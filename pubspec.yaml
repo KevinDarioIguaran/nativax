@@ -1,0 +1,16 @@
+name: nativax_workspace
+description: Monorepo root for the NativaX packages.
+publish_to: none
+
+environment:
+  sdk: ^3.10.0
+
+workspace:
+  - packages/nativax_css
+  - packages/nativax_dom
+  - packages/nativax_dom_bindings
+  - packages/nativax_html
+  - packages/nativax_js
+
+dev_dependencies:
+  lints: ^6.0.0

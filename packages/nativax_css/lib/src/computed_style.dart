@@ -1,0 +1,189 @@
+import 'properties.dart';
+import 'values.dart';
+
+enum Display { block, inline, inlineBlock, flex, inlineFlex, none, listItem }
+
+/// A length after computation: absolute px, a percentage to be resolved by
+/// layout against the containing block, or `auto` (represented as null by
+/// the accessors below).
+class ResolvedLength {
+  const ResolvedLength.px(this.value) : isPercent = false;
+  const ResolvedLength.percent(this.value) : isPercent = true;
+  static const zero = ResolvedLength.px(0);
+
+  final double value;
+  final bool isPercent;
+
+  /// Resolves against [basis] (the containing block's size on the relevant
+  /// axis). Percentages against an unknown (null/infinite) basis yield null,
+  /// which callers treat as `auto`.
+  double? resolve(double? basis) {
+    if (!isPercent) return value;
+    if (basis == null || !basis.isFinite) return null;
+    return basis * value / 100;
+  }
+
+  @override
+  bool operator ==(Object o) =>
+      o is ResolvedLength && o.value == value && o.isPercent == isPercent;
+  @override
+  int get hashCode => Object.hash(value, isPercent);
+  @override
+  String toString() => isPercent ? '$value%' : '${value}px';
+}
+
+/// The computed values of every supported longhand for one element.
+///
+/// Values are stored as [CssValue]s after computation: relative lengths
+/// (`em`, `rem`, `vw`, `vh`) are converted to px, `currentcolor` is resolved
+/// (except where it must stay relative), and only percentages remain
+/// relative. Typed accessors serve the renderer.
+class ComputedStyle {
+  ComputedStyle(this.values);
+
+  final Map<String, CssValue> values;
+
+  CssValue operator [](String property) => values[property] ?? longhands[property]!.initial;
+
+  String _kw(String p) => (this[p] as Keyword).name;
+
+  double _px(String p) {
+    final v = this[p];
+    return v is Length && v.unit == LengthUnit.px ? v.value : 0;
+  }
+
+  /// null for `auto` / `none` / `normal` / `content`.
+  ResolvedLength? _len(String p) {
+    final v = this[p];
+    if (v is! Length) return null;
+    return v.unit == LengthUnit.percent
+        ? ResolvedLength.percent(v.value)
+        : ResolvedLength.px(v.value);
+  }
+
+  Display get display => switch (_kw('display')) {
+        'block' => Display.block,
+        'inline-block' => Display.inlineBlock,
+        'flex' => Display.flex,
+        'inline-flex' => Display.inlineFlex,
+        'none' => Display.none,
+        'list-item' => Display.listItem,
+        _ => Display.inline,
+      };
+
+  bool get isInlineLevel =>
+      display == Display.inline || display == Display.inlineBlock || display == Display.inlineFlex;
+  bool get isFlexContainer => display == Display.flex || display == Display.inlineFlex;
+
+  String get position => _kw('position');
+  ResolvedLength? get top => _len('top');
+  ResolvedLength? get right => _len('right');
+  ResolvedLength? get bottom => _len('bottom');
+  ResolvedLength? get left => _len('left');
+  int? get zIndex {
+    final v = this['z-index'];
+    return v is NumberValue ? v.value.toInt() : null;
+  }
+
+  bool get borderBox => _kw('box-sizing') == 'border-box';
+  ResolvedLength? get width => _len('width');
+  ResolvedLength? get height => _len('height');
+  ResolvedLength get minWidth => _len('min-width') ?? ResolvedLength.zero;
+  ResolvedLength get minHeight => _len('min-height') ?? ResolvedLength.zero;
+  ResolvedLength? get maxWidth => _len('max-width');
+  ResolvedLength? get maxHeight => _len('max-height');
+
+  /// Margins; null means `auto`.
+  ResolvedLength? marginOf(String side) => _len('margin-$side');
+  ResolvedLength paddingOf(String side) => _len('padding-$side') ?? ResolvedLength.zero;
+
+  String borderStyleOf(String side) => _kw('border-$side-style');
+
+  /// Used border width: 0 when the style is `none` or `hidden`.
+  double borderWidthOf(String side) {
+    final style = borderStyleOf(side);
+    return style == 'none' || style == 'hidden' ? 0 : _px('border-$side-width');
+  }
+
+  CssColor borderColorOf(String side) =>
+      (this['border-$side-color'] as ColorValue).color ?? color;
+
+  ResolvedLength radiusOf(String corner) => _len('border-$corner-radius') ?? ResolvedLength.zero;
+
+  CssColor get backgroundColor =>
+      (this['background-color'] as ColorValue).color ?? color;
+  String? get backgroundImage {
+    final v = this['background-image'];
+    return v is UrlValue ? v.url : null;
+  }
+
+  CssColor get color => (this['color'] as ColorValue).color ?? CssColor.black;
+  double get opacity => (this['opacity'] as NumberValue).value;
+  String get visibility => _kw('visibility');
+
+  List<String> get fontFamily => (this['font-family'] as FontFamilyValue).families;
+  double get fontSize => _px('font-size');
+  int get fontWeight {
+    final v = this['font-weight'];
+    if (v is NumberValue) return v.value.round();
+    return (v as Keyword).name == 'bold' ? 700 : 400;
+  }
+
+  bool get italic => _kw('font-style') != 'normal';
+  String get textAlign => _kw('text-align');
+  Set<String> get textDecorationLines {
+    final k = _kw('text-decoration-line');
+    return k == 'none' ? const {} : k.split(' ').toSet();
+  }
+
+  CssColor get textDecorationColor =>
+      (this['text-decoration-color'] as ColorValue).color ?? color;
+  String get textDecorationStyle => _kw('text-decoration-style');
+  String get textTransform => _kw('text-transform');
+  double? get letterSpacing {
+    final v = this['letter-spacing'];
+    return v is Length ? v.value : null;
+  }
+
+  /// Multiplier of the font size, or null for `normal`.
+  double? get lineHeightMultiplier {
+    final v = this['line-height'];
+    if (v is NumberValue) return v.value;
+    if (v is Length && fontSize > 0) return v.value / fontSize;
+    return null;
+  }
+
+  String get whiteSpace => _kw('white-space');
+  String get overflowX => _kw('overflow-x');
+  String get overflowY => _kw('overflow-y');
+
+  String get flexDirection => _kw('flex-direction');
+  String get flexWrap => _kw('flex-wrap');
+  double get flexGrow => (this['flex-grow'] as NumberValue).value;
+  double get flexShrink => (this['flex-shrink'] as NumberValue).value;
+
+  /// null for `auto`/`content`.
+  ResolvedLength? get flexBasis => _len('flex-basis');
+  String get justifyContent => _kw('justify-content');
+  String get alignItems => _kw('align-items');
+  String get alignSelf => _kw('align-self');
+  ResolvedLength get rowGap => _len('row-gap') ?? ResolvedLength.zero;
+  ResolvedLength get columnGap => _len('column-gap') ?? ResolvedLength.zero;
+
+  String get listStyleType => _kw('list-style-type');
+  String get objectFit => _kw('object-fit');
+  String get cursor => _kw('cursor');
+
+  @override
+  bool operator ==(Object other) {
+    if (other is! ComputedStyle) return false;
+    if (other.values.length != values.length) return false;
+    for (final e in values.entries) {
+      if (other.values[e.key] != e.value) return false;
+    }
+    return true;
+  }
+
+  @override
+  int get hashCode => Object.hashAllUnordered(values.entries.map((e) => Object.hash(e.key, e.value)));
+}
