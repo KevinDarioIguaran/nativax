@@ -17,7 +17,7 @@ evidence and definition-of-done rules.
    - `progress/status.md`: current state, tests, rates, and next targets.
    - `progress/log.md`: what changed and the exact commands.
    - `progress/conformance.md`: PASS/FAIL/SKIP/ERROR and rates.
-   - `progress/reports/`: readable per-suite reports.
+   - `progress/reports/`: only the latest readable report per suite.
    - `docs/`: API contracts, limits, and guides.
    - `STATUS.md`: short session summary.
 3. Keep product documentation in Spanish and agent/tool documentation in

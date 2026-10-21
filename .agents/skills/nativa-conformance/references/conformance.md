@@ -57,8 +57,9 @@ dart run bin/run_wpt.dart --limit 200
 dart run bin/run_html_tree.dart
 ```
 
-Raw results go to `.conformance/results/*.jsonl` and `*.summary.json`. Readable
-reports go to `progress/reports/<suite>-latest.md` and a dated archive.
+Raw results go to `.conformance/results/*.jsonl` and `*.summary.json`. Dated
+Markdown archives also stay in `.conformance/results/` and are ignored by git.
+Only `progress/reports/<suite>-latest.md` is versioned.
 
 ## Known runner limitations
 

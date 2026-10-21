@@ -20,9 +20,9 @@ tools/
   test_all.sh    # current local runner
 ```
 
-`progress/reports/` stores readable reports; raw results go to ignored
-directories (`.conformance/`, `benchmarks/results/`, `benchmarks/leaks/`,
-`benchmarks/security/`).
+`progress/reports/` stores only the latest readable report per suite. Raw
+results and dated Markdown archives go to ignored directories (`.conformance/`,
+`benchmarks/results/`, `benchmarks/leaks/`, `benchmarks/security/`).
 
 ## Execution profiles
 

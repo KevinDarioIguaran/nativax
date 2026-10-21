@@ -42,6 +42,9 @@ real y el test de estadísticas de presentación.
   `nativa_dom_bindings`.
 - No se reanudó el trabajo de conformidad; el siguiente incremento sigue
   pendiente de petición explícita.
+- Reportes de conformidad: se eliminaron 420 archivos con timestamp de
+  `progress/reports/`; solo quedan `*-latest.md` por suite. Las corridas con
+  fecha pasan a `.conformance/results/` (ignorado por git).
 
 ## Checkpoint estable — Fase 0 de presentación
 

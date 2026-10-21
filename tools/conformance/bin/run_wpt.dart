@@ -62,7 +62,7 @@ Future<void> main(List<String> args) async {
   final baseline = _loadBaseline(root, baselinePath);
   final stamp = timestampForFile(summary.startedAt);
   final marked =
-      markdownPath ?? p.join(reportsDir(root), 'wpt-$stamp.md');
+      markdownPath ?? p.join(resultsDir(root), 'wpt-$stamp.md');
   final files = const ConformanceReport().write(
     summary,
     outputDir: resultsDir(root),
