@@ -40,8 +40,9 @@ trusts none of them.
 
 The executable suite lives in `tools/security`. The live Linux status is in
 `progress/status.md`; the current audit reports 14 PASS, 0 FAIL, and 1 SKIP.
-See `SECURITY_AUDIT.md`, `SECURITY_THREAT_MODEL.md`, `SECURITY_TEST_PLAN.md`,
-and `SECURITY_PLATFORM_MATRIX.md`.
+See `../../../docs/security/audit.md`, `../../../docs/security/threat-model.md`,
+`../../../docs/security/test-plan.md`, and
+`../../../docs/security/platform-matrix.md`.
 
 ## Contribution rules
 

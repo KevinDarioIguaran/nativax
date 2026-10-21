@@ -1,6 +1,6 @@
 # Progreso de NativaX
 
-Esta carpeta es la fuente de verdad del avance. `STATUS.md` (raíz) es solo un
+Esta carpeta es la fuente de verdad del avance. `docs/status.md` es solo un
 resumen de sesión; aquí están los números, las fases y el histórico.
 
 ## Archivos

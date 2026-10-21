@@ -19,7 +19,7 @@ evidence and definition-of-done rules.
    - `progress/conformance.md`: PASS/FAIL/SKIP/ERROR and rates.
    - `progress/reports/`: only the latest readable report per suite.
    - `docs/`: API contracts, limits, and guides.
-   - `STATUS.md`: short session summary.
+   - `docs/status.md`: short session summary.
 3. Keep product documentation in Spanish and agent/tool documentation in
    English, matching the existing repository.
 4. Every number needs a date, command, commit, and environment. Link the raw

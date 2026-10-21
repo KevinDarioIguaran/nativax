@@ -40,6 +40,6 @@
 
 ## Documentation
 
-- `STATUS.md` is the session summary; `progress/` is the source of truth.
+- `docs/status.md` is the session summary; `progress/` is the source of truth.
 - ADRs belong in `docs/adr/` (pending) and are linked from `.agents/`.
 - Every new limitation is documented the same day.

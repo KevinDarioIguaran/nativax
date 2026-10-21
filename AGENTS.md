@@ -101,4 +101,4 @@ dart run bin/run_html_tree.dart
 - `docs/nativa-family.md`: family names, package map, extraction criteria.
 - `progress/status.md`: live state and numbers.
 - `progress/conformance.md`: suite baselines and gaps.
-- `SECURITY_AUDIT.md`, `SECURITY_THREAT_MODEL.md`: security model.
+- `docs/security/audit.md`, `docs/security/threat-model.md`: security model.

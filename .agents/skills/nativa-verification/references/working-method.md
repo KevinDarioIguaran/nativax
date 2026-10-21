@@ -5,7 +5,7 @@ This is the mandatory protocol for every change in Nativa. Do not skip a step
 
 ## 1. Inspect before writing
 
-- Read `AGENTS.md`, `STATUS.md`, `progress/`, and the relevant `.agents/` docs.
+- Read `AGENTS.md`, `docs/status.md`, `progress/`, and the relevant `.agents/` docs.
 - Locate the package, API, and existing tests.
 - Check existing limits, contracts, and decisions.
 - Identify what cannot yet be measured or implemented.
@@ -85,7 +85,7 @@ Memory:
 - `progress/conformance.md`: rates and gaps.
 - `docs/`: API contracts, limits, and guides.
 - `.agents/`: new decisions or requirements.
-- `STATUS.md`: session summary.
+- `docs/status.md`: session summary.
 
 ## 8. Report
 
