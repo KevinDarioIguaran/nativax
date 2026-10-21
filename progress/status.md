@@ -21,7 +21,7 @@ real y el test de estadísticas de presentación.
 | Rendimiento 7× | 🔴 registrado | Rapier 180 pasos: 328,5 ms (wasm3) vs 30,7 ms (V8); gap 10,7× |
 | Ejemplo web-challenge | ✅ original | HTML/CSS/JS **sin modificar**: 46/52 comprobaciones propias en verde |
 | Seguridad | 🟢 | `tools/security`: 14 PASS / 0 FAIL / 1 SKIP |
-| Conformidad | 🟡 | Test262 97,93 %; html5lib 99,26 %; URL 74,22 %; DOM 59,36 %; CSS 39,78 %; tree 50,37 % |
+| Conformidad | 🟡 | Test262 97,93 %; html5lib 99,26 %; URL 74,22 %; DOM 59,36 %; CSS 41,99 %; tree 50,37 % |
 | Plataformas | 🟡 solo Linux | build Linux verificado; resto sin probar |
 
 ## Reorganización Nativa y skills — 2026-10-21
@@ -86,6 +86,20 @@ real y el test de estadísticas de presentación.
 - Causa real: `.foo-*` (class prefix selector) no se soportaba y `:dir()`
   aceptaba cadenas entre comillas aunque la gramática exige un ident.
 - Fix: soporte de class prefix selectors y validación de argumento de `:dir()`.
+- Comando: `dart run bin/run_wpt.dart --dirs css/selectors --limit 100000`
+  (commit de la suite `e7d77cd`).
+- Tests: `nativa_dom` 38 en verde; `./tools/test_all.sh` 316 en verde;
+  `flutter analyze` limpio.
+
+## Incremento de conformidad CSS selectors — 2026-10-21 (2)
+
+- CSS selectors: **39,78 % → 41,99 %** (+2,21 puntos; 72 → 76 PASS;
+  109 → 105 FAIL; 528 archivos, 347 SKIP, 0 ERROR).
+- Causa real: `getAttribute('lang')` coincidía con el atributo `xml:lang`
+  por nombre local, y los selectores de atributo no trataban `lang` como
+  insensible a mayúsculas.
+- Fix: `getAttribute` solo coincide por nombre completo; los selectores de
+  atributo tratan `lang` como case-insensitive.
 - Comando: `dart run bin/run_wpt.dart --dirs css/selectors --limit 100000`
   (commit de la suite `e7d77cd`).
 - Tests: `nativa_dom` 38 en verde; `./tools/test_all.sh` 316 en verde;
