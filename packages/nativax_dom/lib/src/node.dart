@@ -9,8 +9,10 @@ import 'mutation.dart';
 enum NodeType {
   element(1),
   text(3),
+  processingInstruction(7),
   comment(8),
   document(9),
+  doctype(10),
   documentFragment(11);
 
   const NodeType(this.code);
@@ -68,6 +70,22 @@ abstract class Node extends EventTarget {
   /// Index among the parent's child nodes, or -1 when detached.
   int get indexInParent => _parent?._children.indexOf(this) ?? -1;
 
+  /// Nearest following sibling element, skipping text and comment nodes.
+  Element? get nextElementSibling {
+    for (var n = nextSibling; n != null; n = n.nextSibling) {
+      if (n is Element) return n;
+    }
+    return null;
+  }
+
+  /// Nearest preceding sibling element, skipping text and comment nodes.
+  Element? get previousElementSibling {
+    for (var n = previousSibling; n != null; n = n.previousSibling) {
+      if (n is Element) return n;
+    }
+    return null;
+  }
+
   bool get isConnected {
     Node n = this;
     while (n._parent != null) {
@@ -102,7 +120,28 @@ abstract class Node extends EventTarget {
 
   /// Replaces all children with a single text node (none when empty).
   set textContent(String value) {
-    replaceChildren([if (value.isNotEmpty) ownerDocument.createTextNode(value)]);
+    final old = List<Node>.of(_children);
+    final incoming = <Node>[
+      if (value.isNotEmpty) ownerDocument.createTextNode(value),
+    ];
+    for (final n in old) {
+      n._parent = null;
+      ownerDocument.onDetached(this, n);
+    }
+    _children.clear();
+    for (final n in incoming) {
+      _children.add(n);
+      n._parent = this;
+      n._adopt(ownerDocument);
+      ownerDocument.onAttached(this, n);
+    }
+    if (old.isNotEmpty || incoming.isNotEmpty) {
+      ownerDocument.notify(MutationRecord.childList(
+        this,
+        added: incoming,
+        removed: old,
+      ));
+    }
   }
 
   // --- tree mutation -------------------------------------------------------
@@ -113,9 +152,32 @@ abstract class Node extends EventTarget {
     _checkInsertable(child, reference);
     if (child is DocumentFragment) {
       final moved = List<Node>.of(child._children);
+      if (moved.isEmpty) return child;
+      if (identical(child, reference)) reference = child.nextSibling;
+      ownerDocument.checkCanAttach(this, child);
+      final index =
+          reference == null ? _children.length : _children.indexOf(reference);
       for (final n in moved) {
-        insertBefore(n, reference);
+        n._parent = null;
       }
+      child._children.clear();
+      if (moved.isNotEmpty) {
+        ownerDocument.notify(MutationRecord.childList(child, removed: moved));
+      }
+      _children.insertAll(index, moved);
+      for (final n in moved) {
+        n._parent = this;
+        n._adopt(ownerDocument);
+        ownerDocument.onAttached(this, n);
+      }
+      ownerDocument.notify(MutationRecord.childList(
+        this,
+        added: moved,
+        previousSibling: index > 0 ? _children[index - 1] : null,
+        nextSibling: index + moved.length < _children.length
+            ? _children[index + moved.length]
+            : null,
+      ));
       return child;
     }
     if (identical(child, reference)) reference = child.nextSibling;
@@ -159,22 +221,50 @@ abstract class Node extends EventTarget {
     }
     if (identical(newChild, oldChild)) return oldChild;
     _checkInsertable(newChild, oldChild);
-    final next = oldChild.nextSibling;
-    removeChild(oldChild);
-    insertBefore(newChild, identical(next, newChild) ? newChild.nextSibling : next);
+    newChild._parent?.removeChild(newChild);
+    final index = _children.indexOf(oldChild);
+    final prev = index > 0 ? _children[index - 1] : null;
+    final next = index + 1 < _children.length ? _children[index + 1] : null;
+    oldChild._parent = null;
+    ownerDocument.onDetached(this, oldChild);
+    _children.removeAt(index);
+    final at = prev == null ? 0 : _children.indexOf(prev) + 1;
+    _children.insert(at, newChild);
+    newChild._parent = this;
+    newChild._adopt(ownerDocument);
+    ownerDocument.onAttached(this, newChild);
+    ownerDocument.notify(MutationRecord.childList(
+      this,
+      added: [newChild],
+      removed: [oldChild],
+      previousSibling: prev,
+      nextSibling: next,
+    ));
     return oldChild;
   }
 
   void replaceChildren(Iterable<Node> nodes) {
     final incoming = List<Node>.of(nodes);
+    final old = List<Node>.of(_children);
+    for (final n in old) {
+      n._parent = null;
+      ownerDocument.onDetached(this, n);
+    }
+    _children.clear();
     for (final n in incoming) {
+      if (n._parent != null) n._parent!.removeChild(n);
       _checkInsertable(n, null);
+      _children.add(n);
+      n._parent = this;
+      n._adopt(ownerDocument);
+      ownerDocument.onAttached(this, n);
     }
-    while (_children.isNotEmpty) {
-      removeChild(_children.last);
-    }
-    for (final n in incoming) {
-      appendChild(n);
+    if (old.isNotEmpty || incoming.isNotEmpty) {
+      ownerDocument.notify(MutationRecord.childList(
+        this,
+        added: incoming,
+        removed: old,
+      ));
     }
   }
 
@@ -184,9 +274,55 @@ abstract class Node extends EventTarget {
     if (child is Document) {
       throw DomException('HierarchyRequestError', 'cannot insert a document');
     }
-    if (this is Text || this is Comment) {
+    if (this is Text || this is Comment || this is ProcessingInstruction) {
       throw DomException(
           'HierarchyRequestError', '$nodeName nodes cannot have children');
+    }
+    if (this is Document && child is Text) {
+      throw DomException(
+          'HierarchyRequestError', 'a document cannot contain text nodes');
+    }
+    if (this is Document && child is DocumentFragment &&
+        child.rawChildren.any((c) => c is Text)) {
+      throw DomException(
+          'HierarchyRequestError', 'a document cannot contain text nodes');
+    }
+    if (this is DocumentType) {
+      throw DomException(
+          'HierarchyRequestError', 'a doctype cannot have children');
+    }
+    if (child is DocumentType && this is! Document) {
+      throw DomException(
+          'HierarchyRequestError', 'a doctype can only be a document child');
+    }
+    if (this is Document) {
+      var incomingElements = 0;
+      var incomingDoctypes = 0;
+      if (child is Element) {
+        incomingElements = 1;
+      } else if (child is DocumentFragment) {
+        incomingElements = child.children.length;
+        incomingDoctypes = child.rawChildren.whereType<DocumentType>().length;
+      } else if (child is DocumentType) {
+        incomingDoctypes = 1;
+      }
+      final elements = children.where((c) => !identical(c, child)).length;
+      final doctypes = rawChildren
+          .whereType<DocumentType>()
+          .where((d) => !identical(d, child))
+          .length;
+      if (elements + incomingElements > 1) {
+        throw DomException(
+            'HierarchyRequestError', 'a document can only have one element child');
+      }
+      if (doctypes + incomingDoctypes > 1) {
+        throw DomException(
+            'HierarchyRequestError', 'a document can only have one doctype');
+      }
+      if (child is DocumentType && children.isNotEmpty) {
+        throw DomException(
+            'HierarchyRequestError', 'a doctype must precede the document element');
+      }
     }
     if (child.contains(this)) {
       throw DomException(
@@ -196,14 +332,13 @@ abstract class Node extends EventTarget {
       throw DomException(
           'NotFoundError', 'reference node is not a child of this node');
     }
-    if (!identical(child.ownerDocument, ownerDocument)) {
-      throw DomException('WrongDocumentError',
-          'node belongs to another document; import it first');
-    }
   }
 
   void _adopt(Document doc) {
     _ownerDocument = doc;
+    for (final c in _children) {
+      c._adopt(doc);
+    }
   }
 
   /// Deep or shallow copy owned by the same document. Listeners are not
@@ -220,6 +355,17 @@ abstract class Node extends EventTarget {
 
   @override
   EventTarget? get parentEventTarget => _parent;
+
+  static const _activationEvents = {
+    'click', 'keydown', 'keyup', 'mousedown', 'mouseup', 'pointerdown', 'pointerup', 'touchend', 'contextmenu',
+  };
+
+  @override
+  void willDispatch(Event event) {
+    if (event.isTrusted && _activationEvents.contains(event.type)) {
+      ownerDocument.lastUserActivation = DateTime.now();
+    }
+  }
 
   @override
   ListenerErrorHandler? get listenerErrorHandler =>
@@ -245,7 +391,6 @@ class Text extends Node {
 
   String get data => _data;
   set data(String value) {
-    if (value == _data) return;
     final old = _data;
     _data = value;
     ownerDocument.notify(MutationRecord.characterData(this, old));
@@ -263,14 +408,50 @@ class Text extends Node {
   @override
   set textContent(String value) => data = value;
 
+  /// Concatenated data of adjacent [Text] siblings (including this node).
+  String get wholeText {
+    final buf = StringBuffer();
+    Node first = this;
+    while (first.previousSibling is Text) {
+      first = first.previousSibling!;
+    }
+    for (Node? n = first; n is Text; n = n.nextSibling) {
+      buf.write(n.data);
+    }
+    return buf.toString();
+  }
+
+  /// Splits this node at [offset], returning the new text node inserted after
+  /// it. Mutates this node's data and the tree like the DOM.
+  Text splitText(int offset) {
+    if (offset < 0 || offset > _data.length) {
+      throw DomException('IndexSizeError', 'offset out of range');
+    }
+    final rest = _data.substring(offset);
+    data = _data.substring(0, offset);
+    final tail = Text(ownerDocument, rest);
+    final parent = _parent;
+    if (parent != null) {
+      parent.insertBefore(tail, nextSibling);
+    }
+    return tail;
+  }
+
   @override
   Text cloneNode({bool deep = false}) => Text(ownerDocument, _data);
 }
 
 class Comment extends Node {
-  Comment(Document doc, this.data) : super(doc);
+  Comment(Document doc, this._data) : super(doc);
 
-  String data;
+  String _data;
+
+  String get data => _data;
+  set data(String value) {
+    final old = _data;
+    _data = value;
+    ownerDocument.notify(MutationRecord.characterData(this, old));
+  }
 
   @override
   NodeType get nodeType => NodeType.comment;
@@ -279,13 +460,70 @@ class Comment extends Node {
   String get nodeName => '#comment';
 
   @override
-  String get textContent => data;
+  String get textContent => _data;
 
   @override
   set textContent(String value) => data = value;
 
   @override
-  Comment cloneNode({bool deep = false}) => Comment(ownerDocument, data);
+  Comment cloneNode({bool deep = false}) => Comment(ownerDocument, _data);
+}
+
+/// An XML processing instruction (`<?target data?>`).
+class ProcessingInstruction extends Node {
+  ProcessingInstruction(Document doc, this.target, this._data) : super(doc);
+
+  final String target;
+  String _data;
+
+  String get data => _data;
+  set data(String value) {
+    final old = _data;
+    _data = value;
+    ownerDocument.notify(MutationRecord.characterData(this, old));
+  }
+
+  @override
+  NodeType get nodeType => NodeType.processingInstruction;
+
+  @override
+  String get nodeName => target;
+
+  @override
+  String get textContent => _data;
+
+  @override
+  set textContent(String value) => data = value;
+
+  @override
+  ProcessingInstruction cloneNode({bool deep = false}) =>
+      ProcessingInstruction(ownerDocument, target, data);
+}
+
+/// A `<!DOCTYPE ...>` node. NativaX keeps it outside the element tree.
+class DocumentType extends Node {
+  DocumentType(Document doc, this.name, {this.publicId = '', this.systemId = ''})
+      : super(doc);
+
+  final String name;
+  final String publicId;
+  final String systemId;
+
+  @override
+  NodeType get nodeType => NodeType.doctype;
+
+  @override
+  String get nodeName => name;
+
+  @override
+  String get textContent => '';
+
+  @override
+  set textContent(String value) {}
+
+  @override
+  DocumentType cloneNode({bool deep = false}) =>
+      DocumentType(ownerDocument, name, publicId: publicId, systemId: systemId);
 }
 
 class DocumentFragment extends Node {

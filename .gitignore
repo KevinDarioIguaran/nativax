@@ -4,3 +4,15 @@ build/
 pubspec.lock
 *.iml
 .idea/
+
+# External conformance suites and raw results are downloaded on demand.
+.conformance/
+
+# Benchmark outputs are generated locally.
+benchmarks/results/
+
+# Leak suite outputs are generated locally.
+benchmarks/leaks/
+
+# Security suite outputs are generated locally.
+benchmarks/security/

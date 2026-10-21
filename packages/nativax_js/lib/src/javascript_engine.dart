@@ -52,6 +52,16 @@ abstract interface class JavaScriptEngine {
   /// `null`). Pending microtasks are drained before returning.
   Object? evaluate(String source, {String filename = '<nativax>'});
 
+  /// Evaluates an ES module located at [url] (`import.meta.url`). Its
+  /// imports are resolved and loaded through [moduleHost]. Evaluation is
+  /// asynchronous when the module graph uses top-level `await`; rejections
+  /// are reported to [ModuleHost.onError].
+  void evaluateModule(String source, {required String url});
+
+  /// Supplies module resolution and sources; null rejects every import.
+  ModuleHost? get moduleHost;
+  set moduleHost(ModuleHost? host);
+
   /// Calls `globalThis[functionName](argument)`; [argument] is JSON-encoded.
   Object? callGlobal(String functionName, [Object? argument]);
 
@@ -71,4 +81,19 @@ abstract interface class JavaScriptEngine {
   /// Releases the native runtime. Further calls throw
   /// [JavaScriptEngineStateException].
   void dispose();
+}
+
+/// Module resolution for [JavaScriptEngine.evaluateModule]. Module loading
+/// in QuickJS is synchronous, so the host must have every source ready
+/// (prefetched) when [source] is called.
+abstract interface class ModuleHost {
+  /// The absolute URL of [specifier] imported from the module at [base].
+  /// Throw [JavaScriptHostError] to reject the import.
+  String resolve(String base, String specifier);
+
+  /// The source text of the module at [url], or null when unavailable.
+  String? source(String url);
+
+  /// A module evaluation (or one of its asynchronous imports) failed.
+  void onError(JavaScriptException error);
 }

@@ -37,7 +37,7 @@ enum Combinator { descendant, child, nextSibling, subsequentSibling }
 
 sealed class SimpleSelector {
   const SimpleSelector();
-  bool matches(Element e);
+  bool matches(Element e, [Element? scope]);
   Specificity get specificity;
 }
 
@@ -45,7 +45,7 @@ class TypeSelector extends SimpleSelector {
   const TypeSelector(this.name);
   final String name;
   @override
-  bool matches(Element e) => e.localName == name;
+  bool matches(Element e, [Element? scope]) => e.localName == name;
   @override
   Specificity get specificity => const Specificity(0, 0, 1);
 }
@@ -53,7 +53,7 @@ class TypeSelector extends SimpleSelector {
 class UniversalSelector extends SimpleSelector {
   const UniversalSelector();
   @override
-  bool matches(Element e) => true;
+  bool matches(Element e, [Element? scope]) => true;
   @override
   Specificity get specificity => Specificity.zero;
 }
@@ -62,7 +62,7 @@ class IdSelector extends SimpleSelector {
   const IdSelector(this.id);
   final String id;
   @override
-  bool matches(Element e) => e.getAttribute('id') == id;
+  bool matches(Element e, [Element? scope]) => e.getAttribute('id') == id;
   @override
   Specificity get specificity => const Specificity(1, 0, 0);
 }
@@ -71,7 +71,7 @@ class ClassSelector extends SimpleSelector {
   const ClassSelector(this.name);
   final String name;
   @override
-  bool matches(Element e) => e.classList.contains(name);
+  bool matches(Element e, [Element? scope]) => e.classList.contains(name);
   @override
   Specificity get specificity => const Specificity(0, 1, 0);
 }
@@ -86,7 +86,7 @@ class AttributeSelector extends SimpleSelector {
   final bool ignoreCase;
 
   @override
-  bool matches(Element e) {
+  bool matches(Element e, [Element? scope]) {
     var actual = e.getAttribute(name);
     if (actual == null) return false;
     if (op == null) return true;
@@ -101,7 +101,7 @@ class AttributeSelector extends SimpleSelector {
       case '~=':
         return v.isNotEmpty && actual.split(RegExp(r'\s+')).contains(v);
       case '|=':
-        return actual == v || actual.startsWith('$v-');
+        return actual == v || actual.startsWith('${v}-');
       case '^=':
         return v.isNotEmpty && actual.startsWith(v);
       case r'$=':
@@ -117,20 +117,49 @@ class AttributeSelector extends SimpleSelector {
 }
 
 class PseudoClassSelector extends SimpleSelector {
-  const PseudoClassSelector(this.name, {this.a = 0, this.b = 0, this.inner});
+  const PseudoClassSelector(this.name,
+      {this.a = 0,
+      this.b = 0,
+      this.inner,
+      this.hasParts,
+      this.arg,
+      this.of});
   final String name;
 
   /// `an+b` for nth-* pseudo-classes.
   final int a;
   final int b;
 
-  /// Argument of `:not()`.
+  /// Argument of `:not()`, `:is()` or `:where()`.
   final SelectorList? inner;
+
+  /// `:has()` arguments with their optional relative combinator.
+  final List<(Combinator?, ComplexSelector)>? hasParts;
+
+  /// Argument of `:dir()` / `:lang()`.
+  final String? arg;
+
+  /// `of S` filter for `:nth-child(An+B of S)`.
+  final SelectorList? of;
 
   static const Set<String> supported = {
     'first-child', 'last-child', 'only-child', 'nth-child', 'nth-last-child',
-    'first-of-type', 'last-of-type', 'empty', 'root', 'not', 'checked',
-    'disabled', 'enabled', 'focus', //
+    'first-of-type', 'last-of-type', 'empty', 'root', 'not', 'is', 'where',
+    'has', 'checked', 'disabled', 'enabled', 'focus', 'focus-visible',
+    'focus-within', 'dir', 'lang', 'heading', 'link', 'any-link', 'scope',
+    'hover', 'active', 'target', 'visited', 'defined', 'open', 'modal',
+    'required', 'optional', 'read-only', 'read-write', 'placeholder-shown',
+    'valid', 'invalid', 'user-valid', 'user-invalid', 'in-range',
+    'out-of-range', 'indeterminate', 'default', 'autofill', 'only-of-type',
+    'nth-of-type', 'nth-last-of-type', 'first', 'popover-open', //
+  };
+
+  /// Pseudo-classes whose result depends on interaction state rather than
+  /// the tree; changing that state must invalidate styles.
+  static const Set<String> stateful = {
+    'hover', 'active', 'focus', 'focus-visible', 'focus-within', 'target',
+    'valid', 'invalid', 'user-valid', 'user-invalid', 'placeholder-shown',
+    'checked', 'in-range', 'out-of-range', 'modal', //
   };
 
   bool _nth(int index1) {
@@ -140,7 +169,7 @@ class PseudoClassSelector extends SimpleSelector {
   }
 
   @override
-  bool matches(Element e) {
+  bool matches(Element e, [Element? scope]) {
     switch (name) {
       case 'first-child':
         return e.parentNode != null && e.previousElementSibling == null;
@@ -154,8 +183,11 @@ class PseudoClassSelector extends SimpleSelector {
       case 'nth-last-child':
         final parent = e.parentNode;
         if (parent == null) return false;
-        final siblings = parent.children.toList();
+        final siblings = parent.children
+            .where((s) => of == null || of!.matches(s, scope))
+            .toList();
         final i = siblings.indexOf(e);
+        if (i < 0) return false;
         return _nth(name == 'nth-child' ? i + 1 : siblings.length - i);
       case 'first-of-type':
         return e.parentNode != null &&
@@ -170,27 +202,196 @@ class PseudoClassSelector extends SimpleSelector {
       case 'root':
         return identical(e.ownerDocument.documentElement, e);
       case 'not':
-        return !inner!.matches(e);
+        return !inner!.matches(e, scope);
+      case 'is':
+      case 'where':
+        return inner!.matches(e, scope);
+      case 'has':
+        for (final (combinator, selector) in hasParts!) {
+          switch (combinator) {
+            case Combinator.child:
+              if (e.children.any((c) => selector.matches(c, scope))) return true;
+            case Combinator.nextSibling:
+              final s = e.nextElementSibling;
+              if (s != null && selector.matches(s, scope)) return true;
+            case Combinator.subsequentSibling:
+              for (var s = e.nextElementSibling;
+                  s != null;
+                  s = s.nextElementSibling) {
+                if (selector.matches(s, scope)) return true;
+              }
+            case Combinator.descendant:
+            case null:
+              for (final d in e.descendants) {
+                if (d is Element && selector.matches(d, scope)) return true;
+              }
+          }
+        }
+        return false;
+      case 'focus-visible':
+        return identical(e.ownerDocument.focusedElement, e);
+      case 'focus-within':
+        final active = e.ownerDocument.focusedElement;
+        return active != null && (identical(active, e) || e.contains(active));
+      case 'dir':
+        return _direction(e) == (arg ?? 'ltr').toLowerCase();
+      case 'lang':
+        for (Element? n = e; n != null; n = n.parentElement) {
+          final lang = n.getAttribute('lang');
+          if (lang != null) {
+            final wanted = (arg ?? '').toLowerCase();
+            final actual = lang.toLowerCase();
+            return actual == wanted || actual.startsWith('${wanted}-');
+          }
+        }
+        return false;
+      case 'heading':
+        return RegExp(r'^h[1-6]$').hasMatch(e.localName);
+      case 'link':
+      case 'any-link':
+        return (e.localName == 'a' || e.localName == 'area') &&
+            e.getAttribute('href') != null;
+      case 'scope':
+        return scope != null ? identical(e, scope) : identical(e.ownerDocument.documentElement, e);
       case 'checked':
         return (e.localName == 'input' && e.checked) ||
             (e.localName == 'option' &&
                 identical(e.closest('select')?.selectedOption, e));
       case 'disabled':
-        return e.isFormControl || e.localName == 'button' ? e.disabled : false;
+        return e.hasAttribute('disabled') ||
+            ((e.isFormControl || e.localName == 'button') && e.disabled);
       case 'enabled':
-        return (e.isFormControl || e.localName == 'button') && !e.disabled;
+        return (e.isFormControl || e.localName == 'button' || e.localName == 'fieldset') &&
+            !e.disabled;
       case 'focus':
-        return identical(e.ownerDocument.activeElement, e);
+        return identical(e.ownerDocument.focusedElement, e);
+      case 'hover':
+        final h = e.ownerDocument.hoverElement;
+        return h != null && (identical(h, e) || e.contains(h));
+      case 'active':
+        final a = e.ownerDocument.pressedElement;
+        return a != null && (identical(a, e) || e.contains(a));
+      case 'target':
+        final t = e.ownerDocument.targetId;
+        return t != null && t.isNotEmpty && e.getAttribute('id') == t;
+      case 'visited':
+      case 'autofill':
+      case 'popover-open':
+      case 'first':
+        return false;
+      case 'defined':
+        return true;
+      case 'open':
+        return (e.localName == 'details' || e.localName == 'dialog') &&
+            e.hasAttribute('open');
+      case 'modal':
+        return e.ownerDocument.modalElements.contains(e);
+      case 'required':
+        return e.isFormControl && e.hasAttribute('required');
+      case 'optional':
+        return e.isFormControl && !e.hasAttribute('required');
+      case 'read-write':
+        return _readWrite(e);
+      case 'read-only':
+        return !_readWrite(e);
+      case 'placeholder-shown':
+        return (e.localName == 'input' || e.localName == 'textarea') &&
+            e.hasAttribute('placeholder') &&
+            e.value.isEmpty;
+      case 'valid':
+        return e.willValidate && e.validity.valid;
+      case 'invalid':
+        if (e.willValidate) return !e.validity.valid;
+        if (e.localName == 'fieldset') {
+          for (final d in e.querySelectorAll('input, select, textarea, button')) {
+            if (d.willValidate && !d.validity.valid) return true;
+          }
+        }
+        return false;
+      case 'user-valid':
+        return e.userInteracted && e.willValidate && e.validity.valid;
+      case 'user-invalid':
+        return e.userInteracted && e.willValidate && !e.validity.valid;
+      case 'in-range':
+      case 'out-of-range':
+        if (e.localName != 'input' ||
+            !(e.hasAttribute('min') || e.hasAttribute('max'))) {
+          return false;
+        }
+        final v = e.validity;
+        final out = v.rangeUnderflow || v.rangeOverflow;
+        return name == 'out-of-range' ? out : !out;
+      case 'indeterminate':
+        return e.localName == 'input' &&
+            e.inputType == 'radio' &&
+            !_radioGroupChecked(e);
+      case 'default':
+        return (e.localName == 'input' && e.hasAttribute('checked')) ||
+            (e.localName == 'option' && e.hasAttribute('selected'));
+      case 'only-of-type':
+        final p = e.parentNode;
+        return p != null &&
+            p.children.where((s) => s.localName == e.localName).length == 1;
+      case 'nth-of-type':
+      case 'nth-last-of-type':
+        final p = e.parentNode;
+        if (p == null) return false;
+        final same = p.children.where((s) => s.localName == e.localName).toList();
+        final i = same.indexOf(e);
+        return _nth(name == 'nth-of-type' ? i + 1 : same.length - i);
     }
     return false;
   }
 
+  static bool _readWrite(Element e) {
+    if (e.localName == 'textarea' ||
+        (e.localName == 'input' &&
+            !const {'checkbox', 'radio', 'button', 'submit', 'reset', 'image',
+                    'hidden', 'range', 'color', 'file'}
+                .contains(e.inputType))) {
+      return !e.hasAttribute('readonly') && !e.disabled;
+    }
+    for (Element? n = e; n != null; n = n.parentElement) {
+      final ce = n.getAttribute('contenteditable');
+      if (ce != null) return ce != 'false';
+    }
+    return false;
+  }
+
+  static bool _radioGroupChecked(Element e) {
+    final name = e.getAttribute('name');
+    if (e.checked) return true;
+    if (name == null) return false;
+    final scope = e.closest('form') ?? e.ownerDocument.documentElement;
+    return scope?.querySelectorAll('input[type=radio]').any(
+            (r) => r.getAttribute('name') == name && r.checked) ??
+        false;
+  }
+
+  String _direction(Element e) {
+    for (Element? n = e; n != null; n = n.parentElement) {
+      final dir = n.getAttribute('dir')?.toLowerCase();
+      if (dir == 'rtl') return 'rtl';
+      if (dir == 'ltr') return 'ltr';
+    }
+    return 'ltr';
+  }
+
   @override
-  Specificity get specificity => name == 'not'
-      ? inner!.selectors
+  Specificity get specificity {
+    if (name == 'where') return Specificity.zero;
+    if (name == 'not' || name == 'is') {
+      return inner!.selectors
           .map((s) => s.specificity)
-          .reduce((x, y) => x.compareTo(y) >= 0 ? x : y)
-      : const Specificity(0, 1, 0);
+          .reduce((x, y) => x.compareTo(y) >= 0 ? x : y);
+    }
+    if (name == 'has' && hasParts != null && hasParts!.isNotEmpty) {
+      return hasParts!
+          .map((p) => p.$2.specificity)
+          .reduce((x, y) => x.compareTo(y) >= 0 ? x : y);
+    }
+    return const Specificity(0, 1, 0);
+  }
 }
 
 /// A sequence of simple selectors with no combinator (`div.a#b:first-child`).
@@ -198,9 +399,9 @@ class CompoundSelector {
   const CompoundSelector(this.parts);
   final List<SimpleSelector> parts;
 
-  bool matches(Element e) {
+  bool matches(Element e, [Element? scope]) {
     for (final p in parts) {
-      if (!p.matches(e)) return false;
+      if (!p.matches(e, scope)) return false;
     }
     return true;
   }
@@ -212,11 +413,16 @@ class CompoundSelector {
 /// A complex selector: compounds joined by combinators, stored right-to-left
 /// for matching (`compounds[0]` is the subject).
 class ComplexSelector {
-  ComplexSelector(this.compounds, this.combinators)
-      : specificity =
-            compounds.fold(Specificity.zero, (s, c) => s + c.specificity);
+  ComplexSelector(this.compounds, this.combinators, {this.pseudoElement})
+      : specificity = compounds.fold(Specificity.zero, (s, c) => s + c.specificity) +
+            (pseudoElement == null ? Specificity.zero : const Specificity(0, 0, 1));
 
   final List<CompoundSelector> compounds;
+
+  /// `before`, `after`, `marker`, `placeholder`, ... for selectors ending in
+  /// a pseudo-element. Such selectors never match elements themselves; the
+  /// cascade uses [matchesPseudo].
+  final String? pseudoElement;
 
   /// `combinators[i]` joins `compounds[i]` to `compounds[i + 1]` (leftwards).
   final List<Combinator> combinators;
@@ -225,26 +431,33 @@ class ComplexSelector {
   /// The rightmost compound's ID/class/type, used by the cascade's rule index.
   CompoundSelector get subject => compounds.first;
 
-  bool matches(Element e) => _matchFrom(e, 0);
+  bool matches(Element e, [Element? scope]) => pseudoElement == null && _matchFrom(e, 0, scope);
 
-  bool _matchFrom(Element e, int index) {
-    if (!compounds[index].matches(e)) return false;
+  /// Whether this selector styles the [pseudo] pseudo-element of [e].
+  bool matchesPseudo(Element e, String pseudo, [Element? scope]) =>
+      pseudoElement == pseudo && _matchFrom(e, 0, scope);
+
+  /// Whether the subject compound matches [e], ignoring any pseudo-element.
+  bool matchesOriginating(Element e, [Element? scope]) => _matchFrom(e, 0, scope);
+
+  bool _matchFrom(Element e, int index, [Element? scope]) {
+    if (!compounds[index].matches(e, scope)) return false;
     if (index == compounds.length - 1) return true;
     switch (combinators[index]) {
       case Combinator.child:
         final p = e.parentElement;
-        return p != null && _matchFrom(p, index + 1);
+        return p != null && _matchFrom(p, index + 1, scope);
       case Combinator.descendant:
         for (var p = e.parentElement; p != null; p = p.parentElement) {
-          if (_matchFrom(p, index + 1)) return true;
+          if (_matchFrom(p, index + 1, scope)) return true;
         }
         return false;
       case Combinator.nextSibling:
         final s = e.previousElementSibling;
-        return s != null && _matchFrom(s, index + 1);
+        return s != null && _matchFrom(s, index + 1, scope);
       case Combinator.subsequentSibling:
         for (var s = e.previousElementSibling; s != null; s = s.previousElementSibling) {
-          if (_matchFrom(s, index + 1)) return true;
+          if (_matchFrom(s, index + 1, scope)) return true;
         }
         return false;
     }
@@ -278,23 +491,23 @@ class SelectorList {
     }
   }
 
-  bool matches(Element e) {
+  bool matches(Element e, [Element? scope]) {
     for (final s in selectors) {
-      if (s.matches(e)) return true;
+      if (s.matches(e, scope)) return true;
     }
     return false;
   }
 
-  Element? first(Node root) {
+  Element? first(Node root, [Element? scope]) {
     for (final n in root.descendants) {
-      if (n is Element && matches(n)) return n;
+      if (n is Element && matches(n, scope)) return n;
     }
     return null;
   }
 
-  List<Element> all(Node root) => [
+  List<Element> all(Node root, [Element? scope]) => [
         for (final n in root.descendants)
-          if (n is Element && matches(n)) n,
+          if (n is Element && matches(n, scope)) n,
       ];
 }
 
@@ -333,17 +546,34 @@ class _SelectorParser {
       final c = _ch;
       if (c == r'\') {
         pos++;
-        if (_done) _fail('dangling escape');
+        if (_done) { buf.writeCharCode(0xFFFD); break; }
         // Hex escape (up to 6 digits, optional trailing space) or literal.
         final hex = RegExp(r'^[0-9a-fA-F]{1,6}').stringMatch(src.substring(pos));
         if (hex != null) {
-          buf.writeCharCode(int.parse(hex, radix: 16));
+          var value = int.parse(hex, radix: 16);
           pos += hex.length;
-          if (!_done && _isWs(_ch)) pos++;
+          if (!_done && _isWs(_ch)) {
+            if (_ch == '\r' && pos + 1 < src.length && src[pos + 1] == '\n') {
+              pos += 2;
+            } else {
+              pos++;
+            }
+          }
+          if (value == 0 || (value >= 0xD800 && value <= 0xDFFF) || value > 0x10FFFF) {
+            value = 0xFFFD;
+          }
+          buf.write(String.fromCharCode(value));
         } else {
-          buf.write(_ch);
+          if (_ch.codeUnitAt(0) == 0) {
+            buf.writeCharCode(0xFFFD);
+          } else {
+            buf.write(_ch);
+          }
           pos++;
         }
+      } else if (c.codeUnitAt(0) == 0) {
+        buf.writeCharCode(0xFFFD);
+        pos++;
       } else if (_isNameChar(c)) {
         buf.write(c);
         pos++;
@@ -352,7 +582,13 @@ class _SelectorParser {
       }
     }
     if (buf.isEmpty) _fail('expected a name at offset $pos');
-    return buf.toString();
+    final ident = buf.toString();
+    if (ident.length > 1 &&
+        ident.startsWith('-') &&
+        RegExp(r'^[0-9]').hasMatch(ident.substring(1))) {
+      _fail('invalid identifier at offset $pos');
+    }
+    return ident;
   }
 
   SelectorList parseList({bool nested = false}) {
@@ -372,13 +608,18 @@ class _SelectorParser {
     return SelectorList(list);
   }
 
+  /// Set by [_compound] when it consumes a trailing pseudo-element.
+  String? _pseudoElement;
+
   ComplexSelector _complex() {
+    _pseudoElement = null;
     final compounds = <CompoundSelector>[_compound()];
     final combinators = <Combinator>[];
     while (true) {
       final start = pos;
       _skipWs();
       if (_done || _ch == ',' || _ch == ')') break;
+      if (_pseudoElement != null) _fail('a pseudo-element must be last');
       Combinator comb;
       switch (_ch) {
         case '>':
@@ -398,8 +639,41 @@ class _SelectorParser {
       combinators.add(comb);
       compounds.add(_compound());
     }
+    final pseudo = _pseudoElement;
+    _pseudoElement = null;
     return ComplexSelector(
-        compounds.reversed.toList(), combinators.reversed.toList());
+        compounds.reversed.toList(), combinators.reversed.toList(),
+        pseudoElement: pseudo);
+  }
+
+  static const Set<String> pseudoElements = {
+    'before', 'after', 'marker', 'placeholder', 'backdrop', 'selection',
+    'first-line', 'first-letter', 'file-selector-button', 'part', 'slotted',
+    'cue', 'grammar-error', 'spelling-error', 'target-text', 'details-content', //
+  };
+
+  String _pseudoElementName() {
+    final name = _ident().toLowerCase();
+    if (!pseudoElements.contains(name) && !name.startsWith('-webkit-') &&
+        !name.startsWith('-moz-')) {
+      _fail('unsupported pseudo-element ::$name');
+    }
+    if (!_done && _ch == '(') {
+      // ::part(x) / ::slotted(x): skip the argument; they never match here.
+      var depth = 0;
+      while (!_done) {
+        if (_ch == '(') depth++;
+        if (_ch == ')') {
+          depth--;
+          if (depth == 0) {
+            pos++;
+            break;
+          }
+        }
+        pos++;
+      }
+    }
+    return name;
   }
 
   CompoundSelector _compound() {
@@ -422,14 +696,32 @@ class _SelectorParser {
         pos++;
         parts.add(_attribute());
       } else if (c == ':') {
+        if (_pseudoElement != null) {
+          // User-action pseudo-classes after a pseudo-element
+          // (`::before:hover`) are not supported.
+          _fail('pseudo-class after a pseudo-element');
+        }
         pos++;
-        if (!_done && _ch == ':') _fail('pseudo-elements are not supported');
+        if (!_done && _ch == ':') {
+          pos++;
+          _pseudoElement = _pseudoElementName();
+          continue;
+        }
+        // CSS2 single-colon pseudo-elements.
+        final save = pos;
+        final name = _ident().toLowerCase();
+        if (const {'before', 'after', 'first-line', 'first-letter'}.contains(name)) {
+          _pseudoElement = name;
+          continue;
+        }
+        pos = save;
         parts.add(_pseudo());
       } else {
         break;
       }
     }
     if (parts.isEmpty) {
+      if (_pseudoElement != null) return CompoundSelector(const [UniversalSelector()]);
       _fail(_done ? 'unexpected end' : 'unexpected "${_ch}" at offset $pos');
     }
     return CompoundSelector(parts);
@@ -478,6 +770,10 @@ class _SelectorParser {
       ignoreCase = true;
       pos++;
       _skipWs();
+    } else if (!_done && (_ch == 's' || _ch == 'S')) {
+      ignoreCase = false;
+      pos++;
+      _skipWs();
     }
     if (_done || _ch != ']') _fail('expected "]"');
     pos++;
@@ -489,22 +785,101 @@ class _SelectorParser {
     if (!PseudoClassSelector.supported.contains(name)) {
       _fail('unsupported pseudo-class :$name');
     }
-    final functional = name == 'not' || name.startsWith('nth-');
+    final functional = name == 'not' ||
+        name == 'is' ||
+        name == 'where' ||
+        name == 'has' ||
+        name == 'dir' ||
+        name == 'lang' ||
+        name.startsWith('nth-');
     if (!functional) return PseudoClassSelector(name);
     if (_done || _ch != '(') _fail(':$name requires arguments');
     pos++;
     _skipWs();
-    if (name == 'not') {
+    if (name == 'not' || name == 'is' || name == 'where') {
       final inner = parseList(nested: true);
       if (_done || _ch != ')') _fail('expected ")"');
       pos++;
       return PseudoClassSelector(name, inner: inner);
     }
-    final close = src.indexOf(')', pos);
+    if (name == 'has') {
+      final parts = <(Combinator?, ComplexSelector)>[];
+      while (true) {
+        _skipWs();
+        Combinator? combinator;
+        if (!_done && (_ch == '>' || _ch == '+' || _ch == '~')) {
+          combinator = switch (_ch) {
+            '>' => Combinator.child,
+            '+' => Combinator.nextSibling,
+            _ => Combinator.subsequentSibling,
+          };
+          pos++;
+          _skipWs();
+        }
+        parts.add((combinator, _complex()));
+        _skipWs();
+        if (_done) _fail('expected ")"');
+        if (_ch == ',') {
+          pos++;
+          continue;
+        }
+        if (_ch == ')') {
+          pos++;
+          break;
+        }
+        _fail('unexpected "$_ch" in :has()');
+      }
+      return PseudoClassSelector(name, hasParts: parts);
+    }
+    if (name == 'dir' || name == 'lang') {
+      String value;
+      if (!_done && (_ch == '"' || _ch == "'")) {
+        final quote = _ch;
+        pos++;
+        final start = pos;
+        while (!_done && _ch != quote) {
+          pos++;
+        }
+        if (_done) _fail('unterminated string');
+        value = src.substring(start, pos);
+        pos++;
+      } else {
+        value = _ident();
+      }
+      _skipWs();
+      if (_done || _ch != ')') _fail('expected ")"');
+      pos++;
+      return PseudoClassSelector(name, arg: value);
+    }
+
+    // nth-*: find the matching close parenthesis, then split `of S`.
+    var depth = 1;
+    final start = pos;
+    var close = -1;
+    while (pos < src.length) {
+      final c = src[pos];
+      if (c == '(') depth++;
+      if (c == ')') {
+        depth--;
+        if (depth == 0) {
+          close = pos;
+          break;
+        }
+      }
+      pos++;
+    }
     if (close < 0) _fail('expected ")"');
-    final (a, b) = _parseNth(src.substring(pos, close).trim().toLowerCase());
+    final argument = src.substring(start, close).trim().toLowerCase();
     pos = close + 1;
-    return PseudoClassSelector(name, a: a, b: b);
+    var nthText = argument;
+    SelectorList? of;
+    final ofIndex = argument.indexOf(' of ');
+    if (ofIndex >= 0) {
+      nthText = argument.substring(0, ofIndex).trim();
+      of = SelectorList.parse(argument.substring(ofIndex + 4).trim());
+    }
+    final (a, b) = _parseNth(nthText);
+    return PseudoClassSelector(name, a: a, b: b, of: of);
   }
 
   (int, int) _parseNth(String s) {

@@ -6,7 +6,7 @@ import 'tokenizer.dart';
 
 /// Elements allowed in `<head>` before `<body>` starts.
 const Set<String> _headElements = {
-  'title', 'meta', 'link', 'style', 'script', 'base', 'noscript', //
+  'title', 'meta', 'link', 'style', 'script', 'base', 'noscript', 'template', //
 };
 
 /// Start tags that implicitly close an open `<p>`.
@@ -20,6 +20,12 @@ const Set<String> _closesP = {
 /// Elements that bound the search for an implicitly closed `li`, `dd`, `dt`
 /// or `option`.
 const Set<String> _listScopes = {'ul', 'ol', 'menu', 'dl', 'select', 'datalist'};
+
+/// Formatting elements tracked by the (simplified) adoption agency.
+const Set<String> _formattingTags = {
+  'a', 'b', 'big', 'code', 'em', 'font', 'i', 'nobr', 's', 'small',
+  'strike', 'strong', 'tt', 'u',
+};
 
 /// Result of a parse: the tree plus every recoverable error encountered.
 class HtmlParseResult<T> {
@@ -38,7 +44,8 @@ class HtmlParseResult<T> {
 /// elements, implicit closing of `p`, `li`, `dd`, `dt` and `option`, and
 /// recovery from unmatched end tags. It does not implement the adoption
 /// agency algorithm (misnested formatting), foster parenting (tables),
-/// `template`, foreign content (SVG/MathML) or quirks mode. See
+/// `template` contents or quirks mode. Foreign content (SVG/MathML) honors
+/// self-closing tags and HTML breakout tags. See
 /// docs/html-supported.md.
 class HtmlParser {
   HtmlParser({this.limits = const HtmlParserLimits()});
@@ -52,7 +59,10 @@ class HtmlParser {
     final doc = Document(limits: documentLimits);
     final builder = _TreeBuilder(doc, source, limits, fragment: false);
     builder.run();
-    doc.adoptParsed([builder.html]);
+    doc.adoptParsed([
+      ...builder.topLevel,
+      builder.html,
+    ]);
     return HtmlParseResult(doc, builder.errors, builder.dropped);
   }
 
@@ -84,6 +94,9 @@ class _TreeBuilder {
   int _nodes = 0;
   List<int>? _lineStarts;
 
+  DocumentType? doctype;
+  final List<Node> topLevel = [];
+  bool _beforeFirstStart = true;
   late final Element html;
   late final Element head;
   late final Element body;
@@ -93,6 +106,9 @@ class _TreeBuilder {
 
   /// Open elements; [0] is the root of insertion.
   final List<Element> _stack = [];
+
+  /// Active formatting elements: (element, start tag) in insertion order.
+  final List<(Element, StartTagToken)> _formatting = [];
 
   Element get _current => _stack.last;
 
@@ -151,6 +167,7 @@ class _TreeBuilder {
     for (final token in tokenizer.tokenize()) {
       switch (token) {
         case StartTagToken t:
+          _beforeFirstStart = false;
           _startTag(t);
         case EndTagToken t:
           _endTag(t);
@@ -158,9 +175,20 @@ class _TreeBuilder {
           _text(t);
         case CommentToken t:
           _countNode();
-          _current.appendParsed(doc.createComment(t.data));
+          if (!fragment && _beforeFirstStart) {
+            topLevel.add(doc.createComment(t.data));
+          } else {
+            _current.appendParsed(doc.createComment(t.data));
+          }
         case DoctypeToken t:
-          if (t.name != 'html') _error('unsupported-doctype', t.offset, t.name);
+          if (!fragment && doctype == null) {
+            _countNode();
+            doctype = DocumentType(doc, t.name,
+                publicId: t.publicId, systemId: t.systemId);
+            topLevel.add(doctype!);
+          } else {
+            _error('unexpected-doctype', t.offset, t.name);
+          }
       }
     }
   }
@@ -213,10 +241,43 @@ class _TreeBuilder {
         _mergeAttributes(body, t);
         return;
       }
-      if (!_bodyStarted && !_headElements.contains(name)) _enterBody();
+      if (!_bodyStarted &&
+          !_headElements.contains(name) &&
+          !_stack.any((e) => e.localName == 'template')) {
+        _enterBody();
+      }
     } else if (name == 'html' || name == 'head' || name == 'body') {
       _error('unexpected-start-tag-in-fragment', t.offset, name);
       return;
+    }
+
+    // Foreign content (SVG/MathML): no HTML implicit rules, `/>` closes the
+    // element, and HTML "breakout" tags close the foreign subtree first.
+    if (_inForeign) {
+      if (_breakout.contains(name) || (name == 'font' && t.attributes.any((a) => const {'color', 'face', 'size'}.contains(a.$1)))) {
+        _error('html-start-tag-in-foreign-content', t.offset, name);
+        while (_inForeign && _stack.length > (fragment ? 1 : 2)) {
+          _stack.removeLast();
+        }
+      } else {
+        _countNode();
+        final el = Element(doc, name);
+        for (final (k, v) in t.attributes) {
+          try {
+            el.setParsedAttribute(k, v);
+          } on DomException {
+            _error('invalid-attribute-name', t.offset, k);
+          }
+        }
+        _current.appendParsed(el);
+        if (t.selfClosing) return;
+        if (_stack.length >= limits.maxDepth) {
+          _error('nesting-too-deep', t.offset, name);
+          return;
+        }
+        _stack.add(el);
+        return;
+      }
     }
 
     if (_closesP.contains(name)) _closeIfOpen('p', t);
@@ -231,8 +292,9 @@ class _TreeBuilder {
       }
     }
 
+    _tableContext(name, t);
     _countNode();
-    final el = doc.createElement(name);
+    final el = Element(doc, name);
     for (final (k, v) in t.attributes) {
       try {
         el.setParsedAttribute(k, v);
@@ -243,6 +305,7 @@ class _TreeBuilder {
     _current.appendParsed(el);
 
     final isVoid = voidElements.contains(name);
+    if (t.selfClosing && (name == 'svg' || name == 'math')) return;
     if (t.selfClosing && !isVoid) {
       // HTML ignores "/>" on non-void elements; the element stays open.
       _error('non-void-html-element-start-tag-with-trailing-solidus', t.offset, name);
@@ -253,10 +316,50 @@ class _TreeBuilder {
       return; // children of `el` become its siblings
     }
     _stack.add(el);
+    if (_formattingTags.contains(name)) _formatting.add((el, t));
   }
+
+  /// Whether the insertion point is inside `<svg>`/`<math>` and not inside an
+  /// HTML integration point (`foreignObject`, `desc`, `title`,
+  /// `annotation-xml`).
+  bool get _inForeign {
+    for (var i = _stack.length - 1; i >= 0; i--) {
+      final n = _stack[i].localName;
+      if (n == 'foreignobject' || n == 'annotation-xml') return false;
+      if ((n == 'desc' || n == 'title') && i > 0 && _stackHasSvgBelow(i)) return false;
+      if (n == 'svg' || n == 'math') return true;
+    }
+    return false;
+  }
+
+  bool _stackHasSvgBelow(int index) {
+    for (var i = index - 1; i >= 0; i--) {
+      if (_stack[i].localName == 'svg') return true;
+    }
+    return false;
+  }
+
+  static const _breakout = {
+    'b', 'big', 'blockquote', 'body', 'br', 'center', 'code', 'dd', 'div', 'dl', 'dt', 'em', 'embed', 'h1', 'h2',
+    'h3', 'h4', 'h5', 'h6', 'head', 'hr', 'i', 'img', 'li', 'listing', 'menu', 'meta', 'nobr', 'ol', 'p', 'pre',
+    'ruby', 's', 'small', 'span', 'strong', 'strike', 'sub', 'sup', 'table', 'tt', 'u', 'ul', 'var',
+  };
 
   void _endTag(EndTagToken t) {
     final name = t.name;
+    if (_inForeign) {
+      for (var i = _stack.length - 1; i >= (fragment ? 1 : 2); i--) {
+        if (_stack[i].localName == name) {
+          _stack.removeRange(i, _stack.length);
+          return;
+        }
+        if (_stack[i].localName == 'svg' || _stack[i].localName == 'math') break;
+      }
+      if (name != 'br' && name != 'p') {
+        _error('unexpected-end-tag-in-foreign-content', t.offset, name);
+        return;
+      }
+    }
     if (!fragment) {
       if (name == 'head') {
         if (!_bodyStarted && identical(_current, head)) return;
@@ -277,6 +380,10 @@ class _TreeBuilder {
       _error('end-tag-for-void-element', t.offset, name);
       return;
     }
+    if (_formattingTags.contains(name)) {
+      _closeFormatting(t);
+      return;
+    }
     for (var i = _stack.length - 1; i >= (fragment ? 1 : 2); i--) {
       if (_stack[i].localName == name) {
         if (i != _stack.length - 1) {
@@ -295,6 +402,81 @@ class _TreeBuilder {
       return;
     }
     _error('unexpected-end-tag', t.offset, name);
+  }
+
+  /// Simplified adoption agency: move a misnested formatting element into the
+  /// current block instead of leaving it as an ancestor.
+  void _closeFormatting(EndTagToken t) {
+    final name = t.name;
+    var index = -1;
+    for (var i = _formatting.length - 1; i >= 0; i--) {
+      if (_formatting[i].$1.localName == name) {
+        index = i;
+        break;
+      }
+    }
+    if (index < 0) {
+      _error('unexpected-end-tag', t.offset, name);
+      return;
+    }
+    final element = _formatting.removeAt(index).$1;
+    final stackIndex = _stack.indexOf(element);
+    if (stackIndex < 0) return;
+    if (stackIndex == _stack.length - 1) {
+      _stack.removeLast();
+      return;
+    }
+    // The formatting element is an ancestor of the current node. Move the
+    // current branch out of it, then put the formatting element inside the
+    // current node (the common `<b><p></b>` case).
+    final current = _current;
+    final parent = element.parentNode;
+    if (element.contains(current)) {
+      current.remove();
+      if (parent != null) parent.appendChild(current);
+    }
+    if (parent != null) {
+      // The adoption agency leaves an empty clone at the original position.
+      parent.insertBefore(element.cloneNode(deep: false), element);
+    }
+    element.remove();
+    current.appendChild(element);
+    _stack.removeAt(stackIndex);
+  }
+
+  /// Minimal table insertion modes: implicit tbody/tr and cell placement.
+  void _tableContext(String name, StartTagToken t) {
+    if (!{'tbody', 'thead', 'tfoot', 'tr', 'td', 'th', 'caption', 'colgroup'}
+        .contains(name)) {
+      return;
+    }
+    final tableIndex = _stack.lastIndexWhere((e) => e.localName == 'table');
+    if (tableIndex < 0) return;
+    Element? section;
+    Element? row;
+    for (var i = tableIndex + 1; i < _stack.length; i++) {
+      final n = _stack[i].localName;
+      if (n == 'tbody' || n == 'thead' || n == 'tfoot') section = _stack[i];
+      if (n == 'tr') row = _stack[i];
+    }
+    if (section == null && (name == 'tr' || name == 'td' || name == 'th')) {
+      _stack.removeRange(tableIndex + 1, _stack.length);
+      final el = doc.createElement('tbody');
+      _current.appendParsed(el);
+      _stack.add(el);
+      section = el;
+    }
+    if (section != null && (name == 'td' || name == 'th')) {
+      if (row == null) {
+        _stack.removeRange(_stack.indexOf(section) + 1, _stack.length);
+        final el = doc.createElement('tr');
+        _current.appendParsed(el);
+        _stack.add(el);
+        row = el;
+      } else {
+        _stack.removeRange(_stack.indexOf(row) + 1, _stack.length);
+      }
+    }
   }
 
   void _mergeAttributes(Element target, StartTagToken t) {

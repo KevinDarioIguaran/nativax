@@ -27,14 +27,11 @@ const String _timerPrelude = r'''
     if (typeof fn !== 'function') throw new TypeError('not a function');
     Promise.resolve().then(fn);
   };
-  Object.defineProperty(globalThis, '__nx_fireTimer', {
-    value: (id) => {
-      const entry = callbacks.get(id);
-      if (!entry) return;
-      if (!entry.repeat) callbacks.delete(id);
-      entry.fn(...entry.args);
-    },
-    enumerable: false,
+  __nx.register('__nx_fireTimer', (id) => {
+    const entry = callbacks.get(id);
+    if (!entry) return;
+    if (!entry.repeat) callbacks.delete(id);
+    entry.fn(...entry.args);
   });
 })();
 ''';

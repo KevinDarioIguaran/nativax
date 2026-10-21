@@ -48,6 +48,18 @@ external int nx_eval(
 );
 
 @Native<
+    Int32 Function(Pointer<NxRuntime>, Pointer<Char>, Int64, Pointer<Char>,
+        Pointer<Pointer<Char>>, Pointer<Int64>)>()
+external int nx_eval_module(
+  Pointer<NxRuntime> rt,
+  Pointer<Char> source,
+  int len,
+  Pointer<Char> url,
+  Pointer<Pointer<Char>> out,
+  Pointer<Int64> outLen,
+);
+
+@Native<
     Int32 Function(Pointer<NxRuntime>, Pointer<Char>, Pointer<Char>, Int64,
         Pointer<Pointer<Char>>, Pointer<Int64>)>()
 external int nx_call(
@@ -83,3 +95,33 @@ external Pointer<Void> nx_alloc(int size);
 
 @Native<Void Function(Pointer<Void>)>()
 external void nx_free(Pointer<Void> ptr);
+
+@Native<Int64 Function(Pointer<Void>, Int64)>()
+external int nx_buffer_put(Pointer<Void> data, int len);
+
+@Native<Pointer<Void> Function(Int64, Pointer<Int64>)>()
+external Pointer<Void> nx_buffer_take(int id, Pointer<Int64> len);
+
+@Native<Void Function(Pointer<NxRuntime>, Int32)>()
+external void nx_set_can_block(Pointer<NxRuntime> rt, int canBlock);
+
+@Native<Void Function()>()
+external void nx_gl_release_current();
+
+@Native<Int32 Function()>()
+external int nx_gl_available();
+
+@Native<Int64 Function()>()
+external int nx_surface_create();
+
+@Native<Void Function(Int64)>()
+external void nx_surface_retain(int id);
+
+@Native<Void Function(Int64)>()
+external void nx_surface_release(int id);
+
+@Native<Pointer<Uint8> Function(Int64, Pointer<Int32>, Pointer<Int32>, Pointer<Int64>)>()
+external Pointer<Uint8> nx_surface_acquire(int id, Pointer<Int32> width, Pointer<Int32> height, Pointer<Int64> frame);
+
+@Native<Int64 Function(Int64)>()
+external int nx_surface_frame(int id);

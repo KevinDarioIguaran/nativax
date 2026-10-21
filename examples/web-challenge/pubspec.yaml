@@ -1,0 +1,23 @@
+name: nativax_web_challenge_example
+description: NativaX port of the NativaX Web Challenge HTML/CSS/JS demo.
+version: 0.1.0
+publish_to: none
+resolution: workspace
+
+environment:
+  sdk: ^3.10.0
+  flutter: ">=3.35.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  nativax: ^0.1.0
+  nativax_dom: ^0.1.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+flutter:
+  assets:
+    - assets/

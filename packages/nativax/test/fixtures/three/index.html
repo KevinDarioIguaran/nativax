@@ -1,0 +1,32 @@
+<!doctype html>
+<html><body style="margin:0;background:#000">
+<canvas id="c" width="320" height="240" style="display:block"></canvas>
+<script type="module">
+import * as THREE from '/three/build/three.module.js';
+const canvas = document.getElementById('c');
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+renderer.setSize(320, 240, false);
+renderer.shadowMap.enabled = true;
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x203040);
+const camera = new THREE.PerspectiveCamera(60, 320 / 240, 0.1, 100);
+camera.position.set(2, 2, 3);
+camera.lookAt(0, 0, 0);
+scene.add(new THREE.AmbientLight(0xffffff, 0.4));
+const sun = new THREE.DirectionalLight(0xffffff, 2);
+sun.position.set(3, 5, 2);
+sun.castShadow = true;
+scene.add(sun);
+const cube = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1),
+  new THREE.MeshStandardMaterial({ color: 0xff6600, metalness: 0.3, roughness: 0.4 }));
+cube.castShadow = true;
+scene.add(cube);
+const floor = new THREE.Mesh(new THREE.PlaneGeometry(6, 6), new THREE.MeshStandardMaterial({ color: 0x88aa88 }));
+floor.rotation.x = -Math.PI / 2;
+floor.position.y = -0.5;
+floor.receiveShadow = true;
+scene.add(floor);
+renderer.render(scene, camera);
+globalThis.result = { triangles: renderer.info.render.triangles, programs: renderer.info.programs.length, error: renderer.getContext().getError() };
+</script>
+</body></html>

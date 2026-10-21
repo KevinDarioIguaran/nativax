@@ -11,6 +11,14 @@ workspace:
   - packages/nativax_dom_bindings
   - packages/nativax_html
   - packages/nativax_js
+  - packages/nativax_flutter
+  - packages/nativax
+  - examples/web-challenge
+  - examples/game-player
+  - tools/conformance
+  - tools/benchmark
+  - tools/leaks
+  - tools/security
 
 dev_dependencies:
   lints: ^6.0.0

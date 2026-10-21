@@ -30,6 +30,9 @@ class CommentToken extends Token {
 }
 
 class DoctypeToken extends Token {
-  const DoctypeToken(super.offset, this.name);
+  const DoctypeToken(super.offset, this.name,
+      {this.publicId = '', this.systemId = ''});
   final String name;
+  final String publicId;
+  final String systemId;
 }

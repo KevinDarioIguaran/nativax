@@ -26,6 +26,13 @@ String serializeChildren(Node node) {
 
 void _write(Node node, StringBuffer buf) {
   switch (node) {
+    case DocumentType d:
+      buf.write('<!DOCTYPE ${d.name}');
+      if (d.publicId.isNotEmpty || d.systemId.isNotEmpty) {
+        buf.write(' "${d.publicId}"');
+        if (d.systemId.isNotEmpty) buf.write(' "${d.systemId}"');
+      }
+      buf.write('>');
     case Element e:
       buf.write('<${e.localName}');
       e.attributes.forEach((k, v) => buf.write(' $k="${escapeAttribute(v)}"'));
@@ -42,6 +49,8 @@ void _write(Node node, StringBuffer buf) {
       buf.write('</${e.localName}>');
     case Text t:
       buf.write(escapeText(t.data));
+    case ProcessingInstruction p:
+      buf.write('<?${p.target}${p.data.isEmpty ? '' : ' ${p.data}'}?>');
     case Comment c:
       buf.write('<!--${c.data}-->');
     default:

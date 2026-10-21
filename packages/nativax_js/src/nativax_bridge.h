@@ -45,6 +45,10 @@ NX_EXPORT NxRuntime *nx_runtime_new(int64_t runtime_id, int64_t memory_limit,
                                     int64_t stack_size, NxHostCallback host);
 NX_EXPORT void nx_runtime_free(NxRuntime *rt);
 
+/* Whether Atomics.wait may block this runtime's thread (workers: yes; the UI
+ * thread: no, as in browsers). Off by default. */
+NX_EXPORT void nx_set_can_block(NxRuntime *rt, int32_t can_block);
+
 /* Sets an execution budget in milliseconds starting now; 0 disables it. */
 NX_EXPORT void nx_set_budget_ms(NxRuntime *rt, int64_t budget_ms);
 
@@ -55,6 +59,16 @@ NX_EXPORT void nx_set_budget_ms(NxRuntime *rt, int64_t budget_ms);
  */
 NX_EXPORT int32_t nx_eval(NxRuntime *rt, const char *source, int64_t len,
                           const char *filename, char **out, int64_t *out_len);
+
+/*
+ * Evaluates an ES module whose URL is `url` (`import.meta.url`). Imports are
+ * resolved and loaded through the host callback with requests
+ * ["__module", ["resolve", base, specifier]] and ["__module", ["source", url]].
+ * Rejections of the evaluation promise go to the registered callback
+ * "__nx_module_error". Same out contract as nx_eval (no completion value).
+ */
+NX_EXPORT int32_t nx_eval_module(NxRuntime *rt, const char *source, int64_t len,
+                                 const char *url, char **out, int64_t *out_len);
 
 /* Calls globalThis[function_name](JSON.parse(json_arg)). Same out contract. */
 NX_EXPORT int32_t nx_call(NxRuntime *rt, const char *function_name,
@@ -71,6 +85,16 @@ NX_EXPORT int32_t nx_has_pending_jobs(NxRuntime *rt);
 
 NX_EXPORT void nx_run_gc(NxRuntime *rt);
 NX_EXPORT int64_t nx_memory_used(NxRuntime *rt);
+
+/*
+ * Process-wide buffer handoff. nx_buffer_put takes ownership of `data`
+ * (allocated with nx_alloc) and returns an id; nx_buffer_take removes it and
+ * returns the pointer (release with nx_free) and its length, or NULL with
+ * *len = -1 for an unknown id. Scripts use the internal __nx_buffer_put /
+ * __nx_buffer_take functions captured by the host prelude.
+ */
+NX_EXPORT int64_t nx_buffer_put(void *data, int64_t len);
+NX_EXPORT void *nx_buffer_take(int64_t id, int64_t *len);
 
 NX_EXPORT void *nx_alloc(int64_t size);
 NX_EXPORT void nx_free(void *ptr);

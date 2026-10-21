@@ -1,4 +1,7 @@
+import 'dart:convert';
 import 'dart:async';
+import 'dart:math' as math;
+import 'dart:typed_data';
 
 import 'package:nativax_css/nativax_css.dart';
 import 'package:nativax_dom/nativax_dom.dart';
@@ -7,7 +10,12 @@ import 'package:nativax_js/nativax_js.dart';
 
 import 'environment.dart';
 import 'inline_style.dart';
+import 'messaging.dart';
+import 'worker_runtime.dart';
+import 'network.dart';
 import 'prelude.dart';
+
+part 'web_ops.dart';
 
 /// Dart handler callable from script as `nativax.invoke(name, ...args)`.
 typedef AppHandler = Object? Function(List<Object?> args);
@@ -16,6 +24,12 @@ typedef AppHandler = Object? Function(List<Object?> args);
 class WindowTarget extends EventTarget {
   @override
   EventTarget? get parentEventTarget => null;
+
+  /// Where listener exceptions go (reported like uncaught script errors).
+  ListenerErrorHandler? onListenerError;
+
+  @override
+  ListenerErrorHandler? get listenerErrorHandler => onListenerError;
 }
 
 /// A `matchMedia()` result; fires `change` when its result flips.
@@ -33,6 +47,33 @@ class _MediaQueryTarget extends EventTarget {
 ///
 /// Script code only ever sees numeric ids; every operation is validated
 /// here. Listener callbacks stay in the engine and are invoked by id.
+/// Mutation records are captured as node references and materialised only
+/// when script calls `takeRecords()`. A removed node's wrapper may otherwise
+/// be released between the mutation and the microtask that delivers it.
+class _PendingMutation {
+  _PendingMutation({
+    required this.type,
+    required this.target,
+    required this.addedNodes,
+    required this.removedNodes,
+    required this.previousSibling,
+    required this.nextSibling,
+    required this.attributeName,
+    required this.attributeNamespace,
+    required this.oldValue,
+  });
+
+  final String type;
+  final Node target;
+  final List<Node> addedNodes;
+  final List<Node> removedNodes;
+  final Node? previousSibling;
+  final Node? nextSibling;
+  final String? attributeName;
+  final String? attributeNamespace;
+  final String? oldValue;
+}
+
 class DomBindings {
   DomBindings({
     required this.engine,
@@ -41,8 +82,49 @@ class DomBindings {
     HtmlParser? htmlParser,
     Map<String, AppHandler> appHandlers = const {},
     this.onScriptError,
-  })  : _html = htmlParser ?? HtmlParser(),
-        _appHandlers = Map.of(appHandlers);
+    this.styleEngine,
+    String documentUrl = 'about:blank',
+    this.network = const DeniedNetwork(),
+    this.services = const PlatformServices(),
+    NativaXMessaging? messaging,
+    this.workerScope,
+  })  : messaging = messaging ?? RouterMessaging.local(launcher: InProcessWorkerLauncher(network: network)),
+        _html = htmlParser ?? HtmlParser(),
+        _appHandlers = Map.of(appHandlers),
+        _url = Uri.tryParse(documentUrl) ?? Uri.parse('about:blank');
+
+  /// Computed styles for `getComputedStyle()`; null reports empty styles.
+  final StyleEngine? styleEngine;
+
+  /// `fetch`, `XMLHttpRequest` and `WebSocket` go through this policy.
+  final NativaXNetwork network;
+
+  /// `MessagePort`s and dedicated workers.
+  final NativaXMessaging messaging;
+
+  /// Set when these bindings back a worker's global scope instead of a
+  /// window: no `window`/`document` globals, `self.postMessage` on the
+  /// worker's implicit port.
+  final WorkerScopeInfo? workerScope;
+  final PlatformServices services;
+
+  Uri _url;
+  final List<(Uri, Object?)> _history = [];
+  int _historyIndex = 0;
+  final Stopwatch _clock = Stopwatch()..start();
+  final int _timeOrigin = DateTime.now().millisecondsSinceEpoch;
+  final math.Random _random = math.Random.secure();
+  final Map<int, List<_Observation>> _observers = {};
+  final Map<int, List<_PendingMutation>> _pendingRecords = {};
+  bool _deliveryScheduled = false;
+  final Map<int, NetworkSocket> _sockets = {};
+  final Set<int> _aborted = {};
+
+  /// GL surfaces owned by canvas elements of this document.
+  final Set<int> _surfaces = {};
+
+  /// The document URL (`location.href`).
+  Uri get url => _url;
 
   final JavaScriptEngine engine;
   final Document document;
@@ -78,13 +160,67 @@ class DomBindings {
 
   void registerHandler(String name, AppHandler handler) => _appHandlers[name] = handler;
 
+  /// Removes the raw host-function bridge from script globals.
+  ///
+  /// The DOM/console/timer preludes close over `host`, so they keep working.
+  /// Call this only after every prelude that needs `__nx.host` has been
+  /// installed (the public runtime does it before executing document
+  /// scripts). Scripts then cannot invoke internal host operations by name.
+  void harden() {
+    if (_disposed) return;
+    try {
+      engine.evaluate('delete globalThis.__nx;', filename: '<nativax:harden>');
+    } on JavaScriptException {
+      // A script cannot reach this point before installation; keep the host
+      // bridge if the engine refuses deletion rather than breaking the app.
+    }
+  }
+
   void install() {
     if (_installed) return;
     _installed = true;
     document.eventParent = window;
     _idFor(window);
-    final ops = _ops();
+    void report(Object error, StackTrace stack) => onScriptError?.call(error);
+    document.onListenerError ??= report;
+    window.onListenerError ??= report;
+    _history.add((_url, null));
+    _setUrl(_url);
+    final external = document.onNavigate;
+    document.onNavigate = (href, anchor) {
+      final Uri next;
+      try {
+        next = _url.resolve(href);
+      } on FormatException {
+        return;
+      }
+      if (!_navigate(next, replace: false, push: true)) external?.call(href, anchor);
+    };
+    document.addMutationListener(_observe);
+    final ops = {..._ops(), ...webOps()};
     ops.forEach(engine.registerHostFunction);
+    messaging.attach(
+      deliver: (port, wire) {
+        if (_disposed || engine.isDisposed) return;
+        try {
+          engine.callGlobal('__nx_port', {'id': port, 'wire': wire});
+        } on JavaScriptException catch (e) {
+          onScriptError?.call(e);
+        }
+      },
+      workerEvent: (worker, event) {
+        if (_disposed || engine.isDisposed) return;
+        try {
+          engine.callGlobal('__nx_worker', {'id': worker, ...event});
+        } on JavaScriptException catch (e) {
+          onScriptError?.call(e);
+        }
+      },
+    );
+    final scope = workerScope;
+    if (scope != null) {
+      engine.evaluate('globalThis.__nx_scope = ${jsonEncode(scope.toJson())};', filename: '<nativax:scope>');
+    }
     engine.evaluate(domPrelude, filename: '<nativax:dom>');
     _lastMedia = environment.media;
     _lastTheme = environment.theme;
@@ -107,8 +243,10 @@ class DomBindings {
     if (t == null) return null;
     final id = _idFor(t);
     return switch (t) {
-      Element e => [id, 1, e.localName],
-      Node n => [id, n.nodeType.code, null],
+      Element e => [id, 1, e.localName, e.isConnected],
+      DocumentType d => [id, 10, d.name, d.isConnected],
+      Document _ => [id, 9, null],
+      Node n => [id, n.nodeType.code, null, n.isConnected],
       _MediaQueryTarget _ => [id, 100, null],
       _ => [id, 0, null],
     };
@@ -132,6 +270,12 @@ class DomBindings {
     return t;
   }
 
+  Document _document(Object? id) {
+    final t = _target(id);
+    if (t is! Document) throw JavaScriptHostError('TypeError', 'not a document');
+    return t;
+  }
+
   static String _str(Object? v) => v is String ? v : throw JavaScriptHostError('TypeError', 'expected a string');
 
   /// Runs [body], translating DOM exceptions into script exceptions.
@@ -142,6 +286,105 @@ class DomBindings {
       throw JavaScriptHostError(e.name, e.message);
     } on HtmlLimitException catch (e) {
       throw JavaScriptHostError('QuotaExceededError', e.message);
+    }
+  }
+
+  // --- MutationObserver delivery -----------------------------------------------
+
+  // --- wrapper retention ------------------------------------------------------
+
+  final Set<int> _attach = {};
+  final Set<int> _detach = {};
+  bool _connScheduled = false;
+
+  /// Tracks nodes entering or leaving the document so the prelude can hold
+  /// connected wrappers strongly and release detached ones.
+  void _trackConnection(MutationRecord r) {
+    if (r.type != MutationType.childList) return;
+    void visit(Node n, Set<int> into, Set<int> other) {
+      final id = _ids[n];
+      if (id != null && identical(_targets[id], n)) {
+        into.add(id);
+        other.remove(id);
+      }
+      for (final c in n.childNodes) {
+        visit(c, into, other);
+      }
+    }
+
+    for (final n in r.removedNodes) {
+      if (!n.isConnected) visit(n, _detach, _attach);
+    }
+    for (final n in r.addedNodes) {
+      if (n.isConnected) visit(n, _attach, _detach);
+    }
+    if ((_attach.isNotEmpty || _detach.isNotEmpty) && !_connScheduled) {
+      _connScheduled = true;
+      scheduleMicrotask(_flushConnections);
+    }
+  }
+
+  void _flushConnections() {
+    _connScheduled = false;
+    if (_disposed || engine.isDisposed) return;
+    final msg = {'attach': _attach.toList(), 'detach': _detach.toList()};
+    _attach.clear();
+    _detach.clear();
+    try {
+      engine.callGlobal('__nx_conn', msg);
+    } on JavaScriptException catch (e) {
+      onScriptError?.call(e);
+    }
+  }
+
+  void _observe(MutationRecord r) {
+    _trackConnection(r);
+    if (_observers.isEmpty || r.type == MutationType.property) return;
+    for (final entry in _observers.entries) {
+      final t = r.target;
+      var matched = false;
+      var withOld = false;
+      for (final o in entry.value) {
+        if (!(identical(o.target, t) || (o.subtree && o.target.contains(t)))) continue;
+        switch (r.type) {
+          case MutationType.childList:
+            if (!o.childList) continue;
+          case MutationType.attributes:
+            if (!o.attributes) continue;
+            final filter = o.attributeFilter;
+            if (filter != null && !filter.contains(r.name)) continue;
+          case MutationType.characterData:
+            if (!o.characterData) continue;
+          case MutationType.property:
+            continue;
+        }
+        matched = true;
+        if (r.type == MutationType.attributes && o.options['attributeOldValue'] == true) {
+          withOld = true;
+        }
+        if (r.type == MutationType.characterData && o.options['characterDataOldValue'] == true) {
+          withOld = true;
+        }
+      }
+      if (!matched) continue;
+      _pendingRecords.putIfAbsent(entry.key, () => []).add(_PendingMutation(
+            type: r.type.name,
+            target: t,
+            addedNodes: List.of(r.addedNodes),
+            removedNodes: List.of(r.removedNodes),
+            previousSibling: r.previousSibling,
+            nextSibling: r.nextSibling,
+            attributeName: r.type == MutationType.attributes ? r.name : null,
+            attributeNamespace: r.type == MutationType.attributes ? r.namespace : null,
+            oldValue: withOld ? r.oldValue : null,
+          ));
+    }
+    if (_pendingRecords.isNotEmpty) {
+      try {
+        engine.callGlobal('__nx_queue_mo', _pendingRecords.keys.toList());
+      } on JavaScriptException catch (e) {
+        onScriptError?.call(e);
+      }
     }
   }
 
@@ -234,9 +477,22 @@ class DomBindings {
     window.dispatchEvent(Event('nativax:message', detail: {'data': data})..isTrusted = true);
   }
 
+  /// Runs the platform's own "document parsed" steps (inline `on*`
+  /// attributes, media and image error reporting). Call once, before
+  /// `DOMContentLoaded`.
+  void documentReady() {
+    if (_disposed || engine.isDisposed) return;
+    try {
+      engine.callGlobal('__nx_ready');
+    } on JavaScriptException catch (e) {
+      onScriptError?.call(e);
+    }
+  }
+
   /// Fires `DOMContentLoaded` (document, bubbling to window) and `load`
   /// (window) once document scripts have run.
   void fireLoadEvents() {
+    documentReady();
     readyState = 'interactive';
     document.dispatchEvent(Event('DOMContentLoaded', bubbles: true)..isTrusted = true);
     readyState = 'complete';
@@ -250,6 +506,13 @@ class DomBindings {
           final id = (a[0] as num).toInt();
           final t = _targets[id];
           if (t != null && !identical(t, window) && !identical(t, document)) {
+            // A wrapper can be collected while its DOM node is still connected
+            // and reachable from the document. In that case listeners belong
+            // to the node and must survive; only a detached node with no JS
+            // reference can release them safely.
+            if (t is Node && !t.isConnected) {
+              t.removeAllEventListeners();
+            }
             _targets.remove(id);
           }
           return null;
@@ -292,6 +555,11 @@ class DomBindings {
             }),
         'node.contains': (a) => _node(a[0]).contains(_node(a[1])),
         'node.clone': (a) => _dom(() => describe(_node(a[0]).cloneNode(deep: a[1] == true))),
+        'node.splitText': (a) => _dom(() {
+              final n = _node(a[0]);
+              if (n is! Text) throw JavaScriptHostError('TypeError', 'not a Text node');
+              return describe(n.splitText((a[1] as num).toInt()));
+            }),
 
         // Attributes and classes
         'attr.get': (a) => _element(a[0]).getAttribute(_str(a[1])),
@@ -301,6 +569,17 @@ class DomBindings {
             }),
         'attr.remove': (a) {
           _element(a[0]).removeAttribute(_str(a[1]));
+          return null;
+        },
+        'attr.namespaces': (a) => Map.of(_element(a[0]).attributeNamespaces),
+        'attr.entries': (a) => _element(a[0]).attributeEntries,
+        'attr.getNS': (a) => _element(a[0]).getAttributeNS(a[1] as String?, _str(a[2])),
+        'attr.setNS': (a) {
+          _element(a[0]).setAttributeNS(a[1] as String?, _str(a[2]), _str(a[3]));
+          return null;
+        },
+        'attr.removeNS': (a) {
+          _element(a[0]).removeAttributeNS(a[1] as String?, _str(a[2]));
           return null;
         },
         'attr.toggle': (a) => _dom(() => _element(a[0]).toggleAttribute(_str(a[1]), a[2] as bool?)),
@@ -363,6 +642,20 @@ class DomBindings {
           _element(a[0]).click();
           return null;
         },
+        'el.outerHTML': (a) => _dom(() {
+              final e = _element(a[0]);
+              final parent = e.parentElement;
+              if (parent == null) return null;
+              final fragment = _html.parseFragment(_str(a[1]), parent).value;
+              final nodes = fragment.childNodes.toList();
+              if (nodes.length == 1) {
+                parent.replaceChild(nodes.single, e);
+              } else {
+                parent.insertBefore(fragment, e);
+                parent.removeChild(e);
+              }
+              return null;
+            }),
         'el.insertAdjacentHTML': (a) => _dom(() {
               final e = _element(a[0]);
               final pos = _str(a[1]).toLowerCase();
@@ -385,31 +678,48 @@ class DomBindings {
             }),
 
         // Document
-        'doc.createElement': (a) => _dom(() => describe(document.createElement(_str(a[0])))),
-        'doc.createText': (a) => describe(document.createTextNode(_str(a[0]))),
-        'doc.createComment': (a) => describe(document.createComment(_str(a[0]))),
-        'doc.createFragment': (a) => describe(document.createDocumentFragment()),
-        'doc.byId': (a) => describe(document.getElementById(_str(a[0]))),
-        'doc.get': (a) => switch (_str(a[0])) {
-              'documentElement' => describe(document.documentElement),
-              'head' => describe(document.head),
-              'body' => describe(document.body),
-              'activeElement' => describe(document.activeElement),
-              'title' => document.title,
-              'readyState' => readyState,
-              _ => throw JavaScriptHostError('TypeError', 'unknown document property'),
-            },
+        'doc.new': (a) => describe(Document()),
+        'doc.createElement': (a) => _dom(() => describe(_document(a[0]).createElement(_str(a[1])))),
+        'doc.createText': (a) => describe(_document(a[0]).createTextNode(_str(a[1]))),
+        'doc.createComment': (a) => describe(_document(a[0]).createComment(_str(a[1]))),
+        'doc.createPI': (a) => _dom(() =>
+            describe(_document(a[0]).createProcessingInstruction(_str(a[1]), _str(a[2])))),
+        'doc.createDoctype': (a) => _dom(() => describe(_document(a[0]).createDocumentType(
+            _str(a[1]), _str(a[2]), _str(a[3])))),
+        'doc.createFragment': (a) => describe(_document(a[0]).createDocumentFragment()),
+        'doc.byId': (a) => _dom(() => describe(_document(a[0]).getElementById(_str(a[1])))),
+        'doc.get': (a) {
+          final d = _document(a[0]);
+          return switch (_str(a[1])) {
+            'documentElement' => describe(d.documentElement),
+            'head' => describe(d.head),
+            'body' => describe(d.body),
+            'activeElement' => describe(d.activeElement),
+            'title' => d.title,
+            'readyState' => readyState,
+            'doctype' => describe(d.doctype),
+            _ => throw JavaScriptHostError('TypeError', 'unknown document property'),
+          };
+        },
         'doc.setTitle': (a) => _dom(() {
-              final head = document.head;
+              final d = _document(a[0]);
+              final head = d.head;
               if (head == null) return null;
-              var title = document.querySelector('title');
+              var title = d.querySelector('title');
               if (title == null) {
-                title = document.createElement('title');
+                title = d.createElement('title');
                 head.appendChild(title);
               }
-              title.textContent = _str(a[0]);
+              title.textContent = _str(a[1]);
               return null;
             }),
+
+        // URL (WHATWG fixture). Dart's Uri is not a complete WHATWG parser,
+        // but it covers the common schemes and keeps the JS surface honest.
+        'url.parse': (a) => _parseUrl(
+              _str(a[0]),
+              a.length > 1 && a[1] != null ? _str(a[1]) : null,
+            ),
 
         // Events
         'ev.add': (a) {
@@ -539,6 +849,217 @@ class DomBindings {
     };
   }
 
+  static const _defaultPorts = {
+    'http': 80,
+    'https': 443,
+    'ws': 80,
+    'wss': 443,
+    'ftp': 21,
+  };
+
+  Map<String, Object?>? _parseUrl(String input, String? base) {
+    String clean(String value) => value
+        .replaceAll(RegExp(r'[\t\n\r]'), '')
+        .replaceAll(RegExp(r'^[\u0000-\u0020]+|[\u0000-\u0020]+$'), '');
+    var text = clean(input);
+    var baseText = base == null ? null : clean(base);
+    try {
+      // WHATWG treats a special scheme without `//` as a relative reference or
+      // an authority depending on the remainder. Dart's Uri is stricter, so
+      // normalize the common forms before parsing.
+      if (baseText != null) {
+        if (text.startsWith(':')) text = './$text';
+        final match = RegExp(r'^(https?|wss?|ftp):(?!//)(.*)$',
+                caseSensitive: false)
+            .firstMatch(text);
+        if (match != null) {
+          final scheme = match.group(1)!.toLowerCase();
+          final rest = match.group(2)!.replaceAll('\\', '/');
+          final baseUri = Uri.parse(baseText);
+          if (rest.startsWith('/')) {
+            final without = rest.replaceFirst(RegExp(r'^/+'), '');
+            if (without.isEmpty) {
+              text = baseUri
+                  .replace(scheme: scheme, path: '/', query: null, fragment: null)
+                  .toString();
+            } else if (RegExp(r'[@.:]').hasMatch(without)) {
+              text = '$scheme://$without';
+            } else {
+              text = baseUri
+                  .resolve(without)
+                  .replace(scheme: scheme)
+                  .toString();
+            }
+          } else if (rest.startsWith('@') ||
+              (rest.contains('@') && !rest.startsWith(':')) ||
+              (scheme != baseUri.scheme.toLowerCase() &&
+                  RegExp(r'[.:@]').hasMatch(rest))) {
+            text = '$scheme://$rest';
+          } else {
+            final relative = rest.startsWith(':') || rest.startsWith('[')
+                ? './$rest'
+                : rest;
+            text = baseUri
+                .resolve(relative)
+                .replace(scheme: scheme)
+                .toString();
+          }
+          baseText = null;
+        }
+      }
+
+      final authority = RegExp(r'^[a-zA-Z][a-zA-Z0-9+.-]*://([^/?#]*)')
+          .firstMatch(text);
+      if (authority != null &&
+          RegExp(r'\s').hasMatch(authority.group(1) ?? '')) {
+        return null;
+      }
+      final candidate = Uri.parse(text);
+      final baseUri = baseText == null ? null : Uri.parse(baseText);
+      final resolved = baseUri == null ? candidate : baseUri.resolveUri(candidate);
+      final scheme = resolved.scheme.toLowerCase();
+      if (baseUri != null &&
+          !_defaultPorts.containsKey(baseUri.scheme) &&
+          !baseUri.hasAuthority &&
+          !candidate.hasScheme) {
+        return null;
+      }
+      if (scheme.isEmpty) return null;
+      final special = _defaultPorts.containsKey(scheme);
+      final port = resolved.hasPort ? resolved.port : null;
+      if (port != null && (port < 0 || port > 65535)) return null;
+      if (scheme == 'file' && resolved.hasPort) return null;
+      if (special && resolved.host.isEmpty) return null;
+      final hasAuthority = resolved.hasAuthority;
+      final defaultPort = _defaultPorts[scheme];
+      var hostname = resolved.host;
+      if (scheme == 'file' && hostname.toLowerCase() == 'localhost') {
+        hostname = '';
+      }
+      if (hostname.contains('%') || hostname.contains('\\')) return null;
+      final authorityText = authority?.group(1) ?? '';
+      if (hasAuthority &&
+          hostname.isEmpty &&
+          (authorityText.contains('@') || authorityText.contains(':'))) {
+        return null;
+      }
+      final hostForIp = hostname.endsWith('.')
+          ? hostname.substring(0, hostname.length - 1)
+          : hostname;
+      final parts = hostForIp.split('.');
+      final last = parts.isEmpty ? '' : parts.last;
+      final looksNumeric = RegExp(r'^(?:0x[0-9a-fA-F]*|[0-9]+)$')
+          .hasMatch(last);
+      if (looksNumeric) {
+        if (parts.length > 4) return null;
+        for (var i = 0; i < parts.length; i++) {
+          final part = parts[i];
+          final isLast = i == parts.length - 1;
+          int? value;
+          if (RegExp(r'^0x[0-9a-fA-F]+$').hasMatch(part)) {
+            value = int.tryParse(part.substring(2), radix: 16);
+          } else if (RegExp(r'^0[0-7]+$').hasMatch(part)) {
+            value = int.tryParse(part.substring(1), radix: 8);
+          } else if (RegExp(r'^(0|[1-9][0-9]*)$').hasMatch(part)) {
+            value = int.tryParse(part);
+          }
+          if (value == null || value < 0) return null;
+          if (isLast) {
+            final maxLast = i == 3 ? 255 : (1 << (8 * (4 - i))) - 1;
+            if (value > maxLast) return null;
+          } else if (value > 255) {
+            return null;
+          }
+        }
+      }
+      BigInt? numericHost;
+      if (RegExp(r'^\d+$').hasMatch(hostname)) {
+        numericHost = BigInt.tryParse(hostname);
+      } else if (RegExp(r'^0x[0-9a-f]+$', caseSensitive: false)
+          .hasMatch(hostname)) {
+        numericHost = BigInt.tryParse(hostname.substring(2), radix: 16);
+      }
+      if (numericHost != null && numericHost > BigInt.from(0xffffffff)) {
+        return null;
+      }
+      final displayHost =
+          hostname.contains(':') ? '[$hostname]' : hostname;
+      final host = displayHost.isEmpty
+          ? ''
+          : (port != null && port != defaultPort
+              ? '$displayHost:$port'
+              : displayHost);
+      final userInfo = resolved.userInfo;
+      final colon = userInfo.indexOf(':');
+      final username = colon < 0 ? userInfo : userInfo.substring(0, colon);
+      final password = colon < 0 ? '' : userInfo.substring(colon + 1);
+      final path = resolved.path.isEmpty && hasAuthority && special
+          ? '/'
+          : resolved.path;
+      final search = resolved.hasQuery && resolved.query.isNotEmpty
+          ? '?${resolved.query}'
+          : '';
+      final hash = resolved.hasFragment && resolved.fragment.isNotEmpty
+          ? '#${resolved.fragment}'
+          : '';
+      String? origin;
+      if (special && hostname.isNotEmpty) {
+        origin = '$scheme://$displayHost'
+            '${port != null && port != defaultPort ? ':$port' : ''}';
+      } else if (scheme == 'blob') {
+        final inner = _parseUrl(resolved.path, null);
+        origin = inner?['origin'] as String?;
+      }
+      final normalizedUserInfo = password.isEmpty
+          ? username
+          : (username.isEmpty ? ':$password' : '$username:$password');
+      var hrefUri = resolved.replace(userInfo: normalizedUserInfo);
+      if (scheme == 'file' && resolved.host.toLowerCase() == 'localhost') {
+        hrefUri = hrefUri.replace(host: '');
+      }
+      var href = hrefUri.toString();
+      if (!hasAuthority && !special) {
+        // Opaque paths keep their raw spaces/backslashes, matching the fixture
+        // input more closely than Dart's percent-encoder.
+        href = text;
+        final hashIndex = text.indexOf('#');
+        if (hashIndex >= 0) {
+          final fragment = text
+              .substring(hashIndex + 1)
+              .replaceAll(' ', '%20');
+          href = '${text.substring(0, hashIndex + 1)}$fragment';
+        }
+      } else {
+        final hashIndex = href.indexOf('#');
+        if (hashIndex >= 0) {
+          final fragment = href
+              .substring(hashIndex + 1)
+              .replaceAll('%23', '#')
+              .replaceAll('%5C', '\\');
+          href = '${href.substring(0, hashIndex + 1)}$fragment';
+        }
+      }
+      if (hasAuthority && resolved.path.isEmpty && special && !href.endsWith('/')) {
+        href = '$href/';
+      }
+      return {
+        'href': href,
+        'origin': origin,
+        'protocol': '$scheme:',
+        'username': username,
+        'password': password,
+        'host': host,
+        'hostname': displayHost,
+        'port': port == null || port == defaultPort ? '' : '$port',
+        'pathname': path,
+        'search': search,
+        'hash': hash,
+      };
+    } catch (error) {
+      return null;
+    }
+  }
+
   Object? _nodeGet(Node n, String name) {
     switch (name) {
       case 'nodeType':
@@ -570,7 +1091,25 @@ class DomBindings {
       case 'lastElementChild':
         return describe(n.children.lastOrNull);
       case 'textContent':
-        return n is Document ? null : n.textContent;
+        return n is Document || n is DocumentType ? null : n.textContent;
+      case 'ownerDocument':
+        return describe(n is Document ? null : n.ownerDocument);
+    }
+    if (name == 'nextElementSibling') return describe(n.nextElementSibling);
+    if (name == 'previousElementSibling') return describe(n.previousElementSibling);
+    if (n is ProcessingInstruction) {
+      return switch (name) {
+        'target' => n.target,
+        _ => throw JavaScriptHostError('TypeError', 'unknown property "$name"'),
+      };
+    }
+    if (n is DocumentType) {
+      return switch (name) {
+        'name' => n.name,
+        'publicId' => n.publicId,
+        'systemId' => n.systemId,
+        _ => throw JavaScriptHostError('TypeError', 'unknown property "$name"'),
+      };
     }
     if (n is! Element) throw JavaScriptHostError('TypeError', '"$name" is not available on ${n.nodeName}');
     return switch (name) {
@@ -587,13 +1126,15 @@ class DomBindings {
       'options' => [for (final o in n.options) describe(o)],
       'attributes' => Map.of(n.attributes),
       'styleText' => n.getAttribute('style') ?? '',
+      'optionSelected' => n.optionSelected,
+      'returnValue' => n.returnValue,
       _ => throw JavaScriptHostError('TypeError', 'unknown property "$name"'),
     };
   }
 
   Object? _nodeSet(Node n, String name, Object? value) {
     if (name == 'textContent') {
-      if (n is! Document) n.textContent = value is String ? value : '';
+      if (n is! Document) n.textContent = value == null ? '' : value.toString();
       return null;
     }
     if (n is! Element) throw JavaScriptHostError('TypeError', 'cannot set "$name" on ${n.nodeName}');
@@ -607,6 +1148,8 @@ class DomBindings {
         n.checked = value == true;
       case 'selectedIndex':
         n.selectedIndex = (value is num) ? value.toInt() : -1;
+      case 'returnValue':
+        n.returnValue = value?.toString() ?? '';
       default:
         throw JavaScriptHostError('TypeError', 'cannot set "$name"');
     }
@@ -617,6 +1160,17 @@ class DomBindings {
   void dispose() {
     if (_disposed) return;
     _disposed = true;
+    document.removeMutationListener(_observe);
+    for (final s in _sockets.values) {
+      s.close();
+    }
+    _sockets.clear();
+    messaging.dispose();
+    for (final s in _surfaces) {
+      GlSurfaces.release(s);
+    }
+    _surfaces.clear();
+    _observers.clear();
     window.removeAllEventListeners();
     for (final mq in _mediaQueries) {
       mq.removeAllEventListeners();
@@ -627,6 +1181,25 @@ class DomBindings {
     _events.clear();
     _listenerRefs.clear();
   }
+}
+
+/// Identity of a worker global scope (see [DomBindings.workerScope]).
+class WorkerScopeInfo {
+  const WorkerScopeInfo({required this.port, this.name = '', this.type = 'classic', this.onClose, this.importScript});
+
+  /// The worker's side of the channel to the page that created it.
+  final int port;
+  final String name;
+  final String type;
+
+  /// `self.close()`.
+  final void Function()? onClose;
+
+  /// Synchronous source of `importScripts(url)` (null fails with
+  /// NetworkError). Only sources available without waiting can be served.
+  final String? Function(String url)? importScript;
+
+  Map<String, Object?> toJson() => {'port': port, 'name': name, 'type': type};
 }
 
 /// A script listener, identified by the id the prelude assigned to the

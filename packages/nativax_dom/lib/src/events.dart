@@ -148,10 +148,14 @@ abstract class EventTarget {
 
   /// Dispatches [event] along the propagation path. Returns false when a
   /// listener called `preventDefault` on a cancelable event.
+  /// Called before [event] is dispatched with this as its target.
+  void willDispatch(Event event) {}
+
   bool dispatchEvent(Event event) {
     if (event._dispatching) {
       throw StateError('event "${event.type}" is already being dispatched');
     }
+    willDispatch(event);
     event._dispatching = true;
     event.target = this;
     final path = <EventTarget>[];

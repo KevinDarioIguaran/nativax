@@ -4,6 +4,7 @@ import 'computed_style.dart';
 import 'media_queries.dart';
 import 'parser.dart';
 import 'properties.dart';
+import 'tokenizer.dart';
 import 'user_agent.dart';
 import 'values.dart';
 
@@ -64,9 +65,22 @@ class StyleEngine {
   final Map<String, List<_IndexedRule>> _byClass = {};
   final Map<String, List<_IndexedRule>> _byTag = {};
   final List<_IndexedRule> _universal = [];
+  final Map<String, List<_IndexedRule>> _pseudoRules = {};
+  final Map<String, KeyframesRule> _keyframes = {};
+
+  /// The active `@keyframes` rule named [name] (the last one wins).
+  KeyframesRule? keyframes(String name) => _keyframes[name];
+  final Map<Element, Map<String, ComputedStyle?>> _pseudoStyles = {};
   List<bool> _mediaState = const [];
   bool _usesSiblingCombinators = false;
   bool _usesViewportUnits = false;
+  bool _usesHover = false;
+  bool _usesActive = false;
+
+  /// Whether any rule depends on `:hover` / `:active`; renderers only track
+  /// pointer state when needed.
+  bool get usesHover => _usesHover;
+  bool get usesActive => _usesActive;
 
   final Map<String, List<Declaration>> _inlineCache = {};
 
@@ -104,6 +118,25 @@ class StyleEngine {
     return _styles[element] ?? _compute(element);
   }
 
+  /// The style of [element]'s [pseudo] pseudo-element (`before`, `after`,
+  /// `marker`, `placeholder`, ...), or null when no rule targets it. For
+  /// `before`/`after` the caller must still check that `content` generates
+  /// a box.
+  ComputedStyle? pseudoStyleOf(Element element, String pseudo) {
+    final rules = _pseudoRules[pseudo];
+    if (rules == null || rules.isEmpty) return null;
+    final origin = styleOf(element);
+    final cache = _pseudoStyles.putIfAbsent(element, () => {});
+    if (cache.containsKey(pseudo)) return cache[pseudo];
+    final any = rules.any((r) => r.selector.matchesPseudo(element, pseudo));
+    final style = any ? _compute(element, pseudo: pseudo, origin: origin) : null;
+    cache[pseudo] = style;
+    return style;
+  }
+
+  /// Whether any rule styles [pseudo]; lets renderers skip lookups.
+  bool hasPseudoRules(String pseudo) => _pseudoRules[pseudo]?.isNotEmpty ?? false;
+
   /// Marks styles affected by [record] dirty.
   void handleMutation(MutationRecord record) {
     final target = record.target;
@@ -128,9 +161,14 @@ class StyleEngine {
           _markDirty(target);
         }
       case MutationType.characterData:
-        // Text changes affect no supported selector except :empty on the
-        // parent, which is re-evaluated when the text node is added/removed.
-        break;
+        // `:empty` depends on whether a child text node has data, so the
+        // parent selector may now match or stop matching.
+        final parent = target.parentElement;
+        if (parent != null) {
+          _markDirty(parent);
+        } else {
+          _allDirty = true;
+        }
     }
   }
 
@@ -149,9 +187,15 @@ class StyleEngine {
   }
 
   void _forget(Node n) {
-    if (n is Element) _styles.remove(n);
+    if (n is Element) {
+      _styles.remove(n);
+      _pseudoStyles.remove(n);
+    }
     for (final d in n.descendants) {
-      if (d is Element) _styles.remove(d);
+      if (d is Element) {
+        _styles.remove(d);
+        _pseudoStyles.remove(d);
+      }
     }
   }
 
@@ -163,6 +207,7 @@ class StyleEngine {
       _allDirty = false;
       _dirtyRoots.clear();
       final root = document.documentElement;
+      _pseudoStyles.clear();
       if (root != null) _computeSubtree(root, changed);
       _styles.removeWhere((e, _) => !e.isConnected);
       return changed;
@@ -183,6 +228,7 @@ class StyleEngine {
       final style = _compute(e);
       if (old == null || old != style) changed.add(e);
       _styles[e] = style;
+      _pseudoStyles.remove(e);
       for (final c in e.children.toList().reversed) {
         stack.add(c);
       }
@@ -190,6 +236,14 @@ class StyleEngine {
   }
 
   // --- rule index ------------------------------------------------------------
+
+  /// [element]'s style with [extra] declarations applied on top of its
+  /// cascade (keyframes are computed this way, so `em`, `var()` and
+  /// `currentcolor` resolve in the element's context). Not cached.
+  ComputedStyle styleWithDeclarations(Element element, List<Declaration> extra) {
+    styleOf(element);
+    return _compute(element, extra: extra);
+  }
 
   List<bool> _evaluateMedia() {
     final state = <bool>[];
@@ -214,15 +268,27 @@ class StyleEngine {
     _byClass.clear();
     _byTag.clear();
     _universal.clear();
+    _pseudoRules.clear();
+    _pseudoStyles.clear();
+    _keyframes.clear();
+    _usesHover = false;
+    _usesActive = false;
     _usesSiblingCombinators = false;
     _usesViewportUnits = false;
     var order = 0;
 
     void add(StyleRule rule, bool ua) {
+      if (rule.selectorText.contains(':hover')) _usesHover = true;
+      if (rule.selectorText.contains(':active')) _usesActive = true;
       for (final d in rule.declarations) {
         final v = d.value;
         if (v is Length && (v.unit == LengthUnit.vw || v.unit == LengthUnit.vh)) {
           _usesViewportUnits = true;
+        } else if (v is RawValue || v is RelativeValue) {
+          final text = v.toString().toLowerCase();
+          if (text.contains('vw') || text.contains('vh') || v is CalcLength) {
+            _usesViewportUnits = true;
+          }
         }
       }
       for (final sel in rule.selectors.selectors) {
@@ -231,6 +297,11 @@ class StyleEngine {
           _usesSiblingCombinators = true;
         }
         final ir = _IndexedRule(sel, rule.declarations, order++, ua);
+        final pseudo = sel.pseudoElement;
+        if (pseudo != null) {
+          _pseudoRules.putIfAbsent(pseudo, () => []).add(ir);
+          continue;
+        }
         final parts = sel.subject.parts;
         final id = parts.whereType<IdSelector>().firstOrNull;
         final cls = parts.whereType<ClassSelector>().firstOrNull;
@@ -254,6 +325,8 @@ class StyleEngine {
             add(r, ua);
           case MediaRule():
             if (r.media.evaluate(_media)) walk(r.rules, ua);
+          case KeyframesRule():
+            _keyframes[r.name] = r;
         }
       }
     }
@@ -276,12 +349,12 @@ class StyleEngine {
   }
 
   /// Matched declarations for [e], in ascending cascade precedence.
-  List<Declaration> cascadedDeclarations(Element e) {
+  List<Declaration> cascadedDeclarations(Element e, {String? pseudo}) {
     final matches = <_Match>[];
     void consider(List<_IndexedRule>? rules) {
       if (rules == null) return;
       for (final r in rules) {
-        if (!r.selector.matches(e)) continue;
+        if (pseudo == null ? !r.selector.matches(e) : !r.selector.matchesPseudo(e, pseudo)) continue;
         for (final d in r.declarations) {
           final layer = r.isUserAgent
               ? (d.important ? _Layer.uaImportant : _Layer.uaNormal)
@@ -291,15 +364,31 @@ class StyleEngine {
       }
     }
 
-    consider(_universal);
-    consider(_byTag[e.localName]);
-    final id = e.getAttribute('id');
-    if (id != null && id.isNotEmpty) consider(_byId[id]);
-    final seenClasses = <String>{};
-    for (final c in e.classList) {
-      if (seenClasses.add(c)) consider(_byClass[c]);
+    if (pseudo != null) {
+      consider(_pseudoRules[pseudo]);
+    } else {
+      consider(_universal);
+      consider(_byTag[e.localName]);
+      final id = e.getAttribute('id');
+      if (id != null && id.isNotEmpty) consider(_byId[id]);
+      final seenClasses = <String>{};
+      for (final c in e.classList) {
+        if (seenClasses.add(c)) consider(_byClass[c]);
+      }
     }
-    final inline = e.getAttribute('style');
+    // SVG presentation attributes count as author rules with specificity 0
+    // that precede every style sheet rule.
+    if (pseudo == null && _svgElements.contains(e.localName)) {
+      var i = -100000;
+      for (final name in _presentationAttributes) {
+        final v = e.getAttribute(name);
+        if (v == null || v.trim().isEmpty) continue;
+        final expanded = expandDeclaration(name, CssTokenizer(v).tokenize());
+        if (expanded == null) continue;
+        expanded.forEach((p, value) => matches.add(_Match(_Layer.authorNormal, Specificity.zero, i++, Declaration(p, value))));
+      }
+    }
+    final inline = pseudo == null ? e.getAttribute('style') : null;
     if (inline != null && inline.trim().isNotEmpty) {
       var i = 0;
       for (final d in _inlineDeclarations(inline)) {
@@ -323,16 +412,45 @@ class StyleEngine {
 
   // --- computation -------------------------------------------------------------
 
-  ComputedStyle _compute(Element e) {
+  ComputedStyle _compute(Element e, {String? pseudo, ComputedStyle? origin, List<Declaration>? extra}) {
     computeCount++;
-    final parentEl = e.parentElement;
-    final parent = parentEl == null ? null : (_styles[parentEl] ?? _compute(parentEl));
+    // A pseudo-element inherits from its originating element.
+    final parentEl = pseudo != null ? e : e.parentElement;
+    final parent = pseudo != null
+        ? origin
+        : (parentEl == null ? null : (_styles[parentEl] ?? _compute(parentEl)));
     final root = document.documentElement;
-    final rootStyle = (root == null || identical(root, e)) ? null : _styles[root];
+    final rootStyle = (root == null || (pseudo == null && identical(root, e))) ? null : _styles[root];
+
+    final cascaded = cascadedDeclarations(e, pseudo: pseudo);
+    if (extra != null) cascaded.addAll(extra);
+    final custom = <String, String>{};
+    if (parent != null) custom.addAll(parent.customProperties);
+    // Custom properties cascade and inherit independently of the order in
+    // which their consumers appear. Resolve references between them first.
+    for (final d in cascaded) {
+      if (!d.property.startsWith('--')) continue;
+      final raw = d.value;
+      if (raw is RawValue) custom[d.property] = raw.text;
+    }
+    for (final key in custom.keys.toList()) {
+      final resolved = _substituteVariables(custom[key]!, custom);
+      if (resolved != null) custom[key] = resolved;
+    }
 
     final specified = <String, CssValue>{};
-    for (final d in cascadedDeclarations(e)) {
-      specified[d.property] = d.value;
+    for (final d in cascaded) {
+      if (d.property.startsWith('--')) continue;
+      final value = d.value;
+      if (value is RawValue) {
+        final text = _substituteVariables(value.text, custom);
+        if (text == null) continue;
+        final expanded = expandDeclaration(
+            d.property, CssTokenizer(text).tokenize());
+        if (expanded != null) specified.addAll(expanded);
+        continue;
+      }
+      specified[d.property] = value;
     }
 
     CssValue specifiedOf(String p) {
@@ -361,28 +479,31 @@ class StyleEngine {
         LengthUnit.px => fs.value,
         LengthUnit.percent => parentFont * fs.value / 100,
         LengthUnit.em => parentFont * fs.value,
-        LengthUnit.rem => (identical(root, e) ? 16 : rootFont) * fs.value,
+        LengthUnit.rem => (pseudo == null && identical(root, e) ? 16 : rootFont) * fs.value,
         LengthUnit.vw => _media.width * fs.value / 100,
         LengthUnit.vh => _media.height * fs.value / 100,
       };
     }
     out['font-size'] = Length.px(fontSize);
-    final remBase = identical(root, e) ? fontSize : rootFont;
+    final remBase = pseudo == null && identical(root, e) ? fontSize : rootFont;
 
     // color next: currentcolor in `color` means the parent's color.
     final colorValue = specifiedOf('color') as ColorValue;
     final color = colorValue.color ?? parent?.color ?? CssColor.black;
     out['color'] = ColorValue(color);
 
+    Length absLength(Length v) => switch (v.unit) {
+          LengthUnit.px || LengthUnit.percent => v,
+          LengthUnit.em => Length.px(v.value * fontSize),
+          LengthUnit.rem => Length.px(v.value * remBase),
+          LengthUnit.vw => Length.px(_media.width * v.value / 100),
+          LengthUnit.vh => Length.px(_media.height * v.value / 100),
+        };
+
     CssValue absolutize(CssValue v) {
-      if (v is! Length) return v;
-      return switch (v.unit) {
-        LengthUnit.px || LengthUnit.percent => v,
-        LengthUnit.em => Length.px(v.value * fontSize),
-        LengthUnit.rem => Length.px(v.value * remBase),
-        LengthUnit.vw => Length.px(_media.width * v.value / 100),
-        LengthUnit.vh => Length.px(_media.height * v.value / 100),
-      };
+      if (v is Length) return absLength(v);
+      if (v is RelativeValue) return (v as RelativeValue).absolutize(absLength);
+      return v;
     }
 
     for (final p in longhands.keys) {
@@ -401,20 +522,115 @@ class StyleEngine {
       if (v != longhands[p]!.initial) out[p] = v;
     }
 
-    // Blockification: flex items, absolutely positioned boxes and the root.
+    // Border and outline widths snap to whole device pixels (CSS Values 4
+    // "snap as a border width"): below one device pixel rounds up to one,
+    // otherwise floors. Browsers do this, so 1.5px draws as 1px at DPR 1.
+    for (final p in _snappedWidths) {
+      final v = out[p] ?? longhands[p]!.initial;
+      if (v is! Length || v.unit != LengthUnit.px || v.value <= 0) continue;
+      final dpr = _media.devicePixelRatio <= 0 ? 1.0 : _media.devicePixelRatio;
+      final device = v.value * dpr;
+      final snapped = (device < 1 ? 1.0 : device.floorToDouble()) / dpr;
+      if (snapped != v.value) out[p] = Length.px(snapped);
+    }
+
+    // Blockification: flex and grid items, absolutely positioned boxes and
+    // the root.
     final display = (out['display'] as Keyword?)?.name ?? 'inline';
-    final parentIsFlex = parent != null && parent.isFlexContainer;
-    final absolute = (out['position'] as Keyword?)?.name == 'absolute';
+    final parentIsFlex = parent != null && (parent.isFlexContainer || parent.isGridContainer);
+    final position = (out['position'] as Keyword?)?.name;
+    final absolute = position == 'absolute' || position == 'fixed';
     if (parentIsFlex || absolute || parentEl == null) {
       final blockified = switch (display) {
         'inline' || 'inline-block' => 'block',
         'inline-flex' => 'flex',
+        'inline-grid' => 'grid',
         _ => display,
       };
       if (blockified != display) out['display'] = Keyword(blockified);
     }
-    return ComputedStyle(out);
+    return ComputedStyle(out, customProperties: custom);
   }
+}
+
+const _snappedWidths = [
+  'border-top-width', 'border-right-width', 'border-bottom-width', 'border-left-width', 'outline-width',
+];
+
+const _svgElements = {
+  'svg', 'g', 'rect', 'circle', 'ellipse', 'line', 'polyline', 'polygon', 'path', 'text', 'tspan', 'use',
+  'symbol', 'defs', 'marker', 'image', 'foreignobject',
+};
+
+const _presentationAttributes = [
+  'fill', 'stroke', 'stroke-width', 'fill-opacity', 'stroke-opacity', 'stroke-linecap', 'stroke-linejoin',
+  'fill-rule', 'opacity', 'font-size', 'font-family', 'font-weight', 'text-anchor', 'dominant-baseline',
+  'visibility', 'display', 'color', 'stroke-dasharray',
+];
+
+/// Substitutes `var(--name[, fallback])` and common safe-area `env()` values.
+/// Returns null when a reference cannot be resolved.
+String? _substituteVariables(String text, Map<String, String> custom) {
+  var out = text;
+  for (var pass = 0; pass < 32; pass++) {
+    final lower = out.toLowerCase();
+    var start = -1;
+    for (var i = lower.indexOf('var('); i >= 0; i = lower.indexOf('var(', i + 1)) {
+      if (i == 0 || !_isIdentChar(lower.codeUnitAt(i - 1))) {
+        start = i;
+        break;
+      }
+    }
+    if (start < 0) break;
+    final open = start + 3; // points at '('
+    final close = _matchingParen(out, open);
+    if (close < 0) return null;
+    final inner = out.substring(open + 1, close);
+    final comma = _topLevelComma(inner);
+    final name = (comma < 0 ? inner : inner.substring(0, comma)).trim();
+    final fallback = comma < 0 ? null : inner.substring(comma + 1).trim();
+    String? replacement;
+    if (name.startsWith('--')) replacement = custom[name];
+    if (replacement == null) replacement = fallback;
+    if (replacement == null) return null;
+    out = out.substring(0, start) + replacement + out.substring(close + 1);
+  }
+  // `env(safe-area-inset-*)` is 0 in a Flutter view without OS insets.
+  out = out.replaceAllMapped(
+    RegExp(r'env\(\s*[^,)]+\s*(?:,\s*([^)]*))?\)', caseSensitive: false),
+    (m) => (m.group(1) ?? '0px').trim(),
+  );
+  return out;
+}
+
+bool _isIdentChar(int c) =>
+    (c >= 0x30 && c <= 0x39) ||
+    (c >= 0x41 && c <= 0x5a) ||
+    (c >= 0x61 && c <= 0x7a) ||
+    c == 0x2d ||
+    c == 0x5f;
+
+int _matchingParen(String text, int open) {
+  var depth = 0;
+  for (var i = open; i < text.length; i++) {
+    if (text.codeUnitAt(i) == 0x28) depth++;
+    if (text.codeUnitAt(i) == 0x29) {
+      depth--;
+      if (depth == 0) return i;
+    }
+  }
+  return -1;
+}
+
+int _topLevelComma(String text) {
+  var depth = 0;
+  for (var i = 0; i < text.length; i++) {
+    final c = text.codeUnitAt(i);
+    if (c == 0x28 || c == 0x5b || c == 0x7b) depth++;
+    if (c == 0x29 || c == 0x5d || c == 0x7d) depth--;
+    if (c == 0x2c && depth == 0) return i;
+  }
+  return -1;
 }
 
 bool _listEquals(List<bool> a, List<bool> b) {

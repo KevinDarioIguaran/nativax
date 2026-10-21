@@ -81,7 +81,8 @@ class _Item {
 class RenderCssFlex extends RenderBox
     with
         ContainerRenderObjectMixin<RenderBox, CssItemParentData>,
-        RenderBoxContainerDefaultsMixin<RenderBox, CssItemParentData> {
+        RenderBoxContainerDefaultsMixin<RenderBox, CssItemParentData>,
+        CssStackingPaint {
   Axis _direction = Axis.horizontal;
   bool _reverse = false;
   String _wrap = 'nowrap';
@@ -305,6 +306,17 @@ class RenderCssFlex extends RenderBox
     final mainSize = mainDefinite ? mainMax : containerMain;
     final crossSize = crossDefinite ? crossMax : totalCross;
     final size = constraints.constrain(_isRow ? Size(mainSize, crossSize) : Size(crossSize, mainSize));
+    // A single line takes the container's (min/max-clamped) cross size, so
+    // `min-height` on a row container centers or stretches its items.
+    if (lines.length == 1 && _cross(size) > lineCross[0]) {
+      lineCross[0] = _cross(size);
+      for (final i in lines[0]) {
+        if (_alignOf(i) != 'stretch' || !_autoCross(i)) continue;
+        final c = math.max(0.0, lineCross[0] - i.crossStart - i.crossEnd);
+        if ((_cross(i.size) - c).abs() < 0.001) continue;
+        i.size = measure(i.child, _constraintsFor(i.target, c, c));
+      }
+    }
     if (dry) return size;
 
     // 5. Position.
@@ -435,9 +447,9 @@ class RenderCssFlex extends RenderBox
       defaultComputeDistanceToHighestActualBaseline(baseline);
 
   @override
-  void paint(PaintingContext context, Offset offset) => defaultPaint(context, offset);
+  void paint(PaintingContext context, Offset offset) => paintStacked(context, offset);
 
   @override
   bool hitTestChildren(BoxHitTestResult result, {required Offset position}) =>
-      defaultHitTestChildren(result, position: position);
+      hitTestStacked(result, position);
 }

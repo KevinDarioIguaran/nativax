@@ -164,7 +164,7 @@ void main() {
       h.document.getElementById('increment')!.click();
       expect(h.js('log'), [
         ['body', 'increment', true, 1],
-        ['btn', true, 2, true, 'click'],
+        ['btn', true, 2, false, 'click'],
         ['win', true],
       ]);
     });
@@ -267,8 +267,8 @@ void main() {
         )));
 
     test('navigator, window metrics, nativax.platform', () {
-      expect(h.js('[navigator.language, navigator.languages, navigator.platform]'),
-          ['es-CO', ['es-CO', 'en'], 'android']);
+      expect(h.js('[navigator.language, navigator.languages, navigator.platform, nativax.platform]'),
+          ['es-CO', ['es-CO', 'en'], 'Linux armv8l', 'android']);
       expect(h.js('[innerWidth, innerHeight, devicePixelRatio, window === globalThis]'),
           [390, 844, 3, true]);
       expect(h.js('nativax.platform'), 'android');

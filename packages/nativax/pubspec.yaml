@@ -1,0 +1,25 @@
+name: nativax
+description: Public NativaX runtime and Flutter view for HTML + CSS + JavaScript documents.
+version: 0.1.0
+publish_to: none
+resolution: workspace
+
+environment:
+  sdk: ^3.10.0
+  flutter: ">=3.35.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  nativax_css: ^0.1.0
+  nativax_dom: ^0.1.0
+  nativax_dom_bindings: ^0.1.0
+  nativax_flutter: ^0.1.0
+  nativax_html: ^0.1.0
+  nativax_js: ^0.1.0
+  path: ^1.9.1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  lints: ^6.0.0

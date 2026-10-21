@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>NativaX Web Challenge</title><link rel="stylesheet" href="styles.css"></head><body>
+<header class="top"><h1>NativaX Web Challenge</h1><span id="status" class="badge" role="status"></span><span id="stats" class="badge" title="OK / ✖">✔ 0 · ✖ 0</span>
+<label><span data-i18n="lang"></span> <select id="lang"><option value="es">Español</option><option value="en">English</option><option value="pt">Português</option></select></label>
+<label><span data-i18n="theme"></span> <select id="theme"><option value="auto" data-i18n="auto"></option><option value="light" data-i18n="light"></option><option value="dark" data-i18n="dark"></option></select></label>
+<button id="runAll" class="btn primary" data-i18n="runAll"></button><button id="export" class="btn" data-i18n="export"></button><button id="clear" class="btn danger" data-i18n="clear"></button></header>
+<nav id="nav" data-i18n-label="nav"><a href="#forms" data-i18n="nForms"></a><a href="#ui" data-i18n="nUi"></a><a href="#media" data-i18n="nMedia"></a><a href="#api" data-i18n="nApi"></a><a href="#http" data-i18n="nHttp"></a><a href="#perf" data-i18n="nPerf"></a><a href="#css" data-i18n="nCss"></a><a href="#diag" data-i18n="nDiag"></a></nav>
+<main>
+<section id="forms"><h2 data-i18n="nForms"></h2>
+<form id="f" novalidate><div class="grid">
+<label>text<input name="text" type="text" required minlength="3" maxlength="20"></label>
+<label>search<input name="search" type="search"></label>
+<label>email<input name="email" type="email" required></label>
+<label>password<input name="password" type="password" required minlength="8" pattern="(?=.*\d).{8,}"></label>
+<label>url<input name="url" type="url" placeholder="https://"></label>
+<label>number<input name="number" type="number" min="1" max="10" value="5"></label>
+<label>range <output id="rv">50</output><input name="range" type="range" min="0" max="100" value="50"></label>
+<label>color<input name="color" type="color" value="#3366ff"></label>
+<label>date<input name="date" type="date"></label><label>time<input name="time" type="time"></label>
+<label>datetime-local<input name="dtl" type="datetime-local"></label><label>month<input name="month" type="month"></label>
+<label>select<select name="select"><option>A</option><option>B</option></select></label>
+<label>multiple<select name="multi" multiple size="3"><option>A</option><option>B</option><option>C</option></select></label>
+<fieldset><legend>checkbox / radio</legend><label class="inl"><input type="checkbox" name="chk" required> required</label><label class="inl"><input type="radio" name="rad" value="1" checked> 1</label><label class="inl"><input type="radio" name="rad" value="2"> 2</label></fieldset>
+<label>textarea <span id="cnt"></span><textarea name="ta" maxlength="120"></textarea></label></div>
+<div id="dyn" class="grid"></div>
+<div class="bar"><button class="btn primary" type="submit" data-i18n="submit"></button><button class="btn" type="reset" data-i18n="reset"></button><button class="btn" type="button" id="addField" data-i18n="addField"></button></div></form>
+<p><strong data-i18n="events"></strong>: <span id="evs"></span></p><p id="fstate" role="status"></p><ul id="ferr" aria-live="polite"></ul><pre id="fout"></pre></section>
+
+<section id="ui"><h2 data-i18n="nUi"></h2><div class="bar">
+<button class="btn primary" data-i18n="btnP"></button><button class="btn" data-i18n="btnS"></button><button class="btn danger" id="del" data-i18n="btnD"></button><button class="btn" disabled data-i18n="btnX"></button><button class="btn" id="load" data-i18n="btnLoad"></button>
+<button class="btn" id="dec">−</button><output id="count">0</output><button class="btn" id="inc">+</button>
+<button class="btn" id="feat" aria-pressed="false" data-i18n="feat"></button>
+<button class="sw" id="sw" role="switch" aria-checked="false" data-i18n-label="sw"><i></i></button>
+<span class="rel"><button class="btn" id="mbtn" aria-expanded="false" aria-controls="mnu" data-i18n="menu"></button><ul id="mnu" hidden><li><button data-act="m1">Item 1</button></li><li><button data-act="m2">Item 2</button></li></ul></span>
+<button class="btn" id="toast" data-i18n="notify"></button><button class="btn" id="open" data-i18n="openModal"></button><button class="btn" id="copy" data-i18n="copy"></button>
+<span class="tip" tabindex="0" data-tip="Tooltip">ⓘ</span><div id="ctx" tabindex="0" class="ctxbox" data-i18n="ctxHint"></div></div>
+<ul id="mnu2" class="ctxmenu" hidden><li><button data-act="c1">Ctx 1</button></li><li><button data-act="c2">Ctx 2</button></li></ul>
+<div role="tablist" id="tabs"><button role="tab" id="t0" aria-controls="p0" aria-selected="true">T1</button><button role="tab" id="t1" aria-controls="p1" aria-selected="false" tabindex="-1">T2</button></div>
+<div role="tabpanel" id="p0" aria-labelledby="t0" tabindex="0">Panel 1</div><div role="tabpanel" id="p1" aria-labelledby="t1" tabindex="0" hidden>Panel 2</div>
+<details><summary data-i18n="acc"></summary><p data-i18n="accBody"></p></details>
+<h3 data-i18n="list"></h3><form id="lf" class="bar"><input id="li" required maxlength="40" data-i18n-label="newItem"><button class="btn primary" data-i18n="add"></button></form><ul id="items" class="dl"></ul></section>
+
+<section id="media"><h2 data-i18n="nMedia"></h2><div class="grid">
+<figure><img id="img" alt="" loading="lazy" width="640" height="360" src="https://picsum.photos/id/237/640/360" srcset="https://picsum.photos/id/237/320/180 320w,https://picsum.photos/id/237/640/360 640w,https://picsum.photos/id/237/960/540 960w" sizes="(max-width:600px) 100vw,50vw"><figcaption id="imgst" role="status"></figcaption></figure>
+<div><label><span data-i18n="pickImg"></span><input id="file" type="file" accept="image/*"></label><img id="prev" alt="" hidden><p id="fst" role="status"></p></div>
+<div><video id="vid" controls preload="metadata" playsinline width="320"><source src="https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.webm" type="video/webm"><source src="https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4" type="video/mp4"></video><p id="vst" role="status"></p><p id="vfb" hidden data-i18n="vFail"></p></div>
+<div><audio id="aud" controls preload="metadata" src="https://interactive-examples.mdn.mozilla.net/media/cc0-audio/t-rex-roar.mp3"></audio><p id="ast" role="status"></p></div>
+<div class="cv"><canvas id="cv" height="160" role="img" data-i18n-label="cvAlt"></canvas><p id="cvst" role="status"></p></div>
+<svg id="svg" viewBox="0 0 200 100" role="group" data-i18n-label="svgAlt"><rect width="200" height="100" class="sbg"/><circle id="c1" cx="50" cy="50" r="28" tabindex="0" role="button" data-i18n-label="svgBtn"/><rect id="c2" x="105" y="22" width="56" height="56" rx="8" tabindex="0" role="button" data-i18n-label="svgBtn"/></svg>
+</div></section>
+
+<section id="api"><h2 data-i18n="nApi"></h2><label>WebSocket URL<input id="wsurl" value="wss://ws.postman-echo.com/raw"></label><label>Base URL<input id="base" value="https://jsonplaceholder.typicode.com"></label><div id="probe" class="probe"></div><div id="apis" class="rows"></div></section>
+
+<section id="http"><h2 data-i18n="nHttp"></h2><form id="hf" class="grid"><label>Method<select id="hm"><option>GET</option><option>POST</option><option>PUT</option><option>PATCH</option><option>DELETE</option></select></label>
+<label>URL<input id="hu" type="url" required value="https://jsonplaceholder.typicode.com/posts/1"></label><label>Timeout (ms)<input id="ht" type="number" min="100" max="60000" value="8000"></label>
+<label>Headers (JSON)<textarea id="hh">{"Accept":"application/json"}</textarea></label><label>Body (JSON)<textarea id="hb"></textarea></label>
+<div class="bar"><button class="btn primary" data-i18n="send"></button><button class="btn" type="button" id="hc" data-i18n="cancel"></button></div></form><p id="hs" role="status"></p><pre id="hr"></pre></section>
+
+<section id="perf"><h2 data-i18n="nPerf"></h2><div id="perfs" class="rows"></div><div id="sandbox" hidden></div></section>
+<section id="css"><h2 data-i18n="nCss"></h2><p data-i18n="cssNote"></p><div id="csss" class="rows"></div></section>
+<section id="diag"><h2 data-i18n="nDiag"></h2><dl id="dg"></dl></section>
+<section id="console"><h2 data-i18n="console"></h2><pre id="log" aria-live="polite"></pre></section>
+</main>
+<dialog id="dlg" aria-labelledby="dt"><h3 id="dt"></h3><p id="dm"></p><div class="bar"><button class="btn primary" id="dok" data-i18n="ok"></button><button class="btn" id="dno" data-i18n="cancel"></button></div></dialog>
+<div id="toasts" aria-live="polite"></div>
+<script src="app.js"></script></body></html>

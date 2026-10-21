@@ -83,8 +83,10 @@ void main() {
       expect(() => div.removeChild(d.body!),
           throwsA(isA<DomException>().having((e) => e.name, 'name', 'NotFoundError')));
       final other = Document();
-      expect(() => div.appendChild(other.createElement('i')),
-          throwsA(isA<DomException>().having((e) => e.name, 'name', 'WrongDocumentError')));
+      final adopted = other.createElement('i');
+      div.appendChild(adopted);
+      expect(adopted.ownerDocument, d);
+      expect(adopted.parentNode, div);
       expect(() => d.createElement('bad name'),
           throwsA(isA<DomException>().having((e) => e.name, 'name', 'InvalidCharacterError')));
     });
@@ -170,6 +172,9 @@ void main() {
       expect(texts('[data-k|=alpha]'), ['1']);
       expect(texts('[class~=y]'), ['onetwo']);
       expect(texts('[data-k=ALPHA-BETA i]'), ['1']);
+      d.querySelector('li')!.setAttribute('lang', 'en-US');
+      expect(texts('[lang|=en]'), ['1']);
+      expect(texts('[lang|=EN i]'), ['1']);
     });
 
     test('pseudo-classes', () {
@@ -183,6 +188,13 @@ void main() {
       expect(texts('li:not(:first-child):not(:last-child)'), ['2', '3']);
       expect(texts('p:not(.x)'), ['one']);
       expect(d.querySelector(':root')!.localName, 'html');
+      final p = d.querySelector('p')!;
+      d.documentElement!.setAttribute('lang', 'en-US');
+      expect(p.matches(':lang(en)'), isTrue);
+      p.setAttribute('lang', 'es-ES');
+      expect(p.matches(':lang(es)'), isTrue);
+      expect(p.matches(':lang(ES)'), isTrue);
+      expect(p.matches(':lang(en)'), isFalse);
     });
 
     test('specificity', () {
@@ -203,11 +215,66 @@ void main() {
     });
 
     test('invalid selectors throw SyntaxError', () {
-      for (final bad in ['', 'div >', '..a', 'p::before', 'p:hover', '[x=', 'a,']) {
+      for (final bad in ['', 'div >', '..a', 'p::bogus', 'p:bogus', '[x=', 'a,', 'p::before span']) {
         expect(() => d.querySelector(bad),
             throwsA(isA<DomException>().having((e) => e.name, 'name', 'SyntaxError')),
             reason: bad);
       }
+    });
+
+    test('pseudo-elements parse but never match elements', () {
+      expect(d.querySelector('p::before'), isNull);
+      expect(d.querySelector('p:after'), isNull);
+      final sel = SelectorList.parse('p.x::after').selectors.single;
+      final p = d.querySelector('p.x')!;
+      expect(sel.pseudoElement, 'after');
+      expect(sel.matchesPseudo(p, 'after'), isTrue);
+      expect(sel.matchesPseudo(p, 'before'), isFalse);
+      expect(sel.specificity, const Specificity(0, 1, 2));
+    });
+
+    test('interaction state pseudo-classes', () {
+      final p = d.querySelector('p.x')!;
+      final records = <MutationRecord>[];
+      d.addMutationListener(records.add);
+      expect(p.matches(':hover'), isFalse);
+      d.hoverElement = p;
+      expect(p.matches(':hover'), isTrue);
+      expect(p.parentElement!.matches(':hover'), isTrue);
+      expect(records.where((r) => r.name == ':state'), isNotEmpty);
+      d.pressedElement = p;
+      expect(p.matches(':active'), isTrue);
+      d.hoverElement = null;
+      expect(p.matches(':hover'), isFalse);
+    });
+
+    test('constraint validation', () {
+      final f = d.createElement('form');
+      final email = d.createElement('input')
+        ..setAttribute('type', 'email')
+        ..setAttribute('required', '');
+      final n = d.createElement('input')
+        ..setAttribute('type', 'number')
+        ..setAttribute('min', '1')
+        ..setAttribute('max', '10');
+      f..appendChild(email)..appendChild(n);
+      d.body!.appendChild(f);
+      expect(email.validity.valueMissing, isTrue);
+      expect(email.matches(':invalid'), isTrue);
+      expect(email.matches(':user-invalid'), isFalse);
+      email.value = 'nope';
+      expect(email.validity.typeMismatch, isTrue);
+      email.value = 'a@b.co';
+      expect(email.validity.valid, isTrue);
+      n.value = '11';
+      expect(n.validity.rangeOverflow, isTrue);
+      expect(n.matches(':out-of-range'), isTrue);
+      expect(f.checkValidity(), isFalse);
+      n.value = '5';
+      email.customValidity = 'custom';
+      expect(email.validationMessage, 'custom');
+      email.customValidity = '';
+      expect(f.checkValidity(), isTrue);
     });
 
     test('getElementsBy*', () {

@@ -1,3 +1,4 @@
+import 'dart:collection';
 import 'dart:convert';
 import 'dart:ffi';
 import 'dart:typed_data';
@@ -5,6 +6,7 @@ import 'dart:typed_data';
 import 'exceptions.dart';
 import 'ffi/bindings.dart' as b;
 import 'javascript_engine.dart';
+import 'wasm_prelude.dart';
 
 /// Installed once per context. Captures the raw `__nx_host` C function,
 /// removes it from the global object and exposes the frozen `__nx.host`
@@ -12,24 +14,62 @@ import 'javascript_engine.dart';
 const String _hostPrelude = r'''
 (() => {
   const raw = globalThis.__nx_host;
+  const rawRegister = globalThis.__nx_register;
+  const takeBuffer = globalThis.__nx_buffer_take;
+  const putBuffer = globalThis.__nx_buffer_put;
+  const shareSab = globalThis.__nx_sab_share;
+  const openSab = globalThis.__nx_sab_open;
+  const gl = globalThis.__nx_gl_native || null;
+  delete globalThis.__nx_sab_share;
+  delete globalThis.__nx_sab_open;
+  delete globalThis.__nx_gl_native;
   delete globalThis.__nx_host;
+  delete globalThis.__nx_register;
+  delete globalThis.__nx_buffer_take;
+  delete globalThis.__nx_buffer_put;
+  // Callbacks for Engine.callGlobal live in a registry scripts cannot reach.
+  const register = (name, fn) => rawRegister(String(name), fn);
   const ctors = { Error, TypeError, RangeError, SyntaxError };
+  const domNames = new Set([
+    'IndexSizeError', 'HierarchyRequestError', 'WrongDocumentError', 'InvalidCharacterError',
+    'NoModificationAllowedError', 'NotFoundError', 'NotSupportedError', 'InUseAttributeError',
+    'InvalidStateError', 'SyntaxError', 'InvalidModificationError', 'NamespaceError',
+    'InvalidAccessError', 'TypeMismatchError', 'SecurityError', 'NetworkError', 'AbortError',
+    'URLMismatchError', 'QuotaExceededError', 'TimeoutError', 'InvalidNodeTypeError',
+    'DataCloneError', 'EncodingError', 'NotReadableError', 'UnknownError', 'ConstraintError',
+    'DataError', 'TransactionInactiveError', 'ReadOnlyError', 'VersionError', 'OperationError',
+    'NotAllowedError', 'OptOutError',
+  ]);
   const stringify = JSON.stringify;
   const hasOwn = Object.prototype.hasOwnProperty;
   const host = (name, ...args) => {
     const r = raw(stringify([name, args]));
     if (r === undefined || r === null) return undefined;
     if (hasOwn.call(r, 'error')) {
-      const C = ctors[r.error.type];
+      const type = r.error.type;
+      if (globalThis.DOMException && domNames.has(type)) {
+        throw new globalThis.DOMException(r.error.message, type);
+      }
+      const C = ctors[type];
       const e = C ? new C(r.error.message) : new Error(r.error.message);
-      if (!C) e.name = r.error.type;
+      if (!C) e.name = type;
       throw e;
     }
     return r.ok;
   };
+  // Rejected module evaluations (top-level await, failed imports).
+  rawRegister('__nx_module_error', (e) => {
+    try {
+      raw(stringify(['__module_error', [{
+        name: e && e.name ? String(e.name) : 'Error',
+        message: e && e.message !== undefined ? String(e.message) : String(e),
+        stack: e && e.stack ? String(e.stack) : '',
+      }]]));
+    } catch (_) {}
+  });
   Object.defineProperty(globalThis, '__nx', {
-    value: Object.freeze({ host }),
-    enumerable: false, writable: false, configurable: false,
+    value: Object.freeze({ host, register, takeBuffer, putBuffer, shareSab, openSab, gl }),
+    enumerable: false, writable: false, configurable: true,
   });
 })();
 ''';
@@ -52,7 +92,62 @@ final class QuickJsEngine implements JavaScriptEngine {
       _callback.close();
       throw JavaScriptEngineStateException('QuickJS runtime creation failed');
     }
+    _hostFunctions['__module'] = _moduleRequest;
+    _hostFunctions['__module_error'] = (args) {
+      final e = (args[0] as Map).cast<String, Object?>();
+      moduleHost?.onError(
+        JavaScriptException(
+          name: e['name'] as String? ?? 'Error',
+          message: e['message'] as String? ?? '',
+          stack: e['stack'] as String?,
+        ),
+      );
+      return null;
+    };
     evaluate(_hostPrelude, filename: '<nativax:host>');
+    evaluate(wasmPrelude, filename: '<nativax:wasm>');
+  }
+
+  @override
+  ModuleHost? moduleHost;
+
+  /// Lets `Atomics.wait` block the calling thread. Enable it only on worker
+  /// isolates; the UI thread must never block (browsers throw there too).
+  set canBlock(bool value) {
+    _checkAlive();
+    b.nx_set_can_block(_rt, value ? 1 : 0);
+  }
+
+  Object? _moduleRequest(List<Object?> args) {
+    final op = args[0] as String;
+    final host = moduleHost;
+    if (host == null)
+      throw JavaScriptHostError('TypeError', 'modules are not enabled');
+    switch (op) {
+      case 'resolve':
+        return host.resolve(args[1] as String, args[2] as String);
+      case 'source':
+        return host.source(args[1] as String);
+    }
+    throw JavaScriptHostError('TypeError', 'unknown module request');
+  }
+
+  @override
+  void evaluateModule(String source, {required String url}) {
+    _checkAlive();
+    _enter(() {
+      final src = _toNative(source);
+      final file = _toNative(url);
+      try {
+        return _invoke(
+          (out, outLen) =>
+              b.nx_eval_module(_rt, src.ptr, src.length, file.ptr, out, outLen),
+        );
+      } finally {
+        src.free();
+        file.free();
+      }
+    });
   }
 
   static int _nextId = 1;
@@ -173,7 +268,13 @@ final class QuickJsEngine implements JavaScriptEngine {
       return result;
     } finally {
       _depth--;
-      if (outermost && !_disposed) b.nx_set_budget_ms(_rt, 0);
+      if (outermost) {
+        if (!_disposed) b.nx_set_budget_ms(_rt, 0);
+        // A WebGL context made current by this task must not stay current:
+        // the next task of this isolate may run on another thread, and the
+        // UI thread's own GL context (Flutter's) must be restored.
+        b.nx_gl_release_current();
+      }
     }
   }
 
@@ -184,7 +285,8 @@ final class QuickJsEngine implements JavaScriptEngine {
       if (n >= config.maxJobsPerDrain && b.nx_has_pending_jobs(_rt) != 0) {
         throw JavaScriptException(
           name: 'MicrotaskLimitError',
-          message: 'more than ${config.maxJobsPerDrain} microtasks in one '
+          message:
+              'more than ${config.maxJobsPerDrain} microtasks in one '
               'drain; remaining jobs stay queued',
         );
       }
@@ -192,9 +294,7 @@ final class QuickJsEngine implements JavaScriptEngine {
     });
   }
 
-  Object? _invoke(
-    int Function(Pointer<Pointer<Char>>, Pointer<Int64>) call,
-  ) {
+  Object? _invoke(int Function(Pointer<Pointer<Char>>, Pointer<Int64>) call) {
     return _withOut((out, outLen) {
       final status = call(out, outLen);
       final text = _readOut(out, outLen);
@@ -306,4 +406,160 @@ _NativeString _toNative(String value) {
   view.setAll(0, bytes);
   view[bytes.length] = 0;
   return _NativeString(buf.cast(), bytes.length);
+}
+
+/// Moves byte buffers between Dart and script code without JSON: Dart parks
+/// bytes under an id, and script code adopts them as an `ArrayBuffer` with
+/// `__nx.takeBuffer(id)` (and the reverse with `__nx.putBuffer(view)`). Ids
+/// are process-wide, so they also cross isolates.
+abstract final class NativeBuffers {
+  /// Copies [bytes] into native memory and returns its id.
+  static int put(Uint8List bytes) {
+    final ptr = b.nx_alloc(bytes.isEmpty ? 1 : bytes.length).cast<Uint8>();
+    if (bytes.isNotEmpty) ptr.asTypedList(bytes.length).setAll(0, bytes);
+    return b.nx_buffer_put(ptr.cast(), bytes.length);
+  }
+
+  /// Removes the buffer [id] and returns a copy of its bytes, or null if no
+  /// such buffer is parked.
+  static Uint8List? take(int id) {
+    final len = b.nx_alloc(sizeOf<Int64>()).cast<Int64>();
+    try {
+      final ptr = b.nx_buffer_take(id, len);
+      if (len.value < 0) return null;
+      final out = Uint8List.fromList(ptr.cast<Uint8>().asTypedList(len.value));
+      b.nx_free(ptr);
+      return out;
+    } finally {
+      b.nx_free(len.cast());
+    }
+  }
+}
+
+/// Canvas backing stores shared between script runtimes (any thread) and the
+/// UI: WebGL contexts publish frames into a surface; the renderer shows the
+/// latest one.
+class _SurfacePresentation {
+  int frames = 0;
+  int width = 0;
+  int height = 0;
+  int decodeMicros = 0;
+  int lastShownMicros = 0;
+  final ListQueue<int> intervals = ListQueue<int>();
+  final ListQueue<int> decodes = ListQueue<int>();
+
+  void addInterval(int micros) {
+    if (micros <= 0) return;
+    intervals.add(micros);
+    while (intervals.length > 240) {
+      intervals.removeFirst();
+    }
+  }
+
+  void addDecode(int micros) {
+    decodes.add(micros);
+    while (decodes.length > 240) {
+      decodes.removeFirst();
+    }
+  }
+}
+
+abstract final class GlSurfaces {
+  /// Whether WebGL is available (EGL + OpenGL ES 3 loaded).
+  static bool get available => b.nx_gl_available() != 0;
+
+  static int create() => b.nx_surface_create();
+  static void retain(int id) => b.nx_surface_retain(id);
+  static void release(int id) => b.nx_surface_release(id);
+
+  /// Counter of the newest presented frame (0: none yet).
+  static int frame(int id) => b.nx_surface_frame(id);
+
+  static final Map<int, _SurfacePresentation> _presentation = {};
+  static final Stopwatch _presentationClock = Stopwatch()..start();
+
+  /// Frames actually decoded and shown by a [GlSurfaceView]. Compare with
+  /// [frame] to distinguish renderer throughput from presentation throughput.
+  static int shown(int id) => _presentation[id]?.frames ?? 0;
+
+  /// Size of the most recently shown drawing buffer.
+  static int shownWidth(int id) => _presentation[id]?.width ?? 0;
+  static int shownHeight(int id) => _presentation[id]?.height ?? 0;
+
+  /// Time spent decoding the most recent frame on the UI isolate.
+  static int decodeMicros(int id) => _presentation[id]?.decodeMicros ?? 0;
+
+  /// Number of presentation intervals in the rolling window.
+  static int presentSamples(int id) => _presentation[id]?.intervals.length ?? 0;
+
+  /// Presentation cadence percentiles in microseconds (time between shown
+  /// frames). These are measured on the UI isolate, after decode.
+  static int presentP50Micros(int id) =>
+      _percentile(_presentation[id]?.intervals, 0.50);
+  static int presentP95Micros(int id) =>
+      _percentile(_presentation[id]?.intervals, 0.95);
+  static int presentP99Micros(int id) =>
+      _percentile(_presentation[id]?.intervals, 0.99);
+
+  /// Decode latency percentiles in microseconds for the same rolling window.
+  static int decodeP50Micros(int id) =>
+      _percentile(_presentation[id]?.decodes, 0.50);
+  static int decodeP95Micros(int id) =>
+      _percentile(_presentation[id]?.decodes, 0.95);
+  static int decodeP99Micros(int id) =>
+      _percentile(_presentation[id]?.decodes, 0.99);
+
+  /// Called by the Flutter view after a decoded frame is installed.
+  static void markShown(
+    int id, {
+    int width = 0,
+    int height = 0,
+    int decodeMicros = 0,
+  }) {
+    final stats = _presentation.putIfAbsent(id, _SurfacePresentation.new);
+    final now = _presentationClock.elapsedMicroseconds;
+    if (stats.lastShownMicros > 0) {
+      stats.addInterval(now - stats.lastShownMicros);
+    }
+    stats.lastShownMicros = now;
+    stats.frames++;
+    stats.width = width;
+    stats.height = height;
+    stats.decodeMicros = decodeMicros;
+    stats.addDecode(decodeMicros);
+  }
+
+  static int _percentile(ListQueue<int>? values, double p) {
+    if (values == null || values.isEmpty) return 0;
+    final sorted = values.toList()..sort();
+    var index = ((sorted.length - 1) * p).round();
+    if (index < 0) index = 0;
+    if (index >= sorted.length) index = sorted.length - 1;
+    return sorted[index];
+  }
+
+  /// The latest frame as premultiplied RGBA8, top row first. The returned
+  /// view aliases native memory that stays valid until the next [acquire]
+  /// of the same surface.
+  static ({Uint8List pixels, int width, int height, int frame})? acquire(
+    int id,
+  ) {
+    final w = b.nx_alloc(4).cast<Int32>();
+    final h = b.nx_alloc(4).cast<Int32>();
+    final f = b.nx_alloc(8).cast<Int64>();
+    try {
+      final ptr = b.nx_surface_acquire(id, w, h, f);
+      if (ptr == nullptr || w.value <= 0 || h.value <= 0) return null;
+      return (
+        pixels: ptr.asTypedList(w.value * h.value * 4),
+        width: w.value,
+        height: h.value,
+        frame: f.value,
+      );
+    } finally {
+      b.nx_free(w.cast());
+      b.nx_free(h.cast());
+      b.nx_free(f.cast());
+    }
+  }
 }

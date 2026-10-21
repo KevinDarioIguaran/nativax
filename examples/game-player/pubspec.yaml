@@ -1,0 +1,38 @@
+name: nativax_game_player
+description: Standalone Linux player for the threejs-multiplayer-starter game.
+publish_to: none
+resolution: workspace
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.10.0
+  flutter: ">=3.35.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  nativax: ^0.1.0
+  nativax_dom: ^0.1.0
+  nativax_js: ^0.1.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/game/
+    - assets/game/assets/
+    - assets/game/audio/
+    - assets/game/draco/
+    - assets/game/draco/gltf/
+    - assets/game/models/
+    - assets/game/models/Fox/
+    - assets/game/models/Fox/glTF/
+    - assets/game/models/Fox/glTF-Binary/
+    - assets/game/models/Fox/glTF-Embedded/
+    - assets/game/models/Fox/screenshot/
+    - assets/game/textures/
+    - assets/game/textures/dirt/
+    - assets/game/textures/environmentMap/

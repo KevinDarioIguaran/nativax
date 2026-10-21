@@ -1,0 +1,17 @@
+records: 50 windows, 1 run(s)
+warm-up skipped: 2 windows per run
+buffer filter: 1280x720
+last windows: 15 per run
+
+Per run
+label           win  render   shown      UI   pres95   pres99   dec95  build95  rast95   tot95  jank%      buffer
+-----------------------------------------------------------------------------------------------------------------
+probe_fixed      15    34.7    26.3    32.0     74.0     89.0    37.1      2.9    15.1    44.0    1.2    1280x720
+
+Per condition (median across runs)
+condition       win  render   shown      UI   pres95   pres99   dec95  build95  rast95   tot95  jank%      buffer
+-----------------------------------------------------------------------------------------------------------------
+probe_fixed      15    34.7    26.3    32.0     74.0     89.0    37.1      2.9    15.1    44.0    1.2    1280x720
+
+Success gate at 1280x720 native (per condition):
+  probe_fixed: shown>=45=FAIL, present_p95<=25ms=FAIL, jank<2%=PASS, UI>=50=FAIL

@@ -53,22 +53,27 @@ void main() {
 
     test('invalid declarations are dropped with warnings, others kept', () {
       final sheet = StyleSheet.parse(
-          'p { color: nope; width: -5px; colr: red; padding: 4px; float: left; --x: 1; width: calc(1px) }');
+          'p { color: nope; width: -5px; colr: red; padding: 4px; zork: left; --x: 1; width: calc(1px) }');
       final rule = sheet.rules.single as StyleRule;
-      expect(rule.declarations.map((d) => d.property),
-          ['padding-top', 'padding-right', 'padding-bottom', 'padding-left']);
+      expect(rule.declarations.map((d) => d.property), [
+        'padding-top',
+        'padding-right',
+        'padding-bottom',
+        'padding-left',
+        '--x',
+        'width',
+      ]);
+      expect(rule.declarations.last.value, isA<RawValue>());
       expect(sheet.warnings.map((w) => w.message), [
         'invalid value for "color"',
         'invalid value for "width"',
         'unsupported property "colr"',
-        'unsupported property "float"',
-        'custom properties are not supported (--x)',
-        'unsupported function in "width"',
+        'unsupported property "zork"',
       ]);
     });
 
     test('invalid selectors drop the whole rule', () {
-      final sheet = StyleSheet.parse('p::before { color: red } a:hover { color: blue } b { color: green }');
+      final sheet = StyleSheet.parse('p::bogus { color: red } a:bogus { color: blue } b { color: green }');
       expect(sheet.rules.length, 1);
       expect(sheet.warnings.length, 2);
     });
@@ -329,6 +334,18 @@ void main() {
       expect(engine.styleOf(li).color, const CssColor(0xffff0000));
     });
 
+    test('text data changes re-evaluate :empty', () {
+      final s = styled('<div id=d>x</div>', 'div:empty { color: red }');
+      final (doc, engine) = s;
+      doc.addMutationListener(engine.handleMutation);
+      engine.recompute();
+      final div = doc.getElementById('d')!;
+      expect(engine.styleOf(div).color, CssColor.black);
+      (div.firstChild! as Text).data = '';
+      engine.recompute();
+      expect(engine.styleOf(div).color, const CssColor(0xffff0000));
+    });
+
     test('inline style mutation', () {
       final s = styled('<p>x</p>', '');
       final (doc, engine) = s;
@@ -337,6 +354,131 @@ void main() {
       doc.querySelector('p')!.setAttribute('style', 'opacity: 0.5');
       expect(engine.recompute().length, 1);
       expect(styleOf(s, 'p').opacity, 0.5);
+    });
+  });
+
+  test('custom properties are inherited and substituted', () {
+    final doc = Document();
+    final root = doc.createElement('html');
+    final body = doc.createElement('body');
+    root.appendChild(body);
+    doc.appendChild(root);
+    final engine = StyleEngine(
+      document: doc,
+      media: const MediaContext(width: 800, height: 600),
+    )..authorSheets = [
+        StyleSheet.parse(':root { --fg: #123456; --bg: #abcdef }'
+            'body { color: var(--fg); background: var(--bg); margin: var(--unknown, 3px) }'),
+      ];
+    final style = engine.styleOf(body);
+    expect((style['color'] as ColorValue).color, const CssColor(0xff123456));
+    expect((style['background-color'] as ColorValue).color,
+        const CssColor(0xffabcdef));
+    expect(style['margin-top'], const Length.px(3));
+  });
+
+  group('modern CSS', () {
+    test('calc(), min(), max() and clamp()', () {
+      final s = styled('<div><p>x</p></div>',
+          'div { font-size: 10px } p { width: calc(100% - 2em); height: calc(1rem + 4px); '
+              'margin-top: max(2px, 1em); padding-left: clamp(1px, 50%, 30px); max-width: min(100%, 230px) }');
+      final p = styleOf(s, 'p');
+      expect(p.width!.resolve(200), 180);
+      expect(p['height'], const Length.px(20));
+      expect(p['margin-top'], const Length.px(10));
+      expect(p.paddingOf('left').resolve(100), 30);
+      expect(p.paddingOf('left').resolve(10), 5);
+      expect(p.maxWidth!.resolve(100), 100);
+      expect(p.maxWidth!.resolve(1000), 230);
+    });
+
+    test('::before / ::after with content and attr()', () {
+      final s = styled('<a href="#x" data-tip="Hi">link</a><b>no</b>',
+          'a::before { content: "→ " attr(data-tip); color: red } a { color: blue } b:after { content: none }');
+      final (doc, engine) = s;
+      final a = doc.querySelector('a')!;
+      final before = engine.pseudoStyleOf(a, 'before')!;
+      expect(before.content!.resolve(a.getAttribute), '→ Hi');
+      expect(before.color, const CssColor(0xffff0000));
+      expect(engine.pseudoStyleOf(a, 'after'), isNull);
+      expect(engine.pseudoStyleOf(doc.querySelector('b')!, 'after')!.content, isNull);
+      expect(styleOf(s, 'a').color, const CssColor(0xff0000ff));
+    });
+
+    test(':hover rules apply while hovered', () {
+      final s = styled('<p>x</p>', 'p { color: red } p:hover { color: green }');
+      final (doc, engine) = s;
+      doc.addMutationListener(engine.handleMutation);
+      final p = doc.querySelector('p')!;
+      expect(engine.styleOf(p).color, const CssColor(0xffff0000));
+      doc.hoverElement = p;
+      expect(engine.styleOf(p).color, const CssColor(0xff008000));
+    });
+
+    test('grid properties', () {
+      final s = styled('<div><i>a</i></div>',
+          'div { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 230px), 1fr)) 2fr; '
+              'grid-template-areas: "h h" "n m"; gap: 1rem } i { grid-column: 1 / -1; grid-area: n }');
+      final div = styleOf(s, 'div');
+      expect(div.isGridContainer, isTrue);
+      final cols = div.gridTemplateColumns!;
+      expect(cols.entries.length, 2);
+      expect(cols.entries.first.auto, 'auto-fit');
+      expect(cols.entries.first.tracks.single.max.kind, 'fr');
+      expect(cols.entries.first.tracks.single.min.length, isA<CalcLength>());
+      expect(div.gridTemplateAreas!.rows, [
+        ['h', 'h'],
+        ['n', 'm'],
+      ]);
+      final i = styleOf(s, 'i');
+      expect(i.gridRowStart.name, 'n');
+      expect(i.gridColumnStart.name, 'n');
+      expect(i.display, Display.block, reason: 'grid items are blockified');
+    });
+
+    test('box-shadow, gradients, transform and font: inherit', () {
+      final s = styled('<div><button>b</button></div>',
+          'div { font: 700 20px serif; box-shadow: 0 1px 2px #0f183014, 0 8px 24px rgba(0,0,0,.5); '
+              'background: linear-gradient(120deg, #3b5bff, #8a4dff); transform: translateX(24px) scale(.97) }'
+              'button { font: inherit }');
+      final div = styleOf(s, 'div');
+      expect(div.boxShadows.length, 2);
+      expect(div.boxShadows.last.blur, const Length.px(24));
+      expect(div.backgroundGradient!.angle, 120);
+      expect(div.backgroundGradient!.stops.length, 2);
+      expect(div.transform!.functions.map((f) => f.name), ['translatex', 'scale']);
+      final button = styleOf(s, 'button');
+      expect(button.fontSize, 20);
+      expect(button.fontWeight, 700);
+    });
+  });
+
+  group('animations, transitions and at-rules', () {
+    test('@keyframes, animation and transition shorthands', () {
+      final s = styled('<div><i>x</i></div>',
+          '@keyframes sp { from { opacity: 0 } 50% { opacity: .5 } to { transform: rotate(360deg) } }'
+              'div { animation: sp 2s linear infinite; transition: transform .2s, background .15s ease-out 50ms }');
+      final (doc, engine) = s;
+      final div = styleOf(s, 'div');
+      final a = div.animations.single;
+      expect([a.name, a.duration, a.iterations, '${a.easing}'], ['sp', 2000, double.infinity, 'linear']);
+      final t = div.transitions;
+      expect(t.map((x) => '${x.property}:${x.duration}:${x.delay}'), ['transform:200.0:0.0', 'background:150.0:50.0']);
+      final kf = engine.keyframes('sp')!;
+      expect(kf.frames.map((f) => f.offsets), [[0.0], [0.5], [1.0]]);
+      final mid = engine.styleWithDeclarations(doc.querySelector('div')!, kf.frames[1].declarations);
+      expect(mid.opacity, 0.5);
+      expect(CssEasing.ease.transform(0.5), closeTo(0.8024, 0.001));
+      expect(const CssEasing.steps(4, 'jump-end').transform(0.3), 0.25);
+    });
+
+    test('@supports and @layer', () {
+      final s = styled('<p>x</p>',
+          '@supports (display: grid) { p { color: red } } @supports (display: bogus) { p { color: blue } }'
+              '@layer base { p { margin-top: 3px } }');
+      final p = styleOf(s, 'p');
+      expect(p.color, const CssColor(0xffff0000));
+      expect(p['margin-top'], const Length.px(3));
     });
   });
 }

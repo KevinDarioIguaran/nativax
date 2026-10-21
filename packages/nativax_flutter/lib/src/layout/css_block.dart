@@ -9,12 +9,45 @@ import 'css_item.dart';
 
 /// Normal flow for block-level children: stacked vertically, auto-width
 /// children fill the line, `margin: auto` centers fixed-width children, and
-/// adjacent sibling margins collapse (CSS 2.1 §8.3.1, sibling case only).
+/// vertical margins collapse (CSS 2.1 §8.3.1): between siblings, through
+/// empty boxes, and between a parent and its first/last child when the
+/// parent has no border or padding on that side and does not establish a
+/// block formatting context ([collapseTop]/[collapseBottom]).
 class CssBlockFlow extends MultiChildRenderObjectWidget {
-  const CssBlockFlow({super.key, super.children});
+  const CssBlockFlow({super.key, this.collapseTop = false, this.collapseBottom = false, super.children});
+
+  /// The first child's top margin escapes to the parent's own margin.
+  final bool collapseTop;
+
+  /// The last child's bottom margin escapes to the parent's own margin.
+  final bool collapseBottom;
 
   @override
-  RenderCssBlock createRenderObject(BuildContext context) => RenderCssBlock();
+  RenderCssBlock createRenderObject(BuildContext context) =>
+      RenderCssBlock(collapseTop: collapseTop, collapseBottom: collapseBottom);
+
+  @override
+  void updateRenderObject(BuildContext context, RenderCssBlock renderObject) {
+    renderObject
+      ..collapseTop = collapseTop
+      ..collapseBottom = collapseBottom;
+  }
+}
+
+/// The margins that escaped through [box]'s own box from its first and last
+/// in-flow children, found through single-child wrappers (box, effects,
+/// gestures). Zero when [box] does not draw a collapsing block flow.
+(double, double) escapingMarginsOf(RenderBox box) {
+  RenderObject? o = box;
+  while (o != null) {
+    if (o is RenderCssBlock) return (o.escapingTop, o.escapingBottom);
+    if (o is RenderObjectWithChildMixin) {
+      o = o.child;
+      continue;
+    }
+    break;
+  }
+  return (0, 0);
 }
 
 double collapseMargins(double a, double b) {
@@ -26,7 +59,31 @@ double collapseMargins(double a, double b) {
 class RenderCssBlock extends RenderBox
     with
         ContainerRenderObjectMixin<RenderBox, CssItemParentData>,
-        RenderBoxContainerDefaultsMixin<RenderBox, CssItemParentData> {
+        RenderBoxContainerDefaultsMixin<RenderBox, CssItemParentData>,
+        CssStackingPaint {
+  RenderCssBlock({bool collapseTop = false, bool collapseBottom = false})
+      : _collapseTop = collapseTop,
+        _collapseBottom = collapseBottom;
+
+  bool _collapseTop;
+  set collapseTop(bool v) {
+    if (v == _collapseTop) return;
+    _collapseTop = v;
+    markNeedsLayout();
+  }
+
+  bool _collapseBottom;
+  set collapseBottom(bool v) {
+    if (v == _collapseBottom) return;
+    _collapseBottom = v;
+    markNeedsLayout();
+  }
+
+  /// Margins that collapsed through this flow's top/bottom edge during the
+  /// last layout; the parent flow adds them to this box's own margins.
+  double escapingTop = 0;
+  double escapingBottom = 0;
+
   @override
   void setupParentData(RenderBox child) {
     if (child.parentData is! CssItemParentData) child.parentData = CssItemParentData();
@@ -38,6 +95,8 @@ class RenderCssBlock extends RenderBox
     var y = 0.0;
     double? pendingMargin; // bottom margin of the previous child
     var maxWidth = 0.0;
+    var placed = false;
+    var escTop = 0.0;
     var child = firstChild;
     while (child != null) {
       final pd = child.parentData! as CssItemParentData;
@@ -63,7 +122,30 @@ class RenderCssBlock extends RenderBox
         child.layout(cc, parentUsesSize: true);
         s = child.size;
       }
-      y += pendingMargin == null ? mT : collapseMargins(pendingMargin, mT);
+      // Margins that escaped from the child's own first/last children.
+      final (cTop, cBottom) = dry ? (0.0, 0.0) : escapingMarginsOf(child);
+      final top = collapseMargins(mT, cTop);
+      final bottom = collapseMargins(mB, cBottom);
+      if (s.height == 0) {
+        // An empty box's top and bottom margins collapse through it and
+        // with its neighbors (CSS 2.1 §8.3.1).
+        final through = collapseMargins(top, bottom);
+        // Its top edge sits where it would with a bottom border: after its
+        // own top margin collapsed with the preceding ones.
+        final edge = pendingMargin == null ? top : collapseMargins(pendingMargin, top);
+        pendingMargin = pendingMargin == null ? through : collapseMargins(pendingMargin, through);
+        if (!dry) pd.offset = Offset(mL, (!placed && _collapseTop) ? y : y + edge);
+        maxWidth = math.max(maxWidth, s.width + mL + mR);
+        child = pd.nextSibling;
+        continue;
+      }
+      final before = pendingMargin == null ? top : collapseMargins(pendingMargin, top);
+      if (!placed && _collapseTop) {
+        escTop = before;
+      } else {
+        y += before;
+      }
+      placed = true;
       if (!dry) {
         double x = mL;
         if (w != null && !pd.autoWidth) {
@@ -77,11 +159,23 @@ class RenderCssBlock extends RenderBox
         pd.offset = Offset(x, y);
       }
       y += s.height;
-      pendingMargin = mB;
+      pendingMargin = bottom;
       maxWidth = math.max(maxWidth, s.width + mL + mR);
       child = pd.nextSibling;
     }
-    y += pendingMargin ?? 0;
+    var escBottom = 0.0;
+    if (!placed && _collapseTop && _collapseBottom) {
+      // Nothing in flow: every margin collapses through this box.
+      escTop = pendingMargin ?? 0;
+    } else if (placed && _collapseBottom) {
+      escBottom = pendingMargin ?? 0;
+    } else {
+      y += pendingMargin ?? 0;
+    }
+    if (!dry) {
+      escapingTop = escTop;
+      escapingBottom = escBottom;
+    }
     return constraints.constrain(Size(w ?? maxWidth, math.max(0, y)));
   }
 
@@ -140,9 +234,9 @@ class RenderCssBlock extends RenderBox
       defaultComputeDistanceToFirstActualBaseline(baseline);
 
   @override
-  void paint(PaintingContext context, Offset offset) => defaultPaint(context, offset);
+  void paint(PaintingContext context, Offset offset) => paintStacked(context, offset);
 
   @override
   bool hitTestChildren(BoxHitTestResult result, {required Offset position}) =>
-      defaultHitTestChildren(result, position: position);
+      hitTestStacked(result, position);
 }

@@ -272,4 +272,16 @@ void main() {
       expect(f.childNodes.single.nodeName, 'P');
     });
   });
+
+  test('foreign content: SVG self-closing tags and breakout', () {
+    final doc = HtmlParser().parseDocument('<svg viewBox="0 0 10 10"><rect width="1"/><circle r="2"/>'
+        '<g><path d="M0 0"/></g></svg><p>after</p><svg><circle/><p>break</p>').value;
+    final svg = doc.querySelector('svg')!;
+    expect(svg.children.map((e) => e.localName), ['rect', 'circle', 'g']);
+    expect(svg.querySelector('g')!.children.single.localName, 'path');
+    expect(doc.querySelector('p')!.parentElement!.localName, 'body');
+    final second = doc.querySelectorAll('svg')[1];
+    expect(second.children.map((e) => e.localName), ['circle']);
+    expect(doc.querySelectorAll('p').last.parentElement!.localName, 'body');
+  });
 }

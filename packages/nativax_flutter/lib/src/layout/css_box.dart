@@ -1,8 +1,9 @@
 import 'dart:math' as math;
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/widgets.dart';
-import 'package:nativax_css/nativax_css.dart';
+import 'package:nativax_css/nativax_css.dart' hide MediaQuery;
 
 import 'css_item.dart';
 
@@ -22,11 +23,17 @@ class CssBoxSpec {
     this.padding = const [ResolvedLength.zero, ResolvedLength.zero, ResolvedLength.zero, ResolvedLength.zero],
     this.border = const [0, 0, 0, 0],
     this.borderColors = const [Color(0xff000000), Color(0xff000000), Color(0xff000000), Color(0xff000000)],
+    this.borderStyles = const ['solid', 'solid', 'solid', 'solid'],
     this.radii = const [ResolvedLength.zero, ResolvedLength.zero, ResolvedLength.zero, ResolvedLength.zero],
     this.borderBox = false,
     this.clip = false,
     this.background,
     this.backgroundImage,
+    this.gradient,
+    this.shadows = const [],
+    this.outlineWidth = 0,
+    this.outlineColor = const Color(0xff000000),
+    this.outlineOffset = 0,
   });
 
   final ResolvedLength? width;
@@ -41,6 +48,12 @@ class CssBoxSpec {
   final List<double> border;
   final List<Color> borderColors;
 
+  /// `solid`, `dashed`, `dotted` or `double` per side (top, right, bottom,
+  /// left).
+  final List<String> borderStyles;
+
+  bool get _customBorder => borderStyles.any((s) => s != 'solid');
+
   /// top-left, top-right, bottom-right, bottom-left.
   final List<ResolvedLength> radii;
   final bool borderBox;
@@ -50,9 +63,18 @@ class CssBoxSpec {
   final Color? background;
   final DecorationImage? backgroundImage;
 
+  /// `background-image: *-gradient()`, painted over [background].
+  final GradientValue? gradient;
+  final List<BoxShadow> shadows;
+  final double outlineWidth;
+  final Color outlineColor;
+  final double outlineOffset;
+
   bool get hasDecoration =>
       (background != null && background!.a > 0) ||
       backgroundImage != null ||
+      gradient != null ||
+      shadows.isNotEmpty ||
       border.any((b) => b > 0);
 
   @override
@@ -67,16 +89,95 @@ class CssBoxSpec {
       listEquals(other.padding, padding) &&
       listEquals(other.border, border) &&
       listEquals(other.borderColors, borderColors) &&
+      listEquals(other.borderStyles, borderStyles) &&
       listEquals(other.radii, radii) &&
       other.borderBox == borderBox &&
       other.clip == clip &&
       other.background == background &&
-      other.backgroundImage == backgroundImage;
+      other.backgroundImage == backgroundImage &&
+      other.gradient == gradient &&
+      listEquals(other.shadows, shadows) &&
+      other.outlineWidth == outlineWidth &&
+      other.outlineColor == outlineColor &&
+      other.outlineOffset == outlineOffset;
 
   @override
   int get hashCode => Object.hash(width, height, minWidth, minHeight, maxWidth, maxHeight,
-      Object.hashAll(padding), Object.hashAll(border), Object.hashAll(borderColors),
-      Object.hashAll(radii), borderBox, clip, background, backgroundImage);
+      Object.hashAll(padding), Object.hashAll(border), Object.hashAll(borderColors), Object.hashAll(borderStyles),
+      Object.hashAll(radii), borderBox, clip, background, backgroundImage, gradient,
+      Object.hashAll(shadows), outlineWidth, outlineColor, outlineOffset);
+}
+
+/// Converts a CSS gradient to a Flutter [Gradient] for a box of [size],
+/// following the CSS gradient line geometry (the line passes through the
+/// center and its length makes the corners hit the 0%/100% stops).
+Gradient cssGradient(GradientValue g, Size size) {
+  final colors = [for (final s in g.stops) Color(s.color.color?.argb ?? 0xff000000)];
+  final stops = _stopPositions(g.stops);
+  final tile = g.repeating ? TileMode.repeated : TileMode.clamp;
+  if (g.kind == 'radial') {
+    final shortest = math.min(size.width, size.height);
+    final farthest = math.sqrt(size.width * size.width + size.height * size.height) / 2;
+    return RadialGradient(
+      colors: colors,
+      stops: stops,
+      radius: shortest <= 0 ? 0.5 : farthest / shortest,
+      tileMode: tile,
+    );
+  }
+  if (g.kind == 'conic') {
+    return SweepGradient(
+      colors: colors,
+      stops: stops,
+      startAngle: 0,
+      endAngle: math.pi * 2,
+      transform: const GradientRotation(-math.pi / 2),
+      tileMode: tile,
+    );
+  }
+  final a = g.angle * math.pi / 180;
+  final dx = math.sin(a), dy = -math.cos(a);
+  final w = size.width, h = size.height;
+  final half = (w * dx.abs() + h * dy.abs()) / 2;
+  Alignment at(double sign) {
+    final px = sign * dx * half;
+    final py = sign * dy * half;
+    return Alignment(w == 0 ? 0 : px / (w / 2), h == 0 ? 0 : py / (h / 2));
+  }
+
+  return LinearGradient(begin: at(-1), end: at(1), colors: colors, stops: stops, tileMode: tile);
+}
+
+/// Fills implicit stop positions per CSS Images §3.5.3.
+List<double> _stopPositions(List<GradientStop> stops) {
+  final n = stops.length;
+  final out = List<double?>.generate(n, (i) => stops[i].position);
+  out[0] ??= 0;
+  out[n - 1] ??= 1;
+  var maxSoFar = 0.0;
+  for (var i = 0; i < n; i++) {
+    if (out[i] != null) {
+      if (out[i]! < maxSoFar) out[i] = maxSoFar;
+      maxSoFar = out[i]!;
+    }
+  }
+  var i = 0;
+  while (i < n) {
+    if (out[i] != null) {
+      i++;
+      continue;
+    }
+    final start = i - 1;
+    var end = i;
+    while (out[end] == null) {
+      end++;
+    }
+    for (var k = i; k < end; k++) {
+      out[k] = out[start]! + (out[end]! - out[start]!) * (k - start) / (end - start);
+    }
+    i = end;
+  }
+  return [for (final v in out) v!];
 }
 
 /// Sizes, pads, borders, decorates and clips one CSS box.
@@ -104,6 +205,7 @@ class RenderCssBox extends RenderBox with RenderObjectWithChildMixin<RenderBox> 
   final ImageConfiguration _imageConfiguration;
   BoxPainter? _painter;
   Decoration? _decoration;
+  Size? _decorationSize;
   EdgeInsets _inset = EdgeInsets.zero;
 
   CssBoxSpec get spec => _spec;
@@ -111,6 +213,7 @@ class RenderCssBox extends RenderBox with RenderObjectWithChildMixin<RenderBox> 
     if (value == _spec) return;
     _spec = value;
     _decoration = null;
+    _decorationSize = null;
     _painter?.dispose();
     _painter = null;
     markNeedsLayout();
@@ -171,8 +274,8 @@ class RenderCssBox extends RenderBox with RenderObjectWithChildMixin<RenderBox> 
     );
     // Minimums from CSS still apply inside loose parent constraints, and the
     // box can never be smaller than its padding and border.
-    return constraints
-        .enforce(wanted)
+    return wanted
+        .enforce(constraints)
         .enforce(BoxConstraints(minWidth: math.min(inset.horizontal, constraints.maxWidth),
             minHeight: math.min(inset.vertical, constraints.maxHeight)));
   }
@@ -270,7 +373,14 @@ class RenderCssBox extends RenderBox with RenderObjectWithChildMixin<RenderBox> 
 
   Decoration _decorationFor(Size s) {
     final cached = _decoration;
-    if (cached != null) return cached;
+    if (cached != null && _decorationSize == s) return cached;
+    // Percentage border radii depend on the border box size; resize must
+    // rebuild the decoration and its painter.
+    if (_decorationSize != null && _decorationSize != s) {
+      _painter?.dispose();
+      _painter = null;
+    }
+    _decorationSize = s;
     BorderSide side(int i) => _spec.border[i] > 0
         ? BorderSide(width: _spec.border[i], color: _spec.borderColors[i])
         : BorderSide.none;
@@ -285,9 +395,106 @@ class RenderCssBox extends RenderBox with RenderObjectWithChildMixin<RenderBox> 
     return _decoration = BoxDecoration(
       color: _spec.background,
       image: _spec.backgroundImage,
-      border: _spec.border.every((b) => b == 0) ? null : border,
+      gradient: _spec.gradient == null ? null : cssGradient(_spec.gradient!, s),
+      boxShadow: _spec.shadows.isEmpty ? null : _spec.shadows,
+      border: _spec.border.every((b) => b == 0) || _spec._customBorder ? null : border,
       borderRadius: _hasRadius ? _radius(s) : null,
     );
+  }
+
+  /// Dashed, dotted and double borders (Flutter's [Border] only draws solid
+  /// lines). Rounded boxes use the first visible side's width and color.
+  void _paintStyledBorder(Canvas canvas, Offset offset) {
+    if (!_spec._customBorder || _spec.border.every((b) => b == 0)) return;
+    final rect = offset & size;
+    Path dashed(Path source, double width, String style) {
+      if (style == 'solid' || style == 'double') return source;
+      final dash = style == 'dotted' ? width : width * 3;
+      final gap = style == 'dotted' ? width : width * 2;
+      final out = Path();
+      for (final metric in source.computeMetrics()) {
+        var d = 0.0;
+        while (d < metric.length) {
+          out.addPath(metric.extractPath(d, math.min(d + dash, metric.length)), Offset.zero);
+          d += dash + gap;
+        }
+      }
+      return out;
+    }
+
+    Paint paintFor(int i, double w) => Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = w
+      ..strokeCap = _spec.borderStyles[i] == 'dotted' ? StrokeCap.round : StrokeCap.butt
+      ..color = _spec.borderColors[i];
+
+    if (_hasRadius) {
+      final i = [0, 1, 2, 3].firstWhere((k) => _spec.border[k] > 0);
+      final w = _spec.border[i];
+      final style = _spec.borderStyles[i];
+      final r = _radius(size);
+      RRect inset(double by) => r.toRRect(rect).deflate(by);
+      if (style == 'double') {
+        final t = w / 3;
+        final p = paintFor(i, t);
+        canvas.drawRRect(inset(t / 2), p);
+        canvas.drawRRect(inset(w - t / 2), p);
+        return;
+      }
+      final path = Path()..addRRect(inset(w / 2));
+      canvas.drawPath(dashed(path, w, style), paintFor(i, style == 'dotted' ? w * 0.9 : w));
+      return;
+    }
+    final t = _spec.border[0], rgt = _spec.border[1], b = _spec.border[2], l = _spec.border[3];
+    final sides = [
+      (0, Offset(rect.left, rect.top + t / 2), Offset(rect.right, rect.top + t / 2), t),
+      (1, Offset(rect.right - rgt / 2, rect.top), Offset(rect.right - rgt / 2, rect.bottom), rgt),
+      (2, Offset(rect.right, rect.bottom - b / 2), Offset(rect.left, rect.bottom - b / 2), b),
+      (3, Offset(rect.left + l / 2, rect.bottom), Offset(rect.left + l / 2, rect.top), l),
+    ];
+    for (final (i, a, z, w) in sides) {
+      if (w <= 0) continue;
+      final style = _spec.borderStyles[i];
+      if (style == 'double') {
+        final third = w / 3;
+        final normal = i == 0 || i == 2 ? const Offset(0, 1) : const Offset(1, 0);
+        final sign = i == 0 || i == 3 ? 1.0 : -1.0;
+        final shiftOuter = normal * (-(w / 2) + third / 2) * sign;
+        final shiftInner = normal * ((w / 2) - third / 2) * sign;
+        final p = paintFor(i, third);
+        canvas.drawLine(a + shiftOuter, z + shiftOuter, p);
+        canvas.drawLine(a + shiftInner, z + shiftInner, p);
+        continue;
+      }
+      final path = Path()
+        ..moveTo(a.dx, a.dy)
+        ..lineTo(z.dx, z.dy);
+      canvas.drawPath(dashed(path, w, style), paintFor(i, w));
+    }
+  }
+
+  void _paintOutline(Canvas canvas, Offset offset) {
+    final w = _spec.outlineWidth;
+    if (w <= 0) return;
+    final grow = _spec.outlineOffset + w / 2;
+    final rect = (offset & size).inflate(grow);
+    final paint = Paint()
+      ..color = _spec.outlineColor
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = w;
+    if (_hasRadius) {
+      final r = _radius(size);
+      canvas.drawRRect(
+        RRect.fromRectAndCorners(rect,
+            topLeft: r.topLeft + Radius.circular(grow),
+            topRight: r.topRight + Radius.circular(grow),
+            bottomLeft: r.bottomLeft + Radius.circular(grow),
+            bottomRight: r.bottomRight + Radius.circular(grow)),
+        paint,
+      );
+    } else {
+      canvas.drawRect(rect, paint);
+    }
   }
 
   @override
@@ -296,12 +503,17 @@ class RenderCssBox extends RenderBox with RenderObjectWithChildMixin<RenderBox> 
       final decoration = _decorationFor(size);
       _painter ??= decoration.createBoxPainter(markNeedsPaint);
       _painter!.paint(context.canvas, offset, _imageConfiguration.copyWith(size: size));
+      _paintStyledBorder(context.canvas, offset);
     }
     final child = this.child;
-    if (child == null) return;
+    if (child == null) {
+      _paintOutline(context.canvas, offset);
+      return;
+    }
     final childOffset = (child.parentData! as BoxParentData).offset;
     if (!_spec.clip) {
       context.paintChild(child, offset + childOffset);
+      _paintOutline(context.canvas, offset);
       return;
     }
     final clipRect = Offset(_spec.border[3], _spec.border[0]) &
@@ -324,6 +536,7 @@ class RenderCssBox extends RenderBox with RenderObjectWithChildMixin<RenderBox> 
         oldLayer: _clipLayer.layer as ClipRectLayer?,
       );
     }
+    _paintOutline(context.canvas, offset);
   }
 
   final LayerHandle<ContainerLayer> _clipLayer = LayerHandle<ContainerLayer>();

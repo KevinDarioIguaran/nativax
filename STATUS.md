@@ -1,5 +1,22 @@
 # NativaX: estado de la sesión (2026-10-20)
 
+> **Este archivo es histórico.** El estado vivo y actualizado está en
+> [`progress/status.md`](progress/status.md) (sesión 19: 276 tests en los
+> paquetes, WebGL/WebAssembly y juego real arrancando; B5 en curso).
+
+> **Actualización de la sesión 2 (conformidad + fase 1).** El estado vivo está
+> en [`progress/status.md`](progress/status.md); el histórico y los números en
+> [`progress/`](progress/README.md); las normas de trabajo en
+> [`.agents/`](.agents/README.md). Resumen: `nativax_flutter` ya compila y
+> renderiza texto, cajas, bloque, flex, controles básicos y eventos
+> JS→DOM→Flutter; el runtime público `NativaXView` ya carga documentos y un
+> contador con estado en JS; las fases 2 y 3 están cerradas para el alcance 0.1
+> (JS async/eventos/ciclo de vida y layout CSS con posición, listas,
+> formularios, imágenes y responsive); hay 212 tests verdes y runners de conformidad para Test262,
+> html5lib y WPT. La línea base es Test262 97,93 %, html5lib 96,95 %, WPT
+> DOM/CSS todavía muy bajo y URL 0 % (API ausente). El texto de abajo es el
+> resumen original de la sesión 1 y se conserva como referencia.
+
 El prompt original completo está en [PROMPT.md](PROMPT.md). Este archivo resume lo que ya existe, lo verificado y lo que falta, para retomar en otra sesión.
 
 ## Pedidos adicionales del usuario (durante la sesión)
@@ -31,10 +48,10 @@ El prompt original completo está en [PROMPT.md](PROMPT.md). Este archivo resume
 | `nativax_html` | Tokenizer (estados WHATWG simplificados), entidades, raw text (script/style) y RCDATA, tree builder con html/head/body implícitos, cierre implícito de p/li/dd/dt/option, recuperación, errores con línea:col, límites, `parseFragment` | **38 ✅** |
 | `nativax_css` | Tokenizer, parser con recuperación y warnings, ~70 longhands + shorthands, colores (148 nombres, hex, rgb, hsl), unidades, media queries (width/height/orientation/prefers-color-scheme/reduced-motion/resolution), `StyleEngine` (índice de reglas, capas UA/autor/inline/!important, herencia, `inherit`/`initial`/`unset`, blockificación, invalidación incremental), hoja UA | **30 ✅** |
 | `nativax_dom_bindings` | Preludio JS (`prelude.dart`: Node/Element/Document/Event/CustomEvent/classList/style Proxy/dataset/on* handlers; WeakRef + FinalizationRegistry para liberar wrappers), `DomBindings` (≈70 ops del host), `HostEnvironment` y `StaticEnvironment`, `MemoryStorage`, `InlineStyle`. APIs tipo navegador: `window`, `navigator.language(s)`, `innerWidth/innerHeight/devicePixelRatio`, `matchMedia` con eventos `change`, `localStorage` con cuota, `nativax.theme` (brightness/colors/`setMode`) con el evento `nativax:themechange`, `languagechange`, `resize`, `nativax.invoke` (JS→Dart) y `postMessage` (Dart→JS) | **26 ✅** |
-| `nativax_flutter` | **EN PROGRESO, sin compilar todavía.** Escrito: `layout/css_item.dart`, `layout/css_box.dart`, `layout/css_block.dart` (colapso de márgenes entre hermanos, `margin:auto`), `layout/css_flex.dart` (algoritmo flex con congelamiento por min-size, wrap, gap, justify, align, márgenes auto), `style_mapping.dart`. **Falta:** `pubspec.yaml`, la entrada `lib/nativax_flutter.dart`, el renderizador (ver el plan) y los tests | — |
-| `nativax` | **NO INICIADO.** Runtime público + `NativaXView` | — |
+| `nativax_flutter` | **Fase 1 (sesión 2): compila y renderiza.** Layout de caja/bloque/flex, `NativaXDocumentView`, texto inline, controles básicos, gestos y 7 tests. **Falta:** posicionamiento absoluto/z-index, listas, tablas, foco/teclado, scroll por contenedor y notificaciones por dueño | — |
+| `nativax` | **Fase 1 (sesión 2):** `NativaXRuntime`, `NativaXView`, `FlutterHostEnvironment` y 3 tests; falta carga desde assets y ejemplo ejecutable | — |
 
-Total verificado: **159 tests en verde** (ejecutar `dart test` dentro de cada paquete puro).
+Total verificado (sesión 1): **159 tests en verde**; tras la sesión 7 (fase 4A en curso): **190 tests** (ejecutar `dart test` dentro de cada paquete puro).
 
 ## Plan del renderizador (diseño ya decidido, falta implementarlo)
 
@@ -51,7 +68,7 @@ Total verificado: **159 tests en verde** (ejecutar `dart test` dentro de cada pa
 ## Siguientes pasos priorizados
 
 1. `nativax_flutter`: pubspec (flutter sdk + nativax_dom + nativax_css), renderizador, `flutter analyze` y widget tests (texto, cajas, flex, botón → evento, actualización reactiva, resize/@media, semantics).
-2. `nativax`: `NativaXRuntime` (carga desde string/asset/archivo con `ResourcePolicy`, ejecución de `<script>` inline en orden, `<style>` → authorSheets, `fireLoadEvents`, TimerHost + console + logger, dispose), `NativaXView(source:)`, `FlutterHostEnvironment` (MediaQuery, Theme, locales, plataforma) y `environmentChanged()` en cambios.
+2. ✅ (parcial, sesión 2) `nativax`: `NativaXRuntime` (carga desde string/asset/archivo con `ResourcePolicy`, ejecución de `<script>` inline en orden, `<style>` → authorSheets, `fireLoadEvents`, TimerHost + console + logger, dispose), `NativaXView(source:)`, `FlutterHostEnvironment` (MediaQuery, Theme, locales, plataforma) y `environmentChanged()` en cambios.
 3. Ejemplos (`examples/counter`, hello, todo, forms) + `integration_test` en Linux (`flutter test -d linux`), y verificar que funciona `flutter build linux` con native assets.
 4. Benchmarks (`tools/benchmark`): parsing, estilos, layout, costo por llamada del puente JS↔Dart → optimizar el puente.
 5. Docs: README, architecture, compatibility (matriz real: solo Linux verificable aquí), html/css/javascript-supported, security-model, api-reference, troubleshooting, ADRs, CHANGELOG, LICENSE y licencias de terceros.

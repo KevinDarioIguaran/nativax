@@ -342,7 +342,26 @@ class HtmlTokenizer {
       final body = src.substring(_pos, end < 0 ? src.length : end).trim();
       _pos = end < 0 ? src.length : end + 1;
       if (end < 0) onError('eof-in-doctype', start);
-      return DoctypeToken(start, body.split(RegExp(r'\s+')).first.toLowerCase());
+      final nameMatch = RegExp(r'^([^\s>]+)').firstMatch(body);
+      final name = nameMatch?.group(1)?.toLowerCase() ?? '';
+      final rest = nameMatch == null ? '' : body.substring(nameMatch.end).trim();
+      var publicId = '';
+      var systemId = '';
+      final public = RegExp(
+              r'''^PUBLIC\s+(?:"([^"]*)"|'([^']*)')(?:\s+(?:"([^"]*)"|'([^']*)'))?''',
+              caseSensitive: false)
+          .firstMatch(rest);
+      if (public != null) {
+        publicId = public.group(1) ?? public.group(2) ?? '';
+        systemId = public.group(3) ?? public.group(4) ?? '';
+      } else {
+        final system = RegExp(r'''^SYSTEM\s+(?:"([^"]*)"|'([^']*)')''',
+                caseSensitive: false)
+            .firstMatch(rest);
+        if (system != null) systemId = system.group(1) ?? system.group(2) ?? '';
+      }
+      return DoctypeToken(start, name,
+          publicId: publicId, systemId: systemId);
     }
     onError('incorrectly-opened-comment', start);
     return _bogusComment(start);
@@ -400,15 +419,41 @@ class HtmlTokenizer {
     }
     final name = src.substring(nameStart, _pos);
     final hasSemicolon = !_eof && src.codeUnitAt(_pos) == 0x3b;
-    final value = namedEntities[name];
-    if (value != null && hasSemicolon) {
-      _pos++;
-      return value;
+
+    if (hasSemicolon) {
+      final value = namedEntities[name];
+      if (value != null) {
+        _pos++;
+        return value;
+      }
     }
-    if (value != null && !inAttribute) {
+
+    // No exact (possibly semicolon-terminated) match: use the longest legacy
+    // prefix, as required by the named character reference state. In
+    // attribute values a legacy reference followed by an alphanumeric or `=`
+    // is not decoded.
+    var prefixLength = name.length;
+    while (prefixLength > 0 &&
+        !legacyNamedEntities.containsKey(name.substring(0, prefixLength))) {
+      prefixLength--;
+    }
+    if (prefixLength > 0) {
+      final end = nameStart + prefixLength;
+      final next = end < src.length ? src.codeUnitAt(end) : -1;
+      final blocked = inAttribute &&
+          (next == 0x3d ||
+              (next >= 0x30 && next <= 0x39) ||
+              (next >= 0x41 && next <= 0x5a) ||
+              (next >= 0x61 && next <= 0x7a));
+      if (blocked) {
+        _pos = start + 1;
+        return '&';
+      }
+      _pos = end;
       onError('missing-semicolon-after-character-reference', start);
-      return value;
+      return legacyNamedEntities[name.substring(0, prefixLength)]!;
     }
+
     if (name.isNotEmpty && hasSemicolon) {
       onError('unknown-named-character-reference', start, name);
     }

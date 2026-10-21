@@ -28,12 +28,82 @@ class CssItemParentData extends ContainerBoxParentData<RenderBox> {
   /// `auto` or an align-items keyword.
   String alignSelf = 'auto';
 
+  /// `auto` or a justify-items keyword (grid items).
+  String justifySelf = 'auto';
+
+  /// Grid placement.
+  GridLineValue gridRowStart = GridLineValue.auto;
+  GridLineValue gridRowEnd = GridLineValue.auto;
+  GridLineValue gridColumnStart = GridLineValue.auto;
+  GridLineValue gridColumnEnd = GridLineValue.auto;
+
+  /// `order` (flex and grid items).
+  int order = 0;
+
+  /// Replaced element (img, svg, video, canvas…): in grid, `normal`
+  /// alignment means `start` instead of `stretch` for these.
+  bool replaced = false;
+
+  /// `z-index` of positioned (relative/sticky) items; null paints in tree
+  /// order with the rest of the flow.
+  int? zIndex;
+
   /// Width/height of the containing block, set by the parent before laying
   /// the child out. null when unknown (indefinite).
   double? containingWidth;
   double? containingHeight;
 
   double resolveMargin(ResolvedLength? m, double basis) => m?.resolve(basis) ?? 0;
+}
+
+/// Paints CSS items in stacking order: negative `z-index` first, then the
+/// flow in tree order, then non-negative `z-index` items; hit tests in
+/// reverse.
+mixin CssStackingPaint on RenderBox, ContainerRenderObjectMixin<RenderBox, CssItemParentData> {
+  List<RenderBox> _paintOrder() {
+    final normal = <RenderBox>[];
+    final stacked = <(int, int, RenderBox)>[];
+    var i = 0;
+    for (var c = firstChild; c != null; c = (c.parentData! as CssItemParentData).nextSibling) {
+      final z = (c.parentData! as CssItemParentData).zIndex;
+      if (z == null) {
+        normal.add(c);
+      } else {
+        stacked.add((z, i, c));
+      }
+      i++;
+    }
+    if (stacked.isEmpty) return normal;
+    stacked.sort((a, b) => a.$1 != b.$1 ? a.$1 - b.$1 : a.$2 - b.$2);
+    return [
+      for (final s in stacked)
+        if (s.$1 < 0) s.$3,
+      ...normal,
+      for (final s in stacked)
+        if (s.$1 >= 0) s.$3,
+    ];
+  }
+
+  void paintStacked(PaintingContext context, Offset offset) {
+    for (final c in _paintOrder()) {
+      context.paintChild(c, (c.parentData! as CssItemParentData).offset + offset);
+    }
+  }
+
+  bool hitTestStacked(BoxHitTestResult result, Offset position) {
+    final order = _paintOrder();
+    for (var k = order.length - 1; k >= 0; k--) {
+      final c = order[k];
+      final pd = c.parentData! as CssItemParentData;
+      final hit = result.addWithPaintOffset(
+        offset: pd.offset,
+        position: position,
+        hitTest: (r, p) => c.hitTest(r, position: p),
+      );
+      if (hit) return true;
+    }
+    return false;
+  }
 }
 
 /// Attaches CSS item data (margins, flex properties) to a child of a
@@ -48,6 +118,14 @@ class CssItem extends ParentDataWidget<CssItemParentData> {
     this.flexShrink = 1,
     this.flexBasis,
     this.alignSelf = 'auto',
+    this.justifySelf = 'auto',
+    this.gridRowStart = GridLineValue.auto,
+    this.gridRowEnd = GridLineValue.auto,
+    this.gridColumnStart = GridLineValue.auto,
+    this.gridColumnEnd = GridLineValue.auto,
+    this.order = 0,
+    this.zIndex,
+    this.replaced = false,
     required super.child,
   });
 
@@ -59,6 +137,14 @@ class CssItem extends ParentDataWidget<CssItemParentData> {
   final double flexShrink;
   final ResolvedLength? flexBasis;
   final String alignSelf;
+  final String justifySelf;
+  final GridLineValue gridRowStart;
+  final GridLineValue gridRowEnd;
+  final GridLineValue gridColumnStart;
+  final GridLineValue gridColumnEnd;
+  final int order;
+  final int? zIndex;
+  final bool replaced;
 
   @override
   void applyParentData(RenderObject renderObject) {
@@ -81,6 +167,17 @@ class CssItem extends ParentDataWidget<CssItemParentData> {
     set(pd.flexShrink, flexShrink, (v) => pd.flexShrink = v);
     set(pd.flexBasis, flexBasis, (v) => pd.flexBasis = v);
     set(pd.alignSelf, alignSelf, (v) => pd.alignSelf = v);
+    set(pd.justifySelf, justifySelf, (v) => pd.justifySelf = v);
+    set(pd.gridRowStart, gridRowStart, (v) => pd.gridRowStart = v);
+    set(pd.gridRowEnd, gridRowEnd, (v) => pd.gridRowEnd = v);
+    set(pd.gridColumnStart, gridColumnStart, (v) => pd.gridColumnStart = v);
+    set(pd.gridColumnEnd, gridColumnEnd, (v) => pd.gridColumnEnd = v);
+    set(pd.order, order, (v) => pd.order = v);
+    set(pd.replaced, replaced, (v) => pd.replaced = v);
+    if (pd.zIndex != zIndex) {
+      pd.zIndex = zIndex;
+      renderObject.parent?.markNeedsPaint();
+    }
     if (changed) renderObject.parent?.markNeedsLayout();
   }
 

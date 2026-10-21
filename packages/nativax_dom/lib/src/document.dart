@@ -1,4 +1,5 @@
 import 'element.dart';
+import 'layout_host.dart';
 import 'events.dart';
 import 'exceptions.dart';
 import 'mutation.dart';
@@ -55,6 +56,9 @@ class Document extends Node {
 
   Element? get documentElement => children.firstOrNull;
 
+  /// The document's doctype node, if any.
+  DocumentType? get doctype => rawChildren.whereType<DocumentType>().firstOrNull;
+
   Element? _childOfRoot(String name) {
     final root = documentElement;
     if (root == null) return null;
@@ -82,6 +86,21 @@ class Document extends Node {
   Comment createComment(String data) => Comment(this, data);
   DocumentFragment createDocumentFragment() => DocumentFragment(this);
 
+  DocumentType createDocumentType(String name, [String publicId = '', String systemId = '']) {
+    if (name.contains(RegExp(r'[\s>]'))) {
+      throw DomException('InvalidCharacterError', 'invalid name "$name"');
+    }
+    return DocumentType(this, name, publicId: publicId, systemId: systemId);
+  }
+
+  ProcessingInstruction createProcessingInstruction(String target, String data) {
+    validateName(target);
+    if (data.contains('?>')) {
+      throw DomException('InvalidCharacterError', 'data contains "?>"');
+    }
+    return ProcessingInstruction(this, target, data);
+  }
+
   // --- queries -------------------------------------------------------------
 
   Element? getElementById(String id) {
@@ -93,10 +112,10 @@ class Document extends Node {
   }
 
   Element? querySelector(String selectors) =>
-      SelectorList.parse(selectors).first(this);
+      SelectorList.parse(selectors).first(this, documentElement);
 
   List<Element> querySelectorAll(String selectors) =>
-      SelectorList.parse(selectors).all(this);
+      SelectorList.parse(selectors).all(this, documentElement);
 
   List<Element> getElementsByTagName(String name) =>
       documentElement == null
@@ -107,21 +126,21 @@ class Document extends Node {
               ...documentElement!.getElementsByTagName(name),
             ];
 
-  List<Element> getElementsByClassName(String names) =>
-      documentElement == null
-          ? const []
-          : [
-              if (names
-                  .split(RegExp(r'\s+'))
-                  .where((s) => s.isNotEmpty)
-                  .every(documentElement!.classList.contains))
-                documentElement!,
-              ...documentElement!.getElementsByClassName(names),
-            ];
+  List<Element> getElementsByClassName(String names) {
+    final wanted = names.split(RegExp(r'[\t\n\f\r ]+')).where((s) => s.isNotEmpty).toList();
+    if (wanted.isEmpty || documentElement == null) return const [];
+    return [
+      if (wanted.every(documentElement!.classList.contains)) documentElement!,
+      ...documentElement!.getElementsByClassName(names),
+    ];
+  }
 
   // --- focus ---------------------------------------------------------------
 
   Element? get activeElement => _activeElement ?? body;
+
+  /// The element that actually has focus (`:focus`), or null.
+  Element? get focusedElement => _activeElement;
 
   /// Records that [element] gained focus (called by the renderer) and fires
   /// `blur`/`focus` events.
@@ -129,9 +148,130 @@ class Document extends Node {
     if (identical(element, _activeElement)) return;
     final previous = _activeElement;
     _activeElement = element;
+    _stateChanged(previous, element);
     previous?.dispatchEvent(Event('blur')..isTrusted = true);
     element?.dispatchEvent(Event('focus')..isTrusted = true);
+    if (previous != null) {
+      previous.dispatchEvent(Event('focusout', bubbles: true)..isTrusted = true);
+    }
+    element?.dispatchEvent(Event('focusin', bubbles: true)..isTrusted = true);
   }
+
+  // --- interaction state (:hover, :active, :target, :modal) ---------------
+
+  Element? _hoverElement;
+  Element? _pressedElement;
+  String? _targetId;
+
+  /// The innermost element under the pointer (`:hover` matches it and its
+  /// ancestors).
+  Element? get hoverElement => _hoverElement;
+  set hoverElement(Element? element) {
+    if (identical(element, _hoverElement)) return;
+    final previous = _hoverElement;
+    _hoverElement = element;
+    _stateChanged(previous, element);
+  }
+
+  /// The element being pressed (`:active`).
+  Element? get pressedElement => _pressedElement;
+  set pressedElement(Element? element) {
+    if (identical(element, _pressedElement)) return;
+    final previous = _pressedElement;
+    _pressedElement = element;
+    _stateChanged(previous, element);
+  }
+
+  /// The fragment of the document URL (`:target`), without `#`.
+  String? get targetId => _targetId;
+  set targetId(String? id) {
+    if (id == _targetId) return;
+    final previous = _targetId == null ? null : getElementById(_targetId!);
+    _targetId = id;
+    _stateChanged(previous, id == null ? null : getElementById(id));
+  }
+
+  /// Layout queries and scrolling, provided by the renderer when mounted.
+  LayoutHost? layoutHost;
+
+  /// `<canvas>` 2D drawing, provided by the renderer when mounted. Commands
+  /// recorded before a renderer exists are queued and replayed when one is
+  /// attached.
+  CanvasHost? get canvasHost => _canvasHost;
+  CanvasHost? _canvasHost;
+  set canvasHost(CanvasHost? host) {
+    _canvasHost = host;
+    if (host == null || _pendingCanvas.isEmpty) return;
+    final pending = List.of(_pendingCanvas);
+    _pendingCanvas.clear();
+    for (final (el, w, h, ops) in pending) {
+      host.draw(el, w, h, ops);
+    }
+  }
+
+  final List<(Element, int, int, List<Object?>)> _pendingCanvas = [];
+  int _pendingCanvasOps = 0;
+
+  /// Sends canvas commands to the renderer, or queues them (bounded) until
+  /// one is attached.
+  void drawCanvas(Element canvas, int width, int height, List<Object?> ops) {
+    final host = _canvasHost;
+    if (host != null) {
+      host.draw(canvas, width, height, ops);
+      return;
+    }
+    // A reset makes earlier queued commands for this canvas irrelevant.
+    if (ops.isNotEmpty && ops.first is List && (ops.first as List).firstOrNull == 'reset') {
+      _pendingCanvas.removeWhere((p) => identical(p.$1, canvas));
+    }
+    _pendingCanvasOps += ops.length;
+    if (_pendingCanvasOps > 500000) return;
+    _pendingCanvas.add((canvas, width, height, ops));
+  }
+
+  /// When the user last interacted (trusted click, key or touch). Powerful
+  /// APIs (clipboard writes, vibration) require a recent activation, like
+  /// browsers' transient user activation.
+  DateTime? lastUserActivation;
+
+  /// Whether a trusted user gesture happened within the last 5 seconds.
+  bool get hasTransientActivation {
+    final t = lastUserActivation;
+    return t != null && DateTime.now().difference(t) < const Duration(seconds: 5);
+  }
+
+  /// Dialogs opened with `showModal()`, in opening order (top last).
+  final List<Element> modalElements = [];
+
+  /// Notifies style listeners that state-dependent pseudo-classes may have
+  /// changed for [a], [b] and their ancestors.
+  void _stateChanged(Element? a, Element? b) {
+    final seen = <Element>{};
+    for (final start in [a, b]) {
+      for (Element? e = start; e != null; e = e.parentElement) {
+        if (!seen.add(e)) break;
+      }
+    }
+    // Only ancestors that differ between the two chains change state; the
+    // shared chain keeps :hover/:focus-within. Notify the topmost differing
+    // elements (their subtrees are restyled).
+    final shared = <Element>{};
+    if (a != null && b != null) {
+      for (Element? e = a; e != null; e = e.parentElement) {
+        if (identical(e, b) || e.contains(b)) shared.add(e);
+      }
+    }
+    for (final e in seen) {
+      if (shared.contains(e)) continue;
+      if (!e.isConnected) continue;
+      notify(MutationRecord.property(e, ':state'));
+    }
+  }
+
+  /// Signals that [element]'s state-dependent styles may have changed
+  /// (validity, modal state).
+  void notifyStateChanged(Element element) =>
+      notify(MutationRecord.property(element, ':state'));
 
   void requestFocus(Element? element) => onFocusRequest?.call(element);
 
@@ -206,8 +346,15 @@ class Document extends Node {
   }
 
   @override
-  Document cloneNode({bool deep = false}) =>
-      throw DomException('NotSupportedError', 'documents cannot be cloned');
+  Document cloneNode({bool deep = false}) {
+    final copy = Document(limits: limits);
+    if (deep) {
+      for (final c in rawChildren) {
+        copy.appendChild(c.cloneNode(deep: true));
+      }
+    }
+    return copy;
+  }
 
   /// Removes every listener in the tree and detaches mutation listeners.
   void dispose() {

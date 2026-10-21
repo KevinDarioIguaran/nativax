@@ -2,6 +2,7 @@ import 'package:nativax_dom/nativax_dom.dart';
 
 import 'media_queries.dart';
 import 'properties.dart';
+import 'supports.dart';
 import 'tokenizer.dart';
 import 'values.dart';
 
@@ -43,6 +44,19 @@ class MediaRule extends CssRule {
   final String conditionText;
   final MediaQueryList media;
   final List<CssRule> rules;
+}
+
+/// One `@keyframes` step: offsets in 0..1 and its declarations.
+class Keyframe {
+  const Keyframe(this.offsets, this.declarations);
+  final List<double> offsets;
+  final List<Declaration> declarations;
+}
+
+class KeyframesRule extends CssRule {
+  const KeyframesRule(this.name, this.frames);
+  final String name;
+  final List<Keyframe> frames;
 }
 
 class StyleSheet {
@@ -150,6 +164,58 @@ class CssParser {
       _i = end + 1;
       return;
     }
+    if ((name == 'keyframes' || name == '-webkit-keyframes') && depth < _maxNesting) {
+      final nameToks = _tokens.sublist(_i, end).where((t) => t.type != CssTokenType.whitespace).toList();
+      final kfName = nameToks.isEmpty ? '' : nameToks.first.value;
+      final blockEnd = _blockEnd(end);
+      _i = end + 1;
+      final frames = <Keyframe>[];
+      while (_i < blockEnd - 1) {
+        final t = _peek;
+        if (t.type == CssTokenType.whitespace) {
+          _i++;
+          continue;
+        }
+        final selEnd = _preludeEnd();
+        if (selEnd >= blockEnd) break;
+        final offsets = <double>[];
+        for (final part in _text(_i, selEnd).split(',')) {
+          final p = part.trim().toLowerCase();
+          if (p == 'from') {
+            offsets.add(0);
+          } else if (p == 'to') {
+            offsets.add(1);
+          } else if (p.endsWith('%')) {
+            final v = double.tryParse(p.substring(0, p.length - 1));
+            if (v != null) offsets.add((v / 100).clamp(0, 1).toDouble());
+          }
+        }
+        final frameEnd = _blockEnd(selEnd);
+        _i = selEnd + 1;
+        final decls = _declarations(frameEnd - 1);
+        _i = frameEnd;
+        if (offsets.isNotEmpty) frames.add(Keyframe(offsets, decls));
+      }
+      _i = blockEnd;
+      if (kfName.isNotEmpty) out.add(KeyframesRule(kfName, frames));
+      return;
+    }
+    if (name == 'supports' && depth < _maxNesting) {
+      final text = _text(_i, end);
+      _i = end + 1;
+      final rules = _ruleList(topLevel: false, depth: depth + 1);
+      if (!_done) _i++; // '}'
+      if (supportsCondition(text)) out.addAll(rules);
+      return;
+    }
+    if (name == 'layer' && depth < _maxNesting) {
+      // Cascade layers are flattened in source order.
+      _i = end + 1;
+      final rules = _ruleList(topLevel: false, depth: depth + 1);
+      if (!_done) _i++;
+      out.addAll(rules);
+      return;
+    }
     if (name == 'media' && depth < _maxNesting) {
       final prelude = _tokens.sublist(_i, end);
       final text = _text(_i, end);
@@ -245,8 +311,9 @@ class CssParser {
       value = value.sublist(0, meaningful[meaningful.length - 2]);
     }
     final name = nameTok.value.toLowerCase();
+    final raw = value.map((t) => t.toString()).join().trim();
     if (name.startsWith('--')) {
-      _warnings.add(CssWarning('custom properties are not supported ($name)', nameTok.offset));
+      out.add(Declaration(name, RawValue(raw), important: important));
       return;
     }
     if (!isSupportedProperty(name)) {
@@ -254,8 +321,11 @@ class CssParser {
       return;
     }
     if (value.any((t) => t.type == CssTokenType.function &&
-        const {'var', 'calc', 'min', 'max', 'clamp', 'env'}.contains(t.value.toLowerCase()))) {
-      _warnings.add(CssWarning('unsupported function in "$name"', nameTok.offset));
+        const {'var', 'env', 'calc', 'min', 'max', 'clamp'}.contains(t.value.toLowerCase()))) {
+      // Keep the declaration: variables are inherited and can only be
+      // substituted while computing an element. The cascade resolves this
+      // RawValue (and reports a warning if it still cannot be parsed).
+      out.add(Declaration(name, RawValue(raw), important: important));
       return;
     }
     final expanded = expandDeclaration(name, value);

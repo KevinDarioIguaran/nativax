@@ -27,6 +27,7 @@ class MutationRecord {
     this.nextSibling,
     this.name,
     this.oldValue,
+    this.namespace,
   });
 
   factory MutationRecord.childList(
@@ -45,9 +46,10 @@ class MutationRecord {
         nextSibling: nextSibling,
       );
 
-  factory MutationRecord.attribute(Node target, String name, String? old) =>
+  factory MutationRecord.attribute(Node target, String name, String? old,
+          {String? namespace}) =>
       MutationRecord._(MutationType.attributes, target,
-          name: name, oldValue: old);
+          name: name, oldValue: old, namespace: namespace);
 
   factory MutationRecord.characterData(Node target, String old) =>
       MutationRecord._(MutationType.characterData, target, oldValue: old);
@@ -66,6 +68,9 @@ class MutationRecord {
   /// [MutationType.property].
   final String? name;
   final String? oldValue;
+
+  /// Attribute namespace for namespaced attribute mutations.
+  final String? namespace;
 
   @override
   String toString() => 'MutationRecord(${type.name}, ${target.nodeName}'
