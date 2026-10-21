@@ -21,7 +21,7 @@ real y el test de estadísticas de presentación.
 | Rendimiento 7× | 🔴 registrado | Rapier 180 pasos: 328,5 ms (wasm3) vs 30,7 ms (V8); gap 10,7× |
 | Ejemplo web-challenge | ✅ original | HTML/CSS/JS **sin modificar**: 46/52 comprobaciones propias en verde |
 | Seguridad | 🟢 | `tools/security`: 14 PASS / 0 FAIL / 1 SKIP |
-| Conformidad | 🟡 | Test262 97,93 %; html5lib 99,26 %; URL 70,98 %; DOM 59,36 %; CSS 10,38 %; tree 48,72 % |
+| Conformidad | 🟡 | Test262 97,93 %; html5lib 99,26 %; URL 72,21 %; DOM 59,36 %; CSS 10,38 %; tree 48,72 % |
 | Plataformas | 🟡 solo Linux | build Linux verificado; resto sin probar |
 
 ## Reorganización Nativa y skills — 2026-10-21
@@ -45,6 +45,17 @@ real y el test de estadísticas de presentación.
 - Reportes de conformidad: se eliminaron 420 archivos con timestamp de
   `progress/reports/`; solo quedan `*-latest.md` por suite. Las corridas con
   fecha pasan a `.conformance/results/` (ignorado por git).
+
+## Incremento de conformidad URL — 2026-10-21
+
+- URL: **70,98 % → 72,21 %** (+1,23 puntos; 636 → 647 PASS;
+  260 → 249 FAIL; 896 casos, 0 SKIP, 0 ERROR).
+- Causa real: el parser de `data:` delegaba en `Uri.parse`, que rechaza las
+  URLs `data:` por su MIME type. Se añadió una rama específica para `data:`
+  usando un pseudo-URI `http:` y normalizando scheme, puerto, host y href.
+- Comando: `dart run bin/run_url.dart` (commit de la suite `e7d77cd`).
+- Tests: `nativa_dom_bindings` 51 en verde; `./tools/test_all.sh` 316 en verde;
+  `flutter analyze` limpio.
 
 ## Checkpoint estable — Fase 0 de presentación
 
