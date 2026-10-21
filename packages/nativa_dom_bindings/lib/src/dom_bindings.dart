@@ -116,7 +116,6 @@ class DomBindings {
   final math.Random _random = math.Random.secure();
   final Map<int, List<_Observation>> _observers = {};
   final Map<int, List<_PendingMutation>> _pendingRecords = {};
-  bool _deliveryScheduled = false;
   final Map<int, NetworkSocket> _sockets = {};
   final Set<int> _aborted = {};
 

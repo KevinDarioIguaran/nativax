@@ -286,13 +286,10 @@ extension _WebOps on DomBindings {
           return null;
         },
         'mo.queuedDone': (a) {
-          _deliveryScheduled = false;
           if (_pendingRecords.isNotEmpty) {
-            _deliveryScheduled = true;
             try {
               engine.callGlobal('__nx_queue_mo', _pendingRecords.keys.toList());
             } on JavaScriptException catch (e) {
-              _deliveryScheduled = false;
               onScriptError?.call(e);
             }
           }
