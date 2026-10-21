@@ -1,23 +1,23 @@
 # Conformidad: wpt-html-tree
 
-- Fecha: 2026-10-21T21:25:19.627824Z
+- Fecha: 2026-10-21T22:27:28.409848Z
 - Duración: 0.2 s
 - Comando: `run_html_tree`
 - Total: **1973** tests
-- Tasa de éxito (sin SKIP): **48.72 %**
+- Tasa de éxito (sin SKIP): **50.37 %**
 
 | Estado | Tests |
 |---|---:|
-| PASS | 913 |
-| FAIL | 961 |
+| PASS | 944 |
+| FAIL | 930 |
 | SKIP | 99 |
 | ERROR | 0 |
 
 ## Delta contra la línea base
 
-- Corregidos: **37**
+- Corregidos: **31**
 - Regresiones: **0**
-- Siguen fallando: **961**
+- Siguen fallando: **930**
 - Nuevos en esta ejecución: **0**
 - Ausentes respecto a la base: **0**
 
@@ -25,31 +25,31 @@
 
 | Grupo | PASS | FAIL | SKIP | ERROR | Éxito |
 |---|---:|---:|---:|---:|---:|
-| `html-parser` | 913 | 961 | 99 | 0 | 48.7 % |
+| `html-parser` | 944 | 930 | 99 | 0 | 50.4 % |
 
 ## Por directorio
 
 | Grupo | PASS | FAIL | SKIP | ERROR | Éxito |
 |---|---:|---:|---:|---:|---:|
 | `scriptdata01.dat#25` | 0 | 1 | 0 | 0 | 0.0 % |
-| `adoption01.dat#1` | 0 | 1 | 0 | 0 | 0.0 % |
-| `adoption01.dat#2` | 0 | 1 | 0 | 0 | 0.0 % |
+| `adoption01.dat#1` | 1 | 0 | 0 | 0 | 100.0 % |
+| `adoption01.dat#2` | 1 | 0 | 0 | 0 | 100.0 % |
 | `adoption01.dat#3` | 0 | 1 | 0 | 0 | 0.0 % |
 | `adoption01.dat#4` | 0 | 1 | 0 | 0 | 0.0 % |
 | `adoption01.dat#5` | 0 | 1 | 0 | 0 | 0.0 % |
 | `adoption01.dat#6` | 1 | 0 | 0 | 0 | 100.0 % |
-| `adoption01.dat#7` | 0 | 1 | 0 | 0 | 0.0 % |
-| `adoption01.dat#8` | 0 | 1 | 0 | 0 | 0.0 % |
+| `adoption01.dat#7` | 1 | 0 | 0 | 0 | 100.0 % |
+| `adoption01.dat#8` | 1 | 0 | 0 | 0 | 100.0 % |
 | `adoption01.dat#9` | 0 | 1 | 0 | 0 | 0.0 % |
 | `adoption01.dat#10` | 0 | 1 | 0 | 0 | 0.0 % |
 | `adoption01.dat#11` | 0 | 1 | 0 | 0 | 0.0 % |
 | `adoption01.dat#12` | 0 | 1 | 0 | 0 | 0.0 % |
 | `adoption01.dat#13` | 0 | 1 | 0 | 0 | 0.0 % |
-| `adoption01.dat#14` | 0 | 1 | 0 | 0 | 0.0 % |
+| `adoption01.dat#14` | 1 | 0 | 0 | 0 | 100.0 % |
 | `adoption01.dat#15` | 1 | 0 | 0 | 0 | 100.0 % |
 | `adoption01.dat#16` | 0 | 1 | 0 | 0 | 0.0 % |
 | `adoption01.dat#17` | 0 | 1 | 0 | 0 | 0.0 % |
-| `adoption02.dat#0` | 0 | 1 | 0 | 0 | 0.0 % |
+| `adoption02.dat#0` | 1 | 0 | 0 | 0 | 100.0 % |
 | `adoption02.dat#1` | 0 | 1 | 0 | 0 | 0.0 % |
 | `adoption02.dat#2` | 0 | 1 | 0 | 0 | 0.0 % |
 | `adoption02.dat#3` | 0 | 1 | 0 | 0 | 0.0 % |
@@ -113,63 +113,7 @@
 | `comments01.dat#9` | 0 | 1 | 0 | 0 | 0.0 % |
 | _(+1893 grupos)_ | | | | | |
 
-## Fallos (961)
-
-### `adoption01.dat#1`
-
-- Características: html-parser
-- Motivo: DOM tree differs from the fixture
-
-```text
-input: "<a>1<p>2</a>3</p>"
-expected: <html>
-  <head>
-  <body>
-    <a>
-      "1"
-    <p>
-      <a>
-        "2"
-      "3"
-
-actual:   <html>
-  <head>
-  <body>
-    <a>
-    <p>
-      "2"
-      <a>
-        "1"
-      "3"
-```
-
-### `adoption01.dat#2`
-
-- Características: html-parser
-- Motivo: DOM tree differs from the fixture
-
-```text
-input: "<a>1<button>2</a>3</button>"
-expected: <html>
-  <head>
-  <body>
-    <a>
-      "1"
-    <button>
-      <a>
-        "2"
-      "3"
-
-actual:   <html>
-  <head>
-  <body>
-    <a>
-    <button>
-      "2"
-      <a>
-        "1"
-      "3"
-```
+## Fallos (930)
 
 ### `adoption01.dat#3`
 
@@ -192,11 +136,10 @@ actual:   <html>
   <head>
   <body>
     <a>
-    <b>
-      "2"
-      <a>
-        "1"
-      "3"
+      "1"
+      <b>
+        "2"
+    "3"
 ```
 
 ### `adoption01.dat#4`
@@ -224,13 +167,14 @@ actual:   <html>
   <head>
   <body>
     <a>
+      "1"
+      <div>
+        "2"
     <div>
-      "3"
       <a>
-        "1"
-        <div>
-          "25"
+        "3"
       "4"
+    "5"
 ```
 
 ### `adoption01.dat#5`
@@ -254,68 +198,13 @@ expected: <html>
 actual:   <html>
   <head>
   <body>
-    <table>
-      <a>
-      <p>
-        "2"
-        <a>
-          "1"
-        "3"
-```
-
-### `adoption01.dat#7`
-
-- Características: html-parser
-- Motivo: DOM tree differs from the fixture
-
-```text
-input: "<b><a><b><p></a>"
-expected: <html>
-  <head>
-  <body>
-    <b>
-      <a>
-        <b>
-      <b>
-        <p>
-          <a>
-
-actual:   <html>
-  <head>
-  <body>
-    <b>
-      <a>
-      <p>
-        <a>
-          <b>
-```
-
-### `adoption01.dat#8`
-
-- Características: html-parser
-- Motivo: DOM tree differs from the fixture
-
-```text
-input: "<a><b><b><p></a>"
-expected: <html>
-  <head>
-  <body>
-    <a>
-      <b>
-        <b>
-    <b>
-      <b>
-        <p>
-          <a>
-
-actual:   <html>
-  <head>
-  <body>
-    <a>
     <p>
       <a>
-        <b>
-          <b>
+        "2"
+      "3"
+    <table>
+      <a>
+        "1"
 ```
 
 ### `adoption01.dat#9`
@@ -476,9 +365,8 @@ actual:   <html>
   <body>
     <div>
       <a>
-      <div>
-        <a>
-          <b>
+        <b>
+          <div>
             <div>
               <div>
                 <div>
@@ -487,42 +375,8 @@ actual:   <html>
                       <div>
                         <div>
                           <div>
-                            <div>
-```
-
-### `adoption01.dat#14`
-
-- Características: html-parser
-- Motivo: DOM tree differs from the fixture
-
-```text
-input: "<div><a><b><u><i><code><div></a>"
-expected: <html>
-  <head>
-  <body>
-    <div>
-      <a>
-        <b>
-          <u>
-            <i>
-              <code>
-      <u>
-        <i>
-          <code>
-            <div>
-              <a>
-
-actual:   <html>
-  <head>
-  <body>
-    <div>
-      <a>
       <div>
         <a>
-          <b>
-            <u>
-              <i>
-                <code>
 ```
 
 ### `adoption01.dat#16`
@@ -574,46 +428,13 @@ expected: <b>
   <b>
 
 actual:   <b>
-<aside>
-  <b>
-    <em>
   <em>
     <foo>
       <foob>
         <fooc>
-```
-
-### `adoption02.dat#0`
-
-- Características: html-parser
-- Motivo: DOM tree differs from the fixture
-
-```text
-input: "<b>1<i>2<p>3</b>4"
-expected: <html>
-  <head>
-  <body>
+<aside>
+  <em>
     <b>
-      "1"
-      <i>
-        "2"
-    <i>
-      <p>
-        <b>
-          "3"
-        "4"
-
-actual:   <html>
-  <head>
-  <body>
-    <b>
-    <p>
-      "3"
-      <b>
-        "1"
-        <i>
-          "2"
-      "4"
 ```
 
 ### `adoption02.dat#1`
@@ -638,10 +459,10 @@ actual:   <html>
   <head>
   <body>
     <a>
+      <div>
+        <style>
     <address>
       <a>
-        <div>
-          <style>
       <a>
 ```
 
@@ -2506,41 +2327,6 @@ actual:   <html>
       <div>
 ```
 
-### `html5test-com.dat#26`
-
-- Características: html-parser
-- Motivo: DOM tree differs from the fixture
-
-```text
-input: "<i>A<b>B<p></i>C</b>D"
-expected: <html>
-  <head>
-  <body>
-    <i>
-      "A"
-      <b>
-        "B"
-    <b>
-    <p>
-      <b>
-        <i>
-        "C"
-      "D"
-
-actual:   <html>
-  <head>
-  <body>
-    <i>
-    <p>
-      <i>
-        "A"
-        <b>
-      "C"
-      <b>
-        "B"
-      "D"
-```
-
 ### `isindex.dat#1`
 
 - Características: html-parser
@@ -2680,7 +2466,158 @@ actual:   <math>
       <tfoot>
 ```
 
-_… y 841 fallos más (ver el JSONL)._
+### `math.dat#5`
+
+- Características: html-parser
+- Motivo: DOM tree differs from the fixture
+
+```text
+input: "<math><tbody><mo></table>"
+expected: <math>
+  <math>
+    <math>
+
+actual:   <math>
+  <tbody>
+    <mo>
+```
+
+### `math.dat#6`
+
+- Características: html-parser
+- Motivo: DOM tree differs from the fixture
+
+```text
+input: "<math><thead><mo></table>"
+expected: <math>
+  <math>
+    <math>
+
+actual:   <math>
+  <thead>
+    <mo>
+```
+
+### `math.dat#7`
+
+- Características: html-parser
+- Motivo: DOM tree differs from the fixture
+
+```text
+input: "<math><tfoot><mo></table>"
+expected: <math>
+  <math>
+    <math>
+
+actual:   <math>
+  <tfoot>
+    <mo>
+```
+
+### `menuitem-element.dat#7`
+
+- Características: html-parser
+- Motivo: DOM tree differs from the fixture
+
+```text
+input: "<!DOCTYPE html><menuitem><p></menuitem>x"
+expected: <!DOCTYPE html>
+<html>
+  <head>
+  <body>
+    <menuitem>
+      <p>
+        "x"
+
+actual:   <!DOCTYPE html>
+<html>
+  <head>
+  <body>
+    <menuitem>
+      <p>
+    "x"
+```
+
+### `menuitem-element.dat#8`
+
+- Características: html-parser
+- Motivo: DOM tree differs from the fixture
+
+```text
+input: "<!DOCTYPE html><p><b></p><menuitem>"
+expected: <!DOCTYPE html>
+<html>
+  <head>
+  <body>
+    <p>
+      <b>
+    <b>
+      <menuitem>
+
+actual:   <!DOCTYPE html>
+<html>
+  <head>
+  <body>
+    <p>
+      <b>
+    <menuitem>
+```
+
+### `namespace-sensitivity.dat#0`
+
+- Características: html-parser
+- Motivo: DOM tree differs from the fixture
+
+```text
+input: "<body><table><tr><td><svg><td><foreignObject><span></td>Foo"
+expected: <html>
+  <head>
+  <body>
+    "Foo"
+    <table>
+      <tbody>
+        <tr>
+          <td>
+            <svg>
+              <svg>
+                <svg>
+                  <span>
+
+actual:   <html>
+  <head>
+  <body>
+    <table>
+      <tbody>
+        <tr>
+          <td>
+            <svg>
+              <td>
+                <foreignobject>
+                  <span>
+              "Foo"
+```
+
+### `pending-spec-changes-plain-text-unsafe.dat#0`
+
+- Características: html-parser
+- Motivo: DOM tree differs from the fixture
+
+```text
+input: "<body><table>\u0000filler\u0000text\u0000"
+expected: <html>
+  <head>
+  <body>
+    "fillertext"
+    <table>
+
+actual:   <html>
+  <head>
+  <body>
+    <table>
+      " filler text "
+```
+
+_… y 810 fallos más (ver el JSONL)._
 
 ## SKIP agrupados por motivo
 

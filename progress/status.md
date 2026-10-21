@@ -21,7 +21,7 @@ real y el test de estadísticas de presentación.
 | Rendimiento 7× | 🔴 registrado | Rapier 180 pasos: 328,5 ms (wasm3) vs 30,7 ms (V8); gap 10,7× |
 | Ejemplo web-challenge | ✅ original | HTML/CSS/JS **sin modificar**: 46/52 comprobaciones propias en verde |
 | Seguridad | 🟢 | `tools/security`: 14 PASS / 0 FAIL / 1 SKIP |
-| Conformidad | 🟡 | Test262 97,93 %; html5lib 99,26 %; URL 74,22 %; DOM 59,36 %; CSS 10,38 %; tree 48,72 % |
+| Conformidad | 🟡 | Test262 97,93 %; html5lib 99,26 %; URL 74,22 %; DOM 59,36 %; CSS 17,68 %; tree 50,37 % |
 | Plataformas | 🟡 solo Linux | build Linux verificado; resto sin probar |
 
 ## Reorganización Nativa y skills — 2026-10-21
@@ -67,6 +67,17 @@ real y el test de estadísticas de presentación.
 - Comando: `dart run bin/run_url.dart` (commit de la suite `e7d77cd`).
 - Tests: `nativa_dom_bindings` 51 en verde; `./tools/test_all.sh` 316 en verde;
   `flutter analyze` limpio.
+
+## Incremento de conformidad HTML tree — 2026-10-21
+
+- Tree construction: **48,72 % → 50,37 %** (+1,65 puntos; 913 → 944 PASS;
+  961 → 930 FAIL; 1973 casos, 99 SKIP, 0 ERROR).
+- Causa real: el adoption agency simplificado dejaba el elemento de formato
+  como ancestro y clonaba en el sitio equivocado.
+- Fix: implementación del algoritmo de adoption agency (WHATWG) con clonación
+  y reparentado del bloque más lejano.
+- Comando: `dart run bin/run_html_tree.dart` (commit de la suite `e7d77cd`).
+- Tests: `nativa_html` 51 en verde; `./tools/test_all.sh` 316 en verde.
 
 ## Checkpoint estable — Fase 0 de presentación
 

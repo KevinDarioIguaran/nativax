@@ -47,6 +47,22 @@ const Set<String> _formattingTags = {
   'u',
 };
 
+/// Elements that can be the "furthest block" in the adoption agency.
+const Set<String> _specialElements = {
+  'address', 'applet', 'area', 'article', 'aside', 'base', 'basefont',
+  'bgsound', 'blockquote', 'body', 'br', 'button', 'caption', 'center', 'col',
+  'colgroup', 'dd', 'details', 'dir', 'div', 'dl', 'dt', 'embed', 'fieldset',
+  'figcaption', 'figure', 'footer', 'form', 'frame', 'frameset', 'h1', 'h2',
+  'h3', 'h4', 'h5', 'h6', 'head', 'header', 'hgroup', 'hr', 'html', 'iframe',
+  'img', 'input', 'keygen', 'li', 'link', 'listing', 'main', 'marquee', 'menu',
+  'meta', 'nav', 'noembed', 'noframes', 'noscript', 'object', 'ol', 'p',
+  'param', 'plaintext', 'pre', 'script', 'section', 'select', 'source', 'style',
+  'summary', 'table', 'tbody', 'td', 'template', 'textarea', 'tfoot', 'th',
+  'thead', 'title', 'tr', 'ul', 'wbr', 'xmp',
+};
+
+bool _isSpecial(Element e) => _specialElements.contains(e.localName);
+
 /// Result of a parse: the tree plus every recoverable error encountered.
 class HtmlParseResult<T> {
   HtmlParseResult(this.value, this.errors, this.droppedErrors);
@@ -127,8 +143,8 @@ class _TreeBuilder {
   /// Open elements; [0] is the root of insertion.
   final List<Element> _stack = [];
 
-  /// Active formatting elements: (element, start tag) in insertion order.
-  final List<(Element, StartTagToken)> _formatting = [];
+  /// Active formatting elements in insertion order. `null` is a scope marker.
+  final List<Element?> _formatting = [];
 
   Element get _current => _stack.last;
 
@@ -309,7 +325,7 @@ class _TreeBuilder {
       }
     }
 
-    if (name == 'a' && _formatting.any((entry) => entry.$1.localName == 'a')) {
+    if (name == 'a' && _formatting.any((e) => e != null && e.localName == 'a')) {
       // A new <a> closes the previous active formatting <a>.
       _error('nested-a', t.offset);
       _closeFormatting(EndTagToken(t.offset, 'a'));
@@ -365,7 +381,7 @@ class _TreeBuilder {
       return; // children of `el` become its siblings
     }
     _stack.add(el);
-    if (_formattingTags.contains(name)) _formatting.add((el, t));
+    if (_formattingTags.contains(name)) _formatting.add(el);
   }
 
   /// Whether the insertion point is inside `<svg>`/`<math>` and not inside an
@@ -513,44 +529,119 @@ class _TreeBuilder {
     _error('unexpected-end-tag', t.offset, name);
   }
 
-  /// Simplified adoption agency: move a misnested formatting element into the
-  /// current block instead of leaving it as an ancestor.
+  /// Adoption agency algorithm (WHATWG), adapted to the simplified tree
+  /// builder. Misnested formatting elements are cloned into the current block
+  /// instead of remaining as ancestors.
   void _closeFormatting(EndTagToken t) {
-    final name = t.name;
-    var index = -1;
-    for (var i = _formatting.length - 1; i >= 0; i--) {
-      if (_formatting[i].$1.localName == name) {
-        index = i;
-        break;
+    final subject = t.name;
+    var outerLoopCounter = 0;
+    while (outerLoopCounter < 8) {
+      outerLoopCounter++;
+
+      var feIndex = -1;
+      for (var i = _formatting.length - 1; i >= 0; i--) {
+        final e = _formatting[i];
+        if (e == null) break;
+        if (e.localName == subject) {
+          feIndex = i;
+          break;
+        }
       }
-    }
-    if (index < 0) {
-      _error('unexpected-end-tag', t.offset, name);
+      if (feIndex < 0) {
+        _error('unexpected-end-tag', t.offset, subject);
+        return;
+      }
+      final formattingElement = _formatting[feIndex]!;
+      if (!_stack.contains(formattingElement)) {
+        _formatting.removeAt(feIndex);
+        continue;
+      }
+      if (!identical(_current, formattingElement)) {
+        _error('adoption-agency-1.3', t.offset);
+      }
+      final feStackIndex = _stack.indexOf(formattingElement);
+      Element? furthestBlock;
+      for (var i = feStackIndex; i < _stack.length; i++) {
+        if (_isSpecial(_stack[i])) furthestBlock = _stack[i];
+      }
+      if (furthestBlock == null) {
+        while (true) {
+          final el = _stack.removeLast();
+          if (identical(el, formattingElement)) break;
+        }
+        _formatting.remove(formattingElement);
+        return;
+      }
+      final commonAncestor = _stack[feStackIndex - 1];
+      var bookmark = feIndex;
+      Element? lastNode = furthestBlock;
+      var nodeStackIndex = _stack.indexOf(furthestBlock);
+      var inner = 0;
+      while (inner < 3) {
+        inner++;
+        nodeStackIndex -= 1;
+        if (nodeStackIndex <= feStackIndex) break;
+        final node = _stack[nodeStackIndex];
+        if (!_formatting.contains(node)) {
+          _stack.removeAt(nodeStackIndex);
+          continue;
+        }
+        if (identical(node, formattingElement)) break;
+        if (identical(lastNode, furthestBlock)) {
+          bookmark = _formatting.indexOf(node) + 1;
+        }
+        final clone = node.cloneNode(deep: false);
+        final afIndex = _formatting.indexOf(node);
+        if (afIndex >= 0) _formatting[afIndex] = clone;
+        final nsIndex = _stack.indexOf(node);
+        if (nsIndex >= 0) _stack[nsIndex] = clone;
+        lastNode?.remove();
+        clone.appendParsed(lastNode!);
+        lastNode = clone;
+      }
+
+      // Foster-parent lastNode when the common ancestor is a table element.
+      lastNode?.remove();
+      if (const {'table', 'tbody', 'tfoot', 'thead', 'tr'}
+          .contains(commonAncestor.localName)) {
+        final parent = commonAncestor.parentNode;
+        if (parent != null) {
+          parent.insertBefore(lastNode!, commonAncestor);
+        } else {
+          commonAncestor.appendParsed(lastNode!);
+        }
+      } else {
+        commonAncestor.appendParsed(lastNode!);
+      }
+
+      final feClone = formattingElement.cloneNode(deep: false);
+      // Reparent all children of the furthest block into the clone.
+      for (final c in List<Node>.of(furthestBlock.childNodes)) {
+        c.remove();
+        feClone.appendParsed(c);
+      }
+      furthestBlock.appendParsed(feClone);
+
+      _formatting.remove(formattingElement);
+      if (bookmark > _formatting.length) bookmark = _formatting.length;
+      _formatting.insert(bookmark, feClone);
+
+      final feIdx = _stack.indexOf(formattingElement);
+      if (feIdx >= 0) _stack.removeAt(feIdx);
+      final fIndex = _stack.indexOf(furthestBlock);
+      final insertIndex = fIndex >= 0 ? fIndex + 1 : _stack.length;
+      if (insertIndex > _stack.length) {
+        _stack.add(feClone);
+      } else {
+        _stack.insert(insertIndex, feClone);
+      }
+      // Keep the furthest block as the current node for following content.
+      while (_stack.isNotEmpty && !identical(_stack.last, furthestBlock)) {
+        _stack.removeLast();
+      }
+      if (!_stack.contains(furthestBlock)) _stack.add(furthestBlock);
       return;
     }
-    final element = _formatting.removeAt(index).$1;
-    final stackIndex = _stack.indexOf(element);
-    if (stackIndex < 0) return;
-    if (stackIndex == _stack.length - 1) {
-      _stack.removeLast();
-      return;
-    }
-    // The formatting element is an ancestor of the current node. Move the
-    // current branch out of it, then put the formatting element inside the
-    // current node (the common `<b><p></b>` case).
-    final current = _current;
-    final parent = element.parentNode;
-    if (element.contains(current)) {
-      current.remove();
-      if (parent != null) parent.appendChild(current);
-    }
-    if (parent != null) {
-      // The adoption agency leaves an empty clone at the original position.
-      parent.insertBefore(element.cloneNode(deep: false), element);
-    }
-    element.remove();
-    current.appendChild(element);
-    _stack.removeAt(stackIndex);
   }
 
   /// Minimal table insertion modes: implicit tbody/tr and cell placement.
