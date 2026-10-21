@@ -11,7 +11,7 @@ checkouts están pinneados y no se versionan (`.conformance/` está ignorado).
 | html5lib tokenizer | todos los `.test` | 5.625 | 177 | 1.025 | 0 | **96,95 %** | `c777c40` |
 | WPT `dom/nodes` | 327 archivos | 127 | 154 | 44 | 2 | **44,88 %** | working tree |
 | WPT `css/selectors` | 528 archivos | 19 | 164 | 345 | 0 | **10,38 %** | working tree |
-| WPT URL | 896 casos del fixture | 636 | 260 | 0 | 0 | **70,98 %** | `e7d77cd` |
+| WPT URL | 896 casos del fixture | 647 | 249 | 0 | 0 | **72,21 %** | `e7d77cd` |
 | WPT tree construction | 1.973 casos `.dat` | 749 | 1.123 | 99 | 2 | **39,97 %** | `e7d77cd` |
 
 La tasa excluye `SKIP`. Un `SKIP` **no** cuenta como compatibilidad.
@@ -111,7 +111,7 @@ Pendiente para el 70 %: realms/iframes, `Range`/`TreeWalker` completos,
 `DOMParser`/CDATA, `moveBefore`, adoption agency del parser y el layout para
 CSS selectors. Los 345 SKIP de CSS son reftests visuales.
 
-### WPT URL (636/896, 70,98 %)
+### WPT URL (647/896, 72,21 %)
 
 `URL` y `URLSearchParams` ya se exponen a scripts. Los fallos restantes son
 IDN, IPv6 canónico, file URLs y detalles de normalización de WHATWG. Ver

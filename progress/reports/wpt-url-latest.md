@@ -1,15 +1,15 @@
 # Conformidad: wpt-url
 
-- Fecha: 2026-10-21T04:23:56.571328Z
+- Fecha: 2026-10-21T22:13:24.645020Z
 - Duración: 0.2 s
 - Comando: `run_url`
 - Total: **896** tests
-- Tasa de éxito (sin SKIP): **70.98 %**
+- Tasa de éxito (sin SKIP): **72.21 %**
 
 | Estado | Tests |
 |---|---:|
-| PASS | 636 |
-| FAIL | 260 |
+| PASS | 647 |
+| FAIL | 249 |
 | SKIP | 0 |
 | ERROR | 0 |
 
@@ -17,7 +17,7 @@
 
 - Corregidos: **0**
 - Regresiones: **0**
-- Siguen fallando: **260**
+- Siguen fallando: **249**
 - Nuevos en esta ejecución: **0**
 - Ausentes respecto a la base: **0**
 
@@ -25,7 +25,7 @@
 
 | Grupo | PASS | FAIL | SKIP | ERROR | Éxito |
 |---|---:|---:|---:|---:|---:|
-| `url` | 636 | 260 | 0 | 0 | 71.0 % |
+| `url` | 647 | 249 | 0 | 0 | 72.2 % |
 
 ## Por directorio
 
@@ -113,7 +113,7 @@
 | `#79 "http:/" base="http:/` | 1 | 0 | 0 | 0 | 100.0 % |
 | _(+816 grupos)_ | | | | | |
 
-## Fallos (260)
+## Fallos (249)
 
 ### `#9 "a:\t foo.com" base="http://example.org/foo/bar"`
 
@@ -188,16 +188,6 @@ hostname: expected example.org, got example.com
 pathname: expected /example.com/, got /
 ```
 
-### `#92 "data:/example.com/" base="http://example.org/foo/bar"`
-
-- Características: url
-- Motivo: URL parsing failed
-
-### `#103 "data:example.com/" base="http://example.org/foo/bar"`
-
-- Características: url
-- Motivo: URL parsing failed
-
 ### `#108 "/a%2fc" base="http://example.org/foo/bar"`
 
 - Características: url
@@ -216,16 +206,6 @@ pathname: expected /a%2fc, got /a%2Fc
 ```text
 href: expected http://example.org/a/%2f/c, got http://example.org/a/%2F/c
 pathname: expected /a/%2f/c, got /a/%2F/c
-```
-
-### `#111 "data:text/html,test#test" base="http://example.org/foo/bar"`
-
-- Características: url
-- Motivo: pathname: expected text/html,test, got text/html,test%23test
-
-```text
-pathname: expected text/html,test, got text/html,test%23test
-hash: expected #test, got
 ```
 
 ### `#114 "file:c:\\foo\\bar.html" base="file:///tmp/mock/path"`
@@ -418,11 +398,6 @@ href: expected http://example.com/%3A%3a%3C%3c, got http://example.com/%3A%3A%3C
 pathname: expected /%3A%3a%3C%3c, got /%3A%3A%3C%3C
 ```
 
-### `#176 "data:test# »"`
-
-- Características: url
-- Motivo: URL parsing failed
-
 ### `#178 "http://192.0x00A80001"`
 
 - Características: url
@@ -485,11 +460,6 @@ pathname: expected /foo%2Ehtml, got /foo.html
 - Características: url
 - Motivo: URL parsing failed
 
-### `#211 "data:/example.com/"`
-
-- Características: url
-- Motivo: URL parsing failed
-
 ### `#214 "http:example.com/"`
 
 - Características: url
@@ -511,11 +481,6 @@ pathname: expected /foo%2Ehtml, got /foo.html
 - Motivo: URL parsing failed
 
 ### `#221 "wss:example.com/"`
-
-- Características: url
-- Motivo: URL parsing failed
-
-### `#222 "data:example.com/"`
 
 - Características: url
 - Motivo: URL parsing failed
@@ -804,11 +769,6 @@ search: expected ?%27, got ?'
 - Características: url
 - Motivo: href: expected about:/, got about:/../
 
-### `#376 "data:/../"`
-
-- Características: url
-- Motivo: URL parsing failed
-
 ### `#377 "javascript:/../"`
 
 - Características: url
@@ -908,7 +868,84 @@ host: expected 192.168.1.1, got 192.168.257
 hostname: expected 192.168.1.1, got 192.168.257
 ```
 
-_… y 140 fallos más (ver el JSONL)._
+### `#515 "http://192.168.257." base="http://other.com/"`
+
+- Características: url
+- Motivo: href: expected http://192.168.1.1/, got http://192.168.257./
+
+```text
+href: expected http://192.168.1.1/, got http://192.168.257./
+origin: expected http://192.168.1.1, got http://192.168.257.
+host: expected 192.168.1.1, got 192.168.257.
+hostname: expected 192.168.1.1, got 192.168.257.
+```
+
+### `#517 "http://256" base="http://other.com/"`
+
+- Características: url
+- Motivo: href: expected http://0.0.1.0/, got http://256/
+
+```text
+href: expected http://0.0.1.0/, got http://256/
+origin: expected http://0.0.1.0, got http://256
+host: expected 0.0.1.0, got 256
+hostname: expected 0.0.1.0, got 256
+```
+
+### `#519 "http://999999999" base="http://other.com/"`
+
+- Características: url
+- Motivo: href: expected http://59.154.201.255/, got http://999999999/
+
+```text
+href: expected http://59.154.201.255/, got http://999999999/
+origin: expected http://59.154.201.255, got http://999999999
+host: expected 59.154.201.255, got 999999999
+hostname: expected 59.154.201.255, got 999999999
+```
+
+### `#520 "http://999999999." base="http://other.com/"`
+
+- Características: url
+- Motivo: href: expected http://59.154.201.255/, got http://999999999./
+
+```text
+href: expected http://59.154.201.255/, got http://999999999./
+origin: expected http://59.154.201.255, got http://999999999.
+host: expected 59.154.201.255, got 999999999.
+hostname: expected 59.154.201.255, got 999999999.
+```
+
+### `#524 "http://4294967295" base="http://other.com/"`
+
+- Características: url
+- Motivo: href: expected http://255.255.255.255/, got http://4294967295/
+
+```text
+href: expected http://255.255.255.255/, got http://4294967295/
+origin: expected http://255.255.255.255, got http://4294967295
+host: expected 255.255.255.255, got 4294967295
+hostname: expected 255.255.255.255, got 4294967295
+```
+
+### `#528 "http://0xffffffff" base="http://other.com/"`
+
+- Características: url
+- Motivo: href: expected http://255.255.255.255/, got http://0xffffffff/
+
+```text
+href: expected http://255.255.255.255/, got http://0xffffffff/
+origin: expected http://255.255.255.255, got http://0xffffffff
+host: expected 255.255.255.255, got 0xffffffff
+hostname: expected 255.255.255.255, got 0xffffffff
+```
+
+### `#531 "https://0x.0x.0"`
+
+- Características: url
+- Motivo: URL parsing failed
+
+_… y 129 fallos más (ver el JSONL)._
 
 ---
 

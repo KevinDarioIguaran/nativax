@@ -863,6 +863,7 @@ class DomBindings {
         .replaceAll(RegExp(r'^[\u0000-\u0020]+|[\u0000-\u0020]+$'), '');
     var text = clean(input);
     var baseText = base == null ? null : clean(base);
+    final isData = text.toLowerCase().startsWith('data:');
     try {
       // WHATWG treats a special scheme without `//` as a relative reference or
       // an authority depending on the remainder. Dart's Uri is stricter, so
@@ -914,10 +915,12 @@ class DomBindings {
           RegExp(r'\s').hasMatch(authority.group(1) ?? '')) {
         return null;
       }
-      final candidate = Uri.parse(text);
+      final candidate = isData
+          ? Uri.parse('http${text.substring(4)}')
+          : Uri.parse(text);
       final baseUri = baseText == null ? null : Uri.parse(baseText);
       final resolved = baseUri == null ? candidate : baseUri.resolveUri(candidate);
-      final scheme = resolved.scheme.toLowerCase();
+      final scheme = isData ? 'data' : resolved.scheme.toLowerCase();
       if (baseUri != null &&
           !_defaultPorts.containsKey(baseUri.scheme) &&
           !baseUri.hasAuthority &&
@@ -926,7 +929,15 @@ class DomBindings {
       }
       if (scheme.isEmpty) return null;
       final special = _defaultPorts.containsKey(scheme);
-      final port = resolved.hasPort ? resolved.port : null;
+      var port = resolved.hasPort ? resolved.port : null;
+      if (isData) {
+        final authorityMatch =
+            RegExp(r'^data://([^/?#]*)').firstMatch(text);
+        final authority = authorityMatch?.group(1) ?? '';
+        final hasExplicitPort = authority.contains(':') &&
+            !(authority.startsWith('[') && authority.contains(']:'));
+        if (!hasExplicitPort) port = null;
+      }
       if (port != null && (port < 0 || port > 65535)) return null;
       if (scheme == 'file' && resolved.hasPort) return null;
       if (special && resolved.host.isEmpty) return null;
@@ -1013,12 +1024,12 @@ class DomBindings {
       final normalizedUserInfo = password.isEmpty
           ? username
           : (username.isEmpty ? ':$password' : '$username:$password');
-      var hrefUri = resolved.replace(userInfo: normalizedUserInfo);
+      var hrefUri = resolved.replace(userInfo: normalizedUserInfo, scheme: scheme);
       if (scheme == 'file' && resolved.host.toLowerCase() == 'localhost') {
         hrefUri = hrefUri.replace(host: '');
       }
       var href = hrefUri.toString();
-      if (!hasAuthority && !special) {
+      if (!hasAuthority && !special && !isData) {
         // Opaque paths keep their raw spaces/backslashes, matching the fixture
         // input more closely than Dart's percent-encoder.
         href = text;
