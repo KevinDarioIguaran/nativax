@@ -10,7 +10,7 @@ checkouts están pinneados y no se versionan (`.conformance/` está ignorado).
 | Test262 | `language/{expressions,statements,types,literals}` | 19.577 | 413 | 1.108 | 0 | **97,93 %** | `d53ebc8` |
 | html5lib tokenizer | todos los `.test` | 5.759 | 43 | 1.025 | 0 | **99,26 %** | `e7d77cd` |
 | WPT `dom/nodes` | 327 archivos | 168 | 115 | 44 | 0 | **59,36 %** | `e7d77cd` |
-| WPT `css/selectors` | 528 archivos | 34 | 147 | 347 | 0 | **18,78 %** | `e7d77cd` |
+| WPT `css/selectors` | 528 archivos | 69 | 112 | 347 | 0 | **38,12 %** | `e7d77cd` |
 | WPT URL | 896 casos del fixture | 665 | 231 | 0 | 0 | **74,22 %** | `e7d77cd` |
 | WPT tree construction | 1.973 casos `.dat` | 944 | 930 | 99 | 0 | **50,37 %** | `e7d77cd` |
 
