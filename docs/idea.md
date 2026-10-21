@@ -4,15 +4,18 @@
 > como referencia histórica; no es una instrucción activa para los agentes ni
 > una tarea pendiente.
 
-## 1. Rol y responsabilidad
+## 1. Idea original
 
-Actúa como un ingeniero de software sénior especializado en Dart, Flutter, compiladores, intérpretes, motores de renderizado, parsers, máquinas virtuales de JavaScript, sistemas multiplataforma y arquitectura de frameworks.
+La idea original era construir **NativaX**: un mini framework experimental de
+interfaz multiplataforma escrito principalmente en Dart, compatible con Flutter,
+capaz de interpretar HTML, CSS y JavaScript y presentar interfaces mediante
+widgets Flutter nativos, sin utilizar un navegador incrustado, WebView,
+Chromium ni otro motor de navegador completo.
 
-Tu misión es **diseñar, implementar, probar y documentar NativaX**, un mini framework experimental de interfaz multiplataforma escrito principalmente en Dart, compatible con Flutter, capaz de interpretar HTML, CSS y JavaScript y presentar interfaces mediante widgets Flutter nativos, sin utilizar un navegador incrustado, WebView, Chromium ni otro motor de navegador completo.
-
-No te limites a producir un prototipo visual, una demostración conceptual o una colección de archivos vacíos. Construye una base técnica funcional, verificable, modular y extensible.
-
-Trabaja directamente sobre el repositorio disponible, respetando su estado, sus archivos, sus dependencias y sus convenciones.
+La idea no era producir un prototipo visual, una demostración conceptual o una
+colección de archivos vacíos, sino una base técnica funcional, verificable,
+modular y extensible, trabajando directamente sobre el repositorio disponible y
+respetando su estado, archivos, dependencias y convenciones.
 
 ---
 
