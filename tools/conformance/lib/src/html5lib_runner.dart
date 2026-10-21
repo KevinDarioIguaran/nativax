@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:nativax_html/nativax_html.dart';
+import 'package:nativa_html/nativa_html.dart';
 import 'package:path/path.dart' as p;
 
 import 'result.dart';

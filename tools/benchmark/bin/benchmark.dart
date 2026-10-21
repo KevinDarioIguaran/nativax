@@ -1,6 +1,6 @@
 import 'dart:io';
 
-import 'package:nativax_benchmark/benchmark.dart';
+import 'package:nativa_benchmark/benchmark.dart';
 import 'package:path/path.dart' as p;
 
 Future<void> main(List<String> args) async {

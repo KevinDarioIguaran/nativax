@@ -1,6 +1,6 @@
 import 'dart:io';
 
-import 'package:nativax_js/nativax_js.dart';
+import 'package:nativa_js/nativa_js.dart';
 
 enum LeakStatus {
   pass('PASS'),

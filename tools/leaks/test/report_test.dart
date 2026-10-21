@@ -1,6 +1,6 @@
 import 'dart:io';
 
-import 'package:nativax_leaks/leaks.dart';
+import 'package:nativa_leaks/leaks.dart';
 import 'package:test/test.dart';
 
 LeakRun _run(List<LeakResult> results) => LeakRun(
@@ -32,7 +32,7 @@ LeakResult _result(String id, LeakStatus status) => LeakResult(
 
 void main() {
   test('writes JSON, JSONL and Markdown', () {
-    final dir = Directory.systemTemp.createTempSync('nativax_leaks_');
+    final dir = Directory.systemTemp.createTempSync('nativa_leaks_');
     addTearDown(() => dir.deleteSync(recursive: true));
     final run = _run([
       LeakResult(

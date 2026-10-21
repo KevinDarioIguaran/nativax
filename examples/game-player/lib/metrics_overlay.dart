@@ -5,8 +5,8 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:nativax/nativax.dart';
-import 'package:nativax_dom/nativax_dom.dart' show canvasSurfaces;
-import 'package:nativax_js/nativax_js.dart' show GlSurfaces;
+import 'package:nativa_dom/nativa_dom.dart' show canvasSurfaces;
+import 'package:nativa_js/nativa_js.dart' show GlSurfaces;
 
 /// Rolling presentation metrics for a NativaX app.
 ///

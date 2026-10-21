@@ -1,6 +1,6 @@
 import 'dart:convert';
 
-import 'package:nativax_js/nativax_js.dart';
+import 'package:nativa_js/nativa_js.dart';
 
 import '../model.dart';
 

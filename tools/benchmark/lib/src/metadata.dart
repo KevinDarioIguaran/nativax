@@ -50,7 +50,7 @@ String _architecture() {
 }
 
 String quickJsVersion(String repoRoot) {
-  final header = File(p.join(repoRoot, 'packages', 'nativax_js',
+  final header = File(p.join(repoRoot, 'packages', 'nativa_js',
       'third_party', 'quickjs', 'quickjs.h'));
   if (!header.existsSync()) return 'unknown';
   final text = header.readAsStringSync();
@@ -71,7 +71,7 @@ String findRepoRoot([String? start]) {
   while (true) {
     final pubspec = File(p.join(dir.path, 'pubspec.yaml'));
     if (pubspec.existsSync() &&
-        pubspec.readAsStringSync().contains('nativax_workspace')) {
+        pubspec.readAsStringSync().contains('nativa_workspace')) {
       return dir.path;
     }
     final parent = dir.parent;

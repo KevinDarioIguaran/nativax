@@ -1,5 +1,5 @@
-import 'package:nativax_css/nativax_css.dart';
-import 'package:nativax_dom/nativax_dom.dart';
+import 'package:nativa_css/nativa_css.dart';
+import 'package:nativa_dom/nativa_dom.dart';
 
 import '../model.dart';
 

@@ -1,21 +1,21 @@
 # Estado actual
 
-Última actualización: 2026-10-21 (sesión 24: tokenizer html5lib y tree
-construction). Tests: **316** en total (`./tools/test_all.sh`), incluido el
-probe de juego real y el test de estadísticas de presentación.
+Última actualización: 2026-10-21 (reorganización Nativa y skills de agentes).
+Tests: **316** en total (`./tools/test_all.sh`), incluido el probe de juego
+real y el test de estadísticas de presentación.
 
 ## Resumen
 
 | Área | Estado | Evidencia |
 |---|---|---|
-| Núcleo JS (QuickJS-ng + FFI) | 🟢 estable | 52 tests; registro privado de callbacks en el puente C |
+| Núcleo JS (QuickJS-ng + FFI) | 🟢 estable | 53 tests; registro privado de callbacks en el puente C |
 | WebAssembly (wasm3) | 🟢 B4 | 11 unitarios + 3 E2E; Rapier 0.19.3 y worker real (103 cuerpos ~45 Hz) |
 | DOM | 🟢 estable | 38 tests; pseudoelementos, `:hover`/`:active`/`:target`, validación, dialog/details y `adoptNode` |
 | HTML | 🟢 estable | 51 tests; foreign content (SVG/MathML), recuperación de errores y preprocesado de entrada |
 | CSS | 🟢 estable | 39 tests; grid, `calc()`, `::before/::after`, keyframes, transiciones, `@supports` |
 | Bindings JS↔DOM | 🟢 amplio | 51 tests; ~3.800 líneas de plataforma web (ver docs/javascript-supported.md) |
 | Renderer Flutter | 🟢 amplio | 34 tests; grid, sticky, SVG, canvas 2D, animaciones, filtros, DnD |
-| Runtime público (`nativax`) | 🟢 | 27 tests; red por política, servicios de plataforma, errores no fatales |
+| Runtime público (`nativax`) | 🟢 | 28 tests; red por política, servicios de plataforma, errores no fatales |
 | Juego real (B5) | 🟢 jugable | bundle Vite sin modificar, 3 workers, Rapier, Start real, frames GL y captura no plana |
 | Presentación WebGL | 🟡 línea base | 1280×720 DPR 1.0: shown 26,3–29,1 fps; present p95 67–74 ms; objetivo 45 fps no alcanzado |
 | Rendimiento 7× | 🔴 registrado | Rapier 180 pasos: 328,5 ms (wasm3) vs 30,7 ms (V8); gap 10,7× |
@@ -23,6 +23,25 @@ probe de juego real y el test de estadísticas de presentación.
 | Seguridad | 🟢 | `tools/security`: 14 PASS / 0 FAIL / 1 SKIP |
 | Conformidad | 🟡 | Test262 97,93 %; html5lib 99,26 %; URL 70,98 %; DOM 59,36 %; CSS 10,38 %; tree 48,72 % |
 | Plataformas | 🟡 solo Linux | build Linux verificado; resto sin probar |
+
+## Reorganización Nativa y skills — 2026-10-21
+
+- Paquetes internos renombrados a `nativa_js`, `nativa_html`, `nativa_dom`,
+  `nativa_css`, `nativa_dom_bindings` y `nativa_render`; `nativax` conserva su
+  nombre y API pública. Los paquetes de herramientas pasan a
+  `nativa_conformance`, `nativa_benchmark`, `nativa_leaks` y
+  `nativa_security`.
+- NativaWeb queda documentado como familia modular de cuatro paquetes; no se
+  creó un paquete fachada `nativa_web`.
+- `.agents` se convirtió en una biblioteca de skills con `SKILL.md` y
+  `references/`: OpenCode las descubre en `.agents/skills` y Claude Code usa
+  enlaces en `.claude/skills`. La entrada común es `AGENTS.md`; `CLAUDE.md`
+  importa esas instrucciones.
+- `./tools/test_all.sh`: **316 tests en verde** con el juego cerrado.
+- `flutter analyze`: **1 warning preexistente** (`_deliveryScheduled` sin usar
+  en `nativa_dom_bindings`); no hay errores nuevos.
+- No se reanudó el trabajo de conformidad; el siguiente incremento sigue
+  pendiente de petición explícita.
 
 ## Checkpoint estable — Fase 0 de presentación
 
@@ -60,7 +79,7 @@ probe de juego real y el test de estadísticas de presentación.
   cierran `<p>`; un `<a>` anidado cierra el anterior; `</form>` deja abiertos
   sus descendientes; `<frame>` se ignora en body; un `</p>` antes de body no
   crea un párrafo en head; y un `</script` sin `>` al EOF sigue siendo texto.
-- `./tools/test_all.sh`: **305 tests en verde** (43 en `nativax_html`).
+- `./tools/test_all.sh`: **305 tests en verde** (43 en `nativa_html`).
 - Siguen pendientes: adoption agency, foster parenting, template contents,
   tablas y foreign content.
 
@@ -94,7 +113,7 @@ probe de juego real y el test de estadísticas de presentación.
   - referencias numéricas 0x80–0x9F usan el mapa Windows-1252;
   - referencias numéricas con ceros a la izquierda y `</>` vacío.
 - WPT `dom/nodes`: **59,36 %**, sin cambios ni regresiones.
-- `./tools/test_all.sh`: **316 tests en verde** (51 en `nativax_html`).
+- `./tools/test_all.sh`: **316 tests en verde** (51 en `nativa_html`).
 - Quedan 43 fallos de tokenizer, concentrados en comentarios sin cerrar y en
   instrucciones de procesamiento (extensiones de html5lib).
 

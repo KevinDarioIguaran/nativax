@@ -1,4 +1,4 @@
-name: nativax_leaks
+name: nativa_leaks
 description: Memory leak, retention and lifecycle stress suite for NativaX.
 version: 0.1.0
 publish_to: none
@@ -8,11 +8,11 @@ environment:
   sdk: ^3.10.0
 
 dependencies:
-  nativax_css: ^0.1.0
-  nativax_dom: ^0.1.0
-  nativax_dom_bindings: ^0.1.0
-  nativax_html: ^0.1.0
-  nativax_js: ^0.1.0
+  nativa_css: ^0.1.0
+  nativa_dom: ^0.1.0
+  nativa_dom_bindings: ^0.1.0
+  nativa_html: ^0.1.0
+  nativa_js: ^0.1.0
   path: ^1.9.1
 
 dev_dependencies:

@@ -1,8 +1,30 @@
-# NativaX
+# Nativa
 
-Runtime experimental de interfaz escrito en Dart que interpreta un subconjunto
-documentado de HTML, CSS y JavaScript y lo renderiza con widgets Flutter
-nativos. **No usa WebView, Chromium ni un navegador incrustado.**
+**Nativa** es la familia de tecnologías. **NativaX** es la plataforma
+principal: un runtime experimental de interfaz escrito en Dart que interpreta
+un subconjunto documentado de HTML, CSS y JavaScript y lo renderiza con
+widgets Flutter nativos. **No usa WebView, Chromium ni un navegador
+incrustado.**
+
+## Familia Nativa
+
+```
+NATIVA
+├── NativaX       Plataforma multiplataforma
+├── NativaJS      Motor JavaScript
+├── NativaWeb     HTML, CSS, DOM y APIs web
+├── NativaRender  Layout y renderizado Flutter
+├── NativaFlow    Workers, concurrencia y mensajería
+├── NativaForge   Toolchain, tests y conformidad
+├── NativaShield  Seguridad, permisos y límites
+└── NativaBench   Benchmarks y rendimiento
+```
+
+Cada nombre identifica una responsabilidad. No todos son paquetes separados
+todavía: los que aún no tienen API y ciclo propios viven dentro del proyecto
+que los contiene y se extraerán solo cuando aporte valor. El detalle y los
+criterios de extracción están en
+[`docs/nativa-family.md`](docs/nativa-family.md).
 
 ## Estado
 
@@ -25,15 +47,19 @@ números y pendientes:
 
 ## Paquetes
 
-| Paquete | Responsabilidad |
-|---|---|
-| `nativax_js` | QuickJS-ng, puente C/FFI, WebGL 2 (EGL), WebAssembly (wasm3), timers y límites |
-| `nativax_dom` | Árbol DOM, eventos, selectores, mutaciones |
-| `nativax_html` | Tokenizer y tree builder HTML |
-| `nativax_css` | Parser, cascada, media queries, estilos computados |
-| `nativax_dom_bindings` | DOM y APIs de navegador expuestas a JavaScript |
-| `nativax_flutter` | Layout CSS y renderer Flutter |
-| `nativax` | Runtime público y `NativaXView` |
+| Proyecto | Paquete(s) / ubicación | Responsabilidad |
+|---|---|---|
+| **NativaX** | `nativax` | Runtime público, `NativaXView`, carga de documentos y workers |
+| **NativaJS** | `nativa_js` | QuickJS-ng, puente C/FFI, timers, WebAssembly (wasm3) y límites |
+| **NativaWeb** | `nativa_html`, `nativa_dom`, `nativa_css`, `nativa_dom_bindings` | HTML, DOM, CSS y APIs de navegador expuestas a JavaScript |
+| **NativaRender** | `nativa_render` | Layout CSS y renderizado Flutter |
+| **NativaFlow** | `nativax/lib/src/workers.dart` (embebido) | Workers, mensajería y concurrencia |
+| **NativaForge** | `tools/` | Tests, conformidad, empaquetado y herramientas de desarrollo |
+| **NativaShield** | `tools/security`, `SECURITY_*` | Aislamiento, permisos, límites y auditoría |
+| **NativaBench** | `benchmarks/`, `tools/benchmark`, `tools/leaks` | Benchmarks reproducibles de rendimiento y conformidad |
+
+NativaWeb **no** es un paquete monolítico: es la familia de cuatro módulos
+independientes que pueden usarse por separado.
 
 ## Uso mínimo
 
@@ -65,6 +91,8 @@ void main() => runApp(const MaterialApp(
   original, sin adaptaciones, con red habilitada solo para sus hosts; incluye
   build Linux y una herramienta de captura para comparar con Chrome
   (`test/screenshot_test.dart`).
+- [`examples/game-player`](examples/game-player): reproductor del juego real
+  con workers, WebAssembly y presentación WebGL.
 
 ## Tests
 
@@ -83,7 +111,8 @@ dart run bin/fetch_suites.dart --suite test262 --suite html5lib --suite wpt
 dart run bin/run_all.dart
 ```
 
-Resultados actuales: Test262 **97,93 %**, html5lib **96,95 %**, URL
-**70,98 %**; WPT `dom/nodes` 19,11 %, `css/selectors` 4,92 % y tree
-construction 39,75 %. El objetivo de 70 % en todas no se ha alcanzado todavía
-en DOM/CSS/parser; ver [`progress/conformance.md`](progress/conformance.md).
+Resultados actuales: Test262 **97,93 %**, html5lib tokenizer **99,26 %**, URL
+**70,98 %**; WPT `dom/nodes` **59,36 %**, `css/selectors` **10,38 %** y tree
+construction **48,72 %**. El objetivo de 70 % en todas no se ha alcanzado
+todavía en DOM/CSS/parser; ver
+[`progress/conformance.md`](progress/conformance.md).

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:nativax_dom_bindings/nativax_dom_bindings.dart' show MemoryStorage, PlatformServices, ThemeModeRequest;
-import 'package:nativax_flutter/nativax_flutter.dart';
+import 'package:nativa_dom_bindings/nativa_dom_bindings.dart' show MemoryStorage, PlatformServices, ThemeModeRequest;
+import 'package:nativa_render/nativa_render.dart';
 
 import 'flutter_environment.dart';
 import 'runtime.dart';

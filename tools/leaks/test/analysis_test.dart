@@ -1,4 +1,4 @@
-import 'package:nativax_leaks/leaks.dart';
+import 'package:nativa_leaks/leaks.dart';
 import 'package:test/test.dart';
 
 LeakCase _case(String expectation) => LeakCase(

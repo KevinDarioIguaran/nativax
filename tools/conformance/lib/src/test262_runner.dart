@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 
-import 'package:nativax_js/nativax_js.dart';
+import 'package:nativa_js/nativa_js.dart';
 import 'package:path/path.dart' as p;
 import 'package:yaml/yaml.dart';
 

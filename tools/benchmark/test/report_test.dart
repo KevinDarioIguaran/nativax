@@ -1,6 +1,6 @@
 import 'dart:io';
 
-import 'package:nativax_benchmark/benchmark.dart';
+import 'package:nativa_benchmark/benchmark.dart';
 import 'package:test/test.dart';
 
 RunMetadata _metadata() => RunMetadata(

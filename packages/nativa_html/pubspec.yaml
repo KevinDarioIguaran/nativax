@@ -1,0 +1,14 @@
+name: nativa_html
+description: Token-based HTML parser producing nativa_dom trees, with error recovery and resource limits. Pure Dart.
+version: 0.1.0
+publish_to: none
+resolution: workspace
+
+environment:
+  sdk: ^3.10.0
+
+dependencies:
+  nativa_dom: ^0.1.0
+
+dev_dependencies:
+  test: ^1.26.0

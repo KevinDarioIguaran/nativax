@@ -12,8 +12,8 @@ dependencies:
   flutter:
     sdk: flutter
   nativax: ^0.1.0
-  nativax_dom: ^0.1.0
-  nativax_js: ^0.1.0
+  nativa_dom: ^0.1.0
+  nativa_js: ^0.1.0
 
 dev_dependencies:
   flutter_test:

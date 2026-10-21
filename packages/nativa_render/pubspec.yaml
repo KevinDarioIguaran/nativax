@@ -1,0 +1,24 @@
+name: nativa_render
+description: Flutter renderer for NativaX documents (CSS boxes, block flow, flexbox).
+version: 0.1.0
+publish_to: none
+resolution: workspace
+
+environment:
+  sdk: ^3.10.0
+  flutter: ">=3.35.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  nativa_css: ^0.1.0
+  nativa_dom: ^0.1.0
+  nativa_js: ^0.1.0
+  vector_math: ^2.1.4
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  nativa_dom_bindings: ^0.1.0
+  nativa_html: ^0.1.0
+  lints: ^6.0.0

@@ -5,12 +5,12 @@
 set -euo pipefail
 root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
-for pkg in nativax_js nativax_dom nativax_html nativax_css nativax_dom_bindings; do
+for pkg in nativa_js nativa_dom nativa_html nativa_css nativa_dom_bindings; do
   echo "=== $pkg ==="
   (cd "$root/packages/$pkg" && dart test)
 done
 
-for pkg in nativax_flutter nativax; do
+for pkg in nativa_render nativax; do
   echo "=== $pkg ==="
   (cd "$root/packages/$pkg" && flutter test)
 done

@@ -2,7 +2,7 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
-import 'package:nativax_flutter/nativax_flutter.dart' show NativaXImageResolver;
+import 'package:nativa_render/nativa_render.dart' show NativaXImageResolver;
 import 'package:path/path.dart' as p;
 
 import 'runtime.dart';

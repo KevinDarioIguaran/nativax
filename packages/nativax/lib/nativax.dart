@@ -8,8 +8,8 @@ export 'src/resources.dart';
 export 'src/runtime.dart';
 export 'src/workers.dart' show IsolateWorkerLauncher;
 export 'src/view.dart';
-export 'package:nativax_css/nativax_css.dart' show MediaContext;
-export 'package:nativax_dom_bindings/nativax_dom_bindings.dart'
+export 'package:nativa_css/nativa_css.dart' show MediaContext;
+export 'package:nativa_dom_bindings/nativa_dom_bindings.dart'
     show
         AppHandler,
         HostEnvironment,
@@ -18,7 +18,7 @@ export 'package:nativax_dom_bindings/nativax_dom_bindings.dart'
         StaticEnvironment,
         ThemeModeRequest,
         ThemeSnapshot;
-export 'package:nativax_js/nativax_js.dart'
+export 'package:nativa_js/nativa_js.dart'
     show
         ConsoleLevel,
         ConsoleMessage,
@@ -26,6 +26,6 @@ export 'package:nativax_js/nativax_js.dart'
         JavaScriptException,
         JavaScriptTimeoutException,
         TimerLimits;
-export 'package:nativax_dom/nativax_dom.dart' show Document, Element, Event;
-export 'package:nativax_flutter/nativax_flutter.dart'
+export 'package:nativa_dom/nativa_dom.dart' show Document, Element, Event;
+export 'package:nativa_render/nativa_render.dart'
     show NativaXDocumentView, NativaXImageResolver, nativaxDefaultFontFamily, nativaxFontFallback;

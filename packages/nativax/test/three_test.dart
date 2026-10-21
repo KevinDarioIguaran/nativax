@@ -6,7 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:nativax/nativax.dart';
-import 'package:nativax_js/nativax_js.dart' show GlSurfaces;
+import 'package:nativa_js/nativa_js.dart' show GlSurfaces;
 
 /// Serves the fixture and the real three.js build installed by the
 /// threejs-multiplayer-starter example (`npm install`).

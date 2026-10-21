@@ -17,7 +17,7 @@ petición del usuario se dejó una versión estable y se guardó el progreso.
 
 - `examples/game-player/lib/metrics_overlay.dart`: overlay opt-in con
   percentiles por ventana de 2 s y salida JSONL.
-- `packages/nativax_js/lib/src/quickjs_engine.dart`: `GlSurfaces` conserva
+- `packages/nativa_js/lib/src/quickjs_engine.dart`: `GlSurfaces` conserva
   intervalos de presentación y latencias de decode; expone p50/p95/p99.
 - `tools/summarize_metrics.py`: agrupa por corrida y condición, con filtros
   `--skip`, `--last` y `--buffer`; no usa el promedio de FPS como veredicto.

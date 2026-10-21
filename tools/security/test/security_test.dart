@@ -1,6 +1,6 @@
 import 'dart:io';
 
-import 'package:nativax_security/security.dart';
+import 'package:nativa_security/security.dart';
 import 'package:test/test.dart';
 
 void main() {
@@ -53,7 +53,7 @@ void main() {
   });
 
   test('writes and reloads a security report', () async {
-    final dir = Directory.systemTemp.createTempSync('nativax_security_');
+    final dir = Directory.systemTemp.createTempSync('nativa_security_');
     addTearDown(() => dir.deleteSync(recursive: true));
     final run = SecurityRun(
       metadata: collectSecurityMetadata(

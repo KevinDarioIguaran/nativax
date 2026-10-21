@@ -9,7 +9,7 @@ String findRepoRoot([String? start]) {
   while (true) {
     final pubspec = File(p.join(dir.path, 'pubspec.yaml'));
     if (pubspec.existsSync() &&
-        pubspec.readAsStringSync().contains('nativax_workspace')) {
+        pubspec.readAsStringSync().contains('nativa_workspace')) {
       return dir.path;
     }
     final parent = dir.parent;

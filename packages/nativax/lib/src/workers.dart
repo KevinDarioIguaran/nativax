@@ -2,8 +2,8 @@ import 'dart:async';
 import 'dart:isolate';
 import 'dart:typed_data';
 
-import 'package:nativax_dom_bindings/nativax_dom_bindings.dart';
-import 'package:nativax_js/nativax_js.dart';
+import 'package:nativa_dom_bindings/nativa_dom_bindings.dart';
+import 'package:nativa_js/nativa_js.dart';
 
 /// Runs each dedicated worker on its own isolate (its own thread and
 /// QuickJS runtime), like browsers. Ports, `fetch` and console/error reports

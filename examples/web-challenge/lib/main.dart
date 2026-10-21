@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:nativax/nativax.dart';
-import 'package:nativax_dom/nativax_dom.dart' as dom;
+import 'package:nativa_dom/nativa_dom.dart' as dom;
 
 void main() => runApp(const WebChallengeApp());
 

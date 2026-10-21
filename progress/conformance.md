@@ -67,7 +67,7 @@ Los JSONL completos quedan en `.conformance/results/` (ignorado por git).
 La mayoría de los 164 FAIL de `css/selectors` comprueban `offsetWidth`,
 `offsetHeight` o `getBoundingClientRect`. El runner de WPT sólo tiene DOM y
 `StyleEngine`, **no layout/renderer**, así que no puede alcanzar el 70 % de
-CSS selectors sin integrar el motor de layout de `nativax_flutter`. Los tests
+CSS selectors sin integrar el motor de layout de `nativa_render`. Los tests
 reftest (345) están SKIP y no cuentan.
 
 ### WPT DOM/CSS (127 y 19 PASS)
@@ -124,8 +124,8 @@ IDN, IPv6 canónico, file URLs y detalles de normalización de WHATWG. Ver
 
 ## Cómo mejorar la línea base
 
-1. `nativax_dom_bindings`: `createElementNS`, CSSOM, `DOMParser`.
-2. `nativax_html`: adoption agency, foster parenting, doctype, template,
+1. `nativa_dom_bindings`: `createElementNS`, CSSOM, `DOMParser`.
+2. `nativa_html`: adoption agency, foster parenting, doctype, template,
    foreign content.
-3. `nativax_dom_bindings`: `URL` sobre `Uri` o un parser WHATWG propio.
+3. `nativa_dom_bindings`: `URL` sobre `Uri` o un parser WHATWG propio.
 4. Repetir `dart run bin/run_all.dart` y comparar el delta.

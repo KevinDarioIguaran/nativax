@@ -1,4 +1,4 @@
-import 'package:nativax_benchmark/benchmark.dart';
+import 'package:nativa_benchmark/benchmark.dart';
 import 'package:test/test.dart';
 
 void main() {

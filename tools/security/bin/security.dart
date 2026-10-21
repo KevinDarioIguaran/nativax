@@ -1,6 +1,6 @@
 import 'dart:io';
 
-import 'package:nativax_security/security.dart';
+import 'package:nativa_security/security.dart';
 import 'package:path/path.dart' as p;
 
 Future<void> main(List<String> args) async {

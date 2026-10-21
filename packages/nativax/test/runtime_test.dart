@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:nativax/nativax.dart';
-import 'package:nativax_css/nativax_css.dart' show CssColor;
+import 'package:nativa_css/nativa_css.dart' show CssColor;
 
 Finder _richTextContaining(String value) => find.byWidgetPredicate(
       (widget) =>

@@ -363,7 +363,7 @@ String _mode() {
 }
 
 String _quickJsVersion(String root) {
-  final f = File(p.join(root, 'packages', 'nativax_js', 'third_party',
+  final f = File(p.join(root, 'packages', 'nativa_js', 'third_party',
       'quickjs', 'quickjs.h'));
   if (!f.existsSync()) return 'unknown';
   final text = f.readAsStringSync();
@@ -379,7 +379,7 @@ String findLeakRepoRoot([String? start]) {
   while (true) {
     final pubspec = File(p.join(dir.path, 'pubspec.yaml'));
     if (pubspec.existsSync() &&
-        pubspec.readAsStringSync().contains('nativax_workspace')) {
+        pubspec.readAsStringSync().contains('nativa_workspace')) {
       return dir.path;
     }
     final parent = dir.parent;

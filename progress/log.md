@@ -1,5 +1,9 @@
 # Histórico
 
+> Las entradas anteriores al 2026-10-21 usan la nomenclatura antigua
+> `nativax_*`. La tabla de migración y los nombres actuales están en
+> [`docs/nativa-family.md`](../docs/nativa-family.md).
+
 ## 2026-10-20 — Sesión 1: cimientos
 
 - Monorepo con `nativax_js`, `nativax_dom`, `nativax_html`, `nativax_css`,

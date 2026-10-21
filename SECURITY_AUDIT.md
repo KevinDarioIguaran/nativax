@@ -1,8 +1,8 @@
 # NativaX security audit
 
 Fecha: 2026-10-20. Alcance: Linux x86_64, Dart JIT, QuickJS-ng 0.17.0, paquetes
-`nativax_js`, `nativax_dom`, `nativax_dom_bindings`, `nativax_html`,
-`nativax_css` y runtime público.
+`nativa_js`, `nativa_dom`, `nativa_dom_bindings`, `nativa_html`,
+`nativa_css` y runtime público.
 
 Este informe **no** declara que NativaX sea “100 % seguro” ni “a prueba de
 exploits”. Recoge lo comprobado y lo que queda abierto.
@@ -155,5 +155,5 @@ dart run bin/security.dart run --only internal.callback_globals
 
 
 Las correcciones tienen tests de regresión en la suite y en
-`packages/nativax_dom/test`, `packages/nativax_dom_bindings/test` y
+`packages/nativa_dom/test`, `packages/nativa_dom_bindings/test` y
 `tools/leaks`.

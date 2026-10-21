@@ -169,7 +169,7 @@ SecurityMetadata collectSecurityMetadata({
 }
 
 String _version(String root) {
-  final f = File('$root/packages/nativax_js/third_party/quickjs/quickjs.h');
+  final f = File('$root/packages/nativa_js/third_party/quickjs/quickjs.h');
   if (!f.existsSync()) return 'unknown';
   final text = f.readAsStringSync();
   String v(String name) =>
@@ -184,7 +184,7 @@ String findSecurityRepoRoot([String? start]) {
   while (true) {
     final pubspec = File('${dir.path}/pubspec.yaml');
     if (pubspec.existsSync() &&
-        pubspec.readAsStringSync().contains('nativax_workspace')) {
+        pubspec.readAsStringSync().contains('nativa_workspace')) {
       return dir.path;
     }
     final parent = dir.parent;

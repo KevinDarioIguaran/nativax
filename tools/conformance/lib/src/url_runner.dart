@@ -1,10 +1,10 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:nativax_css/nativax_css.dart' show MediaContext;
-import 'package:nativax_dom/nativax_dom.dart' as dom;
-import 'package:nativax_dom_bindings/nativax_dom_bindings.dart';
-import 'package:nativax_js/nativax_js.dart';
+import 'package:nativa_css/nativa_css.dart' show MediaContext;
+import 'package:nativa_dom/nativa_dom.dart' as dom;
+import 'package:nativa_dom_bindings/nativa_dom_bindings.dart';
+import 'package:nativa_js/nativa_js.dart';
 import 'package:path/path.dart' as p;
 
 import 'result.dart';

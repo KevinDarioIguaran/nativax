@@ -1,17 +1,17 @@
-name: nativax_workspace
-description: Monorepo root for the NativaX packages.
+name: nativa_workspace
+description: Monorepo root for the Nativa family (NativaX, NativaJS, NativaWeb, NativaRender, NativaFlow, NativaForge, NativaShield and NativaBench).
 publish_to: none
 
 environment:
   sdk: ^3.10.0
 
 workspace:
-  - packages/nativax_css
-  - packages/nativax_dom
-  - packages/nativax_dom_bindings
-  - packages/nativax_html
-  - packages/nativax_js
-  - packages/nativax_flutter
+  - packages/nativa_css
+  - packages/nativa_dom
+  - packages/nativa_dom_bindings
+  - packages/nativa_html
+  - packages/nativa_js
+  - packages/nativa_render
   - packages/nativax
   - examples/web-challenge
   - examples/game-player

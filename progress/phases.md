@@ -11,7 +11,7 @@
 ## Fase 1 — Esqueleto funcional 🟡
 
 - [x] Paquetes puros: js, dom, html, css, bindings.
-- [x] `nativax_flutter` compila (pubspec + entrypoint).
+- [x] `nativa_render` compila (pubspec + entrypoint).
 - [x] Renderer de texto, cajas, bloque y flex.
 - [x] Mutaciones DOM → reconstrucción de UI.
 - [x] Click Flutter → `Element.click()` → listener JS.

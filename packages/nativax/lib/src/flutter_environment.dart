@@ -1,7 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:nativax_css/nativax_css.dart' hide MediaQuery;
-import 'package:nativax_dom_bindings/nativax_dom_bindings.dart';
+import 'package:nativa_css/nativa_css.dart' hide MediaQuery;
+import 'package:nativa_dom_bindings/nativa_dom_bindings.dart';
 
 /// [HostEnvironment] backed by the current Flutter context.
 ///

@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'dart:typed_data';
 
-import 'package:nativax_dom_bindings/nativax_dom_bindings.dart';
+import 'package:nativa_dom_bindings/nativa_dom_bindings.dart';
 
 import 'resources.dart';
 
