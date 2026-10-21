@@ -10,7 +10,7 @@
   `nativax_dom_bindings`.
 - QuickJS-ng vendorizado, puente C/FFI, timers, límites.
 - 159 tests unitarios en verde.
-- `STATUS.md` con el plan del renderer.
+- `docs/status.md` con el plan del renderer.
 
 ## 2026-10-20 — Sesión 2: conformidad + renderer (fase 1)
 
@@ -197,8 +197,8 @@ Total unitario/widget: **170 tests**.
 - Corregido: `node.release` libera listeners (detectado por `tools/leaks`).
 - Abierto: `__nx_dispatch`/`__nx_eventDone`/`__nx_releaseListener` siguen
   visibles en `globalThis` (severidad media; sin escape al host).
-- Documentos: `SECURITY_THREAT_MODEL.md`, `SECURITY_AUDIT.md`,
-  `SECURITY_TEST_PLAN.md`, `SECURITY_PLATFORM_MATRIX.md`.
+- Documentos: `docs/security/threat-model.md`, `docs/security/audit.md`,
+  `docs/security/test-plan.md`, `docs/security/platform-matrix.md`.
 - Resultado real: 13 PASS / 1 FAIL / 1 SKIP.
 - Total: **209 tests**.
 

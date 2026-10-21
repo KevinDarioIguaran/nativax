@@ -17,7 +17,7 @@ Salidas en `benchmarks/security/` (JSON + Markdown, ignoradas por git).
   `__nx_eventDone`, `__nx_releaseListener` visibles en `globalThis`).
 - SKIP: política de recursos Flutter, no ejecutable desde CLI pura.
 
-Ver `SECURITY_AUDIT.md`, `SECURITY_THREAT_MODEL.md`,
-`SECURITY_TEST_PLAN.md` y `SECURITY_PLATFORM_MATRIX.md`.
+Ver `../../docs/security/audit.md`, `../../docs/security/threat-model.md`,
+`../../docs/security/test-plan.md` y `../../docs/security/platform-matrix.md`.
 
 No se declara NativaX “100 % seguro”; un PASS solo cubre el ataque probado.
