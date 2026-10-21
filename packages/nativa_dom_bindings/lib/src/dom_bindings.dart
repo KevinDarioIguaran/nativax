@@ -863,6 +863,27 @@ class DomBindings {
         .replaceAll(RegExp(r'^[\u0000-\u0020]+|[\u0000-\u0020]+$'), '');
     var text = clean(input);
     var baseText = base == null ? null : clean(base);
+    // A special scheme without `//` and without a base can still denote an
+    // authority (`http:example.com`), not a relative reference.
+    if (baseText == null) {
+      final noSlash = RegExp(r'^(https?|wss?|ftp):(?!//)(.*)$',
+              caseSensitive: false)
+          .firstMatch(text);
+      if (noSlash != null) {
+        final scheme = noSlash.group(1)!.toLowerCase();
+        var rest = noSlash.group(2)!.replaceAll('\\', '/');
+        if (rest.startsWith('/')) {
+          final without = rest.replaceFirst(RegExp(r'^/+'), '');
+          if (without.isNotEmpty && RegExp(r'[@.:]').hasMatch(without)) {
+            text = '$scheme://$without';
+          }
+        } else if (rest.startsWith('@') ||
+            (rest.contains('@') && !rest.startsWith(':')) ||
+            RegExp(r'[.:@]').hasMatch(rest)) {
+          text = '$scheme://$rest';
+        }
+      }
+    }
     final isData = text.toLowerCase().startsWith('data:');
     try {
       // WHATWG treats a special scheme without `//` as a relative reference or

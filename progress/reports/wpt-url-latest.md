@@ -1,23 +1,23 @@
 # Conformidad: wpt-url
 
-- Fecha: 2026-10-21T22:13:24.645020Z
+- Fecha: 2026-10-21T22:22:34.626428Z
 - Duración: 0.2 s
 - Comando: `run_url`
 - Total: **896** tests
-- Tasa de éxito (sin SKIP): **72.21 %**
+- Tasa de éxito (sin SKIP): **74.22 %**
 
 | Estado | Tests |
 |---|---:|
-| PASS | 647 |
-| FAIL | 249 |
+| PASS | 665 |
+| FAIL | 231 |
 | SKIP | 0 |
 | ERROR | 0 |
 
 ## Delta contra la línea base
 
-- Corregidos: **0**
+- Corregidos: **18**
 - Regresiones: **0**
-- Siguen fallando: **249**
+- Siguen fallando: **231**
 - Nuevos en esta ejecución: **0**
 - Ausentes respecto a la base: **0**
 
@@ -25,7 +25,7 @@
 
 | Grupo | PASS | FAIL | SKIP | ERROR | Éxito |
 |---|---:|---:|---:|---:|---:|
-| `url` | 647 | 249 | 0 | 0 | 72.2 % |
+| `url` | 665 | 231 | 0 | 0 | 74.2 % |
 
 ## Por directorio
 
@@ -113,7 +113,7 @@
 | `#79 "http:/" base="http:/` | 1 | 0 | 0 | 0 | 100.0 % |
 | _(+816 grupos)_ | | | | | |
 
-## Fallos (249)
+## Fallos (231)
 
 ### `#9 "a:\t foo.com" base="http://example.org/foo/bar"`
 
@@ -434,96 +434,6 @@ pathname: expected /foo%2Ehtml, got /foo.html
 
 - Características: url
 - Motivo: href: expected wss://foo/, got wss://foo:443/
-
-### `#202 "http:/example.com/"`
-
-- Características: url
-- Motivo: URL parsing failed
-
-### `#203 "ftp:/example.com/"`
-
-- Características: url
-- Motivo: URL parsing failed
-
-### `#204 "https:/example.com/"`
-
-- Características: url
-- Motivo: URL parsing failed
-
-### `#209 "ws:/example.com/"`
-
-- Características: url
-- Motivo: URL parsing failed
-
-### `#210 "wss:/example.com/"`
-
-- Características: url
-- Motivo: URL parsing failed
-
-### `#214 "http:example.com/"`
-
-- Características: url
-- Motivo: URL parsing failed
-
-### `#215 "ftp:example.com/"`
-
-- Características: url
-- Motivo: URL parsing failed
-
-### `#216 "https:example.com/"`
-
-- Características: url
-- Motivo: URL parsing failed
-
-### `#220 "ws:example.com/"`
-
-- Características: url
-- Motivo: URL parsing failed
-
-### `#221 "wss:example.com/"`
-
-- Características: url
-- Motivo: URL parsing failed
-
-### `#226 "http:@www.example.com"`
-
-- Características: url
-- Motivo: URL parsing failed
-
-### `#227 "http:/@www.example.com"`
-
-- Características: url
-- Motivo: URL parsing failed
-
-### `#229 "http:a:b@www.example.com"`
-
-- Características: url
-- Motivo: URL parsing failed
-
-### `#230 "http:/a:b@www.example.com"`
-
-- Características: url
-- Motivo: URL parsing failed
-
-### `#233 "http::b@www.example.com"`
-
-- Características: url
-- Motivo: URL parsing failed
-
-### `#234 "http:/:b@www.example.com"`
-
-- Características: url
-- Motivo: URL parsing failed
-
-### `#246 "http:a:@www.example.com"`
-
-- Características: url
-- Motivo: URL parsing failed
-
-### `#247 "http:/a:@www.example.com"`
-
-- Características: url
-- Motivo: URL parsing failed
 
 ### `#267 "file:.." base="http://www.example.com/test"`
 
@@ -945,7 +855,187 @@ hostname: expected 255.255.255.255, got 0xffffffff
 - Características: url
 - Motivo: URL parsing failed
 
-_… y 129 fallos más (ver el JSONL)._
+### `#532 "https://0x.0x.0x.0x"`
+
+- Características: url
+- Motivo: URL parsing failed
+
+### `#533 "https://00.00.00.00"`
+
+- Características: url
+- Motivo: href: expected https://0.0.0.0/, got https://00.00.00.00/
+
+```text
+href: expected https://0.0.0.0/, got https://00.00.00.00/
+origin: expected https://0.0.0.0, got https://00.00.00.00
+host: expected 0.0.0.0, got 00.00.00.00
+hostname: expected 0.0.0.0, got 00.00.00.00
+```
+
+### `#534 "https://0000000000000000000000000000000000000000177.0.0.1"`
+
+- Características: url
+- Motivo: href: expected https://127.0.0.1/, got https://0000000000000000000000000000000000000000177.0.0.1/
+
+```text
+href: expected https://127.0.0.1/, got https://0000000000000000000000000000000000000000177.0.0.1/
+origin: expected https://127.0.0.1, got https://0000000000000000000000000000000000000000177.0.0.1
+host: expected 127.0.0.1, got 0000000000000000000000000000000000000000177.0.0.1
+hostname: expected 127.0.0.1, got 0000000000000000000000000000000000000000177.0.0.1
+```
+
+### `#546 "asdf://%43%7C/"`
+
+- Características: url
+- Motivo: URL parsing failed
+
+### `#548 ".." base="file:///C:/"`
+
+- Características: url
+- Motivo: href: expected file:///C:/, got file:///
+
+```text
+href: expected file:///C:/, got file:///
+pathname: expected /C:/, got /
+```
+
+### `#550 "/" base="file:///C:/a/b"`
+
+- Características: url
+- Motivo: href: expected file:///C:/, got file:///
+
+```text
+href: expected file:///C:/, got file:///
+pathname: expected /C:/, got /
+```
+
+### `#551 "/" base="file://h/C:/a/b"`
+
+- Características: url
+- Motivo: href: expected file://h/C:/, got file://h/
+
+```text
+href: expected file://h/C:/, got file://h/
+pathname: expected /C:/, got /
+```
+
+### `#553 "//d:" base="file:///C:/a/b"`
+
+- Características: url
+- Motivo: href: expected file:///d:, got file://d/
+
+```text
+href: expected file:///d:, got file://d/
+host: expected , got d
+hostname: expected , got d
+pathname: expected /d:, got /
+```
+
+### `#554 "//d:/.." base="file:///C:/a/b"`
+
+- Características: url
+- Motivo: href: expected file:///d:/, got file://d/
+
+```text
+href: expected file:///d:/, got file://d/
+host: expected , got d
+hostname: expected , got d
+pathname: expected /d:/, got /
+```
+
+### `#558 "file:" base="file:///test?test#test"`
+
+- Características: url
+- Motivo: href: expected file:///test?test, got file:///
+
+```text
+href: expected file:///test?test, got file:///
+pathname: expected /test, got /
+search: expected ?test, got
+```
+
+### `#560 "file:?x" base="file:///test?test#test"`
+
+- Características: url
+- Motivo: href: expected file:///test?x, got file:///?x
+
+```text
+href: expected file:///test?x, got file:///?x
+pathname: expected /test, got /
+```
+
+### `#562 "file:#x" base="file:///test?test#test"`
+
+- Características: url
+- Motivo: href: expected file:///test?test#x, got file:///#x
+
+```text
+href: expected file:///test?test#x, got file:///#x
+pathname: expected /test, got /
+search: expected ?test, got
+```
+
+### `#580 "C|" base="file://host/dir/file"`
+
+- Características: url
+- Motivo: href: expected file://host/C:, got file://host/dir/C%7C
+
+```text
+href: expected file://host/C:, got file://host/dir/C%7C
+pathname: expected /C:, got /dir/C%7C
+```
+
+### `#581 "C|" base="file://host/D:/dir1/dir2/file"`
+
+- Características: url
+- Motivo: href: expected file://host/C:, got file://host/D:/dir1/dir2/C%7C
+
+```text
+href: expected file://host/C:, got file://host/D:/dir1/dir2/C%7C
+pathname: expected /C:, got /D:/dir1/dir2/C%7C
+```
+
+### `#582 "C|#" base="file://host/dir/file"`
+
+- Características: url
+- Motivo: href: expected file://host/C:#, got file://host/dir/C%7C#
+
+```text
+href: expected file://host/C:#, got file://host/dir/C%7C#
+pathname: expected /C:, got /dir/C%7C
+```
+
+### `#583 "C|?" base="file://host/dir/file"`
+
+- Características: url
+- Motivo: href: expected file://host/C:?, got file://host/dir/C%7C?
+
+```text
+href: expected file://host/C:?, got file://host/dir/C%7C?
+pathname: expected /C:, got /dir/C%7C
+```
+
+### `#584 "C|/" base="file://host/dir/file"`
+
+- Características: url
+- Motivo: href: expected file://host/C:/, got file://host/dir/C%7C/
+
+```text
+href: expected file://host/C:/, got file://host/dir/C%7C/
+pathname: expected /C:/, got /dir/C%7C/
+```
+
+### `#585 "C|\n/" base="file://host/dir/file"`
+
+- Características: url
+- Motivo: href: expected file://host/C:/, got file://host/dir/C%7C/
+
+```text
+href: expected file://host/C:/, got file://host/dir/C%7C/
+pathname: expected /C:/, got /dir/C%7C/
+```
+
+_… y 111 fallos más (ver el JSONL)._
 
 ---
 
