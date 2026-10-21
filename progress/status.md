@@ -21,7 +21,7 @@ real y el test de estadísticas de presentación.
 | Rendimiento 7× | 🔴 registrado | Rapier 180 pasos: 328,5 ms (wasm3) vs 30,7 ms (V8); gap 10,7× |
 | Ejemplo web-challenge | ✅ original | HTML/CSS/JS **sin modificar**: 46/52 comprobaciones propias en verde |
 | Seguridad | 🟢 | `tools/security`: 14 PASS / 0 FAIL / 1 SKIP |
-| Conformidad | 🟡 | Test262 97,93 %; html5lib 99,26 %; URL 74,22 %; DOM 59,36 %; CSS 17,68 %; tree 50,37 % |
+| Conformidad | 🟡 | Test262 97,93 %; html5lib 99,26 %; URL 74,22 %; DOM 59,36 %; CSS 18,78 %; tree 50,37 % |
 | Plataformas | 🟡 solo Linux | build Linux verificado; resto sin probar |
 
 ## Reorganización Nativa y skills — 2026-10-21
@@ -78,6 +78,18 @@ real y el test de estadísticas de presentación.
   y reparentado del bloque más lejano.
 - Comando: `dart run bin/run_html_tree.dart` (commit de la suite `e7d77cd`).
 - Tests: `nativa_html` 51 en verde; `./tools/test_all.sh` 316 en verde.
+
+## Incremento de conformidad CSS selectors — 2026-10-21
+
+- CSS selectors: **17,68 % → 18,78 %** (+1,10 puntos; 32 → 34 PASS;
+  149 → 147 FAIL; 528 archivos, 347 SKIP, 0 ERROR).
+- Causa real: `.foo-*` (class prefix selector) no se soportaba y `:dir()`
+  aceptaba cadenas entre comillas aunque la gramática exige un ident.
+- Fix: soporte de class prefix selectors y validación de argumento de `:dir()`.
+- Comando: `dart run bin/run_wpt.dart --dirs css/selectors --limit 100000`
+  (commit de la suite `e7d77cd`).
+- Tests: `nativa_dom` 38 en verde; `./tools/test_all.sh` 316 en verde;
+  `flutter analyze` limpio.
 
 ## Checkpoint estable — Fase 0 de presentación
 

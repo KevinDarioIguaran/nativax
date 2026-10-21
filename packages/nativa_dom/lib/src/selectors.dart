@@ -68,10 +68,13 @@ class IdSelector extends SimpleSelector {
 }
 
 class ClassSelector extends SimpleSelector {
-  const ClassSelector(this.name);
+  const ClassSelector(this.name, {this.prefix = false});
   final String name;
+  final bool prefix;
   @override
-  bool matches(Element e, [Element? scope]) => e.classList.contains(name);
+  bool matches(Element e, [Element? scope]) => prefix
+      ? e.classList.any((c) => c.startsWith(name) && c.length > name.length)
+      : e.classList.contains(name);
   @override
   Specificity get specificity => const Specificity(0, 1, 0);
 }
@@ -691,7 +694,13 @@ class _SelectorParser {
         parts.add(IdSelector(_ident()));
       } else if (c == '.') {
         pos++;
-        parts.add(ClassSelector(_ident()));
+        final name = _ident();
+        var prefix = false;
+        if (!_done && _ch == '*') {
+          prefix = true;
+          pos++;
+        }
+        parts.add(ClassSelector(name, prefix: prefix));
       } else if (c == '[') {
         pos++;
         parts.add(_attribute());
@@ -833,6 +842,9 @@ class _SelectorParser {
     }
     if (name == 'dir' || name == 'lang') {
       String value;
+      if (name == 'dir' && (_ch == '"' || _ch == "'")) {
+        _fail('expected an ident');
+      }
       if (!_done && (_ch == '"' || _ch == "'")) {
         final quote = _ch;
         pos++;
