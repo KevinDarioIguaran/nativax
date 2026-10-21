@@ -93,6 +93,17 @@ class Document extends Node {
     return DocumentType(this, name, publicId: publicId, systemId: systemId);
   }
 
+  /// Removes [node] from its parent and moves it (and its descendants) into
+  /// this document. Documents cannot be adopted.
+  Node adoptNode(Node node) {
+    if (node is Document) {
+      throw DomException('NotSupportedError', 'a document cannot be adopted');
+    }
+    node.parentNode?.removeChild(node);
+    if (!identical(node.ownerDocument, this)) node.adoptDocument(this);
+    return node;
+  }
+
   ProcessingInstruction createProcessingInstruction(String target, String data) {
     validateName(target);
     if (data.contains('?>')) {

@@ -104,6 +104,45 @@ void main() {
           '<p class="x">uno <b>dos</b></p><script>globalThis.ran = true</script>');
     });
 
+    test('adoptNode moves nodes and keeps attribute identity', () {
+      final result = h.js('''
+        (() => {
+          const other = document.implementation.createHTMLDocument("T");
+          const div = other.createElement("div");
+          div.setAttribute("data-a", "1");
+          const attr = div.getAttributeNode("data-a");
+          const before = [div.ownerDocument === other, attr.ownerDocument === other];
+          const returned = document.adoptNode(div);
+          return [before, returned === div, div.parentNode === null,
+                  div.ownerDocument === document, attr.ownerDocument === document,
+                  div.getAttributeNode("data-a") === attr];
+        })()
+      ''');
+      expect(result, [
+        [true, true],
+        true,
+        true,
+        true,
+        true,
+        true,
+      ]);
+    });
+
+    test('appending to an XML document updates tagName', () {
+      expect(
+          h.js('''
+            (() => {
+              const el = document.createElement("t");
+              const xml = document.implementation
+                .createDocument("http://www.w3.org/1999/xhtml", "div", null)
+                .documentElement;
+              xml.appendChild(el);
+              return [el.tagName, el.ownerDocument.contentType];
+            })()
+          '''),
+          ['t', 'application/xhtml+xml']);
+    });
+
     test('DOM errors become typed exceptions', () {
       expect(h.js('try { document.body.appendChild(document.documentElement) } catch (e) { e.name }'),
           'HierarchyRequestError');

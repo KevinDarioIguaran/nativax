@@ -1,16 +1,16 @@
 # Conformidad: wpt
 
-- Fecha: 2026-10-21T18:58:51.679328Z
-- Duración: 137.7 s
+- Fecha: 2026-10-21T21:08:00.429532Z
+- Duración: 138.0 s
 - Commit de la suite: `e7d77cd1e0353d7b37ce35eb912b6992df8dfab0`
 - Comando: `run_wpt dom/nodes --limit 100000`
 - Total: **327** tests
-- Tasa de éxito (sin SKIP): **58.30 %**
+- Tasa de éxito (sin SKIP): **59.36 %**
 
 | Estado | Tests |
 |---|---:|
-| PASS | 165 |
-| FAIL | 118 |
+| PASS | 168 |
+| FAIL | 115 |
 | SKIP | 44 |
 | ERROR | 0 |
 
@@ -26,7 +26,7 @@
 
 | Grupo | PASS | FAIL | SKIP | ERROR | Éxito |
 |---|---:|---:|---:|---:|---:|
-| `dom/nodes` | 165 | 118 | 44 | 0 | 58.3 % |
+| `dom/nodes` | 168 | 115 | 44 | 0 | 59.4 % |
 
 ## Por directorio
 
@@ -53,7 +53,7 @@
 | `dom/nodes/DOMImplementation-createHTMLDocument.html` | 1 | 0 | 0 | 0 | 100.0 % |
 | `dom/nodes/DOMImplementation-hasFeature.html` | 1 | 0 | 0 | 0 | 100.0 % |
 | `dom/nodes/Document-URL.html` | 0 | 1 | 0 | 0 | 0.0 % |
-| `dom/nodes/Document-adoptNode.html` | 0 | 1 | 0 | 0 | 0.0 % |
+| `dom/nodes/Document-adoptNode.html` | 1 | 0 | 0 | 0 | 100.0 % |
 | `dom/nodes/Document-characterSet-normalization-1.html` | 0 | 1 | 0 | 0 | 0.0 % |
 | `dom/nodes/Document-characterSet-normalization-2.html` | 0 | 1 | 0 | 0 | 0.0 % |
 | `dom/nodes/Document-constructor.html` | 1 | 0 | 0 | 0 | 100.0 % |
@@ -114,7 +114,7 @@
 | `dom/nodes/Element-setAttribute-crbug-1138487.html` | 1 | 0 | 0 | 0 | 100.0 % |
 | _(+146 grupos)_ | | | | | |
 
-## Fallos (118)
+## Fallos (115)
 
 ### `dom/nodes/Comment-constructor.html`
 
@@ -157,19 +157,6 @@ createDocument test: null,"foo1",null,null: element.namespaceURI: expected null,
 
 ```text
 : assert_equals: expected about:///common/blank.html, got about:blank
-```
-
-### `dom/nodes/Document-adoptNode.html`
-
-- Características: dom/nodes
-- Motivo: 6 subtest(s) failed
-
-```text
-Adopting an Element called 'x<' should work.: assert_equals: expected null, got [object HTMLBodyElement]
-Adopting an Element called ':good:times:' should work.: assert_equals: expected [object Object], got [object Object]
-Explicitly adopting a DocumentType should work.: assert_equals: expected null, got [object Object]
-Adopting a Document should throw.: assert_throws_dom: did not throw
-Adopting an Element should adopt its Attr nodes.: assert_equals: expected [object Object], got [object Object]
 ```
 
 ### `dom/nodes/Document-characterSet-normalization-1.html`
@@ -257,24 +244,14 @@ has a namespace, *|, webkitMatchesSelector: "*|h" is not a valid selector: unexp
 Replacing an attribute prefix preserves other attributes with the old qualified name: assert_equals: expected plain, got null
 ```
 
-### `dom/nodes/Element-tagName-adopt.html`
-
-- Características: dom/nodes
-- Motivo: 1 subtest(s) failed
-
-```text
-tagName should not be uppercased when appended to XML document: tagName should be lowercase in XML document: expected t, got T
-```
-
 ### `dom/nodes/Element-tagName.html`
 
 - Características: dom/nodes
-- Motivo: 3 subtest(s) failed
+- Motivo: 2 subtest(s) failed
 
 ```text
 tagName should be updated when changing ownerDocument: tagName should be lowercase in XML: expected div, got HTML
-tagName should be updated when changing ownerDocument (createDocument without prefix): tagName should be lowercase in XML: expected div, got DIV
-tagName should be updated when changing ownerDocument (createDocument with prefix): tagName should be lowercase in XML: expected foo:div, got DIV
+tagName should be updated when changing ownerDocument (createDocument with prefix): tagName should be lowercase in XML: expected foo:div, got div
 ```
 
 ### `dom/nodes/Element-webkitMatchesSelector.html`
@@ -437,15 +414,6 @@ DocumentFragment should have null namespace, prefix "": assert_equals: expected 
 DocumentFragment should have null namespace, prefix "foo": assert_equals: expected null, got http://www.w3.org/1999/xhtml
 DocumentFragment should have null namespace, prefix "xml": assert_equals: expected null, got http://www.w3.org/1999/xhtml
 DocumentFragment should have null namespace, prefix "xmlns": assert_equals: expected null, got http://www.w3.org/1999/xhtml
-```
-
-### `dom/nodes/Node-mutation-adoptNode.html`
-
-- Características: dom/nodes
-- Motivo: 1 subtest(s) failed
-
-```text
-Adopting an element into a different document update's the element's owner doc as well as the owner docs of it's attributes: assert_equals: expected [object Object], got [object Object]
 ```
 
 ### `dom/nodes/Node-normalize-2.html`
@@ -679,7 +647,7 @@ setting an attribute should not overwrite the length property of an `NamedNodeMa
 ### `dom/nodes/attributes.html`
 
 - Características: dom/nodes
-- Motivo: 34 subtest(s) failed
+- Motivo: 26 subtest(s) failed
 
 ```text
 When qualifiedName does not match the Name production, an INVALID_CHARACTER_ERR exception is to be thrown. (toggleAttribute): toggleAttribute("", false): did not throw

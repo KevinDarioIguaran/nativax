@@ -91,6 +91,21 @@ void main() {
           throwsA(isA<DomException>().having((e) => e.name, 'name', 'InvalidCharacterError')));
     });
 
+    test('adoptNode detaches and rewrites ownerDocument recursively', () {
+      final source = sample();
+      final target = Document();
+      final div = source.getElementById('a')!;
+      final paragraph = div.firstElementChild!;
+      expect(target.adoptNode(div), same(div));
+      expect(div.parentNode, isNull);
+      expect(div.ownerDocument, same(target));
+      expect(paragraph.ownerDocument, same(target));
+      expect(
+          () => target.adoptNode(target),
+          throwsA(isA<DomException>()
+              .having((e) => e.name, 'name', 'NotSupportedError')));
+    });
+
     test('textContent setter replaces children', () {
       final d = sample();
       final div = d.getElementById('a')!..textContent = 'plain';

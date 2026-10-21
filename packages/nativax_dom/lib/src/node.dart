@@ -334,12 +334,16 @@ abstract class Node extends EventTarget {
     }
   }
 
-  void _adopt(Document doc) {
+  /// Updates this subtree's node document after insertion into another
+  /// document, or after [Document.adoptNode].
+  void adoptDocument(Document doc) {
     _ownerDocument = doc;
     for (final c in _children) {
-      c._adopt(doc);
+      c.adoptDocument(doc);
     }
   }
+
+  void _adopt(Document doc) => adoptDocument(doc);
 
   /// Deep or shallow copy owned by the same document. Listeners are not
   /// copied, matching the DOM.

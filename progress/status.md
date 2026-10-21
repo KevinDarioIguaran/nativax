@@ -1,7 +1,7 @@
 # Estado actual
 
-Última actualización: 2026-10-21 (sesión 22: primer incremento de conformidad
-HTML). Tests: **305** en total (`./tools/test_all.sh`), incluido el probe de
+Última actualización: 2026-10-21 (sesión 23: segundo incremento de conformidad,
+DOM). Tests: **308** en total (`./tools/test_all.sh`), incluido el probe de
 juego real y el test de estadísticas de presentación.
 
 ## Resumen
@@ -10,10 +10,10 @@ juego real y el test de estadísticas de presentación.
 |---|---|---|
 | Núcleo JS (QuickJS-ng + FFI) | 🟢 estable | 52 tests; registro privado de callbacks en el puente C |
 | WebAssembly (wasm3) | 🟢 B4 | 11 unitarios + 3 E2E; Rapier 0.19.3 y worker real (103 cuerpos ~45 Hz) |
-| DOM | 🟢 estable | 37 tests; pseudoelementos, `:hover`/`:active`/`:target`, validación, dialog/details |
+| DOM | 🟢 estable | 38 tests; pseudoelementos, `:hover`/`:active`/`:target`, validación, dialog/details y `adoptNode` |
 | HTML | 🟢 estable | 43 tests; foreign content (SVG/MathML) y recuperación de errores |
 | CSS | 🟢 estable | 39 tests; grid, `calc()`, `::before/::after`, keyframes, transiciones, `@supports` |
-| Bindings JS↔DOM | 🟢 amplio | 49 tests; ~3.800 líneas de plataforma web (ver docs/javascript-supported.md) |
+| Bindings JS↔DOM | 🟢 amplio | 51 tests; ~3.800 líneas de plataforma web (ver docs/javascript-supported.md) |
 | Renderer Flutter | 🟢 amplio | 34 tests; grid, sticky, SVG, canvas 2D, animaciones, filtros, DnD |
 | Runtime público (`nativax`) | 🟢 | 27 tests; red por política, servicios de plataforma, errores no fatales |
 | Juego real (B5) | 🟢 jugable | bundle Vite sin modificar, 3 workers, Rapier, Start real, frames GL y captura no plana |
@@ -21,7 +21,7 @@ juego real y el test de estadísticas de presentación.
 | Rendimiento 7× | 🔴 registrado | Rapier 180 pasos: 328,5 ms (wasm3) vs 30,7 ms (V8); gap 10,7× |
 | Ejemplo web-challenge | ✅ original | HTML/CSS/JS **sin modificar**: 46/52 comprobaciones propias en verde |
 | Seguridad | 🟢 | `tools/security`: 14 PASS / 0 FAIL / 1 SKIP |
-| Conformidad | 🟡 | Test262 97,93 %; html5lib 96,95 %; URL 70,98 %; DOM 58,30 %; CSS 10,38 %; tree 46,74 % |
+| Conformidad | 🟡 | Test262 97,93 %; html5lib 96,95 %; URL 70,98 %; DOM 59,36 %; CSS 10,38 %; tree 46,74 % |
 | Plataformas | 🟡 solo Linux | build Linux verificado; resto sin probar |
 
 ## Checkpoint estable — Fase 0 de presentación
@@ -64,6 +64,23 @@ juego real y el test de estadísticas de presentación.
 - Siguen pendientes: adoption agency, foster parenting, template contents,
   tablas y foreign content.
 
+## Segundo incremento de conformidad DOM — 2026-10-21
+
+- WPT `dom/nodes`: **58,30 % → 59,36 %** (168 PASS, 115 FAIL, 44 SKIP,
+  0 ERROR). **+1,06 puntos**, 3 archivos corregidos y **0 regresiones**.
+- `Document.adoptNode` real: desengancha el nodo de su padre, actualiza
+  `ownerDocument` en todo el subárbol y lanza `NotSupportedError` para
+  documentos.
+- Atributos: `Attr.ownerDocument` sigue al elemento, se conserva la identidad
+  del wrapper y la adopción implícita al insertar en otro documento.
+- Los wrappers de documento se mantienen vivos para no perder `contentType`;
+  así `tagName` cambia entre HTML y XML. `Element-tagName-adopt.html` pasa.
+- `./tools/test_all.sh`: **308 tests en verde**.
+- Sigue fallando `Element-tagName.html` por el `DOMParser` simulado (devuelve
+  un documento HTML) y por metadatos de prefijo cuando se recolecta el wrapper
+  del elemento. También quedan MutationObserver y `createElement` con
+  namespace como siguientes objetivos.
+
 ## Comparación con Chrome (web-challenge)
 
 `examples/web-challenge/test/screenshot_test.dart` renderiza la página con
@@ -82,7 +99,7 @@ soportados: `share` y `geolocation`.
 ## Fase 4 — en curso
 
 - [x] Test262 (97,93 %), html5lib (96,95 %) y URL (70,98 %) por encima del 70 %.
-- [ ] WPT `dom/nodes`: **58,30 %** (objetivo 70 %).
+- [ ] WPT `dom/nodes`: **59,36 %** (objetivo 70 %).
 - [ ] WPT `css/selectors`: **10,38 %** (objetivo 70 %).
 - [ ] WPT tree construction: **46,74 %** (objetivo 70 %).
 - [x] Reparse de `<style>` al insertar/editar hojas (prerrequisito de CSSOM y

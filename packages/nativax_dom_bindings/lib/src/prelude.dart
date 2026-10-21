@@ -23,6 +23,10 @@ const hidden = (obj, name, value) =>
 
 // ---- wrapper identity ------------------------------------------------------
 const cache = new Map();                  // id -> WeakRef(wrapper)
+// Document wrappers own metadata such as contentType. Hold them strongly so
+// an element keeping only `ownerDocument` cannot lose that metadata when the
+// temporary document wrapper is collected.
+const documents = new Map();              // id -> document wrapper
 const finalizer = new FinalizationRegistry((id) => {
   const ref = cache.get(id);
   if (ref && ref.deref() === undefined) {
@@ -67,6 +71,7 @@ const wrap = (desc) => {
   let w = ref && ref.deref();
   if (w) {
     if (desc[3] === true && !strong.has(id)) strong.set(id, w);
+    if (desc[1] === 9) documents.set(id, w);
     return w;
   }
   w = Object.create(protoFor(desc[1], desc[2]));
@@ -74,6 +79,7 @@ const wrap = (desc) => {
   cache.set(id, new WeakRef(w));
   finalizer.register(w, id);
   if (desc[3] === true) strong.set(id, w);
+  if (desc[1] === 9) documents.set(id, w);
   if (upgradeHook && desc[1] === 1) upgradeHook(w, desc[2]);
   return w;
 };
@@ -865,9 +871,10 @@ const prefixOf = (el) => prefixes.has(el) ? prefixes.get(el) : null;
 const localNameOf = (name) => String(name).includes(':') ? String(name).split(':').pop() : String(name);
 const attrToken = Symbol('nativax.attr');
 class Attr {
-  constructor(token, element, name, value, namespaceURI = null, prefix = null, localName = null) {
+  constructor(token, element, name, value, namespaceURI = null, prefix = null, localName = null, ownerDocument = null) {
     if (token !== attrToken) throw new TypeError('Illegal constructor');
     hidden(this, '__el', element || null);
+    hidden(this, '__doc', ownerDocument || null);
     hidden(this, '__name', String(name));
     defineProperty(this, '__value', { value: value == null ? '' : String(value), writable: true, enumerable: false, configurable: true });
     hidden(this, '__ns', namespaceURI == null ? null : String(namespaceURI));
@@ -881,7 +888,7 @@ class Attr {
   get prefix() { return this.__prefix; }
   get namespaceURI() { return this.__ns; }
   get specified() { return true; }
-  get ownerDocument() { return document; }
+  get ownerDocument() { return this.__el ? this.__el.ownerDocument : (this.__doc || document); }
   get baseURI() { return document.baseURI; }
   get ownerElement() { return this.__el; }
   get value() { return this.__el ? (this.__el.getAttribute(this.__name) ?? this.__value) : this.__value; }
@@ -891,17 +898,38 @@ class Attr {
   get textContent() { return this.value; }
   set textContent(v) { this.value = v; }
   isSameNode(other) { return this === other; }
-  cloneNode() { return new Attr(attrToken, null, this.__name, this.value, this.__ns, this.__prefix, this.__local); }
+  cloneNode() { return new Attr(attrToken, null, this.__name, this.value, this.__ns, this.__prefix, this.__local, this.ownerDocument); }
   toString() { return this.value; }
 }
 Attr.prototype[Symbol.toStringTag] = 'Attr';
-const attrFor = (el, name, value, ns = null, prefix = null, localName = null) =>
-  new Attr(attrToken, el, name, value, ns, prefix, localName);
+const attrFor = (el, name, value, ns = null, prefix = null, localName = null, doc = null) =>
+  new Attr(attrToken, el, name, value, ns, prefix, localName, doc);
 const XLINK_NS = 'http://www.w3.org/1999/xlink';
 const XML_NS = 'http://www.w3.org/XML/1998/namespace';
+const attrCaches = new WeakMap();       // element -> Map(attribute key -> Attr)
+const attrKey = (name, ns) => (ns == null ? '' : ns) + '\u0000' + name;
+const cacheForAttrs = (el) => {
+  let cache = attrCaches.get(el);
+  if (!cache) { cache = new Map(); attrCaches.set(el, cache); }
+  return cache;
+};
+const forgetAttr = (el, name) => {
+  const cache = attrCaches.get(el);
+  if (!cache) return;
+  const wanted = String(name).toLowerCase();
+  for (const [key, attr] of cache) {
+    if (attr.name.toLowerCase() === wanted || attr.localName.toLowerCase() === wanted) {
+      hidden(attr, '__doc', el.ownerDocument);
+      hidden(attr, '__el', null);
+      cache.delete(key);
+      return;
+    }
+  }
+};
 const attrsFor = (el) => {
   const entries = host('attr.entries', el[ID]);
   const ns = nsOf(el);
+  const cache = cacheForAttrs(el);
   const arr = entries.map((a) => {
     let an = a.namespaceURI, prefix = a.prefix, local = a.localName;
     if (an == null && a.name === 'xlink:href' && ns === SVG_NS) {
@@ -909,7 +937,16 @@ const attrsFor = (el) => {
     } else if (an == null && a.name === 'xml:lang' && ns !== HTML_NS) {
       an = XML_NS; prefix = 'xml'; local = 'lang';
     }
-    return attrFor(el, a.name, a.value, an, prefix, local);
+    const key = attrKey(a.name, an);
+    let attr = cache.get(key);
+    if (!attr) {
+      attr = attrFor(el, a.name, a.value, an, prefix, local, el.ownerDocument);
+      cache.set(key, attr);
+    } else {
+      hidden(attr, '__el', el);
+      hidden(attr, '__doc', el.ownerDocument);
+    }
+    return attr;
   });
   defineProperty(arr, 'item', { value: (i) => arr[i] || null, enumerable: false });
   defineProperty(arr, 'getNamedItem', { value: (n) => arr.find((a) => a.name === String(n)) || null, enumerable: false });
@@ -930,14 +967,21 @@ const setAttributeNode = (el, attr) => {
   } else {
     el.setAttribute(attr.name, attr.value);
   }
+  if (old && old !== attr) hidden(old, '__el', null);
   hidden(attr, '__el', el);
+  hidden(attr, '__doc', el.ownerDocument);
+  cacheForAttrs(el).set(attrKey(attr.name, attr.namespaceURI), attr);
   return old;
 };
 const removeAttributeNode = (el, attr) => {
   if (!(attr instanceof Attr) || attr.ownerElement !== el) throw new DOMException('The attribute is not owned by this element.', 'NotFoundError');
+  attr.__value = attr.value;
   if (attr.namespaceURI != null) el.removeAttributeNS(attr.namespaceURI, attr.localName);
   else el.removeAttribute(attr.name);
+  hidden(attr, '__doc', el.ownerDocument);
   hidden(attr, '__el', null);
+  const cache = attrCaches.get(el);
+  if (cache) cache.delete(attrKey(attr.name, attr.namespaceURI));
   return attr;
 };
 
@@ -958,14 +1002,14 @@ class Element extends Node {
       queueMicrotask(() => { try { if (this.isConnected) this.dispatchEvent(new Event('load')); } catch (e) {} });
     }
   }
-  removeAttribute(n) { host('attr.remove', this[ID], String(n)); }
+  removeAttribute(n) { host('attr.remove', this[ID], String(n)); forgetAttr(this, n); }
   hasAttribute(n) { return host('attr.get', this[ID], String(n)) !== null; }
   toggleAttribute(n, force) { return host('attr.toggle', this[ID], String(n), force === undefined ? null : !!force); }
   getAttributeNames() { return Object.keys(this.attributesObject()); }
   hasAttributes() { return this.getAttributeNames().length > 0; }
   getAttributeNS(ns, name) { return this.getAttribute(localNameOf(name)); }
   setAttributeNS(ns, name, value) { host('attr.setNS', this[ID], ns == null ? null : String(ns), String(name), String(value)); }
-  removeAttributeNS(ns, name) { host('attr.removeNS', this[ID], ns == null ? null : String(ns), String(name)); }
+  removeAttributeNS(ns, name) { host('attr.removeNS', this[ID], ns == null ? null : String(ns), String(name)); forgetAttr(this, localNameOf(name)); }
   getAttributeNS(ns, name) { return host('attr.getNS', this[ID], ns == null ? null : String(ns), String(name)); }
   hasAttributeNS(ns, name) { return this.hasAttribute(localNameOf(name)); }
   insertAdjacentElement(position, element) {
@@ -1131,12 +1175,12 @@ class Document extends Node {
     let n = String(name);
     if (!n) throw new DOMException('Invalid character', 'InvalidCharacterError');
     if (this.contentType === 'text/html') n = n.toLowerCase();
-    return attrFor(null, n, '', null, null, n);
+    return attrFor(null, n, '', null, null, n, this);
   }
   createAttributeNS(ns, name) {
     const n = String(name);
     if (!n || /[\s"'<>\/]/.test(n)) throw new DOMException('Invalid character', 'InvalidCharacterError');
-    return attrFor(null, n, '', ns, n.includes(':') ? n.split(':')[0] : null, n.includes(':') ? n.split(':').pop() : n);
+    return attrFor(null, n, '', ns, n.includes(':') ? n.split(':')[0] : null, n.includes(':') ? n.split(':').pop() : n, this);
   }
   getElementById(id) {
     return wrap(host('doc.byId', this[ID], String(id)));
@@ -1156,7 +1200,10 @@ class Document extends Node {
     }
     return c;
   }
-  adoptNode(node) { return node; }
+  adoptNode(node) {
+    if (!(node instanceof Node)) throw new TypeError('parameter is not a Node');
+    return wrap(host('doc.adoptNode', this[ID], idOf(node)));
+  }
   createEvent() { return new Event(''); }
   get URL() { return docMeta.get(this)?.url || 'about:blank'; }
   get documentURI() { return this.URL; }

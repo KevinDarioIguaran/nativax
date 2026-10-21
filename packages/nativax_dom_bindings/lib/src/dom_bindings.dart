@@ -680,6 +680,7 @@ class DomBindings {
         // Document
         'doc.new': (a) => describe(Document()),
         'doc.createElement': (a) => _dom(() => describe(_document(a[0]).createElement(_str(a[1])))),
+        'doc.adoptNode': (a) => _dom(() => describe(_document(a[0]).adoptNode(_node(a[1])))),
         'doc.createText': (a) => describe(_document(a[0]).createTextNode(_str(a[1]))),
         'doc.createComment': (a) => describe(_document(a[0]).createComment(_str(a[1]))),
         'doc.createPI': (a) => _dom(() =>
