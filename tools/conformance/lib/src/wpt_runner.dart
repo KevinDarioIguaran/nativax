@@ -8,6 +8,7 @@ import 'package:nativa_html/nativa_html.dart';
 import 'package:nativa_js/nativa_js.dart';
 import 'package:path/path.dart' as p;
 
+import 'headless_layout.dart';
 import 'result.dart';
 import 'wpt_shim.dart';
 
@@ -247,6 +248,12 @@ class WptRunner {
       timers = TimerHost(e);
       const media = MediaContext(width: 800, height: 600);
       final styleEngine = StyleEngine(document: doc, media: media);
+      doc.layoutHost = HeadlessLayoutHost(
+        document: doc,
+        styleEngine: styleEngine,
+        width: 800,
+        height: 600,
+      );
       List<StyleSheet> styleSheets() => [
         for (final style in doc.querySelectorAll('style'))
           StyleSheet.parse(style.textContent),

@@ -1,16 +1,16 @@
 # Conformidad: wpt
 
-- Fecha: 2026-10-21T22:31:24.065883Z
-- Duración: 23.1 s
+- Fecha: 2026-10-21T22:35:45.588034Z
+- Duración: 23.5 s
 - Commit de la suite: `e7d77cd1e0353d7b37ce35eb912b6992df8dfab0`
 - Comando: `run_wpt css/selectors --limit 100000`
 - Total: **528** tests
-- Tasa de éxito (sin SKIP): **18.78 %**
+- Tasa de éxito (sin SKIP): **38.12 %**
 
 | Estado | Tests |
 |---|---:|
-| PASS | 34 |
-| FAIL | 147 |
+| PASS | 69 |
+| FAIL | 112 |
 | SKIP | 347 |
 | ERROR | 0 |
 
@@ -26,14 +26,14 @@
 
 | Grupo | PASS | FAIL | SKIP | ERROR | Éxito |
 |---|---:|---:|---:|---:|---:|
-| `css/selectors` | 34 | 147 | 347 | 0 | 18.8 % |
+| `css/selectors` | 69 | 112 | 347 | 0 | 38.1 % |
 
 ## Por directorio
 
 | Grupo | PASS | FAIL | SKIP | ERROR | Éxito |
 |---|---:|---:|---:|---:|---:|
 | `css/selectors/invalidation` | 3 | 66 | 69 | 0 | 4.3 % |
-| `css/selectors/i18n` | 1 | 42 | 1 | 0 | 2.3 % |
+| `css/selectors/i18n` | 36 | 7 | 1 | 0 | 83.7 % |
 | `css/selectors/selectors-4` | 0 | 1 | 29 | 0 | 0.0 % |
 | `css/selectors/parsing` | 0 | 1 | 23 | 0 | 0.0 % |
 | `css/selectors/attribute-selectors` | 0 | 3 | 4 | 0 | 0.0 % |
@@ -114,7 +114,7 @@
 | `css/selectors/focus-visible-018.html` | 0 | 0 | 1 | 0 | 0.0 % |
 | _(+202 grupos)_ | | | | | |
 
-## Fallos (147)
+## Fallos (112)
 
 ### `css/selectors/attribute-selectors/attribute-case/cssom.html`
 
@@ -391,148 +391,13 @@ With nested top layer elements, :focus-within should stop at the innermost top l
 <h1 data-expect-match="1"></h1> :heading(5): ":heading(5)" is not a valid selector: unexpected "(" at offset 8
 ```
 
-### `css/selectors/i18n/css3-selectors-lang-001.html`
-
-- Características: css/selectors
-- Motivo: 1 subtest(s) failed
-
-```text
-A :lang value that matches an identical lang attribute value on the same element will produce styling.: assert_equals: expected 100, got 0
-```
-
-### `css/selectors/i18n/css3-selectors-lang-002.html`
-
-- Características: css/selectors
-- Motivo: 1 subtest(s) failed
-
-```text
-A :lang value that matches an identical lang attribute value on a parent element will produce styling.: assert_equals: expected 100, got 0
-```
-
-### `css/selectors/i18n/css3-selectors-lang-004.html`
-
-- Características: css/selectors
-- Motivo: 1 subtest(s) failed
-
-```text
-A :lang value will match a lang attribute value regardless of case differences.: assert_equals: expected 100, got 0
-```
-
-### `css/selectors/i18n/css3-selectors-lang-005.html`
-
-- Características: css/selectors
-- Motivo: 1 subtest(s) failed
-
-```text
-A :lang value will match a lang attribute value when the latter contains additional subtags.: assert_equals: expected 100, got 0
-```
-
-### `css/selectors/i18n/css3-selectors-lang-006.html`
-
-- Características: css/selectors
-- Motivo: 1 subtest(s) failed
-
-```text
-A :lang value will NOT match a lang attribute value when the former contains more subtags.: assert_equals: expected 50, got 0
-```
-
-### `css/selectors/i18n/css3-selectors-lang-007.html`
-
-- Características: css/selectors
-- Motivo: 1 subtest(s) failed
-
-```text
-When the :lang value uses a single subtag, it will NOT match against an attribute value where it appears in a different position.: assert_equals: expected 50, got 0
-```
-
-### `css/selectors/i18n/css3-selectors-lang-008.html`
-
-- Características: css/selectors
-- Motivo: 1 subtest(s) failed
-
-```text
-A :lang value with language and region subtags will match a lang attribute value with the same subtags.: assert_equals: expected 100, got 0
-```
-
-### `css/selectors/i18n/css3-selectors-lang-009.html`
-
-- Características: css/selectors
-- Motivo: 1 subtest(s) failed
-
-```text
-A :lang value with a multiple subtags will match a lang attribute value with multiple subtags as long as the first part is the same.: assert_equals: expected 100, got 0
-```
-
-### `css/selectors/i18n/css3-selectors-lang-010.html`
-
-- Características: css/selectors
-- Motivo: 1 subtest(s) failed
-
-```text
-A :lang value and a lang attribute value will NOT match if their region subtags differ.: assert_equals: expected 50, got 0
-```
-
-### `css/selectors/i18n/css3-selectors-lang-011.html`
-
-- Características: css/selectors
-- Motivo: 1 subtest(s) failed
-
-```text
-A :lang value with language, script and region subtags will match a lang attribute value with the same language, script and region subtags.: assert_equals: expected 100, got 0
-```
-
-### `css/selectors/i18n/css3-selectors-lang-012.html`
-
-- Características: css/selectors
-- Motivo: 1 subtest(s) failed
-
-```text
-A :lang value with language, script and region subtags will NOT match a lang attribute value with the script subtag missing.: assert_equals: expected 50, got 0
-```
-
-### `css/selectors/i18n/css3-selectors-lang-014.html`
-
-- Características: css/selectors
-- Motivo: 1 subtest(s) failed
-
-```text
-A :lang value with language and region subtags will match a lang attribute value with language, script and region subtags under CSS Selectors 4, but not Selectors 3.: 0 not in array
-```
-
-### `css/selectors/i18n/css3-selectors-lang-015.html`
-
-- Características: css/selectors
-- Motivo: 1 subtest(s) failed
-
-```text
-A :lang value will match a lang attribute value regardless of case differences in the script tag.: assert_equals: expected 100, got 0
-```
-
 ### `css/selectors/i18n/css3-selectors-lang-016.html`
 
 - Características: css/selectors
 - Motivo: 1 subtest(s) failed
 
 ```text
-A :lang value that matches an identical xml:lang attribute value will NOT produce styling in pages served as HTML.: assert_equals: expected 50, got 0
-```
-
-### `css/selectors/i18n/css3-selectors-lang-021.html`
-
-- Características: css/selectors
-- Motivo: 1 subtest(s) failed
-
-```text
-A lang|= value that matches an identical lang attribute value on the same element will produce styling.: assert_equals: expected 100, got 0
-```
-
-### `css/selectors/i18n/css3-selectors-lang-022.html`
-
-- Características: css/selectors
-- Motivo: 1 subtest(s) failed
-
-```text
-A lang|= value that matches an identical lang attribute value on the parent element will NOT produce styling.: assert_equals: expected 50, got 0
+A :lang value that matches an identical xml:lang attribute value will NOT produce styling in pages served as HTML.: assert_equals: expected 50, got 100
 ```
 
 ### `css/selectors/i18n/css3-selectors-lang-024.html`
@@ -541,88 +406,7 @@ A lang|= value that matches an identical lang attribute value on the parent elem
 - Motivo: 1 subtest(s) failed
 
 ```text
-A lang|= value will match a lang attribute value regardless of case differences.: assert_equals: expected 100, got 0
-```
-
-### `css/selectors/i18n/css3-selectors-lang-025.html`
-
-- Características: css/selectors
-- Motivo: 1 subtest(s) failed
-
-```text
-A lang|= value will match a lang attribute value when the latter contains additional subtags.: assert_equals: expected 100, got 0
-```
-
-### `css/selectors/i18n/css3-selectors-lang-026.html`
-
-- Características: css/selectors
-- Motivo: 1 subtest(s) failed
-
-```text
-A lang|= value will NOT match a lang attribute value when the former contains more subtags.: assert_equals: expected 50, got 0
-```
-
-### `css/selectors/i18n/css3-selectors-lang-027.html`
-
-- Características: css/selectors
-- Motivo: 1 subtest(s) failed
-
-```text
-When the lang|= value uses a single subtag, it will NOT match against an attribute value where it appears in a different position.: assert_equals: expected 50, got 0
-```
-
-### `css/selectors/i18n/css3-selectors-lang-028.html`
-
-- Características: css/selectors
-- Motivo: 1 subtest(s) failed
-
-```text
-A lang|= value with language and region subtags will match a lang attribute value with the same subtags.: assert_equals: expected 100, got 0
-```
-
-### `css/selectors/i18n/css3-selectors-lang-029.html`
-
-- Características: css/selectors
-- Motivo: 1 subtest(s) failed
-
-```text
-A lang|= value with a multiple subtags will match a lang attribute value with multiple subtags as long as the first part is the same.: assert_equals: expected 100, got 0
-```
-
-### `css/selectors/i18n/css3-selectors-lang-030.html`
-
-- Características: css/selectors
-- Motivo: 1 subtest(s) failed
-
-```text
-A lang|= value and a lang attribute value will NOT match if their region subtags differ.: assert_equals: expected 50, got 0
-```
-
-### `css/selectors/i18n/css3-selectors-lang-031.html`
-
-- Características: css/selectors
-- Motivo: 1 subtest(s) failed
-
-```text
-A lang|= value with language, script and region subtags will match a lang attribute value with the same language, script and region subtags.: assert_equals: expected 100, got 0
-```
-
-### `css/selectors/i18n/css3-selectors-lang-032.html`
-
-- Características: css/selectors
-- Motivo: 1 subtest(s) failed
-
-```text
-A lang|= value with language, script and region subtags will NOT match a lang attribute value with the script subtag missing.: assert_equals: expected 50, got 0
-```
-
-### `css/selectors/i18n/css3-selectors-lang-034.html`
-
-- Características: css/selectors
-- Motivo: 1 subtest(s) failed
-
-```text
-A lang|= value with language and region subtags will NOT match a lang attribute value with language, script and region subtags.: assert_equals: expected 50, got 0
+A lang|= value will match a lang attribute value regardless of case differences.: assert_equals: expected 100, got 50
 ```
 
 ### `css/selectors/i18n/css3-selectors-lang-035.html`
@@ -631,7 +415,7 @@ A lang|= value with language and region subtags will NOT match a lang attribute 
 - Motivo: 1 subtest(s) failed
 
 ```text
-A lang|= value will match a lang attribute value regardless of case differences in the script tag.: assert_equals: expected 100, got 0
+A lang|= value will match a lang attribute value regardless of case differences in the script tag.: assert_equals: expected 100, got 50
 ```
 
 ### `css/selectors/i18n/css3-selectors-lang-036.html`
@@ -640,25 +424,7 @@ A lang|= value will match a lang attribute value regardless of case differences 
 - Motivo: 1 subtest(s) failed
 
 ```text
-A [lang|='es'] value that matches an identical xml:lang attribute value will NOT produce styling in pages served as HTML.: assert_equals: expected 50, got 0
-```
-
-### `css/selectors/i18n/css3-selectors-lang-041.html`
-
-- Características: css/selectors
-- Motivo: 1 subtest(s) failed
-
-```text
-A lang= value that matches an identical lang attribute value on the same element will produce styling.: assert_equals: expected 100, got 0
-```
-
-### `css/selectors/i18n/css3-selectors-lang-042.html`
-
-- Características: css/selectors
-- Motivo: 1 subtest(s) failed
-
-```text
-A lang|= value that matches an identical lang attribute value on the parent element will NOT produce styling.: assert_equals: expected 50, got 0
+A [lang|='es'] value that matches an identical xml:lang attribute value will NOT produce styling in pages served as HTML.: assert_equals: expected 50, got 100
 ```
 
 ### `css/selectors/i18n/css3-selectors-lang-044.html`
@@ -667,88 +433,7 @@ A lang|= value that matches an identical lang attribute value on the parent elem
 - Motivo: 1 subtest(s) failed
 
 ```text
-A lang= value will match a lang attribute value regardless of case differences.: assert_equals: expected 100, got 0
-```
-
-### `css/selectors/i18n/css3-selectors-lang-045.html`
-
-- Características: css/selectors
-- Motivo: 1 subtest(s) failed
-
-```text
-A lang= value will NOT match a lang attribute value when the latter contains additional subtags.: assert_equals: expected 50, got 0
-```
-
-### `css/selectors/i18n/css3-selectors-lang-046.html`
-
-- Características: css/selectors
-- Motivo: 1 subtest(s) failed
-
-```text
-A lang= value will NOT match a lang attribute value when the former contains more subtags.: assert_equals: expected 50, got 0
-```
-
-### `css/selectors/i18n/css3-selectors-lang-047.html`
-
-- Características: css/selectors
-- Motivo: 1 subtest(s) failed
-
-```text
-When the lang= value uses a single subtag, it will NOT match against an attribute value where it appears in a different position.: assert_equals: expected 50, got 0
-```
-
-### `css/selectors/i18n/css3-selectors-lang-048.html`
-
-- Características: css/selectors
-- Motivo: 1 subtest(s) failed
-
-```text
-A lang= value with language and region subtags will match a lang attribute value with the same subtags.: assert_equals: expected 100, got 0
-```
-
-### `css/selectors/i18n/css3-selectors-lang-049.html`
-
-- Características: css/selectors
-- Motivo: 1 subtest(s) failed
-
-```text
-A lang= value with multiple subtags will NOT match a lang attribute value with multiple subtags if the latter has more subtags, even if the first two subtags are the same.: assert_equals: expected 50, got 0
-```
-
-### `css/selectors/i18n/css3-selectors-lang-050.html`
-
-- Características: css/selectors
-- Motivo: 1 subtest(s) failed
-
-```text
-A lang= value and a lang attribute value will NOT match if their region subtags differ.: assert_equals: expected 50, got 0
-```
-
-### `css/selectors/i18n/css3-selectors-lang-051.html`
-
-- Características: css/selectors
-- Motivo: 1 subtest(s) failed
-
-```text
-A lang= value with language, script and region subtags will match a lang attribute value with the same language, script and region subtags.: assert_equals: expected 100, got 0
-```
-
-### `css/selectors/i18n/css3-selectors-lang-052.html`
-
-- Características: css/selectors
-- Motivo: 1 subtest(s) failed
-
-```text
-A lang= value with language, script and region subtags will NOT match a lang attribute value with the script subtag missing.: assert_equals: expected 50, got 0
-```
-
-### `css/selectors/i18n/css3-selectors-lang-054.html`
-
-- Características: css/selectors
-- Motivo: 1 subtest(s) failed
-
-```text
-A lang= value with language and region subtags will NOT match a lang attribute value with language, script and region subtags.: assert_equals: expected 50, got 0
+A lang= value will match a lang attribute value regardless of case differences.: assert_equals: expected 100, got 50
 ```
 
 ### `css/selectors/i18n/css3-selectors-lang-055.html`
@@ -757,7 +442,7 @@ A lang= value with language and region subtags will NOT match a lang attribute v
 - Motivo: 1 subtest(s) failed
 
 ```text
-A lang= value will match a lang attribute value regardless of case differences in the script tag.: assert_equals: expected 100, got 0
+A lang= value will match a lang attribute value regardless of case differences in the script tag.: assert_equals: expected 100, got 50
 ```
 
 ### `css/selectors/i18n/css3-selectors-lang-056.html`
@@ -766,7 +451,7 @@ A lang= value will match a lang attribute value regardless of case differences i
 - Motivo: 1 subtest(s) failed
 
 ```text
-A [lang='es'] value that matches an identical xml:lang attribute value will NOT produce styling in pages served as HTML.: assert_equals: expected 50, got 0
+A [lang='es'] value that matches an identical xml:lang attribute value will NOT produce styling in pages served as HTML.: assert_equals: expected 50, got 100
 ```
 
 ### `css/selectors/invalidation/any-link-pseudo.html`
@@ -1379,7 +1064,283 @@ Test specificity of :not().: assert_equals: expected rgb(0, 0, 255), got rgb(0, 
 :nth-last-child() enclosed by :not() matching after insertion: assert_equals: expected rgb(0, 128, 0), got rgb(255, 0, 0)
 ```
 
-_… y 27 fallos más (ver el JSONL)._
+### `css/selectors/invalidation/nth-child-whole-subtree.html`
+
+- Características: css/selectors
+- Motivo: 1 subtest(s) failed
+
+```text
+: assert_equals: expected rgb(192, 192, 192), got rgba(0, 0, 0, 0)
+```
+
+### `css/selectors/invalidation/option-disabled-when-ancestor-changes.html`
+
+- Características: css/selectors
+- Motivo: 4 subtest(s) failed
+
+```text
+option :disabled and :has(option:disabled) invalidate when ancestor select disabled toggles: cannot read property 'add_cleanup' of undefined
+optgroup :disabled and :has(optgroup:disabled) invalidate when ancestor select disabled toggles: cannot read property 'add_cleanup' of undefined
+option :disabled and :has(option:disabled) invalidate when ancestor fieldset disabled toggles: cannot read property 'add_cleanup' of undefined
+optgroup :disabled and :has(optgroup:disabled) invalidate when ancestor fieldset disabled toggles: cannot read property 'add_cleanup' of undefined
+```
+
+### `css/selectors/invalidation/part-dir.html`
+
+- Características: css/selectors
+- Motivo: 2 subtest(s) failed
+
+```text
+::part():dir() invalidation: cannot read property 'add_cleanup' of undefined
+::part():dir() invalidation from setAttribute: cannot read property 'add_cleanup' of undefined
+```
+
+### `css/selectors/invalidation/part-lang.html`
+
+- Características: css/selectors
+- Motivo: 2 subtest(s) failed
+
+```text
+::part():lang() invalidation: cannot read property 'add_cleanup' of undefined
+::part():lang() invalidation from setAttribute: cannot read property 'add_cleanup' of undefined
+```
+
+### `css/selectors/invalidation/placeholder-shown.html`
+
+- Características: css/selectors
+- Motivo: 2 subtest(s) failed
+
+```text
+Added placeholder text: assert_equals: expected rgb(0, 128, 0), got rgb(255, 0, 0)
+Set placeholder text to empty string: assert_equals: expected rgb(0, 128, 0), got rgb(255, 0, 0)
+```
+
+### `css/selectors/invalidation/quirks-mode-stylesheet-dynamic-add-001.html`
+
+- Características: css/selectors
+- Motivo: 1 subtest(s) failed
+
+```text
+Style should've changed to a green background: assert_equals: expected rgb(0, 128, 0), got rgb(255, 0, 0)
+```
+
+### `css/selectors/invalidation/sibling.html`
+
+- Características: css/selectors
+- Motivo: 7 subtest(s) failed
+
+```text
+Adjacent with universal selector: Background color is green after class change: expected rgb(0, 128, 0), got rgba(0, 0, 0, 0)
+Indirect adjacent with universal selector: Background color is green after class change: expected rgb(0, 128, 0), got rgba(0, 0, 0, 0)
+Indirect adjacent with two adjacent selectors: Background color is green after class change: expected rgb(0, 128, 0), got rgba(0, 0, 0, 0)
+Adjacent class: Background color is green after class change: expected rgb(0, 128, 0), got rgba(0, 0, 0, 0)
+Adjacent universal: Background color is green after class change: expected rgb(0, 128, 0), got rgba(0, 0, 0, 0)
+```
+
+### `css/selectors/invalidation/state-in-has.html`
+
+- Características: css/selectors
+- Motivo: 1 subtest(s) failed
+
+```text
+Test :has() invalidation with :state() pseudo-classes: cannot read property 'states' of undefined
+```
+
+### `css/selectors/invalidation/subject-has-invalidation-with-display-none-anchor-element.html`
+
+- Características: css/selectors
+- Motivo: 1 subtest(s) failed
+
+```text
+: target display should be none: expected none, got block
+```
+
+### `css/selectors/invalidation/target-pseudo-in-has.html`
+
+- Características: css/selectors
+- Motivo: 1 subtest(s) failed
+
+```text
+: parent1 should be green on fragment click: expected rgb(0, 128, 0), got rgb(128, 128, 128)
+```
+
+### `css/selectors/invalidation/typed-child-indexed-pseudo-classes-in-has.html`
+
+- Características: css/selectors
+- Motivo: 48 subtest(s) failed
+
+```text
+Prepend #div1.green: #only_of_type: assert_equals: expected rgb(255, 0, 0), got rgb(128, 128, 128)
+Prepend #div1.green: #first_of_type: assert_equals: expected rgb(0, 128, 0), got rgb(128, 128, 128)
+Prepend #div1.green: #last_of_type: assert_equals: expected rgb(0, 128, 0), got rgb(128, 128, 128)
+Prepend #div1.green: #nth_of_type_3n_1: assert_equals: expected rgb(0, 128, 0), got rgb(128, 128, 128)
+Prepend span (2): #only_of_type: assert_equals: expected rgb(255, 0, 0), got rgb(128, 128, 128)
+```
+
+### `css/selectors/invalidation/where.html`
+
+- Características: css/selectors
+- Motivo: 3 subtest(s) failed
+
+```text
+Invalidate :where() for compound selector arguments.: assert_equals: expected rgb(0, 128, 0), got rgb(255, 0, 0)
+Invalidate :where() for complex selector arguments.: assert_equals: expected rgb(255, 255, 0), got rgb(0, 0, 0)
+Invalidate nested :where().: assert_equals: expected rgb(0, 0, 255), got rgb(0, 0, 0)
+```
+
+### `css/selectors/is-specificity-shadow.html`
+
+- Características: css/selectors
+- Motivo: 1 subtest(s) failed
+
+```text
+Specificity of :host() inside :is(): assert_equals: expected rgb(0, 128, 0), got rgb(0, 0, 0)
+```
+
+### `css/selectors/is-where-basic.html`
+
+- Características: css/selectors
+- Motivo: 1 subtest(s) failed
+
+```text
+:is() matches expected elements: ":is()" is not a valid selector: unexpected ")" at offset 4
+```
+
+### `css/selectors/is-where-error-recovery.html`
+
+- Características: css/selectors
+- Motivo: 1 subtest(s) failed
+
+```text
+: ":is(:total-nonsense)" is not a valid selector: unsupported pseudo-class :total-nonsense
+```
+
+### `css/selectors/is-where-not.html`
+
+- Características: css/selectors
+- Motivo: 3 subtest(s) failed
+
+```text
+:not(:is(*|div)) matches expected elements: ":not(:is(*|div))" is not a valid selector: unexpected "|" at offset 10
+:not(:is(*|*)) matches expected elements: ":not(:is(*|*))" is not a valid selector: unexpected "|" at offset 10
+:not(:is(svg|div)) matches expected elements: ":not(:is(svg|div))" is not a valid selector: unexpected "|" at offset 12
+```
+
+### `css/selectors/is-where-shadow.html`
+
+- Características: css/selectors
+- Motivo: 3 subtest(s) failed
+
+```text
+:is() inside :host(): assert_equals: expected rgb(0, 128, 0), got rgb(0, 0, 255)
+:is() inside :host-context(): assert_equals: expected rgb(0, 128, 0), got rgb(0, 0, 255)
+:is() inside ::slotted(): Failed to execute 'getComputedStyle': parameter 1 is not of type 'Element'.
+```
+
+### `css/selectors/missing-right-token.html`
+
+- Características: css/selectors
+- Motivo: 1 subtest(s) failed
+
+```text
+attribute selectors with missing right tokens succeed: "meta[charset="utf-8"" is not a valid selector: expected "]"
+```
+
+### `css/selectors/nth-child-large-anplusb-clamp.html`
+
+- Características: css/selectors
+- Motivo: 3 subtest(s) failed
+
+```text
+b term (NumberToken path) is clamped to INT_MAX: assert_equals: expected :nth-child(2147483647), got :nth-child(99999999999999999999)
+a term (DimensionToken path) is clamped to INT_MAX: internal host error
+b term following an a coefficient is clamped to INT_MAX: internal host error
+```
+
+### `css/selectors/nth-of-type-namespace.html`
+
+- Características: css/selectors
+- Motivo: 2 subtest(s) failed
+
+```text
+:nth-of-type selectors matching takes element namespace into account (http://www.w3.org/1999/xhtml): span with namespace: http://www.w3.org/1999/xhtml should have a green color: expected rgb(0, 128, 0), got rgb(0, 0, 0)
+:nth-of-type selectors matching takes element namespace into account (http://www.w3.org/1999/xhtml): span with namespace: http://www.w3.org/1999/xhtml should have a green color: expected rgb(0, 128, 0), got rgb(0, 0, 0)
+```
+
+### `css/selectors/parsing/parse-anplusb.html`
+
+- Características: css/selectors
+- Motivo: 104 subtest(s) failed
+
+```text
+:nth-child(1n+0) should be parsed and serialized correctly: assert_equals: expected :nth-child(n), got :nth-child(1n+0)
+:nth-child(n+0) should be parsed and serialized correctly: assert_equals: expected :nth-child(n), got :nth-child(n+0)
+:nth-child(-n+0) should be parsed and serialized correctly: assert_equals: expected :nth-child(-n), got :nth-child(-n+0)
+:nth-child(N) should be parsed and serialized correctly: assert_equals: expected :nth-child(n), got :nth-child(N)
+:nth-child(+n+3) should be parsed and serialized correctly: assert_equals: expected :nth-child(n+3), got :nth-child(+n+3)
+```
+
+### `css/selectors/scope-selector.html`
+
+- Características: css/selectors
+- Motivo: 2 subtest(s) failed
+
+```text
+: should not match in shadow root: expected 0, got 1
+querySelector() with ":scope" should return the document element, if present in the subtree: should return null: expected null, got [object HTMLDivElement]
+```
+
+### `css/selectors/selector-specificity.html`
+
+- Características: css/selectors
+- Motivo: 4 subtest(s) failed
+
+```text
+Basic: cannot read property 'add_cleanup' of undefined
+Logical :is(): cannot read property 'add_cleanup' of undefined
+Logical :where(): cannot read property 'add_cleanup' of undefined
+!important flag: cannot read property 'add_cleanup' of undefined
+```
+
+### `css/selectors/selectors-4/lang-singleton-subtag-matching.html`
+
+- Características: css/selectors
+- Motivo: 1 subtest(s) failed
+
+```text
+:lang(fr) does not match lang="fr-ninechars" (subtag exceeds 8-char limit): assert_equals: expected 3, got 4
+```
+
+### `css/selectors/selectors-case-sensitive-001.html`
+
+- Características: css/selectors
+- Motivo: 2 subtest(s) failed
+
+```text
+CSS selector should match for Unicode uppercase element: assert_equals: expected 100, got 19
+Elements with namespace should work the same way: assert_equals: expected 200, got 38
+```
+
+### `css/selectors/valid-invalid-pseudo.html`
+
+- Características: css/selectors
+- Motivo: 2 subtest(s) failed
+
+```text
+Does not fire event when querying valid form: has matching node length: expected 1, got 0
+Does not fire event when querying invalid form: has matching node length: expected 1, got 0
+```
+
+### `css/selectors/webkit-pseudo-element.html`
+
+- Características: css/selectors
+- Motivo: 3 subtest(s) failed
+
+```text
+webkit-prefixed pseudo-element selectors should be accessible from CSSOM: assert_equals: expected span::-webkit-something-invalid, #test, ::-webkit-something-nonexist123, ::-webkit-\ escaped, got span::-webkit-something-invalid, #test, ::-WeBkIt-sOmEtHiNg-NoNeXiSt123, ::-webkit-\ escaped
+User-action pseudo-classes are valid: "span::-webkit-something-invalid:active" is not a valid selector: pseudo-class after a pseudo-element
+webkit-prefix without dash is invalid: assert_equals: expected 2, got 3
+```
 
 ## SKIP agrupados por motivo
 
