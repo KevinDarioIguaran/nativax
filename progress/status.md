@@ -38,8 +38,8 @@ real y el test de estadísticas de presentación.
   enlaces en `.claude/skills`. La entrada común es `AGENTS.md`; `CLAUDE.md`
   importa esas instrucciones.
 - `./tools/test_all.sh`: **316 tests en verde** con el juego cerrado.
-- `flutter analyze`: **1 warning preexistente** (`_deliveryScheduled` sin usar
-  en `nativa_dom_bindings`); no hay errores nuevos.
+- `flutter analyze`: **sin issues**; se eliminó un flag de entrega sin uso en
+  `nativa_dom_bindings`.
 - No se reanudó el trabajo de conformidad; el siguiente incremento sigue
   pendiente de petición explícita.
 
