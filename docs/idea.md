@@ -1,5 +1,9 @@
 # IDEA MAESTRA: DISEÑO E IMPLEMENTACIÓN DE NATIVAX
 
+> Este documento conserva la **idea maestra original** del proyecto. Se mantiene
+> como referencia histórica; no es una instrucción activa para los agentes ni
+> una tarea pendiente.
+
 ## 1. Rol y responsabilidad
 
 Actúa como un ingeniero de software sénior especializado en Dart, Flutter, compiladores, intérpretes, motores de renderizado, parsers, máquinas virtuales de JavaScript, sistemas multiplataforma y arquitectura de frameworks.
