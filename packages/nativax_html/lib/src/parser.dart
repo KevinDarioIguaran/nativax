@@ -11,20 +11,40 @@ const Set<String> _headElements = {
 
 /// Start tags that implicitly close an open `<p>`.
 const Set<String> _closesP = {
-  'address', 'article', 'aside', 'blockquote', 'details', 'div', 'dl',
-  'fieldset', 'figcaption', 'figure', 'footer', 'form', 'h1', 'h2', 'h3',
-  'h4', 'h5', 'h6', 'header', 'hr', 'main', 'menu', 'nav', 'ol', 'p', 'pre',
-  'section', 'table', 'ul', //
+  'address', 'article', 'aside', 'blockquote', 'center', 'details', 'dialog',
+  'dir', 'div', 'dl', 'fieldset', 'figcaption', 'figure', 'footer', 'form',
+  'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'header', 'hgroup', 'hr', 'listing',
+  'main', 'menu', 'nav', 'ol', 'p', 'plaintext', 'pre', 'search', 'section',
+  'summary', 'table', 'ul', //
 };
 
 /// Elements that bound the search for an implicitly closed `li`, `dd`, `dt`
 /// or `option`.
-const Set<String> _listScopes = {'ul', 'ol', 'menu', 'dl', 'select', 'datalist'};
+const Set<String> _listScopes = {
+  'ul',
+  'ol',
+  'menu',
+  'dl',
+  'select',
+  'datalist',
+};
 
 /// Formatting elements tracked by the (simplified) adoption agency.
 const Set<String> _formattingTags = {
-  'a', 'b', 'big', 'code', 'em', 'font', 'i', 'nobr', 's', 'small',
-  'strike', 'strong', 'tt', 'u',
+  'a',
+  'b',
+  'big',
+  'code',
+  'em',
+  'font',
+  'i',
+  'nobr',
+  's',
+  'small',
+  'strike',
+  'strong',
+  'tt',
+  'u',
 };
 
 /// Result of a parse: the tree plus every recoverable error encountered.
@@ -59,17 +79,17 @@ class HtmlParser {
     final doc = Document(limits: documentLimits);
     final builder = _TreeBuilder(doc, source, limits, fragment: false);
     builder.run();
-    doc.adoptParsed([
-      ...builder.topLevel,
-      builder.html,
-    ]);
+    doc.adoptParsed([...builder.topLevel, builder.html]);
     return HtmlParseResult(doc, builder.errors, builder.dropped);
   }
 
   /// Parses [source] as the children of [context] (used by `innerHTML`).
   /// No implicit `html`/`head`/`body` are created. The returned fragment is
   /// owned by [context]'s document.
-  HtmlParseResult<DocumentFragment> parseFragment(String source, Element context) {
+  HtmlParseResult<DocumentFragment> parseFragment(
+    String source,
+    Element context,
+  ) {
     final doc = context.ownerDocument;
     final builder = _TreeBuilder(doc, source, limits, fragment: true);
     builder.run();
@@ -148,7 +168,8 @@ class _TreeBuilder {
   void run() {
     if (source.length > limits.maxInputLength) {
       throw HtmlLimitException(
-          'input of ${source.length} characters exceeds ${limits.maxInputLength}');
+        'input of ${source.length} characters exceeds ${limits.maxInputLength}',
+      );
     }
     if (fragment) {
       fragmentRoot = doc.createElement('template');
@@ -183,8 +204,12 @@ class _TreeBuilder {
         case DoctypeToken t:
           if (!fragment && doctype == null) {
             _countNode();
-            doctype = DocumentType(doc, t.name,
-                publicId: t.publicId, systemId: t.systemId);
+            doctype = DocumentType(
+              doc,
+              t.name,
+              publicId: t.publicId,
+              systemId: t.systemId,
+            );
             topLevel.add(doctype!);
           } else {
             _error('unexpected-doctype', t.offset, t.name);
@@ -254,7 +279,11 @@ class _TreeBuilder {
     // Foreign content (SVG/MathML): no HTML implicit rules, `/>` closes the
     // element, and HTML "breakout" tags close the foreign subtree first.
     if (_inForeign) {
-      if (_breakout.contains(name) || (name == 'font' && t.attributes.any((a) => const {'color', 'face', 'size'}.contains(a.$1)))) {
+      if (_breakout.contains(name) ||
+          (name == 'font' &&
+              t.attributes.any(
+                (a) => const {'color', 'face', 'size'}.contains(a.$1),
+              ))) {
         _error('html-start-tag-in-foreign-content', t.offset, name);
         while (_inForeign && _stack.length > (fragment ? 1 : 2)) {
           _stack.removeLast();
@@ -280,6 +309,22 @@ class _TreeBuilder {
       }
     }
 
+    if (name == 'a' && _formatting.any((entry) => entry.$1.localName == 'a')) {
+      // A new <a> closes the previous active formatting <a>.
+      _error('nested-a', t.offset);
+      _closeFormatting(EndTagToken(t.offset, 'a'));
+    }
+    if (name == 'form' &&
+        !_stack.any((e) => e.localName == 'template') &&
+        _stack.any((e) => e.localName == 'form')) {
+      _error('nested-form', t.offset);
+      return;
+    }
+    if (!fragment && name == 'frame') {
+      // <frame> is only valid in a frameset; in body it is ignored.
+      _error('unexpected-start-tag', t.offset, name);
+      return;
+    }
     if (_closesP.contains(name)) _closeIfOpen('p', t);
     if (name == 'li') _closeInListScope(const {'li'}, t);
     if (name == 'dd' || name == 'dt') _closeInListScope(const {'dd', 'dt'}, t);
@@ -308,7 +353,11 @@ class _TreeBuilder {
     if (t.selfClosing && (name == 'svg' || name == 'math')) return;
     if (t.selfClosing && !isVoid) {
       // HTML ignores "/>" on non-void elements; the element stays open.
-      _error('non-void-html-element-start-tag-with-trailing-solidus', t.offset, name);
+      _error(
+        'non-void-html-element-start-tag-with-trailing-solidus',
+        t.offset,
+        name,
+      );
     }
     if (isVoid) return;
     if (_stack.length >= limits.maxDepth) {
@@ -326,7 +375,8 @@ class _TreeBuilder {
     for (var i = _stack.length - 1; i >= 0; i--) {
       final n = _stack[i].localName;
       if (n == 'foreignobject' || n == 'annotation-xml') return false;
-      if ((n == 'desc' || n == 'title') && i > 0 && _stackHasSvgBelow(i)) return false;
+      if ((n == 'desc' || n == 'title') && i > 0 && _stackHasSvgBelow(i))
+        return false;
       if (n == 'svg' || n == 'math') return true;
     }
     return false;
@@ -340,9 +390,50 @@ class _TreeBuilder {
   }
 
   static const _breakout = {
-    'b', 'big', 'blockquote', 'body', 'br', 'center', 'code', 'dd', 'div', 'dl', 'dt', 'em', 'embed', 'h1', 'h2',
-    'h3', 'h4', 'h5', 'h6', 'head', 'hr', 'i', 'img', 'li', 'listing', 'menu', 'meta', 'nobr', 'ol', 'p', 'pre',
-    'ruby', 's', 'small', 'span', 'strong', 'strike', 'sub', 'sup', 'table', 'tt', 'u', 'ul', 'var',
+    'b',
+    'big',
+    'blockquote',
+    'body',
+    'br',
+    'center',
+    'code',
+    'dd',
+    'div',
+    'dl',
+    'dt',
+    'em',
+    'embed',
+    'h1',
+    'h2',
+    'h3',
+    'h4',
+    'h5',
+    'h6',
+    'head',
+    'hr',
+    'i',
+    'img',
+    'li',
+    'listing',
+    'menu',
+    'meta',
+    'nobr',
+    'ol',
+    'p',
+    'pre',
+    'ruby',
+    's',
+    'small',
+    'span',
+    'strong',
+    'strike',
+    'sub',
+    'sup',
+    'table',
+    'tt',
+    'u',
+    'ul',
+    'var',
   };
 
   void _endTag(EndTagToken t) {
@@ -353,7 +444,8 @@ class _TreeBuilder {
           _stack.removeRange(i, _stack.length);
           return;
         }
-        if (_stack[i].localName == 'svg' || _stack[i].localName == 'math') break;
+        if (_stack[i].localName == 'svg' || _stack[i].localName == 'math')
+          break;
       }
       if (name != 'br' && name != 'p') {
         _error('unexpected-end-tag-in-foreign-content', t.offset, name);
@@ -371,6 +463,20 @@ class _TreeBuilder {
         return;
       }
     }
+    if (name == 'form' && !fragment) {
+      // The form element is removed from the stack without closing its
+      // descendants; a following block stays inside the open child.
+      final index = _stack.lastIndexWhere((e) => e.localName == 'form');
+      if (index >= 0) {
+        _stack.removeAt(index);
+        return;
+      }
+    }
+    if (name == 'p' && !_bodyStarted && !fragment) {
+      // A stray </p> before the body cannot create a paragraph in <head>.
+      _error('end-tag-p-before-body', t.offset);
+      return;
+    }
     if (name == 'br') {
       _error('end-tag-br', t.offset);
       _startTag(StartTagToken(t.offset, 'br', const []));
@@ -387,8 +493,11 @@ class _TreeBuilder {
     for (var i = _stack.length - 1; i >= (fragment ? 1 : 2); i--) {
       if (_stack[i].localName == name) {
         if (i != _stack.length - 1) {
-          _error('unclosed-elements', t.offset,
-              _stack.sublist(i + 1).map((e) => e.localName).join(','));
+          _error(
+            'unclosed-elements',
+            t.offset,
+            _stack.sublist(i + 1).map((e) => e.localName).join(','),
+          );
         }
         _stack.removeRange(i, _stack.length);
         return;
@@ -446,8 +555,16 @@ class _TreeBuilder {
 
   /// Minimal table insertion modes: implicit tbody/tr and cell placement.
   void _tableContext(String name, StartTagToken t) {
-    if (!{'tbody', 'thead', 'tfoot', 'tr', 'td', 'th', 'caption', 'colgroup'}
-        .contains(name)) {
+    if (!{
+      'tbody',
+      'thead',
+      'tfoot',
+      'tr',
+      'td',
+      'th',
+      'caption',
+      'colgroup',
+    }.contains(name)) {
       return;
     }
     final tableIndex = _stack.lastIndexWhere((e) => e.localName == 'table');
@@ -493,7 +610,10 @@ class _TreeBuilder {
         return;
       }
       // Do not close a <p> across these boundaries.
-      if (n == 'button' || n == 'td' || n == 'th' || n == 'li' && name != 'li') {
+      if (n == 'button' ||
+          n == 'td' ||
+          n == 'th' ||
+          n == 'li' && name != 'li') {
         return;
       }
     }

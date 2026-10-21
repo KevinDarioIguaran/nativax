@@ -1,8 +1,8 @@
 # Estado actual
 
-Última actualización: 2026-10-21 (sesión 21: checkpoint estable y Fase 0 de
-presentación). Tests: **301** en total (`./tools/test_all.sh`), incluido el
-probe de juego real y el test de estadísticas de presentación.
+Última actualización: 2026-10-21 (sesión 22: primer incremento de conformidad
+HTML). Tests: **305** en total (`./tools/test_all.sh`), incluido el probe de
+juego real y el test de estadísticas de presentación.
 
 ## Resumen
 
@@ -11,7 +11,7 @@ probe de juego real y el test de estadísticas de presentación.
 | Núcleo JS (QuickJS-ng + FFI) | 🟢 estable | 52 tests; registro privado de callbacks en el puente C |
 | WebAssembly (wasm3) | 🟢 B4 | 11 unitarios + 3 E2E; Rapier 0.19.3 y worker real (103 cuerpos ~45 Hz) |
 | DOM | 🟢 estable | 37 tests; pseudoelementos, `:hover`/`:active`/`:target`, validación, dialog/details |
-| HTML | 🟢 estable | 39 tests; foreign content (SVG/MathML) |
+| HTML | 🟢 estable | 43 tests; foreign content (SVG/MathML) y recuperación de errores |
 | CSS | 🟢 estable | 39 tests; grid, `calc()`, `::before/::after`, keyframes, transiciones, `@supports` |
 | Bindings JS↔DOM | 🟢 amplio | 49 tests; ~3.800 líneas de plataforma web (ver docs/javascript-supported.md) |
 | Renderer Flutter | 🟢 amplio | 34 tests; grid, sticky, SVG, canvas 2D, animaciones, filtros, DnD |
@@ -21,7 +21,7 @@ probe de juego real y el test de estadísticas de presentación.
 | Rendimiento 7× | 🔴 registrado | Rapier 180 pasos: 328,5 ms (wasm3) vs 30,7 ms (V8); gap 10,7× |
 | Ejemplo web-challenge | ✅ original | HTML/CSS/JS **sin modificar**: 46/52 comprobaciones propias en verde |
 | Seguridad | 🟢 | `tools/security`: 14 PASS / 0 FAIL / 1 SKIP |
-| Conformidad | 🟡 | Test262 97,93 %; html5lib 96,95 %; URL 70,98 %; DOM 58,30 %; CSS 10,38 %; tree 39,97 % |
+| Conformidad | 🟡 | Test262 97,93 %; html5lib 96,95 %; URL 70,98 %; DOM 58,30 %; CSS 10,38 %; tree 46,74 % |
 | Plataformas | 🟡 solo Linux | build Linux verificado; resto sin probar |
 
 ## Checkpoint estable — Fase 0 de presentación
@@ -47,6 +47,23 @@ probe de juego real y el test de estadísticas de presentación.
 - **Tests:** `./tools/test_all.sh` en verde con el juego cerrado; se añadió
   `gl_stats_test.dart` y se omiten ejemplos sin directorio `test/`.
 
+## Incremento de conformidad HTML — 2026-10-21
+
+- WPT tree construction: **39,97 % → 46,74 %** (876 PASS, 998 FAIL,
+  99 SKIP, 0 ERROR). Total: **+6,77 puntos**, sin regresiones.
+- **+5,07 puntos** son corrección del adaptador de fixtures: comentarios con
+  un espacio delimitador y las dos formas de serializar processing
+  instructions (`<?x ?>` y `<?x?>`). No cambian el DOM del parser; corrigen la
+  comparación contra los `.dat`.
+- **+1,70 puntos (35 tests) son mejoras reales del parser:** `center`,
+  `dialog`, `dir`, `hgroup`, `listing`, `summary`, `search` y `plaintext`
+  cierran `<p>`; un `<a>` anidado cierra el anterior; `</form>` deja abiertos
+  sus descendientes; `<frame>` se ignora en body; un `</p>` antes de body no
+  crea un párrafo en head; y un `</script` sin `>` al EOF sigue siendo texto.
+- `./tools/test_all.sh`: **305 tests en verde** (43 en `nativax_html`).
+- Siguen pendientes: adoption agency, foster parenting, template contents,
+  tablas y foreign content.
+
 ## Comparación con Chrome (web-challenge)
 
 `examples/web-challenge/test/screenshot_test.dart` renderiza la página con
@@ -67,7 +84,7 @@ soportados: `share` y `geolocation`.
 - [x] Test262 (97,93 %), html5lib (96,95 %) y URL (70,98 %) por encima del 70 %.
 - [ ] WPT `dom/nodes`: **58,30 %** (objetivo 70 %).
 - [ ] WPT `css/selectors`: **10,38 %** (objetivo 70 %).
-- [ ] WPT tree construction: **39,97 %** (objetivo 70 %).
+- [ ] WPT tree construction: **46,74 %** (objetivo 70 %).
 - [x] Reparse de `<style>` al insertar/editar hojas (prerrequisito de CSSOM y
   de la UI de frameworks).
 - [x] CSSOM básico: `document.styleSheets`, `insertRule`, `deleteRule`,

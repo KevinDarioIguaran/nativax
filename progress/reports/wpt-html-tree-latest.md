@@ -1,23 +1,23 @@
 # Conformidad: wpt-html-tree
 
-- Fecha: 2026-10-21T04:23:58.429227Z
-- Duración: 0.2 s
-- Comando: `run_html_tree`
+- Fecha: 2026-10-21T20:56:18.102875Z
+- Duración: 0.3 s
+- Comando: `run_html_tree --limit 100000`
 - Total: **1973** tests
-- Tasa de éxito (sin SKIP): **39.97 %**
+- Tasa de éxito (sin SKIP): **46.74 %**
 
 | Estado | Tests |
 |---|---:|
-| PASS | 749 |
-| FAIL | 1123 |
+| PASS | 876 |
+| FAIL | 998 |
 | SKIP | 99 |
-| ERROR | 2 |
+| ERROR | 0 |
 
 ## Delta contra la línea base
 
-- Corregidos: **0**
+- Corregidos: **5**
 - Regresiones: **0**
-- Siguen fallando: **1123**
+- Siguen fallando: **998**
 - Nuevos en esta ejecución: **0**
 - Ausentes respecto a la base: **0**
 
@@ -25,7 +25,7 @@
 
 | Grupo | PASS | FAIL | SKIP | ERROR | Éxito |
 |---|---:|---:|---:|---:|---:|
-| `html-parser` | 749 | 1123 | 99 | 2 | 40.0 % |
+| `html-parser` | 876 | 998 | 99 | 0 | 46.7 % |
 
 ## Por directorio
 
@@ -61,13 +61,13 @@
 | `blocks.dat#5` | 1 | 0 | 0 | 0 | 100.0 % |
 | `blocks.dat#6` | 1 | 0 | 0 | 0 | 100.0 % |
 | `blocks.dat#7` | 1 | 0 | 0 | 0 | 100.0 % |
-| `blocks.dat#8` | 0 | 1 | 0 | 0 | 0.0 % |
+| `blocks.dat#8` | 1 | 0 | 0 | 0 | 100.0 % |
 | `blocks.dat#9` | 1 | 0 | 0 | 0 | 100.0 % |
 | `blocks.dat#10` | 1 | 0 | 0 | 0 | 100.0 % |
 | `blocks.dat#11` | 1 | 0 | 0 | 0 | 100.0 % |
-| `blocks.dat#12` | 0 | 1 | 0 | 0 | 0.0 % |
+| `blocks.dat#12` | 1 | 0 | 0 | 0 | 100.0 % |
 | `blocks.dat#13` | 1 | 0 | 0 | 0 | 100.0 % |
-| `blocks.dat#14` | 0 | 1 | 0 | 0 | 0.0 % |
+| `blocks.dat#14` | 1 | 0 | 0 | 0 | 100.0 % |
 | `blocks.dat#15` | 1 | 0 | 0 | 0 | 100.0 % |
 | `blocks.dat#16` | 1 | 0 | 0 | 0 | 100.0 % |
 | `blocks.dat#17` | 1 | 0 | 0 | 0 | 100.0 % |
@@ -83,9 +83,9 @@
 | `blocks.dat#27` | 1 | 0 | 0 | 0 | 100.0 % |
 | `blocks.dat#28` | 1 | 0 | 0 | 0 | 100.0 % |
 | `blocks.dat#29` | 1 | 0 | 0 | 0 | 100.0 % |
-| `blocks.dat#30` | 0 | 1 | 0 | 0 | 0.0 % |
+| `blocks.dat#30` | 1 | 0 | 0 | 0 | 100.0 % |
 | `blocks.dat#31` | 1 | 0 | 0 | 0 | 100.0 % |
-| `blocks.dat#32` | 0 | 1 | 0 | 0 | 0.0 % |
+| `blocks.dat#32` | 1 | 0 | 0 | 0 | 100.0 % |
 | `blocks.dat#33` | 1 | 0 | 0 | 0 | 100.0 % |
 | `blocks.dat#34` | 1 | 0 | 0 | 0 | 100.0 % |
 | `blocks.dat#35` | 1 | 0 | 0 | 0 | 100.0 % |
@@ -97,7 +97,7 @@
 | `blocks.dat#41` | 1 | 0 | 0 | 0 | 100.0 % |
 | `blocks.dat#42` | 1 | 0 | 0 | 0 | 100.0 % |
 | `blocks.dat#43` | 1 | 0 | 0 | 0 | 100.0 % |
-| `blocks.dat#44` | 0 | 1 | 0 | 0 | 0.0 % |
+| `blocks.dat#44` | 1 | 0 | 0 | 0 | 100.0 % |
 | `blocks.dat#45` | 1 | 0 | 0 | 0 | 100.0 % |
 | `blocks.dat#46` | 1 | 0 | 0 | 0 | 100.0 % |
 | `blocks.dat#47` | 1 | 0 | 0 | 0 | 100.0 % |
@@ -113,7 +113,7 @@
 | `comments01.dat#9` | 0 | 1 | 0 | 0 | 0.0 % |
 | _(+1893 grupos)_ | | | | | |
 
-## Fallos (1123)
+## Fallos (998)
 
 ### `adoption01.dat#1`
 
@@ -638,10 +638,11 @@ actual:   <html>
   <head>
   <body>
     <a>
-      <div>
-        <style>
-        <address>
-          <a>
+    <address>
+      <a>
+        <div>
+          <style>
+      <a>
 ```
 
 ### `adoption02.dat#2`
@@ -689,187 +690,7 @@ actual:   <html>
     <a>
       <table>
         <marquee>
-      <a>
-```
-
-### `blocks.dat#8`
-
-- Características: html-parser
-- Motivo: DOM tree differs from the fixture
-
-```text
-input: "<!doctype html><p>foo<center>bar<p>baz"
-expected: <!DOCTYPE html>
-<html>
-  <head>
-  <body>
-    <p>
-      "foo"
-    <center>
-      "bar"
-      <p>
-        "baz"
-
-actual:   <!DOCTYPE html>
-<html>
-  <head>
-  <body>
-    <p>
-      "foo"
-      <center>
-        "bar"
-    <p>
-      "baz"
-```
-
-### `blocks.dat#12`
-
-- Características: html-parser
-- Motivo: DOM tree differs from the fixture
-
-```text
-input: "<!doctype html><p>foo<dialog>bar<p>baz"
-expected: <!DOCTYPE html>
-<html>
-  <head>
-  <body>
-    <p>
-      "foo"
-    <dialog>
-      "bar"
-      <p>
-        "baz"
-
-actual:   <!DOCTYPE html>
-<html>
-  <head>
-  <body>
-    <p>
-      "foo"
-      <dialog>
-        "bar"
-    <p>
-      "baz"
-```
-
-### `blocks.dat#14`
-
-- Características: html-parser
-- Motivo: DOM tree differs from the fixture
-
-```text
-input: "<!doctype html><p>foo<dir>bar<p>baz"
-expected: <!DOCTYPE html>
-<html>
-  <head>
-  <body>
-    <p>
-      "foo"
-    <dir>
-      "bar"
-      <p>
-        "baz"
-
-actual:   <!DOCTYPE html>
-<html>
-  <head>
-  <body>
-    <p>
-      "foo"
-      <dir>
-        "bar"
-    <p>
-      "baz"
-```
-
-### `blocks.dat#30`
-
-- Características: html-parser
-- Motivo: DOM tree differs from the fixture
-
-```text
-input: "<!doctype html><p>foo<hgroup>bar<p>baz"
-expected: <!DOCTYPE html>
-<html>
-  <head>
-  <body>
-    <p>
-      "foo"
-    <hgroup>
-      "bar"
-      <p>
-        "baz"
-
-actual:   <!DOCTYPE html>
-<html>
-  <head>
-  <body>
-    <p>
-      "foo"
-      <hgroup>
-        "bar"
-    <p>
-      "baz"
-```
-
-### `blocks.dat#32`
-
-- Características: html-parser
-- Motivo: DOM tree differs from the fixture
-
-```text
-input: "<!doctype html><p>foo<listing>bar<p>baz"
-expected: <!DOCTYPE html>
-<html>
-  <head>
-  <body>
-    <p>
-      "foo"
-    <listing>
-      "bar"
-      <p>
-        "baz"
-
-actual:   <!DOCTYPE html>
-<html>
-  <head>
-  <body>
-    <p>
-      "foo"
-      <listing>
-        "bar"
-    <p>
-      "baz"
-```
-
-### `blocks.dat#44`
-
-- Características: html-parser
-- Motivo: DOM tree differs from the fixture
-
-```text
-input: "<!doctype html><p>foo<summary>bar<p>baz"
-expected: <!DOCTYPE html>
-<html>
-  <head>
-  <body>
-    <p>
-      "foo"
-    <summary>
-      "bar"
-      <p>
-        "baz"
-
-actual:   <!DOCTYPE html>
-<html>
-  <head>
-  <body>
-    <p>
-      "foo"
-      <summary>
-        "bar"
-    <p>
-      "baz"
+    <a>
 ```
 
 ### `comments01.dat#0`
@@ -886,12 +707,11 @@ expected: <html>
     <!--  BAR  -->
     "BAZ"
 
-actual:   <html>
+actual:   <!--  BAR  -->
+<html>
   <head>
   <body>
-    "FOO"
-    <!-- BAR -->
-    "BAZ"
+    "FOOBAZ"
 ```
 
 ### `comments01.dat#1`
@@ -908,11 +728,11 @@ expected: <html>
     <!--  BAR  -->
     "BAZ"
 
-actual:   <html>
+actual:   <!--  BAR --!>BAZ -->
+<html>
   <head>
   <body>
     "FOO"
-    <!-- BAR --!>BAZ-->
 ```
 
 ### `comments01.dat#2`
@@ -928,11 +748,11 @@ expected: <html>
     "FOO"
     <!--  BAR --! >BAZ -->
 
-actual:   <html>
+actual:   <!--  BAR --! >BAZ -->
+<html>
   <head>
   <body>
     "FOO"
-    <!-- BAR --! >BAZ-->
 ```
 
 ### `comments01.dat#3`
@@ -947,12 +767,12 @@ expected: <html>
   <body>
     "FOO"
 
-actual:   <html>
+actual:   <!--  BAR --!
+>BAZ -->
+<html>
   <head>
   <body>
     "FOO"
-    <!-- BAR --!
->BAZ-->
 ```
 
 ### `comments01.dat#4`
@@ -968,11 +788,11 @@ expected: <html>
     "FOO"
     <!--  BAR --   >BAZ -->
 
-actual:   <html>
+actual:   <!--  BAR --   >BAZ -->
+<html>
   <head>
   <body>
     "FOO"
-    <!-- BAR --   >BAZ-->
 ```
 
 ### `comments01.dat#5`
@@ -989,12 +809,11 @@ expected: <html>
     <!--  BAR -- <QUX> -- MUX  -->
     "BAZ"
 
-actual:   <html>
+actual:   <!--  BAR -- <QUX> -- MUX  -->
+<html>
   <head>
   <body>
-    "FOO"
-    <!-- BAR -- <QUX> -- MUX -->
-    "BAZ"
+    "FOOBAZ"
 ```
 
 ### `comments01.dat#6`
@@ -1011,11 +830,11 @@ expected: <html>
     <!--  BAR -- <QUX> -- MUX  -->
     "BAZ"
 
-actual:   <html>
+actual:   <!--  BAR -- <QUX> -- MUX --!>BAZ -->
+<html>
   <head>
   <body>
     "FOO"
-    <!-- BAR -- <QUX> -- MUX --!>BAZ-->
 ```
 
 ### `comments01.dat#7`
@@ -1031,11 +850,11 @@ expected: <html>
     "FOO"
     <!--  BAR -- <QUX> -- MUX -- >BAZ -->
 
-actual:   <html>
+actual:   <!--  BAR -- <QUX> -- MUX -- >BAZ -->
+<html>
   <head>
   <body>
     "FOO"
-    <!-- BAR -- <QUX> -- MUX -- >BAZ-->
 ```
 
 ### `comments01.dat#8`
@@ -1052,12 +871,11 @@ expected: <html>
     <!--  -->
     "BAZ"
 
-actual:   <html>
+actual:   <!--  -->
+<html>
   <head>
   <body>
-    "FOO"
-    <!---->
-    "BAZ"
+    "FOOBAZ"
 ```
 
 ### `comments01.dat#9`
@@ -1074,11 +892,11 @@ expected: <html>
     <!--  -->
     "BAZ"
 
-actual:   <html>
+actual:   <!-- ->BAZ -->
+<html>
   <head>
   <body>
     "FOO"
-    <!--->BAZ-->
 ```
 
 ### `comments01.dat#10`
@@ -1095,67 +913,11 @@ expected: <html>
     <!--  -->
     "BAZ"
 
-actual:   <html>
+actual:   <!-- >BAZ -->
+<html>
   <head>
   <body>
     "FOO"
-    <!-->BAZ-->
-```
-
-### `comments01.dat#11`
-
-- Características: html-parser
-- Motivo: DOM tree differs from the fixture
-
-```text
-input: "<?xml version=\"1.0\">Hi"
-expected: <!-- ?xml version="1.0" -->
-<html>
-  <head>
-  <body>
-    "Hi"
-
-actual:   <html>
-  <head>
-    <!--?xml version="1.0"-->
-  <body>
-    "Hi"
-```
-
-### `comments01.dat#12`
-
-- Características: html-parser
-- Motivo: DOM tree differs from the fixture
-
-```text
-input: "<?xml version=\"1.0\">"
-expected: <!-- ?xml version="1.0" -->
-<html>
-  <head>
-  <body>
-
-actual:   <html>
-  <head>
-    <!--?xml version="1.0"-->
-  <body>
-```
-
-### `comments01.dat#13`
-
-- Características: html-parser
-- Motivo: DOM tree differs from the fixture
-
-```text
-input: "<?xml version"
-expected: <!-- ?xml version -->
-<html>
-  <head>
-  <body>
-
-actual:   <html>
-  <head>
-    <!--?xml version-->
-  <body>
 ```
 
 ### `comments01.dat#14`
@@ -1172,12 +934,11 @@ expected: <html>
     <!-- - -->
     "BAZ"
 
-actual:   <html>
+actual:   <!-- - -->
+<html>
   <head>
   <body>
-    "FOO"
-    <!----->
-    "BAZ"
+    "FOOBAZ"
 ```
 
 ### `comments01.dat#15`
@@ -1196,7 +957,7 @@ expected: <html>
 
 actual:   <html>
   <head>
-    <!-- comment -->
+    <!--  comment  -->
     <title>
       "Comment before head"
   <body>
@@ -1311,8 +1072,8 @@ actual:   <html>
   <head>
   <body>
     <svg>
-      <!--![CDATA[foo
-bar]]-->
+      <!-- ![CDATA[foo
+bar]] -->
 ```
 
 ### `domjs-unsafe.dat#1`
@@ -1332,8 +1093,8 @@ actual:   <html>
   <head>
   <body>
     <svg>
-      <!--![CDATA[foo
-bar]]-->
+      <!-- ![CDATA[foo
+bar]] -->
 ```
 
 ### `domjs-unsafe.dat#2`
@@ -1353,8 +1114,8 @@ actual:   <html>
   <head>
   <body>
     <svg>
-      <!--![CDATA[foo
-bar]]-->
+      <!-- ![CDATA[foo
+bar]] -->
 ```
 
 ### `domjs-unsafe.dat#3`
@@ -1944,28 +1705,6 @@ actual:   <!DOCTYPE html>
       <colgroup>
 ```
 
-### `domjs-unsafe.dat#34`
-
-- Características: html-parser
-- Motivo: DOM tree differs from the fixture
-
-```text
-input: "<table><colgroup><!--test--></colgroup></table>"
-expected: <html>
-  <head>
-  <body>
-    <table>
-      <colgroup>
-        <!-- test -->
-
-actual:   <html>
-  <head>
-  <body>
-    <table>
-      <colgroup>
-        <!--test-->
-```
-
 ### `domjs-unsafe.dat#36`
 
 - Características: html-parser
@@ -1987,26 +1726,6 @@ actual:   <html>
     <table>
       <colgroup>
         " foo"
-```
-
-### `domjs-unsafe.dat#37`
-
-- Características: html-parser
-- Motivo: DOM tree differs from the fixture
-
-```text
-input: "<select><!--test--></select>"
-expected: <html>
-  <head>
-  <body>
-    <select>
-      <!-- test -->
-
-actual:   <html>
-  <head>
-  <body>
-    <select>
-      <!--test-->
 ```
 
 ### `domjs-unsafe.dat#39`
@@ -2701,7 +2420,205 @@ actual:   <html>
     <div {bar: ZZ>YY}>
 ```
 
-_… y 1003 fallos más (ver el JSONL)._
+### `entities02.dat#1`
+
+- Características: html-parser
+- Motivo: DOM tree differs from the fixture
+
+```text
+input: "<div bar=\"ZZ&\"></div>"
+expected: <html>
+  <head>
+  <body>
+    <div>
+
+actual:   <html>
+  <head>
+  <body>
+    <div {bar: ZZ&}>
+```
+
+### `entities02.dat#2`
+
+- Características: html-parser
+- Motivo: DOM tree differs from the fixture
+
+```text
+input: "<div bar='ZZ&'></div>"
+expected: <html>
+  <head>
+  <body>
+    <div>
+
+actual:   <html>
+  <head>
+  <body>
+    <div {bar: ZZ&}>
+```
+
+### `entities02.dat#3`
+
+- Características: html-parser
+- Motivo: DOM tree differs from the fixture
+
+```text
+input: "<div bar=ZZ&></div>"
+expected: <html>
+  <head>
+  <body>
+    <div>
+
+actual:   <html>
+  <head>
+  <body>
+    <div {bar: ZZ&}>
+```
+
+### `entities02.dat#4`
+
+- Características: html-parser
+- Motivo: DOM tree differs from the fixture
+
+```text
+input: "<div bar=\"ZZ&gt=YY\"></div>"
+expected: <html>
+  <head>
+  <body>
+    <div>
+
+actual:   <html>
+  <head>
+  <body>
+    <div {bar: ZZ&gt=YY}>
+```
+
+### `entities02.dat#5`
+
+- Características: html-parser
+- Motivo: DOM tree differs from the fixture
+
+```text
+input: "<div bar=\"ZZ&gt0YY\"></div>"
+expected: <html>
+  <head>
+  <body>
+    <div>
+
+actual:   <html>
+  <head>
+  <body>
+    <div {bar: ZZ&gt0YY}>
+```
+
+### `entities02.dat#6`
+
+- Características: html-parser
+- Motivo: DOM tree differs from the fixture
+
+```text
+input: "<div bar=\"ZZ&gt9YY\"></div>"
+expected: <html>
+  <head>
+  <body>
+    <div>
+
+actual:   <html>
+  <head>
+  <body>
+    <div {bar: ZZ&gt9YY}>
+```
+
+### `entities02.dat#7`
+
+- Características: html-parser
+- Motivo: DOM tree differs from the fixture
+
+```text
+input: "<div bar=\"ZZ&gtaYY\"></div>"
+expected: <html>
+  <head>
+  <body>
+    <div>
+
+actual:   <html>
+  <head>
+  <body>
+    <div {bar: ZZ&gtaYY}>
+```
+
+### `entities02.dat#8`
+
+- Características: html-parser
+- Motivo: DOM tree differs from the fixture
+
+```text
+input: "<div bar=\"ZZ&gtZYY\"></div>"
+expected: <html>
+  <head>
+  <body>
+    <div>
+
+actual:   <html>
+  <head>
+  <body>
+    <div {bar: ZZ&gtZYY}>
+```
+
+### `entities02.dat#9`
+
+- Características: html-parser
+- Motivo: DOM tree differs from the fixture
+
+```text
+input: "<div bar=\"ZZ&gt YY\"></div>"
+expected: <html>
+  <head>
+  <body>
+    <div>
+
+actual:   <html>
+  <head>
+  <body>
+    <div {bar: ZZ> YY}>
+```
+
+### `entities02.dat#10`
+
+- Características: html-parser
+- Motivo: DOM tree differs from the fixture
+
+```text
+input: "<div bar=\"ZZ&gt\"></div>"
+expected: <html>
+  <head>
+  <body>
+    <div>
+
+actual:   <html>
+  <head>
+  <body>
+    <div {bar: ZZ>}>
+```
+
+### `entities02.dat#11`
+
+- Características: html-parser
+- Motivo: DOM tree differs from the fixture
+
+```text
+input: "<div bar='ZZ&gt'></div>"
+expected: <html>
+  <head>
+  <body>
+    <div>
+
+actual:   <html>
+  <head>
+  <body>
+    <div {bar: ZZ>}>
+```
+
+_… y 878 fallos más (ver el JSONL)._
 
 ## SKIP agrupados por motivo
 
@@ -2723,11 +2640,6 @@ _… y 1003 fallos más (ver el JSONL)._
 | fragment context "math math" needs foreign content or template support | 3 |
 | fragment context "math mfenced" needs foreign content or template support | 1 |
 | fragment context "math malignmark" needs foreign content or template support | 1 |
-
-## Errores del runner (2)
-
-- `html5test-com.dat#0`: runner/parser failure: InvalidCharacterError: invalid name "div<div"
-- `webkit02.dat#18`: runner/parser failure: InvalidCharacterError: invalid name "xh<optgroup"
 
 ---
 

@@ -21,8 +21,10 @@ class HtmlTokenizer {
 
   bool get _eof => _pos >= src.length;
 
-  static bool _isWs(int c) => c == 0x20 || c == 0x09 || c == 0x0a || c == 0x0c || c == 0x0d;
-  static bool _isAlpha(int c) => (c >= 0x41 && c <= 0x5a) || (c >= 0x61 && c <= 0x7a);
+  static bool _isWs(int c) =>
+      c == 0x20 || c == 0x09 || c == 0x0a || c == 0x0c || c == 0x0d;
+  static bool _isAlpha(int c) =>
+      (c >= 0x41 && c <= 0x5a) || (c >= 0x61 && c <= 0x7a);
 
   Iterable<Token> tokenize() sync* {
     final text = StringBuffer();
@@ -37,7 +39,7 @@ class HtmlTokenizer {
 
     while (!_eof) {
       final c = src.codeUnitAt(_pos);
-      if (c == 0x3c /* < */) {
+      if (c == 0x3c /* < */ ) {
         final tagStart = _pos;
         _dropped = false;
         final tag = _tryTag();
@@ -53,11 +55,14 @@ class HtmlTokenizer {
         if (tag is StartTagToken &&
             !tag.selfClosing &&
             (rawTextTags.contains(tag.name) || rcdataTags.contains(tag.name))) {
-          final body = _rawText(tag.name, decode: rcdataTags.contains(tag.name));
+          final body = _rawText(
+            tag.name,
+            decode: rcdataTags.contains(tag.name),
+          );
           if (body.data.isNotEmpty) yield body;
           if (_closedRaw) yield EndTagToken(_pos, tag.name);
         }
-      } else if (c == 0x26 /* & */) {
+      } else if (c == 0x26 /* & */ ) {
         if (text.isEmpty) textStart = _pos;
         text.write(_charRef(inAttribute: false));
       } else {
@@ -96,10 +101,12 @@ class HtmlTokenizer {
         return TextToken(start, decode ? _decodeAll(body) : body);
       }
       final after = i + 2 + name.length;
-      if (after >= src.length ||
-          _isWs(src.codeUnitAt(after)) ||
-          src.codeUnitAt(after) == 0x2f ||
-          src.codeUnitAt(after) == 0x3e) {
+      // A tag name at EOF without `>` is not a complete end tag: keep the
+      // text (`</script` at EOF is script data, not a closing tag).
+      if (after < src.length &&
+          (_isWs(src.codeUnitAt(after)) ||
+              src.codeUnitAt(after) == 0x2f ||
+              src.codeUnitAt(after) == 0x3e)) {
         final body = src.substring(start, i);
         _pos = after;
         // Skip to the closing '>'.
@@ -158,8 +165,8 @@ class HtmlTokenizer {
       return null;
     }
     final c = src.codeUnitAt(_pos);
-    if (c == 0x21 /* ! */) return _markupDeclaration(start);
-    if (c == 0x2f /* / */) {
+    if (c == 0x21 /* ! */ ) return _markupDeclaration(start);
+    if (c == 0x2f /* / */ ) {
       _pos++;
       if (_eof) {
         onError('eof-before-tag-name', start);
@@ -184,7 +191,7 @@ class HtmlTokenizer {
       _dropped = true;
       return null;
     }
-    if (c == 0x3f /* ? */) {
+    if (c == 0x3f /* ? */ ) {
       onError('unexpected-question-mark-instead-of-tag-name', start);
       return _bogusComment(start);
     }
@@ -247,7 +254,11 @@ class HtmlTokenizer {
       }
       while (!_eof) {
         final d = src.codeUnitAt(_pos);
-        if (_isWs(d) || d == 0x2f || d == 0x3e || (d == 0x3d && _pos > nameStart)) break;
+        if (_isWs(d) ||
+            d == 0x2f ||
+            d == 0x3e ||
+            (d == 0x3d && _pos > nameStart))
+          break;
         if (d == 0x22 || d == 0x27 || d == 0x3c) {
           onError('unexpected-character-in-attribute-name', _pos);
         }
@@ -344,24 +355,26 @@ class HtmlTokenizer {
       if (end < 0) onError('eof-in-doctype', start);
       final nameMatch = RegExp(r'^([^\s>]+)').firstMatch(body);
       final name = nameMatch?.group(1)?.toLowerCase() ?? '';
-      final rest = nameMatch == null ? '' : body.substring(nameMatch.end).trim();
+      final rest = nameMatch == null
+          ? ''
+          : body.substring(nameMatch.end).trim();
       var publicId = '';
       var systemId = '';
       final public = RegExp(
-              r'''^PUBLIC\s+(?:"([^"]*)"|'([^']*)')(?:\s+(?:"([^"]*)"|'([^']*)'))?''',
-              caseSensitive: false)
-          .firstMatch(rest);
+        r'''^PUBLIC\s+(?:"([^"]*)"|'([^']*)')(?:\s+(?:"([^"]*)"|'([^']*)'))?''',
+        caseSensitive: false,
+      ).firstMatch(rest);
       if (public != null) {
         publicId = public.group(1) ?? public.group(2) ?? '';
         systemId = public.group(3) ?? public.group(4) ?? '';
       } else {
-        final system = RegExp(r'''^SYSTEM\s+(?:"([^"]*)"|'([^']*)')''',
-                caseSensitive: false)
-            .firstMatch(rest);
+        final system = RegExp(
+          r'''^SYSTEM\s+(?:"([^"]*)"|'([^']*)')''',
+          caseSensitive: false,
+        ).firstMatch(rest);
         if (system != null) systemId = system.group(1) ?? system.group(2) ?? '';
       }
-      return DoctypeToken(start, name,
-          publicId: publicId, systemId: systemId);
+      return DoctypeToken(start, name, publicId: publicId, systemId: systemId);
     }
     onError('incorrectly-opened-comment', start);
     return _bogusComment(start);
@@ -379,17 +392,18 @@ class HtmlTokenizer {
     final start = _pos;
     _pos++; // &
     if (_eof) return '&';
-    if (src.codeUnitAt(_pos) == 0x23 /* # */) {
+    if (src.codeUnitAt(_pos) == 0x23 /* # */ ) {
       _pos++;
       var hex = false;
-      if (!_eof && (src.codeUnitAt(_pos) | 0x20) == 0x78 /* x */) {
+      if (!_eof && (src.codeUnitAt(_pos) | 0x20) == 0x78 /* x */ ) {
         hex = true;
         _pos++;
       }
       final digitsStart = _pos;
       while (!_eof) {
         final d = src.codeUnitAt(_pos) | 0x20;
-        final isDigit = (d >= 0x30 && d <= 0x39) || (hex && d >= 0x61 && d <= 0x66);
+        final isDigit =
+            (d >= 0x30 && d <= 0x39) || (hex && d >= 0x61 && d <= 0x66);
         if (!isDigit) break;
         _pos++;
       }
@@ -404,7 +418,9 @@ class HtmlTokenizer {
       } else {
         onError('missing-semicolon-after-character-reference', start);
       }
-      final code = digits.length > 8 ? 0x110000 : int.parse(digits, radix: hex ? 16 : 10);
+      final code = digits.length > 8
+          ? 0x110000
+          : int.parse(digits, radix: hex ? 16 : 10);
       if (code == 0 || code > 0x10ffff || (code >= 0xd800 && code <= 0xdfff)) {
         onError('invalid-character-reference', start);
         return '�';
@@ -440,7 +456,8 @@ class HtmlTokenizer {
     if (prefixLength > 0) {
       final end = nameStart + prefixLength;
       final next = end < src.length ? src.codeUnitAt(end) : -1;
-      final blocked = inAttribute &&
+      final blocked =
+          inAttribute &&
           (next == 0x3d ||
               (next >= 0x30 && next <= 0x39) ||
               (next >= 0x41 && next <= 0x5a) ||

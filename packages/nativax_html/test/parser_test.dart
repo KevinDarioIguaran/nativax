@@ -9,14 +9,18 @@ void main() {
   group('document structure', () {
     test('empty document gets html/head/body', () {
       final r = HtmlParser().parseDocument('');
-      expect(r.value.documentElement!.outerHtml,
-          '<html><head></head><body></body></html>');
+      expect(
+        r.value.documentElement!.outerHtml,
+        '<html><head></head><body></body></html>',
+      );
       expect(r.errors, isEmpty);
     });
 
     test('explicit structure with doctype', () {
-      final d = parse('<!DOCTYPE html><html lang="es"><head><title>T</title>'
-          '</head><body class="b"><p>x</p></body></html>');
+      final d = parse(
+        '<!DOCTYPE html><html lang="es"><head><title>T</title>'
+        '</head><body class="b"><p>x</p></body></html>',
+      );
       expect(d.documentElement!.getAttribute('lang'), 'es');
       expect(d.title, 'T');
       expect(d.body!.className, 'b');
@@ -36,8 +40,10 @@ void main() {
 
   group('elements and attributes', () {
     test('nesting', () {
-      expect(bodyHtml('<div><section><span>a<b>b</b></span></section></div>'),
-          '<div><section><span>a<b>b</b></span></section></div>');
+      expect(
+        bodyHtml('<div><section><span>a<b>b</b></span></section></div>'),
+        '<div><section><span>a<b>b</b></span></section></div>',
+      );
     });
 
     test('quoted, unquoted, empty and boolean attributes', () {
@@ -59,56 +65,77 @@ void main() {
     });
 
     test('void elements never take children', () {
-      expect(bodyHtml('<p>a<br>b<img src=x.png>c<hr></p>'),
-          // <hr> closes the <p>, so the later </p> creates an empty one.
-          '<p>a<br>b<img src="x.png">c</p><hr><p></p>');
+      expect(
+        bodyHtml('<p>a<br>b<img src=x.png>c<hr></p>'),
+        // <hr> closes the <p>, so the later </p> creates an empty one.
+        '<p>a<br>b<img src="x.png">c</p><hr><p></p>',
+      );
       expect(bodyHtml('<input/><span>x</span>'), '<input><span>x</span>');
     });
 
     test('unknown elements are kept as generic elements', () {
-      expect(bodyHtml('<my-widget foo=1><x-y>t</x-y></my-widget>'),
-          '<my-widget foo="1"><x-y>t</x-y></my-widget>');
+      expect(
+        bodyHtml('<my-widget foo=1><x-y>t</x-y></my-widget>'),
+        '<my-widget foo="1"><x-y>t</x-y></my-widget>',
+      );
     });
 
     test('tag names are case-insensitive', () {
-      expect(bodyHtml('<DIV><SpAn>x</span></div>'), '<div><span>x</span></div>');
+      expect(
+        bodyHtml('<DIV><SpAn>x</span></div>'),
+        '<div><span>x</span></div>',
+      );
     });
   });
 
   group('text and character references', () {
     test('named and numeric references', () {
-      final d = parse('<p>&lt;b&gt; &amp; &copy; &#169; &#xA9; &ntilde; &nbsp;</p>');
+      final d = parse(
+        '<p>&lt;b&gt; &amp; &copy; &#169; &#xA9; &ntilde; &nbsp;</p>',
+      );
       expect(d.querySelector('p')!.textContent, '<b> & © © © ñ  ');
     });
 
     test('unknown and bare ampersands stay literal', () {
       final r = HtmlParser().parseDocument('<p>a & b &zz; &#;</p>');
       expect(r.value.querySelector('p')!.textContent, 'a & b &zz; &#;');
-      expect(r.errors.map((e) => e.code),
-          containsAll(['unknown-named-character-reference',
-              'absence-of-digits-in-numeric-character-reference']));
+      expect(
+        r.errors.map((e) => e.code),
+        containsAll([
+          'unknown-named-character-reference',
+          'absence-of-digits-in-numeric-character-reference',
+        ]),
+      );
     });
 
     test('references in attributes', () {
-      final d = parse('<a href="?a=1&amp;b=2&copy=3" title="&quot;x&quot;">l</a>');
+      final d = parse(
+        '<a href="?a=1&amp;b=2&copy=3" title="&quot;x&quot;">l</a>',
+      );
       final a = d.querySelector('a')!;
       expect(a.getAttribute('href'), '?a=1&b=2&copy=3');
       expect(a.getAttribute('title'), '"x"');
     });
 
     test('invalid numeric references become U+FFFD', () {
-      expect(parse('<p>&#0;&#xD800;&#99999999;</p>').querySelector('p')!.textContent,
-          '���');
+      expect(
+        parse('<p>&#0;&#xD800;&#99999999;</p>').querySelector('p')!.textContent,
+        '���',
+      );
     });
 
     test('a lone < is text', () {
-      expect(parse('<p>1 < 2 and 3 <= 4</p>').querySelector('p')!.textContent,
-          '1 < 2 and 3 <= 4');
+      expect(
+        parse('<p>1 < 2 and 3 <= 4</p>').querySelector('p')!.textContent,
+        '1 < 2 and 3 <= 4',
+      );
     });
 
     test('non-ASCII text is preserved', () {
-      expect(parse('<p>שלום 漢字 🎉</p>').querySelector('p')!.textContent,
-          'שלום 漢字 🎉');
+      expect(
+        parse('<p>שלום 漢字 🎉</p>').querySelector('p')!.textContent,
+        'שלום 漢字 🎉',
+      );
     });
   });
 
@@ -133,7 +160,9 @@ void main() {
 
   group('raw text elements', () {
     test('script content is not parsed as markup', () {
-      final d = parse('<script>if (a < b && c > d) { x = "</div>"; }</script><p>after</p>');
+      final d = parse(
+        '<script>if (a < b && c > d) { x = "</div>"; }</script><p>after</p>',
+      );
       final script = d.querySelector('script')!;
       expect(script.textContent, 'if (a < b && c > d) { x = "</div>"; }');
       expect(d.querySelector('p')!.textContent, 'after');
@@ -156,22 +185,57 @@ void main() {
       expect(r.value.querySelector('script')!.textContent, 'let a = 1;<p>');
       expect(r.errors.map((e) => e.code), contains('eof-in-script'));
     });
+
+    test('an unterminated end tag at EOF stays raw text', () {
+      final d = parse('<script></script');
+      expect(d.querySelector('script')!.textContent, '</script');
+    });
   });
 
   group('implicit closing and recovery', () {
     test('p closed by block elements', () {
       expect(bodyHtml('<p>a<div>b</div>'), '<p>a</p><div>b</div>');
       expect(bodyHtml('<p>a<p>b'), '<p>a</p><p>b</p>');
+      expect(
+        bodyHtml('<p>a<center>b<p>c'),
+        '<p>a</p><center>b<p>c</p></center>',
+      );
+    });
+
+    test('nested anchors are closed by the next anchor', () {
+      expect(bodyHtml('<a>1<a>2</a>'), '<a>1</a><a>2</a>');
+    });
+
+    test('form end tag leaves open descendants in place', () {
+      expect(
+        bodyHtml('<form><div></form><div>'),
+        '<form><div><div></div></div></form>',
+      );
+    });
+
+    test('frame in body is ignored; fragment still builds it', () {
+      expect(bodyHtml('<frame>test'), 'test');
+      final doc = parse('');
+      final fragment = HtmlParser()
+          .parseFragment('</frameset><frame>', doc.body!)
+          .value;
+      expect(fragment.childNodes.single.nodeName, 'FRAME');
     });
 
     test('li, dt/dd and option close their siblings', () {
       expect(bodyHtml('<ul><li>a<li>b</ul>'), '<ul><li>a</li><li>b</li></ul>');
-      expect(bodyHtml('<ul><li>a<ul><li>b</ul><li>c</ul>'),
-          '<ul><li>a<ul><li>b</li></ul></li><li>c</li></ul>');
-      expect(bodyHtml('<dl><dt>a<dd>b<dt>c</dl>'),
-          '<dl><dt>a</dt><dd>b</dd><dt>c</dt></dl>');
-      expect(bodyHtml('<select><option>a<option>b</select>'),
-          '<select><option>a</option><option>b</option></select>');
+      expect(
+        bodyHtml('<ul><li>a<ul><li>b</ul><li>c</ul>'),
+        '<ul><li>a<ul><li>b</li></ul></li><li>c</li></ul>',
+      );
+      expect(
+        bodyHtml('<dl><dt>a<dd>b<dt>c</dl>'),
+        '<dl><dt>a</dt><dd>b</dd><dt>c</dt></dl>',
+      );
+      expect(
+        bodyHtml('<select><option>a<option>b</select>'),
+        '<select><option>a</option><option>b</option></select>',
+      );
     });
 
     test('unmatched end tags are ignored and reported', () {
@@ -198,8 +262,10 @@ void main() {
     test('self-closing non-void elements stay open (HTML semantics)', () {
       final r = HtmlParser().parseDocument('<div/><span>x</span>');
       expect(r.value.body!.innerHtml, '<div><span>x</span></div>');
-      expect(r.errors.single.code,
-          'non-void-html-element-start-tag-with-trailing-solidus');
+      expect(
+        r.errors.single.code,
+        'non-void-html-element-start-tag-with-trailing-solidus',
+      );
     });
 
     test('truncated tags at EOF are dropped', () {
@@ -216,23 +282,26 @@ void main() {
   group('limits', () {
     test('input length limit', () {
       expect(
-        () => HtmlParser(limits: const HtmlParserLimits(maxInputLength: 10))
-            .parseDocument('<p>more than ten</p>'),
+        () => HtmlParser(
+          limits: const HtmlParserLimits(maxInputLength: 10),
+        ).parseDocument('<p>more than ten</p>'),
         throwsA(isA<HtmlLimitException>()),
       );
     });
 
     test('node limit', () {
       expect(
-        () => HtmlParser(limits: const HtmlParserLimits(maxNodes: 50))
-            .parseDocument('<p>x</p>' * 100),
+        () => HtmlParser(
+          limits: const HtmlParserLimits(maxNodes: 50),
+        ).parseDocument('<p>x</p>' * 100),
         throwsA(isA<HtmlLimitException>()),
       );
     });
 
     test('deep nesting is flattened at the limit, without recursion', () {
-      final r = HtmlParser(limits: const HtmlParserLimits(maxDepth: 20))
-          .parseDocument('<div>' * 5000);
+      final r = HtmlParser(
+        limits: const HtmlParserLimits(maxDepth: 20),
+      ).parseDocument('<div>' * 5000);
       var depth = 0;
       for (Node? n = r.value.body; n != null; n = n.firstChild) {
         depth++;
@@ -243,10 +312,14 @@ void main() {
     });
 
     test('large documents parse in linear time', () {
-      final big = '<div class="row"><span>item &amp; text</span><b>x</b></div>' * 15000;
+      final big =
+          '<div class="row"><span>item &amp; text</span><b>x</b></div>' * 15000;
       final sw = Stopwatch()..start();
       final d = HtmlParser(limits: const HtmlParserLimits(maxNodes: 200000))
-          .parseDocument(big, documentLimits: const DocumentLimits(maxNodes: 200000))
+          .parseDocument(
+            big,
+            documentLimits: const DocumentLimits(maxNodes: 200000),
+          )
           .value;
       sw.stop();
       expect(d.body!.children.length, 15000);
@@ -274,8 +347,12 @@ void main() {
   });
 
   test('foreign content: SVG self-closing tags and breakout', () {
-    final doc = HtmlParser().parseDocument('<svg viewBox="0 0 10 10"><rect width="1"/><circle r="2"/>'
-        '<g><path d="M0 0"/></g></svg><p>after</p><svg><circle/><p>break</p>').value;
+    final doc = HtmlParser()
+        .parseDocument(
+          '<svg viewBox="0 0 10 10"><rect width="1"/><circle r="2"/>'
+          '<g><path d="M0 0"/></g></svg><p>after</p><svg><circle/><p>break</p>',
+        )
+        .value;
     final svg = doc.querySelector('svg')!;
     expect(svg.children.map((e) => e.localName), ['rect', 'circle', 'g']);
     expect(svg.querySelector('g')!.children.single.localName, 'path');

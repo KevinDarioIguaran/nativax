@@ -220,7 +220,13 @@ Object? _parseNode(String text) {
     }
   }
   if (text.startsWith('<!--') && text.endsWith('-->')) {
-    return _Comment(text.substring(4, text.length - 3));
+    // The .dat format writes comments as `<!-- data -->`; the spaces around
+    // the data are delimiters, not part of the comment. Remove exactly one on
+    // each side so a data value such as " foo " can still round-trip.
+    var data = text.substring(4, text.length - 3);
+    if (data.startsWith(' ')) data = data.substring(1);
+    if (data.endsWith(' ')) data = data.substring(0, data.length - 1);
+    return _Comment(data);
   }
   if (text.startsWith('<?') && text.endsWith('>')) {
     return _Comment(text.substring(2, text.length - 1));
@@ -306,6 +312,20 @@ List<Object> _normalize(List<dom.Node> nodes) {
   return out;
 }
 
+bool _looksLikeProcessingInstruction(String text) =>
+    text.startsWith('?') || text.endsWith('?') || text.endsWith(' ?');
+
+String _canonicalProcessingInstruction(String text) {
+  var value = text;
+  if (value.startsWith('?')) value = value.substring(1);
+  if (value.endsWith(' ?')) {
+    value = value.substring(0, value.length - 2);
+  } else if (value.endsWith('?')) {
+    value = value.substring(0, value.length - 1);
+  }
+  return value;
+}
+
 bool _same(Object? a, Object? b) {
   if (a is List && b is List) {
     if (a.length != b.length) return false;
@@ -317,10 +337,13 @@ bool _same(Object? a, Object? b) {
   if (a is _TextNode && b is _TextNode) return a.text == b.text;
   if (a is _Comment && b is _Comment) {
     if (a.text == b.text) return true;
-    // html5lib .dat writes processing instructions as `<?target ?>`, while
-    // the HTML DOM represents them as comments with data `?target`.
-    if (b.text.endsWith(' ?') && a.text.startsWith('?')) {
-      return b.text.substring(0, b.text.length - 2) == a.text.substring(1);
+    // The .dat format has two representations for processing instructions:
+    // `<?target ?>` and `<?target?>`. Browsers expose them as bogus comments
+    // whose data starts with `?`; normalize both sides before comparing.
+    if (_looksLikeProcessingInstruction(a.text) ||
+        _looksLikeProcessingInstruction(b.text)) {
+      return _canonicalProcessingInstruction(a.text) ==
+          _canonicalProcessingInstruction(b.text);
     }
     return false;
   }
@@ -352,7 +375,7 @@ String _render(List<Object> nodes, [String indent = '']) {
       case _TextNode(:final text):
         out.writeln('$indent"${text.replaceAll('\n', r'\n')}"');
       case _Comment(:final text):
-        out.writeln('$indent<!--$text-->');
+        out.writeln('$indent<!-- $text -->');
       case _Doctype(:final name, :final publicId, :final systemId):
         out.writeln('$indent<!DOCTYPE $name'
             '${publicId.isEmpty && systemId.isEmpty ? '' : ' "$publicId" "$systemId"'}'
