@@ -87,9 +87,8 @@ class Element extends Node {
     for (final key in _attributes.keys) {
       if (_asciiLower(_nameOf(key)) == lower) return key;
     }
-    for (final key in _attributes.keys) {
-      if (_asciiLower(localNameOf(_nameOf(key))) == lower) return key;
-    }
+    // No fallback to local name: `getAttribute('lang')` must not match
+    // `xml:lang`, and namespaced attributes require getAttributeNS.
     return null;
   }
 
