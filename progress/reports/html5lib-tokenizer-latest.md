@@ -1,24 +1,24 @@
 # Conformidad: html5lib-tokenizer
 
-- Fecha: 2026-10-21T04:24:00.360302Z
+- Fecha: 2026-10-21T21:23:58.793357Z
 - Duración: 0.1 s
 - Commit de la suite: `c777c408b61078ea2eb4acefc2535f54dbc8b28a`
 - Comando: `run_html5lib`
 - Total: **6827** tests
-- Tasa de éxito (sin SKIP): **96.95 %**
+- Tasa de éxito (sin SKIP): **99.26 %**
 
 | Estado | Tests |
 |---|---:|
-| PASS | 5625 |
-| FAIL | 177 |
+| PASS | 5759 |
+| FAIL | 43 |
 | SKIP | 1025 |
 | ERROR | 0 |
 
 ## Delta contra la línea base
 
-- Corregidos: **0**
+- Corregidos: **134**
 - Regresiones: **0**
-- Siguen fallando: **177**
+- Siguen fallando: **43**
 - Nuevos en esta ejecución: **0**
 - Ausentes respecto a la base: **0**
 
@@ -26,7 +26,7 @@
 
 | Grupo | PASS | FAIL | SKIP | ERROR | Éxito |
 |---|---:|---:|---:|---:|---:|
-| `html-tokenizer` | 5625 | 177 | 1025 | 0 | 96.9 % |
+| `html-tokenizer` | 5759 | 43 | 1025 | 0 | 99.3 % |
 | `doctype` | 0 | 0 | 855 | 0 | 0.0 % |
 
 ## Por directorio
@@ -47,9 +47,9 @@
 | `contentModelFlags.test#11 [tests] End tag closing RCDATA or RAWTEXT, switching back to PCDATA` | 0 | 0 | 1 | 0 | 0.0 % |
 | `contentModelFlags.test#12 [tests] RAWTEXT w/ something looking like an entity` | 0 | 0 | 1 | 0 | 0.0 % |
 | `contentModelFlags.test#13 [tests] RCDATA w/ an entity` | 0 | 0 | 1 | 0 | 0.0 % |
-| `domjs.test#0 [tests] CR in bogus comment state` | 0 | 1 | 0 | 0 | 0.0 % |
-| `domjs.test#1 [tests] CRLF in bogus comment state` | 0 | 1 | 0 | 0 | 0.0 % |
-| `domjs.test#2 [tests] CRLFLF in bogus comment state` | 0 | 1 | 0 | 0 | 0.0 % |
+| `domjs.test#0 [tests] CR in bogus comment state` | 1 | 0 | 0 | 0 | 100.0 % |
+| `domjs.test#1 [tests] CRLF in bogus comment state` | 1 | 0 | 0 | 0 | 100.0 % |
+| `domjs.test#2 [tests] CRLFLF in bogus comment state` | 1 | 0 | 0 | 0 | 100.0 % |
 | `domjs.test#3 [tests] Raw NUL replacement` | 0 | 0 | 1 | 0 | 0.0 % |
 | `domjs.test#4 [tests] NUL in CDATA section` | 0 | 0 | 1 | 0 | 0.0 % |
 | `domjs.test#5 [tests] NUL in script HTML comment` | 0 | 0 | 1 | 0 | 0.0 % |
@@ -80,9 +80,9 @@
 | `domjs.test#30 [tests] bad endtag (without close bracket)` | 0 | 0 | 1 | 0 | 0.0 % |
 | `domjs.test#31 [tests] bad endtag (trailing solidus)` | 0 | 0 | 1 | 0 | 0.0 % |
 | `domjs.test#32 [tests] Non BMP-charref in attribute` | 1 | 0 | 0 | 0 | 100.0 % |
-| `domjs.test#33 [tests] --!NUL in comment ` | 0 | 1 | 0 | 0 | 0.0 % |
+| `domjs.test#33 [tests] --!NUL in comment ` | 1 | 0 | 0 | 0 | 100.0 % |
 | `domjs.test#34 [tests] space EOF after doctype ` | 0 | 0 | 1 | 0 | 0.0 % |
-| `domjs.test#35 [tests] CDATA in HTML content` | 0 | 1 | 0 | 0 | 0.0 % |
+| `domjs.test#35 [tests] CDATA in HTML content` | 1 | 0 | 0 | 0 | 100.0 % |
 | `domjs.test#36 [tests] CDATA content` | 0 | 0 | 1 | 0 | 0.0 % |
 | `domjs.test#37 [tests] CDATA followed by HTML content` | 0 | 0 | 1 | 0 | 0.0 % |
 | `domjs.test#38 [tests] CDATA with extra bracket` | 0 | 0 | 1 | 0 | 0.0 % |
@@ -104,673 +104,18 @@
 | `entities.test#11 [tests] Very long undefined named entity in body` | 1 | 0 | 0 | 0 | 100.0 % |
 | `entities.test#12 [tests] CR as numeric entity` | 1 | 0 | 0 | 0 | 100.0 % |
 | `entities.test#13 [tests] CR as hexadecimal numeric entity` | 1 | 0 | 0 | 0 | 100.0 % |
-| `entities.test#14 [tests] Windows-1252 EURO SIGN numeric entity.` | 0 | 1 | 0 | 0 | 0.0 % |
+| `entities.test#14 [tests] Windows-1252 EURO SIGN numeric entity.` | 1 | 0 | 0 | 0 | 100.0 % |
 | `entities.test#15 [tests] Windows-1252 REPLACEMENT CHAR numeric entity.` | 1 | 0 | 0 | 0 | 100.0 % |
-| `entities.test#16 [tests] Windows-1252 SINGLE LOW-9 QUOTATION MARK numeric entity.` | 0 | 1 | 0 | 0 | 0.0 % |
-| `entities.test#17 [tests] Windows-1252 LATIN SMALL LETTER F WITH HOOK numeric entity.` | 0 | 1 | 0 | 0 | 0.0 % |
-| `entities.test#18 [tests] Windows-1252 DOUBLE LOW-9 QUOTATION MARK numeric entity.` | 0 | 1 | 0 | 0 | 0.0 % |
-| `entities.test#19 [tests] Windows-1252 HORIZONTAL ELLIPSIS numeric entity.` | 0 | 1 | 0 | 0 | 0.0 % |
-| `entities.test#20 [tests] Windows-1252 DAGGER numeric entity.` | 0 | 1 | 0 | 0 | 0.0 % |
-| `entities.test#21 [tests] Windows-1252 DOUBLE DAGGER numeric entity.` | 0 | 1 | 0 | 0 | 0.0 % |
-| `entities.test#22 [tests] Windows-1252 MODIFIER LETTER CIRCUMFLEX ACCENT numeric entity.` | 0 | 1 | 0 | 0 | 0.0 % |
+| `entities.test#16 [tests] Windows-1252 SINGLE LOW-9 QUOTATION MARK numeric entity.` | 1 | 0 | 0 | 0 | 100.0 % |
+| `entities.test#17 [tests] Windows-1252 LATIN SMALL LETTER F WITH HOOK numeric entity.` | 1 | 0 | 0 | 0 | 100.0 % |
+| `entities.test#18 [tests] Windows-1252 DOUBLE LOW-9 QUOTATION MARK numeric entity.` | 1 | 0 | 0 | 0 | 100.0 % |
+| `entities.test#19 [tests] Windows-1252 HORIZONTAL ELLIPSIS numeric entity.` | 1 | 0 | 0 | 0 | 100.0 % |
+| `entities.test#20 [tests] Windows-1252 DAGGER numeric entity.` | 1 | 0 | 0 | 0 | 100.0 % |
+| `entities.test#21 [tests] Windows-1252 DOUBLE DAGGER numeric entity.` | 1 | 0 | 0 | 0 | 100.0 % |
+| `entities.test#22 [tests] Windows-1252 MODIFIER LETTER CIRCUMFLEX ACCENT numeric entity.` | 1 | 0 | 0 | 0 | 100.0 % |
 | _(+6747 grupos)_ | | | | | |
 
-## Fallos (177)
-
-### `domjs.test#0 [tests] CR in bogus comment state`
-
-- Características: html-tokenizer
-- Motivo: token stream differs from the fixture
-
-```text
-input: "<?\r"
-expected: [["Comment","?\n"]]
-actual:   [["Comment","?\r"]]
-errors: unexpected-question-mark-instead-of-tag-name@0
-```
-
-### `domjs.test#1 [tests] CRLF in bogus comment state`
-
-- Características: html-tokenizer
-- Motivo: token stream differs from the fixture
-
-```text
-input: "<?\r\n"
-expected: [["Comment","?\n"]]
-actual:   [["Comment","?\r\n"]]
-errors: unexpected-question-mark-instead-of-tag-name@0
-```
-
-### `domjs.test#2 [tests] CRLFLF in bogus comment state`
-
-- Características: html-tokenizer
-- Motivo: token stream differs from the fixture
-
-```text
-input: "<?\r\n\n"
-expected: [["Comment","?\n\n"]]
-actual:   [["Comment","?\r\n\n"]]
-errors: unexpected-question-mark-instead-of-tag-name@0
-```
-
-### `domjs.test#33 [tests] --!NUL in comment `
-
-- Características: html-tokenizer
-- Motivo: token stream differs from the fixture
-
-```text
-input: "<!----!\u0000-->"
-expected: [["Comment","--!�"]]
-actual:   [["Comment","--!\u0000"]]
-```
-
-### `domjs.test#35 [tests] CDATA in HTML content`
-
-- Características: html-tokenizer
-- Motivo: token stream differs from the fixture
-
-```text
-input: "<![CDATA[foo]]>"
-expected: [["Comment","[CDATA[foo]]"]]
-actual:   [["Comment","![CDATA[foo]]"]]
-errors: incorrectly-opened-comment@0
-```
-
-### `entities.test#14 [tests] Windows-1252 EURO SIGN numeric entity.`
-
-- Características: html-tokenizer
-- Motivo: token stream differs from the fixture
-
-```text
-input: "&#0128;"
-expected: [["Character","€"]]
-actual:   [["Character",""]]
-```
-
-### `entities.test#16 [tests] Windows-1252 SINGLE LOW-9 QUOTATION MARK numeric entity.`
-
-- Características: html-tokenizer
-- Motivo: token stream differs from the fixture
-
-```text
-input: "&#0130;"
-expected: [["Character","‚"]]
-actual:   [["Character",""]]
-```
-
-### `entities.test#17 [tests] Windows-1252 LATIN SMALL LETTER F WITH HOOK numeric entity.`
-
-- Características: html-tokenizer
-- Motivo: token stream differs from the fixture
-
-```text
-input: "&#0131;"
-expected: [["Character","ƒ"]]
-actual:   [["Character",""]]
-```
-
-### `entities.test#18 [tests] Windows-1252 DOUBLE LOW-9 QUOTATION MARK numeric entity.`
-
-- Características: html-tokenizer
-- Motivo: token stream differs from the fixture
-
-```text
-input: "&#0132;"
-expected: [["Character","„"]]
-actual:   [["Character",""]]
-```
-
-### `entities.test#19 [tests] Windows-1252 HORIZONTAL ELLIPSIS numeric entity.`
-
-- Características: html-tokenizer
-- Motivo: token stream differs from the fixture
-
-```text
-input: "&#0133;"
-expected: [["Character","…"]]
-actual:   [["Character",""]]
-```
-
-### `entities.test#20 [tests] Windows-1252 DAGGER numeric entity.`
-
-- Características: html-tokenizer
-- Motivo: token stream differs from the fixture
-
-```text
-input: "&#0134;"
-expected: [["Character","†"]]
-actual:   [["Character",""]]
-```
-
-### `entities.test#21 [tests] Windows-1252 DOUBLE DAGGER numeric entity.`
-
-- Características: html-tokenizer
-- Motivo: token stream differs from the fixture
-
-```text
-input: "&#0135;"
-expected: [["Character","‡"]]
-actual:   [["Character",""]]
-```
-
-### `entities.test#22 [tests] Windows-1252 MODIFIER LETTER CIRCUMFLEX ACCENT numeric entity.`
-
-- Características: html-tokenizer
-- Motivo: token stream differs from the fixture
-
-```text
-input: "&#0136;"
-expected: [["Character","ˆ"]]
-actual:   [["Character",""]]
-```
-
-### `entities.test#23 [tests] Windows-1252 PER MILLE SIGN numeric entity.`
-
-- Características: html-tokenizer
-- Motivo: token stream differs from the fixture
-
-```text
-input: "&#0137;"
-expected: [["Character","‰"]]
-actual:   [["Character",""]]
-```
-
-### `entities.test#24 [tests] Windows-1252 LATIN CAPITAL LETTER S WITH CARON numeric entity.`
-
-- Características: html-tokenizer
-- Motivo: token stream differs from the fixture
-
-```text
-input: "&#0138;"
-expected: [["Character","Š"]]
-actual:   [["Character",""]]
-```
-
-### `entities.test#25 [tests] Windows-1252 SINGLE LEFT-POINTING ANGLE QUOTATION MARK numeric entity.`
-
-- Características: html-tokenizer
-- Motivo: token stream differs from the fixture
-
-```text
-input: "&#0139;"
-expected: [["Character","‹"]]
-actual:   [["Character",""]]
-```
-
-### `entities.test#26 [tests] Windows-1252 LATIN CAPITAL LIGATURE OE numeric entity.`
-
-- Características: html-tokenizer
-- Motivo: token stream differs from the fixture
-
-```text
-input: "&#0140;"
-expected: [["Character","Œ"]]
-actual:   [["Character",""]]
-```
-
-### `entities.test#28 [tests] Windows-1252 LATIN CAPITAL LETTER Z WITH CARON numeric entity.`
-
-- Características: html-tokenizer
-- Motivo: token stream differs from the fixture
-
-```text
-input: "&#0142;"
-expected: [["Character","Ž"]]
-actual:   [["Character",""]]
-```
-
-### `entities.test#31 [tests] Windows-1252 LEFT SINGLE QUOTATION MARK numeric entity.`
-
-- Características: html-tokenizer
-- Motivo: token stream differs from the fixture
-
-```text
-input: "&#0145;"
-expected: [["Character","‘"]]
-actual:   [["Character",""]]
-```
-
-### `entities.test#32 [tests] Windows-1252 RIGHT SINGLE QUOTATION MARK numeric entity.`
-
-- Características: html-tokenizer
-- Motivo: token stream differs from the fixture
-
-```text
-input: "&#0146;"
-expected: [["Character","’"]]
-actual:   [["Character",""]]
-```
-
-### `entities.test#33 [tests] Windows-1252 LEFT DOUBLE QUOTATION MARK numeric entity.`
-
-- Características: html-tokenizer
-- Motivo: token stream differs from the fixture
-
-```text
-input: "&#0147;"
-expected: [["Character","“"]]
-actual:   [["Character",""]]
-```
-
-### `entities.test#34 [tests] Windows-1252 RIGHT DOUBLE QUOTATION MARK numeric entity.`
-
-- Características: html-tokenizer
-- Motivo: token stream differs from the fixture
-
-```text
-input: "&#0148;"
-expected: [["Character","”"]]
-actual:   [["Character",""]]
-```
-
-### `entities.test#35 [tests] Windows-1252 BULLET numeric entity.`
-
-- Características: html-tokenizer
-- Motivo: token stream differs from the fixture
-
-```text
-input: "&#0149;"
-expected: [["Character","•"]]
-actual:   [["Character",""]]
-```
-
-### `entities.test#36 [tests] Windows-1252 EN DASH numeric entity.`
-
-- Características: html-tokenizer
-- Motivo: token stream differs from the fixture
-
-```text
-input: "&#0150;"
-expected: [["Character","–"]]
-actual:   [["Character",""]]
-```
-
-### `entities.test#37 [tests] Windows-1252 EM DASH numeric entity.`
-
-- Características: html-tokenizer
-- Motivo: token stream differs from the fixture
-
-```text
-input: "&#0151;"
-expected: [["Character","—"]]
-actual:   [["Character",""]]
-```
-
-### `entities.test#38 [tests] Windows-1252 SMALL TILDE numeric entity.`
-
-- Características: html-tokenizer
-- Motivo: token stream differs from the fixture
-
-```text
-input: "&#0152;"
-expected: [["Character","˜"]]
-actual:   [["Character",""]]
-```
-
-### `entities.test#39 [tests] Windows-1252 TRADE MARK SIGN numeric entity.`
-
-- Características: html-tokenizer
-- Motivo: token stream differs from the fixture
-
-```text
-input: "&#0153;"
-expected: [["Character","™"]]
-actual:   [["Character",""]]
-```
-
-### `entities.test#40 [tests] Windows-1252 LATIN SMALL LETTER S WITH CARON numeric entity.`
-
-- Características: html-tokenizer
-- Motivo: token stream differs from the fixture
-
-```text
-input: "&#0154;"
-expected: [["Character","š"]]
-actual:   [["Character",""]]
-```
-
-### `entities.test#41 [tests] Windows-1252 SINGLE RIGHT-POINTING ANGLE QUOTATION MARK numeric entity.`
-
-- Características: html-tokenizer
-- Motivo: token stream differs from the fixture
-
-```text
-input: "&#0155;"
-expected: [["Character","›"]]
-actual:   [["Character",""]]
-```
-
-### `entities.test#42 [tests] Windows-1252 LATIN SMALL LIGATURE OE numeric entity.`
-
-- Características: html-tokenizer
-- Motivo: token stream differs from the fixture
-
-```text
-input: "&#0156;"
-expected: [["Character","œ"]]
-actual:   [["Character",""]]
-```
-
-### `entities.test#44 [tests] Windows-1252 EURO SIGN hexadecimal numeric entity.`
-
-- Características: html-tokenizer
-- Motivo: token stream differs from the fixture
-
-```text
-input: "&#x080;"
-expected: [["Character","€"]]
-actual:   [["Character",""]]
-```
-
-### `entities.test#46 [tests] Windows-1252 SINGLE LOW-9 QUOTATION MARK hexadecimal numeric entity.`
-
-- Características: html-tokenizer
-- Motivo: token stream differs from the fixture
-
-```text
-input: "&#x082;"
-expected: [["Character","‚"]]
-actual:   [["Character",""]]
-```
-
-### `entities.test#47 [tests] Windows-1252 LATIN SMALL LETTER F WITH HOOK hexadecimal numeric entity.`
-
-- Características: html-tokenizer
-- Motivo: token stream differs from the fixture
-
-```text
-input: "&#x083;"
-expected: [["Character","ƒ"]]
-actual:   [["Character",""]]
-```
-
-### `entities.test#48 [tests] Windows-1252 DOUBLE LOW-9 QUOTATION MARK hexadecimal numeric entity.`
-
-- Características: html-tokenizer
-- Motivo: token stream differs from the fixture
-
-```text
-input: "&#x084;"
-expected: [["Character","„"]]
-actual:   [["Character",""]]
-```
-
-### `entities.test#49 [tests] Windows-1252 HORIZONTAL ELLIPSIS hexadecimal numeric entity.`
-
-- Características: html-tokenizer
-- Motivo: token stream differs from the fixture
-
-```text
-input: "&#x085;"
-expected: [["Character","…"]]
-actual:   [["Character",""]]
-```
-
-### `entities.test#50 [tests] Windows-1252 DAGGER hexadecimal numeric entity.`
-
-- Características: html-tokenizer
-- Motivo: token stream differs from the fixture
-
-```text
-input: "&#x086;"
-expected: [["Character","†"]]
-actual:   [["Character",""]]
-```
-
-### `entities.test#51 [tests] Windows-1252 DOUBLE DAGGER hexadecimal numeric entity.`
-
-- Características: html-tokenizer
-- Motivo: token stream differs from the fixture
-
-```text
-input: "&#x087;"
-expected: [["Character","‡"]]
-actual:   [["Character",""]]
-```
-
-### `entities.test#52 [tests] Windows-1252 MODIFIER LETTER CIRCUMFLEX ACCENT hexadecimal numeric entity.`
-
-- Características: html-tokenizer
-- Motivo: token stream differs from the fixture
-
-```text
-input: "&#x088;"
-expected: [["Character","ˆ"]]
-actual:   [["Character",""]]
-```
-
-### `entities.test#53 [tests] Windows-1252 PER MILLE SIGN hexadecimal numeric entity.`
-
-- Características: html-tokenizer
-- Motivo: token stream differs from the fixture
-
-```text
-input: "&#x089;"
-expected: [["Character","‰"]]
-actual:   [["Character",""]]
-```
-
-### `entities.test#54 [tests] Windows-1252 LATIN CAPITAL LETTER S WITH CARON hexadecimal numeric entity.`
-
-- Características: html-tokenizer
-- Motivo: token stream differs from the fixture
-
-```text
-input: "&#x08A;"
-expected: [["Character","Š"]]
-actual:   [["Character",""]]
-```
-
-### `entities.test#55 [tests] Windows-1252 SINGLE LEFT-POINTING ANGLE QUOTATION MARK hexadecimal numeric entity.`
-
-- Características: html-tokenizer
-- Motivo: token stream differs from the fixture
-
-```text
-input: "&#x08B;"
-expected: [["Character","‹"]]
-actual:   [["Character",""]]
-```
-
-### `entities.test#56 [tests] Windows-1252 LATIN CAPITAL LIGATURE OE hexadecimal numeric entity.`
-
-- Características: html-tokenizer
-- Motivo: token stream differs from the fixture
-
-```text
-input: "&#x08C;"
-expected: [["Character","Œ"]]
-actual:   [["Character",""]]
-```
-
-### `entities.test#58 [tests] Windows-1252 LATIN CAPITAL LETTER Z WITH CARON hexadecimal numeric entity.`
-
-- Características: html-tokenizer
-- Motivo: token stream differs from the fixture
-
-```text
-input: "&#x08E;"
-expected: [["Character","Ž"]]
-actual:   [["Character",""]]
-```
-
-### `entities.test#61 [tests] Windows-1252 LEFT SINGLE QUOTATION MARK hexadecimal numeric entity.`
-
-- Características: html-tokenizer
-- Motivo: token stream differs from the fixture
-
-```text
-input: "&#x091;"
-expected: [["Character","‘"]]
-actual:   [["Character",""]]
-```
-
-### `entities.test#62 [tests] Windows-1252 RIGHT SINGLE QUOTATION MARK hexadecimal numeric entity.`
-
-- Características: html-tokenizer
-- Motivo: token stream differs from the fixture
-
-```text
-input: "&#x092;"
-expected: [["Character","’"]]
-actual:   [["Character",""]]
-```
-
-### `entities.test#63 [tests] Windows-1252 LEFT DOUBLE QUOTATION MARK hexadecimal numeric entity.`
-
-- Características: html-tokenizer
-- Motivo: token stream differs from the fixture
-
-```text
-input: "&#x093;"
-expected: [["Character","“"]]
-actual:   [["Character",""]]
-```
-
-### `entities.test#64 [tests] Windows-1252 RIGHT DOUBLE QUOTATION MARK hexadecimal numeric entity.`
-
-- Características: html-tokenizer
-- Motivo: token stream differs from the fixture
-
-```text
-input: "&#x094;"
-expected: [["Character","”"]]
-actual:   [["Character",""]]
-```
-
-### `entities.test#65 [tests] Windows-1252 BULLET hexadecimal numeric entity.`
-
-- Características: html-tokenizer
-- Motivo: token stream differs from the fixture
-
-```text
-input: "&#x095;"
-expected: [["Character","•"]]
-actual:   [["Character",""]]
-```
-
-### `entities.test#66 [tests] Windows-1252 EN DASH hexadecimal numeric entity.`
-
-- Características: html-tokenizer
-- Motivo: token stream differs from the fixture
-
-```text
-input: "&#x096;"
-expected: [["Character","–"]]
-actual:   [["Character",""]]
-```
-
-### `entities.test#67 [tests] Windows-1252 EM DASH hexadecimal numeric entity.`
-
-- Características: html-tokenizer
-- Motivo: token stream differs from the fixture
-
-```text
-input: "&#x097;"
-expected: [["Character","—"]]
-actual:   [["Character",""]]
-```
-
-### `entities.test#68 [tests] Windows-1252 SMALL TILDE hexadecimal numeric entity.`
-
-- Características: html-tokenizer
-- Motivo: token stream differs from the fixture
-
-```text
-input: "&#x098;"
-expected: [["Character","˜"]]
-actual:   [["Character",""]]
-```
-
-### `entities.test#69 [tests] Windows-1252 TRADE MARK SIGN hexadecimal numeric entity.`
-
-- Características: html-tokenizer
-- Motivo: token stream differs from the fixture
-
-```text
-input: "&#x099;"
-expected: [["Character","™"]]
-actual:   [["Character",""]]
-```
-
-### `entities.test#70 [tests] Windows-1252 LATIN SMALL LETTER S WITH CARON hexadecimal numeric entity.`
-
-- Características: html-tokenizer
-- Motivo: token stream differs from the fixture
-
-```text
-input: "&#x09A;"
-expected: [["Character","š"]]
-actual:   [["Character",""]]
-```
-
-### `entities.test#71 [tests] Windows-1252 SINGLE RIGHT-POINTING ANGLE QUOTATION MARK hexadecimal numeric entity.`
-
-- Características: html-tokenizer
-- Motivo: token stream differs from the fixture
-
-```text
-input: "&#x09B;"
-expected: [["Character","›"]]
-actual:   [["Character",""]]
-```
-
-### `entities.test#72 [tests] Windows-1252 LATIN SMALL LIGATURE OE hexadecimal numeric entity.`
-
-- Características: html-tokenizer
-- Motivo: token stream differs from the fixture
-
-```text
-input: "&#x09C;"
-expected: [["Character","œ"]]
-actual:   [["Character",""]]
-```
-
-### `entities.test#74 [tests] Windows-1252 LATIN SMALL LETTER Z WITH CARON hexadecimal numeric entity.`
-
-- Características: html-tokenizer
-- Motivo: token stream differs from the fixture
-
-```text
-input: "&#x09E;"
-expected: [["Character","ž"]]
-actual:   [["Character",""]]
-```
-
-### `entities.test#75 [tests] Windows-1252 LATIN CAPITAL LETTER Y WITH DIAERESIS hexadecimal numeric entity.`
-
-- Características: html-tokenizer
-- Motivo: token stream differs from the fixture
-
-```text
-input: "&#x09F;"
-expected: [["Character","Ÿ"]]
-actual:   [["Character",""]]
-```
-
-### `test1.test#4 [tests] Truncated doctype start`
-
-- Características: html-tokenizer
-- Motivo: token stream differs from the fixture
-
-```text
-input: "<!DOC>"
-expected: [["Comment","DOC"]]
-actual:   [["Comment","!DOC"]]
-errors: incorrectly-opened-comment@0
-```
-
-### `test1.test#7 [tests] Empty end tag`
-
-- Características: html-tokenizer
-- Motivo: token stream differs from the fixture
-
-```text
-input: "</>"
-expected: []
-actual:   [["Character","<"]]
-errors: missing-end-tag-name@0
-```
+## Fallos (43)
 
 ### `test1.test#22 [tests] Unfinished comment after start of nested comment`
 
@@ -782,18 +127,6 @@ input: "<!-- <!--"
 expected: [["Comment"," <!"]]
 actual:   [["Comment"," <!--"]]
 errors: eof-in-comment@0
-```
-
-### `test1.test#23 [tests] Start of a comment`
-
-- Características: html-tokenizer
-- Motivo: token stream differs from the fixture
-
-```text
-input: "<!-"
-expected: [["Comment","-"]]
-actual:   [["Comment","!-"]]
-errors: incorrectly-opened-comment@0
 ```
 
 ### `test1.test#24 [tests] Short comment`
@@ -856,234 +189,6 @@ actual:   [["Comment","?foo bar??"]]
 errors: unexpected-question-mark-instead-of-tag-name@0
 ```
 
-### `test2.test#42 [tests] Empty end tag with following characters`
-
-- Características: html-tokenizer
-- Motivo: token stream differs from the fixture
-
-```text
-input: "a</>bc"
-expected: [["Character","abc"]]
-actual:   [["Character","a<bc"]]
-errors: missing-end-tag-name@1
-```
-
-### `test2.test#43 [tests] Empty end tag with following tag`
-
-- Características: html-tokenizer
-- Motivo: token stream differs from the fixture
-
-```text
-input: "a</><b>c"
-expected: [["Character","a"],["StartTag","b",{}],["Character","c"]]
-actual:   [["Character","a<"],["StartTag","b",{}],["Character","c"]]
-errors: missing-end-tag-name@1
-```
-
-### `test2.test#44 [tests] Empty end tag with following comment`
-
-- Características: html-tokenizer
-- Motivo: token stream differs from the fixture
-
-```text
-input: "a</><!--b-->c"
-expected: [["Character","a"],["Comment","b"],["Character","c"]]
-actual:   [["Character","a<"],["Comment","b"],["Character","c"]]
-errors: missing-end-tag-name@1
-```
-
-### `test2.test#45 [tests] Empty end tag with following end tag`
-
-- Características: html-tokenizer
-- Motivo: token stream differs from the fixture
-
-```text
-input: "a</></b>c"
-expected: [["Character","a"],["EndTag","b"],["Character","c"]]
-actual:   [["Character","a<"],["EndTag","b"],["Character","c"]]
-errors: missing-end-tag-name@1
-```
-
-### `test3.test#75 [tests] <!`
-
-- Características: html-tokenizer
-- Motivo: token stream differs from the fixture
-
-```text
-input: "<!"
-expected: [["Comment",""]]
-actual:   [["Comment","!"]]
-errors: incorrectly-opened-comment@0
-```
-
-### `test3.test#76 [tests] <!\u0000`
-
-- Características: html-tokenizer
-- Motivo: token stream differs from the fixture
-
-```text
-input: "<!\u0000"
-expected: [["Comment","�"]]
-actual:   [["Comment","!\u0000"]]
-errors: incorrectly-opened-comment@0
-```
-
-### `test3.test#77 [tests] <!\u0009`
-
-- Características: html-tokenizer
-- Motivo: token stream differs from the fixture
-
-```text
-input: "<!\t"
-expected: [["Comment","\t"]]
-actual:   [["Comment","!\t"]]
-errors: incorrectly-opened-comment@0
-```
-
-### `test3.test#78 [tests] <!\u000A`
-
-- Características: html-tokenizer
-- Motivo: token stream differs from the fixture
-
-```text
-input: "<!\n"
-expected: [["Comment","\n"]]
-actual:   [["Comment","!\n"]]
-errors: incorrectly-opened-comment@0
-```
-
-### `test3.test#79 [tests] <!\u000B`
-
-- Características: html-tokenizer
-- Motivo: token stream differs from the fixture
-
-```text
-input: "<!\u000b"
-expected: [["Comment","\u000b"]]
-actual:   [["Comment","!\u000b"]]
-errors: incorrectly-opened-comment@0
-```
-
-### `test3.test#80 [tests] <!\u000C`
-
-- Características: html-tokenizer
-- Motivo: token stream differs from the fixture
-
-```text
-input: "<!\f"
-expected: [["Comment","\f"]]
-actual:   [["Comment","!\f"]]
-errors: incorrectly-opened-comment@0
-```
-
-### `test3.test#81 [tests] <! `
-
-- Características: html-tokenizer
-- Motivo: token stream differs from the fixture
-
-```text
-input: "<! "
-expected: [["Comment"," "]]
-actual:   [["Comment","! "]]
-errors: incorrectly-opened-comment@0
-```
-
-### `test3.test#82 [tests] <! \u0000`
-
-- Características: html-tokenizer
-- Motivo: token stream differs from the fixture
-
-```text
-input: "<! \u0000"
-expected: [["Comment"," �"]]
-actual:   [["Comment","! \u0000"]]
-errors: incorrectly-opened-comment@0
-```
-
-### `test3.test#83 [tests] <!!`
-
-- Características: html-tokenizer
-- Motivo: token stream differs from the fixture
-
-```text
-input: "<!!"
-expected: [["Comment","!"]]
-actual:   [["Comment","!!"]]
-errors: incorrectly-opened-comment@0
-```
-
-### `test3.test#84 [tests] <!"`
-
-- Características: html-tokenizer
-- Motivo: token stream differs from the fixture
-
-```text
-input: "<!\""
-expected: [["Comment","\""]]
-actual:   [["Comment","!\""]]
-errors: incorrectly-opened-comment@0
-```
-
-### `test3.test#85 [tests] <!&`
-
-- Características: html-tokenizer
-- Motivo: token stream differs from the fixture
-
-```text
-input: "<!&"
-expected: [["Comment","&"]]
-actual:   [["Comment","!&"]]
-errors: incorrectly-opened-comment@0
-```
-
-### `test3.test#86 [tests] <!'`
-
-- Características: html-tokenizer
-- Motivo: token stream differs from the fixture
-
-```text
-input: "<!'"
-expected: [["Comment","'"]]
-actual:   [["Comment","!'"]]
-errors: incorrectly-opened-comment@0
-```
-
-### `test3.test#87 [tests] <!-`
-
-- Características: html-tokenizer
-- Motivo: token stream differs from the fixture
-
-```text
-input: "<!-"
-expected: [["Comment","-"]]
-actual:   [["Comment","!-"]]
-errors: incorrectly-opened-comment@0
-```
-
-### `test3.test#89 [tests] <!--\u0000`
-
-- Características: html-tokenizer
-- Motivo: token stream differs from the fixture
-
-```text
-input: "<!--\u0000"
-expected: [["Comment","�"]]
-actual:   [["Comment","\u0000"]]
-errors: eof-in-comment@0
-```
-
-### `test3.test#95 [tests] <!-- \u0000`
-
-- Características: html-tokenizer
-- Motivo: token stream differs from the fixture
-
-```text
-input: "<!-- \u0000"
-expected: [["Comment"," �"]]
-actual:   [["Comment"," \u0000"]]
-errors: eof-in-comment@0
-```
-
 ### `test3.test#106 [tests] <!-- -`
 
 - Características: html-tokenizer
@@ -1093,18 +198,6 @@ errors: eof-in-comment@0
 input: "<!-- -"
 expected: [["Comment"," "]]
 actual:   [["Comment"," -"]]
-errors: eof-in-comment@0
-```
-
-### `test3.test#107 [tests] <!-- -\u0000`
-
-- Características: html-tokenizer
-- Motivo: token stream differs from the fixture
-
-```text
-input: "<!-- -\u0000"
-expected: [["Comment"," -�"]]
-actual:   [["Comment"," -\u0000"]]
 errors: eof-in-comment@0
 ```
 
@@ -1132,18 +225,6 @@ actual:   [["Comment","-"]]
 errors: eof-in-comment@0
 ```
 
-### `test3.test#167 [tests] <!---\u0000`
-
-- Características: html-tokenizer
-- Motivo: token stream differs from the fixture
-
-```text
-input: "<!---\u0000"
-expected: [["Comment","-�"]]
-actual:   [["Comment","-\u0000"]]
-errors: eof-in-comment@0
-```
-
 ### `test3.test#178 [tests] <!----`
 
 - Características: html-tokenizer
@@ -1153,18 +234,6 @@ errors: eof-in-comment@0
 input: "<!----"
 expected: [["Comment",""]]
 actual:   [["Comment","--"]]
-errors: eof-in-comment@0
-```
-
-### `test3.test#179 [tests] <!----\u0000`
-
-- Características: html-tokenizer
-- Motivo: token stream differs from the fixture
-
-```text
-input: "<!----\u0000"
-expected: [["Comment","--�"]]
-actual:   [["Comment","--\u0000"]]
 errors: eof-in-comment@0
 ```
 
@@ -1201,42 +270,6 @@ errors: eof-in-comment@0
 input: "<!----!"
 expected: [["Comment",""]]
 actual:   [["Comment","--!"]]
-errors: eof-in-comment@0
-```
-
-### `test3.test#191 [tests] <!----!>`
-
-- Características: html-tokenizer
-- Motivo: token stream differs from the fixture
-
-```text
-input: "<!----!>"
-expected: [["Comment",""]]
-actual:   [["Comment","--!>"]]
-errors: eof-in-comment@0
-```
-
-### `test3.test#194 [tests] <!----!CR>`
-
-- Características: html-tokenizer
-- Motivo: token stream differs from the fixture
-
-```text
-input: "<!----!\r>"
-expected: [["Comment","--!\n>"]]
-actual:   [["Comment","--!\r>"]]
-errors: eof-in-comment@0
-```
-
-### `test3.test#195 [tests] <!----!CRLF>`
-
-- Características: html-tokenizer
-- Motivo: token stream differs from the fixture
-
-```text
-input: "<!----!\r\n>"
-expected: [["Comment","--!\n>"]]
-actual:   [["Comment","--!\r\n>"]]
 errors: eof-in-comment@0
 ```
 
@@ -1300,211 +333,305 @@ actual:   [["Comment","---"]]
 errors: eof-in-comment@0
 ```
 
-### `test3.test#269 [tests] <!/`
+### `test3.test#1158 [tests] <?`
 
 - Características: html-tokenizer
 - Motivo: token stream differs from the fixture
 
 ```text
-input: "<!/"
-expected: [["Comment","/"]]
-actual:   [["Comment","!/"]]
-errors: incorrectly-opened-comment@0
+input: "<?"
+expected: []
+actual:   [["Comment","?"]]
+errors: unexpected-question-mark-instead-of-tag-name@0
 ```
 
-### `test3.test#270 [tests] <!0`
+### `test3.test#1159 [tests] <?a`
 
 - Características: html-tokenizer
 - Motivo: token stream differs from the fixture
 
 ```text
-input: "<!0"
-expected: [["Comment","0"]]
-actual:   [["Comment","!0"]]
-errors: incorrectly-opened-comment@0
+input: "<?a"
+expected: []
+actual:   [["Comment","?a"]]
+errors: unexpected-question-mark-instead-of-tag-name@0
 ```
 
-### `test3.test#271 [tests] <!1`
+### `test3.test#1160 [tests] <?b`
 
 - Características: html-tokenizer
 - Motivo: token stream differs from the fixture
 
 ```text
-input: "<!1"
-expected: [["Comment","1"]]
-actual:   [["Comment","!1"]]
-errors: incorrectly-opened-comment@0
+input: "<?b"
+expected: []
+actual:   [["Comment","?b"]]
+errors: unexpected-question-mark-instead-of-tag-name@0
 ```
 
-### `test3.test#272 [tests] <!9`
+### `test3.test#1161 [tests] <?y`
 
 - Características: html-tokenizer
 - Motivo: token stream differs from the fixture
 
 ```text
-input: "<!9"
-expected: [["Comment","9"]]
-actual:   [["Comment","!9"]]
-errors: incorrectly-opened-comment@0
+input: "<?y"
+expected: []
+actual:   [["Comment","?y"]]
+errors: unexpected-question-mark-instead-of-tag-name@0
 ```
 
-### `test3.test#273 [tests] <!<`
+### `test3.test#1162 [tests] <?z`
 
 - Características: html-tokenizer
 - Motivo: token stream differs from the fixture
 
 ```text
-input: "<!<"
-expected: [["Comment","<"]]
-actual:   [["Comment","!<"]]
-errors: incorrectly-opened-comment@0
+input: "<?z"
+expected: []
+actual:   [["Comment","?z"]]
+errors: unexpected-question-mark-instead-of-tag-name@0
 ```
 
-### `test3.test#274 [tests] <!=`
+### `test3.test#1163 [tests] <?A`
 
 - Características: html-tokenizer
 - Motivo: token stream differs from the fixture
 
 ```text
-input: "<!="
-expected: [["Comment","="]]
-actual:   [["Comment","!="]]
-errors: incorrectly-opened-comment@0
+input: "<?A"
+expected: []
+actual:   [["Comment","?A"]]
+errors: unexpected-question-mark-instead-of-tag-name@0
 ```
 
-### `test3.test#275 [tests] <!>`
+### `test3.test#1164 [tests] <?B`
 
 - Características: html-tokenizer
 - Motivo: token stream differs from the fixture
 
 ```text
-input: "<!>"
-expected: [["Comment",""]]
-actual:   [["Comment","!"]]
-errors: incorrectly-opened-comment@0
+input: "<?B"
+expected: []
+actual:   [["Comment","?B"]]
+errors: unexpected-question-mark-instead-of-tag-name@0
 ```
 
-### `test3.test#276 [tests] <!?`
+### `test3.test#1165 [tests] <?Y`
 
 - Características: html-tokenizer
 - Motivo: token stream differs from the fixture
 
 ```text
-input: "<!?"
-expected: [["Comment","?"]]
-actual:   [["Comment","!?"]]
-errors: incorrectly-opened-comment@0
+input: "<?Y"
+expected: []
+actual:   [["Comment","?Y"]]
+errors: unexpected-question-mark-instead-of-tag-name@0
 ```
 
-### `test3.test#277 [tests] <!@`
+### `test3.test#1166 [tests] <?Z`
 
 - Características: html-tokenizer
 - Motivo: token stream differs from the fixture
 
 ```text
-input: "<!@"
-expected: [["Comment","@"]]
-actual:   [["Comment","!@"]]
-errors: incorrectly-opened-comment@0
+input: "<?Z"
+expected: []
+actual:   [["Comment","?Z"]]
+errors: unexpected-question-mark-instead-of-tag-name@0
 ```
 
-### `test3.test#278 [tests] <!A`
+### `test3.test#1167 [tests] <?a a`
 
 - Características: html-tokenizer
 - Motivo: token stream differs from the fixture
 
 ```text
-input: "<!A"
-expected: [["Comment","A"]]
-actual:   [["Comment","!A"]]
-errors: incorrectly-opened-comment@0
+input: "<?a a"
+expected: []
+actual:   [["Comment","?a a"]]
+errors: unexpected-question-mark-instead-of-tag-name@0
 ```
 
-### `test3.test#279 [tests] <!B`
+### `test3.test#1168 [tests] <?b b`
 
 - Características: html-tokenizer
 - Motivo: token stream differs from the fixture
 
 ```text
-input: "<!B"
-expected: [["Comment","B"]]
-actual:   [["Comment","!B"]]
-errors: incorrectly-opened-comment@0
+input: "<?b b"
+expected: []
+actual:   [["Comment","?b b"]]
+errors: unexpected-question-mark-instead-of-tag-name@0
 ```
 
-### `test3.test#1104 [tests] <!Y`
+### `test3.test#1169 [tests] <?y y`
 
 - Características: html-tokenizer
 - Motivo: token stream differs from the fixture
 
 ```text
-input: "<!Y"
-expected: [["Comment","Y"]]
-actual:   [["Comment","!Y"]]
-errors: incorrectly-opened-comment@0
+input: "<?y y"
+expected: []
+actual:   [["Comment","?y y"]]
+errors: unexpected-question-mark-instead-of-tag-name@0
 ```
 
-### `test3.test#1105 [tests] <!Z`
+### `test3.test#1170 [tests] <?z z`
 
 - Características: html-tokenizer
 - Motivo: token stream differs from the fixture
 
 ```text
-input: "<!Z"
-expected: [["Comment","Z"]]
-actual:   [["Comment","!Z"]]
-errors: incorrectly-opened-comment@0
+input: "<?z z"
+expected: []
+actual:   [["Comment","?z z"]]
+errors: unexpected-question-mark-instead-of-tag-name@0
 ```
 
-### `test3.test#1106 [tests] <!``
+### `test3.test#1171 [tests] <?A A`
 
 - Características: html-tokenizer
 - Motivo: token stream differs from the fixture
 
 ```text
-input: "<!`"
-expected: [["Comment","`"]]
-actual:   [["Comment","!`"]]
-errors: incorrectly-opened-comment@0
+input: "<?A A"
+expected: []
+actual:   [["Comment","?A A"]]
+errors: unexpected-question-mark-instead-of-tag-name@0
 ```
 
-### `test3.test#1107 [tests] <!a`
+### `test3.test#1172 [tests] <?B B`
 
 - Características: html-tokenizer
 - Motivo: token stream differs from the fixture
 
 ```text
-input: "<!a"
-expected: [["Comment","a"]]
-actual:   [["Comment","!a"]]
-errors: incorrectly-opened-comment@0
+input: "<?B B"
+expected: []
+actual:   [["Comment","?B B"]]
+errors: unexpected-question-mark-instead-of-tag-name@0
 ```
 
-### `test3.test#1108 [tests] <!b`
+### `test3.test#1173 [tests] <?Y Y`
 
 - Características: html-tokenizer
 - Motivo: token stream differs from the fixture
 
 ```text
-input: "<!b"
-expected: [["Comment","b"]]
-actual:   [["Comment","!b"]]
-errors: incorrectly-opened-comment@0
+input: "<?Y Y"
+expected: []
+actual:   [["Comment","?Y Y"]]
+errors: unexpected-question-mark-instead-of-tag-name@0
 ```
 
-### `test3.test#1109 [tests] <!y`
+### `test3.test#1174 [tests] <?Z Z?`
 
 - Características: html-tokenizer
 - Motivo: token stream differs from the fixture
 
 ```text
-input: "<!y"
-expected: [["Comment","y"]]
-actual:   [["Comment","!y"]]
-errors: incorrectly-opened-comment@0
+input: "<?Z Z?"
+expected: []
+actual:   [["Comment","?Z Z?"]]
+errors: unexpected-question-mark-instead-of-tag-name@0
 ```
 
-_… y 57 fallos más (ver el JSONL)._
+### `test3.test#1175 [tests] <?a a?`
+
+- Características: html-tokenizer
+- Motivo: token stream differs from the fixture
+
+```text
+input: "<?a a"
+expected: []
+actual:   [["Comment","?a a"]]
+errors: unexpected-question-mark-instead-of-tag-name@0
+```
+
+### `test3.test#1176 [tests] <?b b?`
+
+- Características: html-tokenizer
+- Motivo: token stream differs from the fixture
+
+```text
+input: "<?b b"
+expected: []
+actual:   [["Comment","?b b"]]
+errors: unexpected-question-mark-instead-of-tag-name@0
+```
+
+### `test3.test#1177 [tests] <?y y?`
+
+- Características: html-tokenizer
+- Motivo: token stream differs from the fixture
+
+```text
+input: "<?y y"
+expected: []
+actual:   [["Comment","?y y"]]
+errors: unexpected-question-mark-instead-of-tag-name@0
+```
+
+### `test3.test#1178 [tests] <?z z?`
+
+- Características: html-tokenizer
+- Motivo: token stream differs from the fixture
+
+```text
+input: "<?z z"
+expected: []
+actual:   [["Comment","?z z"]]
+errors: unexpected-question-mark-instead-of-tag-name@0
+```
+
+### `test3.test#1179 [tests] <?A A?`
+
+- Características: html-tokenizer
+- Motivo: token stream differs from the fixture
+
+```text
+input: "<?A A"
+expected: []
+actual:   [["Comment","?A A"]]
+errors: unexpected-question-mark-instead-of-tag-name@0
+```
+
+### `test3.test#1180 [tests] <?B B?`
+
+- Características: html-tokenizer
+- Motivo: token stream differs from the fixture
+
+```text
+input: "<?B B"
+expected: []
+actual:   [["Comment","?B B"]]
+errors: unexpected-question-mark-instead-of-tag-name@0
+```
+
+### `test3.test#1181 [tests] <?Y Y?`
+
+- Características: html-tokenizer
+- Motivo: token stream differs from the fixture
+
+```text
+input: "<?Y Y"
+expected: []
+actual:   [["Comment","?Y Y"]]
+errors: unexpected-question-mark-instead-of-tag-name@0
+```
+
+### `test3.test#1182 [tests] <?Z Z?`
+
+- Características: html-tokenizer
+- Motivo: token stream differs from the fixture
+
+```text
+input: "<?Z Z"
+expected: []
+actual:   [["Comment","?Z Z"]]
+errors: unexpected-question-mark-instead-of-tag-name@0
+```
 
 ## SKIP agrupados por motivo
 

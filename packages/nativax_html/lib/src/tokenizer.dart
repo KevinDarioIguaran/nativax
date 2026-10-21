@@ -6,6 +6,37 @@ import 'token.dart';
 const Set<String> rawTextTags = {'script', 'style'};
 const Set<String> rcdataTags = {'textarea', 'title'};
 
+/// Numeric character references in 0x80..0x9F use this Windows-1252 mapping.
+const Map<int, int> _windows1252 = {
+  0x80: 0x20AC,
+  0x82: 0x201A,
+  0x83: 0x0192,
+  0x84: 0x201E,
+  0x85: 0x2026,
+  0x86: 0x2020,
+  0x87: 0x2021,
+  0x88: 0x02C6,
+  0x89: 0x2030,
+  0x8A: 0x0160,
+  0x8B: 0x2039,
+  0x8C: 0x0152,
+  0x8E: 0x017D,
+  0x91: 0x2018,
+  0x92: 0x2019,
+  0x93: 0x201C,
+  0x94: 0x201D,
+  0x95: 0x2022,
+  0x96: 0x2013,
+  0x97: 0x2014,
+  0x98: 0x02DC,
+  0x99: 0x2122,
+  0x9A: 0x0161,
+  0x9B: 0x203A,
+  0x9C: 0x0153,
+  0x9E: 0x017E,
+  0x9F: 0x0178,
+};
+
 typedef ErrorSink = void Function(String code, int offset, [String? detail]);
 
 /// A single-pass, linear-time HTML tokenizer modelled on the WHATWG
@@ -13,11 +44,31 @@ typedef ErrorSink = void Function(String code, int offset, [String? detail]);
 /// markup declaration, comment, raw text). No regular expressions are used
 /// on the markup itself.
 class HtmlTokenizer {
-  HtmlTokenizer(this.src, {required this.onError});
+  HtmlTokenizer(String input, {required this.onError})
+    : src = _normalizeInput(input);
 
   final String src;
   final ErrorSink onError;
   int _pos = 0;
+
+  /// The HTML input stream preprocessor: CRLF and CR become LF.
+  static String _normalizeInput(String input) {
+    if (!input.contains('\r')) return input;
+    final out = StringBuffer();
+    for (var i = 0; i < input.length; i++) {
+      final c = input.codeUnitAt(i);
+      if (c == 0x0d) {
+        out.writeCharCode(0x0a);
+        if (i + 1 < input.length && input.codeUnitAt(i + 1) == 0x0a) i++;
+      } else {
+        out.writeCharCode(c);
+      }
+    }
+    return out.toString();
+  }
+
+  static String _replaceNul(String s) =>
+      s.contains('\u0000') ? s.replaceAll('\u0000', '\uFFFD') : s;
 
   bool get _eof => _pos >= src.length;
 
@@ -177,6 +228,7 @@ class HtmlTokenizer {
       if (d == 0x3e) {
         onError('missing-end-tag-name', start);
         _pos++;
+        _dropped = true;
         return null;
       }
       if (!_isAlpha(d)) {
@@ -215,7 +267,7 @@ class HtmlTokenizer {
       if (_isWs(c) || c == 0x2f || c == 0x3e) break;
       _pos++;
     }
-    return src.substring(start, _pos).toLowerCase();
+    return _replaceNul(src.substring(start, _pos)).toLowerCase();
   }
 
   /// Returns (attributes, selfClosing, closedWithGt). When EOF is reached
@@ -264,7 +316,7 @@ class HtmlTokenizer {
         }
         _pos++;
       }
-      final name = src.substring(nameStart, _pos).toLowerCase();
+      final name = _replaceNul(src.substring(nameStart, _pos)).toLowerCase();
       while (!_eof && _isWs(src.codeUnitAt(_pos))) {
         _pos++;
       }
@@ -283,10 +335,11 @@ class HtmlTokenizer {
           _pos++;
           final buf = StringBuffer();
           while (!_eof && src.codeUnitAt(_pos) != q) {
-            if (src.codeUnitAt(_pos) == 0x26) {
+            final d = src.codeUnitAt(_pos);
+            if (d == 0x26) {
               buf.write(_charRef(inAttribute: true));
             } else {
-              buf.writeCharCode(src.codeUnitAt(_pos));
+              buf.writeCharCode(d == 0 ? 0xFFFD : d);
               _pos++;
             }
           }
@@ -316,7 +369,7 @@ class HtmlTokenizer {
             if (d == 0x22 || d == 0x27 || d == 0x3c || d == 0x3d || d == 0x60) {
               onError('unexpected-character-in-unquoted-attribute-value', _pos);
             }
-            buf.writeCharCode(d);
+            buf.writeCharCode(d == 0 ? 0xFFFD : d);
             _pos++;
           }
           value = buf.toString();
@@ -335,15 +388,21 @@ class HtmlTokenizer {
     // At '!'.
     if (src.startsWith('!--', _pos)) {
       _pos += 3;
-      final end = src.indexOf('-->', _pos);
+      var end = src.indexOf('-->', _pos);
+      var endLength = 3;
+      final bangEnd = src.indexOf('--!>', _pos);
+      if (bangEnd >= 0 && (end < 0 || bangEnd < end)) {
+        end = bangEnd;
+        endLength = 4;
+      }
       if (end < 0) {
         onError('eof-in-comment', start);
-        final data = src.substring(_pos);
+        final data = _replaceNul(src.substring(_pos));
         _pos = src.length;
         return CommentToken(start, data);
       }
-      final data = src.substring(_pos, end);
-      _pos = end + 3;
+      final data = _replaceNul(src.substring(_pos, end));
+      _pos = end + endLength;
       return CommentToken(start, data);
     }
     if (src.length - _pos >= 8 &&
@@ -377,12 +436,13 @@ class HtmlTokenizer {
       return DoctypeToken(start, name, publicId: publicId, systemId: systemId);
     }
     onError('incorrectly-opened-comment', start);
+    _pos++; // The bogus comment starts after '!'.
     return _bogusComment(start);
   }
 
   CommentToken _bogusComment(int start) {
     final end = src.indexOf('>', _pos);
-    final data = src.substring(_pos, end < 0 ? src.length : end);
+    final data = _replaceNul(src.substring(_pos, end < 0 ? src.length : end));
     _pos = end < 0 ? src.length : end + 1;
     return CommentToken(start, data);
   }
@@ -418,12 +478,20 @@ class HtmlTokenizer {
       } else {
         onError('missing-semicolon-after-character-reference', start);
       }
-      final code = digits.length > 8
+      final trimmed = digits.replaceFirst(RegExp(r'^0+'), '');
+      final code = trimmed.isEmpty
+          ? 0
+          : trimmed.length > 8
           ? 0x110000
-          : int.parse(digits, radix: hex ? 16 : 10);
+          : int.parse(trimmed, radix: hex ? 16 : 10);
       if (code == 0 || code > 0x10ffff || (code >= 0xd800 && code <= 0xdfff)) {
         onError('invalid-character-reference', start);
         return '�';
+      }
+      final mapped = _windows1252[code];
+      if (mapped != null) {
+        onError('invalid-character-reference', start);
+        return String.fromCharCode(mapped);
       }
       return String.fromCharCode(code);
     }

@@ -1,8 +1,8 @@
 # Estado actual
 
-Última actualización: 2026-10-21 (sesión 23: segundo incremento de conformidad,
-DOM). Tests: **308** en total (`./tools/test_all.sh`), incluido el probe de
-juego real y el test de estadísticas de presentación.
+Última actualización: 2026-10-21 (sesión 24: tokenizer html5lib y tree
+construction). Tests: **316** en total (`./tools/test_all.sh`), incluido el
+probe de juego real y el test de estadísticas de presentación.
 
 ## Resumen
 
@@ -11,7 +11,7 @@ juego real y el test de estadísticas de presentación.
 | Núcleo JS (QuickJS-ng + FFI) | 🟢 estable | 52 tests; registro privado de callbacks en el puente C |
 | WebAssembly (wasm3) | 🟢 B4 | 11 unitarios + 3 E2E; Rapier 0.19.3 y worker real (103 cuerpos ~45 Hz) |
 | DOM | 🟢 estable | 38 tests; pseudoelementos, `:hover`/`:active`/`:target`, validación, dialog/details y `adoptNode` |
-| HTML | 🟢 estable | 43 tests; foreign content (SVG/MathML) y recuperación de errores |
+| HTML | 🟢 estable | 51 tests; foreign content (SVG/MathML), recuperación de errores y preprocesado de entrada |
 | CSS | 🟢 estable | 39 tests; grid, `calc()`, `::before/::after`, keyframes, transiciones, `@supports` |
 | Bindings JS↔DOM | 🟢 amplio | 51 tests; ~3.800 líneas de plataforma web (ver docs/javascript-supported.md) |
 | Renderer Flutter | 🟢 amplio | 34 tests; grid, sticky, SVG, canvas 2D, animaciones, filtros, DnD |
@@ -21,7 +21,7 @@ juego real y el test de estadísticas de presentación.
 | Rendimiento 7× | 🔴 registrado | Rapier 180 pasos: 328,5 ms (wasm3) vs 30,7 ms (V8); gap 10,7× |
 | Ejemplo web-challenge | ✅ original | HTML/CSS/JS **sin modificar**: 46/52 comprobaciones propias en verde |
 | Seguridad | 🟢 | `tools/security`: 14 PASS / 0 FAIL / 1 SKIP |
-| Conformidad | 🟡 | Test262 97,93 %; html5lib 96,95 %; URL 70,98 %; DOM 59,36 %; CSS 10,38 %; tree 46,74 % |
+| Conformidad | 🟡 | Test262 97,93 %; html5lib 99,26 %; URL 70,98 %; DOM 59,36 %; CSS 10,38 %; tree 48,72 % |
 | Plataformas | 🟡 solo Linux | build Linux verificado; resto sin probar |
 
 ## Checkpoint estable — Fase 0 de presentación
@@ -81,6 +81,23 @@ juego real y el test de estadísticas de presentación.
   del elemento. También quedan MutationObserver y `createElement` con
   namespace como siguientes objetivos.
 
+## Tercer incremento de conformidad — 2026-10-21
+
+- html5lib tokenizer: **96,95 % → 99,26 %** (+2,31). 5759 PASS, 43 FAIL,
+  1025 SKIP, 0 ERROR; **134 tests corregidos y 0 regresiones**.
+- WPT tree construction: **46,74 % → 48,72 %** (+1,98). 913 PASS, 961 FAIL,
+  99 SKIP, 0 ERROR; **37 tests corregidos y 0 regresiones**.
+- Causas comunes corregidas en el tokenizer:
+  - preprocesado de CR/CRLF a LF;
+  - `<!...>` ya no incluye el `!` en comentarios bogus y acepta `--!>`;
+  - NUL se sustituye por U+FFFD en comentarios, nombres y valores;
+  - referencias numéricas 0x80–0x9F usan el mapa Windows-1252;
+  - referencias numéricas con ceros a la izquierda y `</>` vacío.
+- WPT `dom/nodes`: **59,36 %**, sin cambios ni regresiones.
+- `./tools/test_all.sh`: **316 tests en verde** (51 en `nativax_html`).
+- Quedan 43 fallos de tokenizer, concentrados en comentarios sin cerrar y en
+  instrucciones de procesamiento (extensiones de html5lib).
+
 ## Comparación con Chrome (web-challenge)
 
 `examples/web-challenge/test/screenshot_test.dart` renderiza la página con
@@ -98,10 +115,10 @@ soportados: `share` y `geolocation`.
 
 ## Fase 4 — en curso
 
-- [x] Test262 (97,93 %), html5lib (96,95 %) y URL (70,98 %) por encima del 70 %.
+- [x] Test262 (97,93 %), html5lib (99,26 %) y URL (70,98 %) por encima del 70 %.
 - [ ] WPT `dom/nodes`: **59,36 %** (objetivo 70 %).
 - [ ] WPT `css/selectors`: **10,38 %** (objetivo 70 %).
-- [ ] WPT tree construction: **46,74 %** (objetivo 70 %).
+- [ ] WPT tree construction: **48,72 %** (objetivo 70 %).
 - [x] Reparse de `<style>` al insertar/editar hojas (prerrequisito de CSSOM y
   de la UI de frameworks).
 - [x] CSSOM básico: `document.styleSheets`, `insertRule`, `deleteRule`,
