@@ -94,7 +94,9 @@ class AttributeSelector extends SimpleSelector {
     if (actual == null) return false;
     if (op == null) return true;
     var v = value!;
-    if (ignoreCase) {
+    // The HTML `lang` attribute is matched case-insensitively.
+    final langAttribute = name.toLowerCase() == 'lang';
+    if (ignoreCase || langAttribute) {
       actual = actual.toLowerCase();
       v = v.toLowerCase();
     }
