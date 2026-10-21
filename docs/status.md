@@ -18,7 +18,7 @@
 > resumen original de la sesión 1 y se conserva como referencia.
 
 El prompt original completo está en
-[`docs/original-prompt.md`](original-prompt.md). Este archivo resume lo que ya
+[`docs/idea.md`](idea.md). Este archivo resume lo que ya
 existe, lo verificado y lo que falta, para retomar en otra sesión.
 
 ## Pedidos adicionales del usuario (durante la sesión)
