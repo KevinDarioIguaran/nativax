@@ -21,7 +21,7 @@ real y el test de estadísticas de presentación.
 | Rendimiento 7× | 🔴 registrado | Rapier 180 pasos: 328,5 ms (wasm3) vs 30,7 ms (V8); gap 10,7× |
 | Ejemplo web-challenge | ✅ original | HTML/CSS/JS **sin modificar**: 46/52 comprobaciones propias en verde |
 | Seguridad | 🟢 | `tools/security`: 14 PASS / 0 FAIL / 1 SKIP |
-| Conformidad | 🟡 | Test262 97,93 %; html5lib 99,26 %; URL 74,22 %; DOM 59,36 %; CSS 41,99 %; tree 50,37 % |
+| Conformidad | 🟡 | Test262 97,93 %; html5lib 99,26 %; URL 74,22 %; DOM 59,36 %; CSS 50,28 %; tree 50,37 % |
 | Plataformas | 🟡 solo Linux | build Linux verificado; resto sin probar |
 
 ## Reorganización Nativa y skills — 2026-10-21
@@ -100,6 +100,19 @@ real y el test de estadísticas de presentación.
   insensible a mayúsculas.
 - Fix: `getAttribute` solo coincide por nombre completo; los selectores de
   atributo tratan `lang` como case-insensitive.
+- Comando: `dart run bin/run_wpt.dart --dirs css/selectors --limit 100000`
+  (commit de la suite `e7d77cd`).
+- Tests: `nativa_dom` 38 en verde; `./tools/test_all.sh` 316 en verde;
+  `flutter analyze` limpio.
+
+## Incremento de conformidad CSS selectors — 2026-10-21 (3)
+
+- CSS selectors: **41,99 % → 50,28 %** (+8,29 puntos; 76 → 91 PASS;
+  105 → 90 FAIL; 528 archivos, 347 SKIP, 0 ERROR).
+- Causa real: el StyleEngine no se invalidaba en mutaciones de atributos,
+  estructura o texto, por lo que la invalidación dinámica fallaba.
+- Fix: `refreshStyles` ahora marca dirty el elemento afectado en cualquier
+  mutación.
 - Comando: `dart run bin/run_wpt.dart --dirs css/selectors --limit 100000`
   (commit de la suite `e7d77cd`).
 - Tests: `nativa_dom` 38 en verde; `./tools/test_all.sh` 316 en verde;
