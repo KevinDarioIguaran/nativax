@@ -1,16 +1,16 @@
 # Conformidad: wpt
 
-- Fecha: 2026-10-21T22:35:45.588034Z
-- Duración: 23.5 s
+- Fecha: 2026-10-21T22:39:01.581963Z
+- Duración: 24.0 s
 - Commit de la suite: `e7d77cd1e0353d7b37ce35eb912b6992df8dfab0`
 - Comando: `run_wpt css/selectors --limit 100000`
 - Total: **528** tests
-- Tasa de éxito (sin SKIP): **38.12 %**
+- Tasa de éxito (sin SKIP): **39.78 %**
 
 | Estado | Tests |
 |---|---:|
-| PASS | 69 |
-| FAIL | 112 |
+| PASS | 72 |
+| FAIL | 109 |
 | SKIP | 347 |
 | ERROR | 0 |
 
@@ -26,14 +26,14 @@
 
 | Grupo | PASS | FAIL | SKIP | ERROR | Éxito |
 |---|---:|---:|---:|---:|---:|
-| `css/selectors` | 69 | 112 | 347 | 0 | 38.1 % |
+| `css/selectors` | 72 | 109 | 347 | 0 | 39.8 % |
 
 ## Por directorio
 
 | Grupo | PASS | FAIL | SKIP | ERROR | Éxito |
 |---|---:|---:|---:|---:|---:|
 | `css/selectors/invalidation` | 3 | 66 | 69 | 0 | 4.3 % |
-| `css/selectors/i18n` | 36 | 7 | 1 | 0 | 83.7 % |
+| `css/selectors/i18n` | 39 | 4 | 1 | 0 | 90.7 % |
 | `css/selectors/selectors-4` | 0 | 1 | 29 | 0 | 0.0 % |
 | `css/selectors/parsing` | 0 | 1 | 23 | 0 | 0.0 % |
 | `css/selectors/attribute-selectors` | 0 | 3 | 4 | 0 | 0.0 % |
@@ -114,7 +114,7 @@
 | `css/selectors/focus-visible-018.html` | 0 | 0 | 1 | 0 | 0.0 % |
 | _(+202 grupos)_ | | | | | |
 
-## Fallos (112)
+## Fallos (109)
 
 ### `css/selectors/attribute-selectors/attribute-case/cssom.html`
 
@@ -391,15 +391,6 @@ With nested top layer elements, :focus-within should stop at the innermost top l
 <h1 data-expect-match="1"></h1> :heading(5): ":heading(5)" is not a valid selector: unexpected "(" at offset 8
 ```
 
-### `css/selectors/i18n/css3-selectors-lang-016.html`
-
-- Características: css/selectors
-- Motivo: 1 subtest(s) failed
-
-```text
-A :lang value that matches an identical xml:lang attribute value will NOT produce styling in pages served as HTML.: assert_equals: expected 50, got 100
-```
-
 ### `css/selectors/i18n/css3-selectors-lang-024.html`
 
 - Características: css/selectors
@@ -418,15 +409,6 @@ A lang|= value will match a lang attribute value regardless of case differences.
 A lang|= value will match a lang attribute value regardless of case differences in the script tag.: assert_equals: expected 100, got 50
 ```
 
-### `css/selectors/i18n/css3-selectors-lang-036.html`
-
-- Características: css/selectors
-- Motivo: 1 subtest(s) failed
-
-```text
-A [lang|='es'] value that matches an identical xml:lang attribute value will NOT produce styling in pages served as HTML.: assert_equals: expected 50, got 100
-```
-
 ### `css/selectors/i18n/css3-selectors-lang-044.html`
 
 - Características: css/selectors
@@ -443,15 +425,6 @@ A lang= value will match a lang attribute value regardless of case differences.:
 
 ```text
 A lang= value will match a lang attribute value regardless of case differences in the script tag.: assert_equals: expected 100, got 50
-```
-
-### `css/selectors/i18n/css3-selectors-lang-056.html`
-
-- Características: css/selectors
-- Motivo: 1 subtest(s) failed
-
-```text
-A [lang='es'] value that matches an identical xml:lang attribute value will NOT produce styling in pages served as HTML.: assert_equals: expected 50, got 100
 ```
 
 ### `css/selectors/invalidation/any-link-pseudo.html`
