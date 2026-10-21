@@ -79,7 +79,7 @@ Future<void> main(List<String> args) async {
   final stamp = timestampForFile(summary.startedAt);
   final outputDir = resultsDir(root);
   final dated = markdownPath ??
-      p.join(reportsDir(root), 'test262-$stamp.md');
+      p.join(resultsDir(root), 'test262-$stamp.md');
   final files = const ConformanceReport().write(
     summary,
     outputDir: outputDir,

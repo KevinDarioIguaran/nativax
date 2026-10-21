@@ -29,8 +29,10 @@ Cada runner escribe:
 
 - `.conformance/results/<suite>-<timestamp>.jsonl`: un resultado por test.
 - `.conformance/results/<suite>-<timestamp>.summary.json`: agregados.
-- `progress/reports/<suite>-<timestamp>.md`: informe legible.
-- `progress/reports/<suite>-latest.md`: último informe.
+- `.conformance/results/<suite>-<timestamp>.md`: archivo legible de la corrida
+  (ignorado por git).
+- `progress/reports/<suite>-latest.md`: último informe versionado. No se
+  versionan reportes con timestamp.
 
 ## Estados
 
@@ -50,6 +52,8 @@ dart run bin/run_wpt.dart --dirs dom/nodes --grep Element-tagName
 
 ## Limitaciones del adaptador
 
-Ver [`../../.agents/conformance.md`](../../.agents/conformance.md). En resumen:
+Ver
+[`../../.agents/skills/nativa-conformance/references/conformance.md`](../../.agents/skills/nativa-conformance/references/conformance.md).
+En resumen:
 Test262 modules y APIs de host se saltan; html5lib se ejecuta solo desde Data
 state; WPT no soporta reftests, testdriver, workers ni el testharness completo.

@@ -40,7 +40,9 @@ formato/foster parenting/template/foreign content. No se maquilla con SKIP.
 - `reports/wpt-url-latest.md`
 - `reports/wpt-html-tree-latest.md`
 
-Los JSONL completos quedan en `.conformance/results/` (ignorado por git).
+Los JSONL completos quedan en `.conformance/results/` (ignorado por git). Los
+informes legibles versionados son solo `progress/reports/<suite>-latest.md`;
+las corridas con timestamp también quedan en `.conformance/results/`.
 
 ## Brechas principales
 
