@@ -100,8 +100,9 @@ virtualización, 5 de caché de estilo y los fixtures de render.
 - NativaWeb queda documentado como familia modular de cuatro paquetes; no se
   creó un paquete fachada `nativa_web`.
 - `.agents` se convirtió en una biblioteca de skills con `SKILL.md` y
-  `references/`: OpenCode las descubre en `.agents/skills`. La entrada común
-  es `AGENTS.md`.
+  `references/`: OpenCode las descubre en `.agents/skills` y Claude Code usa
+  enlaces en `.claude/skills`. La entrada común es `AGENTS.md`; `CLAUDE.md`
+  importa esas instrucciones.
 - `./tools/test_all.sh`: **316 tests en verde** con el juego cerrado.
 - `flutter analyze`: **sin issues**; se eliminó un flag de entrega sin uso en
   `nativa_dom_bindings`.
