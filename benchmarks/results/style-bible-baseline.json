@@ -1,0 +1,20 @@
+{
+  "app": "/home/k3vin/Documents/bible/app (copy, original untouched)",
+  "build": "flutter build linux --profile",
+  "firstContentMs": 1842,
+  "docBuildMs": 2262,
+  "styleSlow": {
+    "samples": 307,
+    "sumMs": 3037,
+    "avgMs": 9.9,
+    "maxMs": 48
+  },
+  "layout": {
+    "boxLayoutCalls": 73,
+    "boxLayoutTotalMs": 565,
+    "flexLayoutTotalMs": 409,
+    "textIntrinsicMs": 59,
+    "paintMs": 7
+  },
+  "note": "Measured before pseudo-rule indexing; style samples include nested parent recomputes."
+}

@@ -28,6 +28,19 @@ import 'fieldset.dart';
 import 'svg.dart';
 import 'render_types.dart';
 
+/// Tags that never generate a box. They are excluded before asking the style
+/// engine, so scripts/styles in real pages do not pay selector matching.
+const Set<String> nativaxNeverRenderedTags = {
+  'script',
+  'style',
+  'head',
+  'title',
+  'meta',
+  'link',
+  'noscript',
+  'template',
+};
+
 /// Renders one DOM element (and its subtree) as a Flutter widget.
 ///
 /// This is the phase 1 renderer: block flow, inline text, flexbox, simple
@@ -269,6 +282,9 @@ class _Builder {
     final legend = element.localName == 'fieldset' ? _legendOf(element) : null;
     for (final c in element.childNodes) {
       if (identical(c, legend)) continue;
+      if (c is dom.Element && nativaxNeverRenderedTags.contains(c.localName)) {
+        continue;
+      }
       if (c is dom.Element && styleEngine.styleOf(c).display == Display.contents) {
         out.addAll(children(c));
       } else {
@@ -287,6 +303,13 @@ class _Builder {
       };
 
   bool _skipped(Object c) {
+    // Tags that never generate a box are skipped without asking the style
+    // engine. Scripts/styles in particular are numerous in real pages and
+    // would otherwise pay full selector matching for no visual result.
+    if (c is dom.Element &&
+        nativaxNeverRenderedTags.contains(c.localName)) {
+      return true;
+    }
     final s = styleOfChild(c);
     if (s == null) return c is! dom.Text;
     return s.display == Display.none || s.position == 'fixed';

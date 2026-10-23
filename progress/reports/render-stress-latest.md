@@ -179,3 +179,51 @@ por ancestros bajó el primer frame de 1.055 a 897 ms, pero aún no es exacto).
 No cumple <500 ms. El cuello es layout/paint de ~800 RenderObjects visibles
 con el CSS real; no es JS ni la virtualización. Con el CSS real la página mide
 ~795 px: no hay contenido fuera de vista que virtualizar.
+
+## CSS style cost — 2026-10-24
+
+Causa raíz encontrada con `NATIVAX_METRICS=1`: `pseudoStyleOf` recorría
+**todas** las reglas `::before`/`::after` para cada elemento. Con Font Awesome
+(600 iconos) eso añadía cientos de evaluaciones por nodo y explicaba los
+~10 ms/elemento de la Biblia. La solución general es indexar las reglas de
+pseudo-elemento por el sujeto, igual que las reglas normales.
+
+### Antes / después
+
+| Métrica | Base | Ahora |
+|---|---:|---:|
+| Fixture sintético, primer frame | 1.089 ms | **442 ms** |
+| Fixture, style own / elemento | no medido (307 muestras Biblia ~9,9 ms) | **0,038 ms** (23,9 ms / 627) |
+| Fixture, selectores/elemento | 46,5 (34.015 / 732) | **1,1** (666 / 627) |
+| Biblia, primer contenido | 1.842 ms | **314 ms** |
+| Biblia, style own / elemento | ~9,9 ms (307 muestras, suma 3.037 ms) | **0,343 ms** (1.284 muestras, 440,9 ms en 2 s) |
+| Biblia, selectores/elemento | no medido | **17,0** |
+| list 10k | 4.037 ms | **440 ms** |
+| flex 10k | 3.672 ms | **611 ms** (426 ms parseo/JS + ~185 ms render) |
+| article 2k updateAll | 129 ms | **26 ms/frame** |
+
+JSON: `benchmarks/results/style-css-baseline.json`,
+`style-css-current.json`, `style-bible-baseline.json`,
+`style-bible-current.json`.
+
+### Metas
+
+- Style < 0,5 ms/elemento: **cumplida** (0,343 ms en la Biblia; 0,038 ms en
+  el fixture).
+- Fixture sintético < 500 ms: **cumplida** (442 ms).
+- Biblia primer contenido < 500 ms: **cumplida** (314 ms), pero **no** “sin
+  frames > 50 ms”: quedan frames de población de 242–429 ms.
+- list/flex/article sin regresión: list 440 ms, flex 611 ms con parseo
+  (render ~185 ms), article 26 ms/frame.
+
+### Lo que domina ahora
+
+En la Biblia el estilo ya no domina: los frames de población siguen en
+~200–430 ms de build/layout. El siguiente trabajo es layout (cache de
+`LayoutResult`, menos pasadas dry/intrinsic), no más CSS matching.
+
+### Conformidad
+
+`dart run bin/run_wpt.dart --dirs css/selectors --limit 100000` no se pudo
+ejecutar: `.conformance/suites/wpt` no está descargado en este checkout. No se
+declara una tasa nueva. `./tools/test_all.sh` sí está en verde.

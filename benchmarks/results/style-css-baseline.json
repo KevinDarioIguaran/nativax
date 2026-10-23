@@ -1,0 +1,20 @@
+{
+  "fixture": "tailwind_800: 801 boxes, 4332 rules, 20 virtual grid rows",
+  "command": "flutter build linux --profile; NATIVAX_METRICS=1 NATIVAX_BENCH_FILE=tailwind_800.html",
+  "style": {
+    "computes": 732,
+    "selectors": 34015,
+    "selectorsPerElement": 46.5,
+    "styleOwnMs": null,
+    "note": "Per-element own time was not instrumented before the pseudo-rule index. Bible STYLE_SLOW log: 307 samples, sum 3037 ms, avg ~9.9 ms (nested parent recomputes)."
+  },
+  "firstFrameMs": 1089,
+  "renderObjects": 1375,
+  "layout": {
+    "boxLayoutCalls": 815,
+    "boxLayoutTotalMs": 654,
+    "flexLayoutCalls": 432,
+    "flexLayoutTotalMs": 473,
+    "textIntrinsicCalls": 1814
+  }
+}

@@ -640,6 +640,9 @@ class _NativaXDocumentViewState extends State<NativaXDocumentView> implements do
     void walk(dom.Element e) {
       for (final c in e.children) {
         if (++visited > 2000) return;
+        if (nativaxNeverRenderedTags.contains(c.localName)) {
+          continue;
+        }
         if (c.children.length >= 40) continue;
         final style = widget.styleEngine.styleOf(c);
         if (style.display == Display.none) continue;

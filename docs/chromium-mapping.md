@@ -241,3 +241,46 @@ reglas) eso domina el arranque.
   (`core/dom/style_engine.cc`, `document_lifecycle.cc`); NativaX mantiene una
   sola pasada por frame en `NativaXDocumentView._flush` y difiere estilos de
   nodos virtualizados fuera de vista (`invalidateDeferred`).
+
+## 11. Pseudo-element RuleSet y ElementRuleCollector
+
+**Problema NativaX.** `hasPseudoRules('before')` era global y
+`pseudoStyleOf` recorría **todas** las reglas `::before` para cada elemento.
+Con Font Awesome (600 iconos) eso añadía cientos de evaluaciones por nodo y
+dominaba el estilo (~10 ms/elemento en la Biblia).
+
+**Chromium.**
+
+- `core/css/rule_set.h`: `RuleSet::AddRule` y
+  `RuleSet::AddRulesFromSheet` indexan por el compuesto más a la derecha
+  (id/clase/tag/universal), incluidas las reglas con pseudo-elemento.
+- `core/css/element_rule_collector.h/.cc`:
+  `ElementRuleCollector::CollectMatchingRules` y
+  `CollectMatchingRulesForListInternal` toman solo las listas de candidatos
+  del `RuleSet` para el elemento; no recorren toda la hoja.
+- `core/css/selector_filter.h`: `SelectorFilter::FastRejectSelector` descarta
+  selectores descendientes con un filtro de ancestros antes del matching.
+- `core/css/resolver/matched_properties_cache.h`:
+  `MatchedPropertiesCache::Find` / `Add` reutilizan declaraciones y estilos.
+- `core/css/resolver/style_resolver.h`: `ApplyMatchedCache` y
+  `MaybeAddToMatchedPropertiesCache`; `InvalidateMatchedPropertiesCache` al
+  cambiar viewport/estado.
+
+**Adaptación Dart.**
+
+- `_RuleBuckets` indexa las reglas de cada pseudo-elemento por el sujeto
+  (id/clase/tag/universal). `pseudoStyleOf` y `cascadedDeclarations(...,
+  pseudo:)` solo iteran `buckets.candidates(element)`.
+- `nativaxNeverRenderedTags` excluye `script`, `style`, `head`, `title`,
+  `meta`, `link`, `noscript` y `template` antes de `styleOf`; no generan caja
+  y no deben pagar matching.
+- `StyleEngine.metricsEnabled` (opt-in con `NATIVAX_METRICS=1`) mide por
+  elemento: selectores, candidatos, cache hit/miss y µs propios/exclusivos,
+  restando el tiempo de los padres anidados.
+- `_RuleBuckets.candidates` sustituye el recorrido plano de pseudo reglas;
+  el resto de la cascada usa los buckets normales + `_matchedCache` +
+  `_computedCache`.
+- Pendiente: el Bloom de ancestros de `SelectorFilter` y los invalidation
+  sets completos. La medición actual ya deja el estilo en ~0,34 ms/elemento
+  en la Biblia; el siguiente cuello es layout/paint de los frames de
+  población.

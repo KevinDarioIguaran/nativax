@@ -337,4 +337,19 @@ void main() {
     expect(find.text('Row 0'), findsOneWidget);
     expect(find.text('Row 19999'), findsNothing);
   });
+
+  testWidgets('never-rendered tags do not pay style computation', (tester) async {
+    final b = StringBuffer('<!doctype html><html><body>');
+    for (var i = 0; i < 100; i++) {
+      b.write('<script>void $i;</script><style>.x$i{color:red}</style>');
+    }
+    b.write('<div id="visible">ok</div></body></html>');
+    final ctx = _document(b.toString());
+    await tester.pumpWidget(_app(ctx.document, ctx.engine));
+    await _pumpFrames(tester);
+    expect(find.text('ok'), findsOneWidget);
+    expect(ctx.engine.computeCount, lessThan(30),
+        reason: 'scripts/styles must be skipped before styleOf');
+  });
+
 }
