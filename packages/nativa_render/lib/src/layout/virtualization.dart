@@ -508,6 +508,7 @@ class CssVirtualBlockState extends State<CssVirtualBlock> {
       _lastViewportTop = viewportTop;
     }
     _lastBlockTop = blockTop - (aboveDelta.abs() > 0.01 ? aboveDelta : 0);
+    if (rangeChanged) _evictOutside(range.$1, range.$2);
     setState(() {
       _start = range.$1;
       _end = range.$2;
@@ -525,6 +526,19 @@ class CssVirtualBlockState extends State<CssVirtualBlock> {
       if (widget.elementsAt(i).any((e) => identical(e, element))) return i;
     }
     return null;
+  }
+
+  /// Drops computed styles for slots that left the window. Render objects are
+  /// already detached by Flutter; this releases the heavier style objects so a
+  /// long scroll does not retain the whole document.
+  void _evictOutside(int nextStart, int nextEnd) {
+    for (var i = _start; i <= _end; i++) {
+      if (i >= nextStart && i <= nextEnd) continue;
+      if (_pinned.contains(i)) continue;
+      for (final e in widget.elementsAt(i)) {
+        widget.styleEngine.invalidateDeferred(e);
+      }
+    }
   }
 
   /// Force [element] into the materialized window. The real box is available

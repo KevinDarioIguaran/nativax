@@ -23,6 +23,9 @@ import 'package:nativa_render/nativa_render.dart';
 void main() async {
   final appWatch = Stopwatch()..start();
   WidgetsFlutterBinding.ensureInitialized();
+  LayoutProfile.enabled = LayoutProfile.enabled ||
+      Platform.environment['NATIVAX_LAYOUT_PROFILE'] == '1';
+  LayoutProfile.reset();
   final file = Platform.environment['NATIVAX_BENCH_FILE'];
   final asset = Platform.environment['NATIVAX_BENCH_HTML'];
   final source = file != null
@@ -105,7 +108,6 @@ class _BenchAppState extends State<BenchApp> {
   bool _reported = false;
   final List<String> _frames = [];
   final List<int> _frameTotals = [];
-  DateTime? _runStart;
   Timer? _holdTimer;
   double _width = 1440;
   int _step = 0;
@@ -125,7 +127,6 @@ class _BenchAppState extends State<BenchApp> {
 
   void _afterFirstFrame() {
     if (!mounted) return;
-    _runStart = DateTime.now();
     switch (widget.scenario) {
       case 'mutate':
         _mutateOnce();
@@ -294,6 +295,12 @@ class _BenchAppState extends State<BenchApp> {
             'create=${widget.createMs}ms builds=${NativeXBuildStats.elementBuilds} '
             'virtual=${NativeXBuildStats.virtualBlocks}/${NativeXBuildStats.virtualItems} '
             'styleComputes=${widget.runtime.styleEngine.computeCount} '
+            'selectors=${widget.runtime.styleEngine.selectorEvaluations} '
+            'matchedHit=${widget.runtime.styleEngine.matchedCacheHits} '
+            'matchedMiss=${widget.runtime.styleEngine.matchedCacheMisses} '
+            'styleHit=${widget.runtime.styleEngine.styleCacheHits} '
+            'cachedStyles=${widget.runtime.styleEngine.cachedStyleCount} '
+            'struct=${widget.runtime.styleEngine.structuralInfo} '
             'subtreePasses=${widget.runtime.styleEngine.subtreePasses} '
             'lazy=${widget.runtime.styleEngine.lazySubtrees} '
             'tags=${_topTags(widget.runtime.styleEngine.computesByTag)} '
@@ -316,7 +323,9 @@ class _BenchAppState extends State<BenchApp> {
       'frames=${_frameTotals.length} over50=$over50 p95=${p95}ms '
       'max=${totals.isEmpty ? 0 : totals.last}ms '
       'renderObjects=${_countRenderObjects()} widgets=${_countElements()} '
-      'documentHeight=${widget.runtime.document.layoutHost?.documentHeight.toStringAsFixed(0) ?? '-'}',
+      'documentHeight=${widget.runtime.document.layoutHost?.documentHeight.toStringAsFixed(0) ?? '-'} '
+      'rss=${(ProcessInfo.currentRss / (1024 * 1024)).toStringAsFixed(1)}MB '
+      '${LayoutProfile.summary()}',
     );
     for (final f in _frames) {
       print(f);

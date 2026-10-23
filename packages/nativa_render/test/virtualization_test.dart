@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -255,6 +257,68 @@ void main() {
     await _pumpFrames(tester, 4);
     expect(find.text('Row 0'), findsOneWidget);
     expect(_renderObjectCount() - before, lessThan(80));
+  });
+
+
+  testWidgets('lazy style invalidates descendants when an ancestor class changes',
+      (tester) async {
+    final ctx = _document(
+      '<!doctype html><html><body>'
+      '<div id="overlay"><button id="start">Start</button></div>'
+      '</body></html>',
+      css: '#start{display:none;width:100px;height:20px}'
+          '#overlay.open #start{display:block}',
+    );
+    await tester.pumpWidget(_app(ctx.document, ctx.engine));
+    await _pumpFrames(tester);
+    final start = ctx.document.getElementById('start')!;
+    expect(ctx.document.layoutHost!.boxOf(start), isNull);
+
+    // The overlay's own style is unchanged: only the descendant selector
+    // matches after the class is added. A lazy cache must drop the child.
+    ctx.document.getElementById('overlay')!.className = 'open';
+    await _pumpFrames(tester, 3);
+    final box = ctx.document.layoutHost!.boxOf(start);
+    expect(box, isNotNull);
+    expect(box!.width, greaterThan(50));
+  });
+
+  testWidgets('fixed elements after many siblings are still found', (tester) async {
+    final b = StringBuffer('<!doctype html><html><body>');
+    for (var i = 0; i < 120; i++) {
+      b.write('<div style="height:2px">s$i</div>');
+    }
+    b.write('<div id="fixed" style="position:fixed;left:0;top:0;'
+        'width:50px;height:20px;background:#000"></div></body></html>');
+    final ctx = _document(b.toString());
+    await tester.pumpWidget(_app(ctx.document, ctx.engine));
+    await _pumpFrames(tester);
+    expect(ctx.document.layoutHost!.boxOf(ctx.document.getElementById('fixed')!),
+        isNotNull);
+  });
+
+  testWidgets('scrolling and mutating do not grow render/style caches without bound',
+      (tester) async {
+    final ctx = _document(_rows(2000));
+    await tester.pumpWidget(_app(ctx.document, ctx.engine));
+    await _pumpFrames(tester);
+    final scrollable = _rootScrollable(tester);
+    final max = scrollable.position.maxScrollExtent;
+    final rssBefore = ProcessInfo.currentRss;
+    for (var i = 0; i < 120; i++) {
+      scrollable.position.jumpTo(max * (i / 119));
+      final row = ctx.document.getElementById('row-${(i * 17) % 2000}')!;
+      row.setAttribute('data-cycle', '$i');
+      await tester.pump();
+    }
+    await _pumpFrames(tester, 3);
+    expect(_renderObjectCount(), lessThan(400),
+        reason: 'render objects leaked across scroll/mutation cycles');
+    expect(ctx.engine.cachedStyleCount, lessThan(300),
+        reason: 'computed styles leaked for offscreen rows');
+    final rssDelta = ProcessInfo.currentRss - rssBefore;
+    expect(rssDelta, lessThan(256 * 1024 * 1024),
+        reason: 'RSS grew by $rssDelta bytes during the stress loop');
   });
 
   testWidgets('stress: 20k rows stay inside the frame and object budgets',

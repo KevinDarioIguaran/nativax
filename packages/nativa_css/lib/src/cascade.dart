@@ -80,6 +80,14 @@ class StyleEngine {
   final Map<Element, Map<String, ComputedStyle?>> _pseudoStyles = {};
   List<bool> _mediaState = const [];
   bool _usesSiblingCombinators = false;
+  bool _usesStructuralSelectors = false;
+  bool _structuralUniversal = false;
+  final Set<String> _structuralTags = {};
+  final Set<String> _structuralClasses = {};
+  final Set<String> _structuralIds = {};
+  final Set<String> _structuralAncestorTags = {};
+  final Set<String> _structuralAncestorClasses = {};
+  final Set<String> _structuralAncestorIds = {};
   bool _usesViewportUnits = false;
   bool _usesHover = false;
   bool _usesActive = false;
@@ -97,7 +105,113 @@ class StyleEngine {
   /// Counters for diagnostics and benchmarks.
   int computeCount = 0;
   int subtreePasses = 0;
+  int selectorEvaluations = 0;
+  int matchedCacheHits = 0;
+  int matchedCacheMisses = 0;
+  int styleCacheHits = 0;
   final Map<String, int> computesByTag = {};
+
+  /// Matched declarations and computed styles shared by elements with the
+  /// same signature (tag/id/classes/attributes) and the same parent style.
+  /// This is the NativaX equivalent of Blink's MatchedPropertiesCache and
+  /// shared style finder.
+  final Map<String, List<Declaration>> _matchedCache = {};
+  final Map<String, ComputedStyle> _computedCache = {};
+  bool _cachesDirty = false;
+  static const int _maxCacheEntries = 8192;
+
+  void _clearStyleCaches() {
+    _matchedCache.clear();
+    _computedCache.clear();
+    _cachesDirty = false;
+  }
+
+  void _ensureStyleCaches() {
+    if (_cachesDirty) _clearStyleCaches();
+  }
+
+  bool _needsStructuralKey(Element e) {
+    if (_structuralUniversal) return true;
+    if (_structuralTags.contains(e.localName)) return true;
+    final id = e.getAttribute('id');
+    if (id != null && _structuralIds.contains(id)) return true;
+    for (final c in e.classList) {
+      if (_structuralClasses.contains(c)) return true;
+    }
+    if (_structuralAncestorTags.isNotEmpty ||
+        _structuralAncestorClasses.isNotEmpty ||
+        _structuralAncestorIds.isNotEmpty) {
+      for (Element? p = e.parentElement; p != null; p = p.parentElement) {
+        if (_structuralAncestorTags.contains(p.localName)) return true;
+        final pid = p.getAttribute('id');
+        if (pid != null && _structuralAncestorIds.contains(pid)) return true;
+        for (final c in p.classList) {
+          if (_structuralAncestorClasses.contains(c)) return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  String _elementSignature(Element e,
+      {String? pseudo, ComputedStyle? parent, bool structural = false}) {
+    final b = StringBuffer()
+      ..write(e.localName)
+      ..write('\u0000')
+      ..write(e.getAttribute('id') ?? '')
+      ..write('\u0000');
+    final classes = e.classList.toList()..sort();
+    b.write(classes.join('.'));
+    b.write('\u0000');
+    final attrs = e.attributes;
+    final names = attrs.keys.toList()..sort();
+    for (final name in names) {
+      b
+        ..write(name)
+        ..write('=')
+        ..write(attrs[name])
+        ..write('\u0001');
+    }
+    b
+      ..write('\u0000')
+      ..write(pseudo ?? '')
+      ..write('\u0000')
+      ..write(parent == null ? 0 : identityHashCode(parent));
+    final doc = e.ownerDocument;
+    b
+      ..write('\u0000')
+      ..write(identityHashCode(doc.hoverElement))
+      ..write(':')
+      ..write(identityHashCode(doc.pressedElement))
+      ..write(':')
+      ..write(identityHashCode(doc.activeElement))
+      ..write(':')
+      ..write(doc.targetId ?? '');
+    if (structural) {
+      final parentEl = e.parentElement;
+      final siblings = parentEl?.children.toList() ?? const <Element>[];
+      final index = siblings.indexWhere((c) => identical(c, e));
+      final childCount = siblings.length;
+      b
+        ..write('\u0000s')
+        ..write(identityHashCode(parentEl))
+        ..write(':')
+        ..write(index)
+        ..write(':')
+        ..write(childCount)
+        ..write(':')
+        ..write(e.childNodes.isEmpty ? 1 : 0);
+    }
+    return b.toString();
+  }
+
+  /// Number of elements with a cached computed style (diagnostics/tests).
+  int get cachedStyleCount => _styles.length;
+
+  /// Structural-selector buckets used by the style cache (diagnostics).
+  String get structuralInfo =>
+      'u=$_structuralUniversal tags=${_structuralTags.join(',')} '
+      'classes=${_structuralClasses.join(',')} ids=${_structuralIds.join(',')}';
 
   MediaContext get media => _media;
 
@@ -150,6 +264,7 @@ class StyleEngine {
 
   /// Marks styles affected by [record] dirty.
   void handleMutation(MutationRecord record) {
+    _cachesDirty = true;
     final target = record.target;
     switch (record.type) {
       case MutationType.childList:
@@ -328,10 +443,28 @@ class StyleEngine {
     _usesHover = false;
     _usesActive = false;
     _usesSiblingCombinators = false;
+    _usesStructuralSelectors = false;
+    _structuralUniversal = false;
+    _structuralTags.clear();
+    _structuralClasses.clear();
+    _structuralIds.clear();
+    _structuralAncestorTags.clear();
+    _structuralAncestorClasses.clear();
+    _structuralAncestorIds.clear();
     _usesViewportUnits = false;
     var order = 0;
 
     void add(StyleRule rule, bool ua) {
+      final selectorText = rule.selectorText;
+      final structuralRule = selectorText.contains(':first-') ||
+          selectorText.contains(':last-') ||
+          selectorText.contains(':only-') ||
+          selectorText.contains(':nth-') ||
+          selectorText.contains(':empty') ||
+          selectorText.contains(':has(') ||
+          selectorText.contains('+') ||
+          selectorText.contains('~');
+      if (structuralRule) _usesStructuralSelectors = true;
       if (rule.selectorText.contains(':hover')) _usesHover = true;
       if (rule.selectorText.contains(':active')) _usesActive = true;
       for (final d in rule.declarations) {
@@ -349,6 +482,38 @@ class StyleEngine {
         if (sel.combinators.any((c) =>
             c == Combinator.nextSibling || c == Combinator.subsequentSibling)) {
           _usesSiblingCombinators = true;
+        }
+        if (structuralRule) {
+          final parts = sel.subject.parts;
+          final id = parts.whereType<IdSelector>().firstOrNull;
+          final cls = parts.whereType<ClassSelector>().firstOrNull;
+          final tag = parts.whereType<TypeSelector>().firstOrNull;
+          if (id != null) {
+            _structuralIds.add(id.id);
+          } else if (cls != null) {
+            _structuralClasses.add(cls.name);
+          } else if (tag != null) {
+            _structuralTags.add(tag.name);
+          } else {
+            // A universal subject (`*:nth-child`, `:not(...)`, `~ *`) only
+            // needs structural keys inside its ancestor constraints.
+            var foundAncestor = false;
+            for (final compound in sel.compounds.skip(1)) {
+              for (final part in compound.parts) {
+                if (part is IdSelector) {
+                  _structuralAncestorIds.add(part.id);
+                  foundAncestor = true;
+                } else if (part is ClassSelector) {
+                  _structuralAncestorClasses.add(part.name);
+                  foundAncestor = true;
+                } else if (part is TypeSelector) {
+                  _structuralAncestorTags.add(part.name);
+                  foundAncestor = true;
+                }
+              }
+            }
+            if (!foundAncestor) _structuralUniversal = true;
+          }
         }
         final ir = _IndexedRule(sel, rule.declarations, order++, ua);
         final pseudo = sel.pseudoElement;
@@ -390,6 +555,7 @@ class StyleEngine {
       walk(s.rules, false);
     }
     _mediaState = _evaluateMedia();
+    _clearStyleCaches();
   }
 
   List<Declaration> _inlineDeclarations(String text) {
@@ -404,10 +570,19 @@ class StyleEngine {
 
   /// Matched declarations for [e], in ascending cascade precedence.
   List<Declaration> cascadedDeclarations(Element e, {String? pseudo}) {
+    _ensureStyleCaches();
+    final cacheKey = _elementSignature(e, pseudo: pseudo, structural: _needsStructuralKey(e));
+    final cached = _matchedCache[cacheKey];
+    if (cached != null) {
+      matchedCacheHits++;
+      return cached;
+    }
+    matchedCacheMisses++;
     final matches = <_Match>[];
     void consider(List<_IndexedRule>? rules) {
       if (rules == null) return;
       for (final r in rules) {
+        selectorEvaluations++;
         if (pseudo == null ? !r.selector.matches(e) : !r.selector.matchesPseudo(e, pseudo)) continue;
         for (final d in r.declarations) {
           final layer = r.isUserAgent
@@ -461,12 +636,16 @@ class StyleEngine {
       if (s != 0) return s;
       return a.order - b.order;
     });
-    return [for (final m in matches) m.declaration];
+    final result = [for (final m in matches) m.declaration];
+    if (_matchedCache.length >= _maxCacheEntries) _matchedCache.clear();
+    _matchedCache[cacheKey] = result;
+    return result;
   }
 
   // --- computation -------------------------------------------------------------
 
   ComputedStyle _compute(Element e, {String? pseudo, ComputedStyle? origin, List<Declaration>? extra}) {
+    _ensureStyleCaches();
     const profile = bool.fromEnvironment('NATIVAX_RENDER_PROFILE', defaultValue: false);
     final watch = profile ? (Stopwatch()..start()) : null;
     computeCount++;
@@ -480,6 +659,15 @@ class StyleEngine {
       parent = _styles[parentEl] ??= _compute(parentEl);
     } else {
       parent = null;
+    }
+    String? styleCacheKey;
+    if (extra == null) {
+      styleCacheKey = _elementSignature(e, pseudo: pseudo, parent: parent, structural: _needsStructuralKey(e));
+      final shared = _computedCache[styleCacheKey];
+      if (shared != null) {
+        styleCacheHits++;
+        return shared;
+      }
     }
     final root = document.documentElement;
     final rootStyle = (root == null || (pseudo == null && identical(root, e))) ? null : _styles[root];
@@ -612,6 +800,10 @@ class StyleEngine {
       if (blockified != display) out['display'] = Keyword(blockified);
     }
     final result = ComputedStyle(out, customProperties: custom);
+    if (styleCacheKey != null) {
+      if (_computedCache.length >= _maxCacheEntries) _computedCache.clear();
+      _computedCache[styleCacheKey] = result;
+    }
     if (watch != null && watch.elapsedMilliseconds >= 2) {
       // ignore: avoid_print
       print('STYLE_SLOW <${e.localName}${e.id.isEmpty ? '' : '#${e.id}'}> '
