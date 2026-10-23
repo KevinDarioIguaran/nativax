@@ -1,0 +1,15 @@
+{
+  "app": "/home/k3vin/Documents/bible/app (copy, original untouched)",
+  "build": "flutter build linux --profile",
+  "firstContentMs": 314,
+  "styleMetrics": {
+    "samples": 1284,
+    "ownMs": 440.9,
+    "avgUs": 343,
+    "selectorsPerElement": 17.0,
+    "candidatesPerElement": 17.0,
+    "cacheHits": 13,
+    "window": "2 s metrics timer"
+  },
+  "note": "After pseudo-rule buckets and never-rendered tag skipping. First content 314 ms; subsequent frames 373/242 ms (still above 50 ms)."
+}

@@ -79,4 +79,24 @@ void main() {
     expect(engine.styleOf(li[1]).color, const CssColor(0xff0000ff));
     expect(identical(engine.styleOf(li[0]), engine.styleOf(li[1])), isFalse);
   });
+
+  test('pseudo rules are indexed by their subject class', () {
+    final b = StringBuffer('<!doctype html><html><body>');
+    for (var i = 0; i < 120; i++) {
+      b.write('<div class="p$i"></div>');
+    }
+    b.write('</body></html>');
+    final css = StringBuffer();
+    for (var i = 0; i < 120; i++) {
+      css.write('.p$i:before{content:"icon-$i"}');
+    }
+    final (doc, engine) = _doc(b.toString(), css.toString());
+    final el = doc.querySelector('.p77')!;
+    expect(engine.pseudoStyleOf(el, 'before')!.content!.resolve((_) => null), 'icon-77');
+    expect(engine.pseudoStyleOf(doc.querySelector('.p78')!, 'before')!.content!.resolve((_) => null),
+        'icon-78');
+    expect(engine.selectorEvaluations, lessThan(500),
+        reason: 'pseudo matching must use the subject index, not all 120 rules');
+  });
+
 }

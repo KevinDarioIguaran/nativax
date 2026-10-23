@@ -28,6 +28,59 @@ class _Match {
   final Declaration declaration;
 }
 
+/// Indexed candidate rules for one pseudo-element kind. The subject is the
+/// rightmost compound, exactly like Blink's RuleSet buckets.
+class _RuleBuckets {
+  final Map<String, List<_IndexedRule>> byId = {};
+  final Map<String, List<_IndexedRule>> byClass = {};
+  final Map<String, List<_IndexedRule>> byTag = {};
+  final List<_IndexedRule> universal = [];
+
+  bool get isEmpty =>
+      byId.isEmpty && byClass.isEmpty && byTag.isEmpty && universal.isEmpty;
+
+  void add(_IndexedRule ir) {
+    final parts = ir.selector.subject.parts;
+    final id = parts.whereType<IdSelector>().firstOrNull;
+    final cls = parts.whereType<ClassSelector>().firstOrNull;
+    final tag = parts.whereType<TypeSelector>().firstOrNull;
+    if (id != null) {
+      byId.putIfAbsent(id.id, () => []).add(ir);
+    } else if (cls != null) {
+      byClass.putIfAbsent(cls.name, () => []).add(ir);
+    } else if (tag != null) {
+      byTag.putIfAbsent(tag.name, () => []).add(ir);
+    } else {
+      universal.add(ir);
+    }
+  }
+
+  Iterable<_IndexedRule> candidates(Element e) sync* {
+    yield* universal;
+    yield* byTag[e.localName] ?? const [];
+    final id = e.getAttribute('id');
+    if (id != null) yield* byId[id] ?? const [];
+    for (final c in e.classList) {
+      yield* byClass[c] ?? const [];
+    }
+  }
+}
+
+class _StyleSample {
+  _StyleSample(this.element);
+  final Element element;
+  final Stopwatch watch = Stopwatch();
+  int selectorStart = 0;
+  int candidateStart = 0;
+  int cacheHitStart = 0;
+  int totalUs = 0;
+  int childUs = 0;
+  int ownUs = 0;
+  int selectors = 0;
+  int candidates = 0;
+  bool cacheHit = false;
+}
+
 /// Resolves computed styles for a document and keeps them up to date
 /// incrementally.
 ///
@@ -76,7 +129,7 @@ class StyleEngine {
   final Map<String, List<_IndexedRule>> _hoverByTag = {};
   final List<_IndexedRule> _hoverUniversal = [];
   final List<_IndexedRule> _universal = [];
-  final Map<String, List<_IndexedRule>> _pseudoRules = {};
+  final Map<String, _RuleBuckets> _pseudoBuckets = {};
   final Map<String, KeyframesRule> _keyframes = {};
 
   /// The active `@keyframes` rule named [name] (the last one wins).
@@ -126,6 +179,14 @@ class StyleEngine {
   int matchedCacheMisses = 0;
   int styleCacheHits = 0;
   final Map<String, int> computesByTag = {};
+
+  /// Opt-in per-element style profiler. The host enables it with
+  /// `NATIVAX_METRICS=1`; production leaves it off.
+  bool metricsEnabled = false;
+  int candidateRules = 0;
+  final List<_StyleSample> _styleSamples = [];
+  final List<_StyleSample> _styleStack = [];
+
 
   /// Matched declarations and computed styles shared by elements with the
   /// same signature (tag/id/classes/attributes) and the same parent style.
@@ -276,19 +337,21 @@ class StyleEngine {
   /// `before`/`after` the caller must still check that `content` generates
   /// a box.
   ComputedStyle? pseudoStyleOf(Element element, String pseudo) {
-    final rules = _pseudoRules[pseudo];
-    if (rules == null || rules.isEmpty) return null;
+    final buckets = _pseudoBuckets[pseudo];
+    if (buckets == null || buckets.isEmpty) return null;
     final origin = styleOf(element);
     final cache = _pseudoStyles.putIfAbsent(element, () => {});
     if (cache.containsKey(pseudo)) return cache[pseudo];
-    final any = rules.any((r) => r.selector.matchesPseudo(element, pseudo));
+    final any = buckets
+        .candidates(element)
+        .any((r) => r.selector.matchesPseudo(element, pseudo));
     final style = any ? _compute(element, pseudo: pseudo, origin: origin) : null;
     cache[pseudo] = style;
     return style;
   }
 
   /// Whether any rule styles [pseudo]; lets renderers skip lookups.
-  bool hasPseudoRules(String pseudo) => _pseudoRules[pseudo]?.isNotEmpty ?? false;
+  bool hasPseudoRules(String pseudo) => _pseudoBuckets[pseudo]?.isEmpty == false;
 
   /// Marks styles affected by [record] dirty.
   void handleMutation(MutationRecord record) {
@@ -442,6 +505,54 @@ class StyleEngine {
     return _compute(element, extra: extra);
   }
 
+  String metricsSummary() {
+    if (!metricsEnabled || _styleSamples.isEmpty) return 'style metrics: off';
+    final own = _styleSamples.fold<int>(0, (a, s) => a + s.ownUs);
+    final top = List<_StyleSample>.of(_styleSamples)
+      ..sort((a, b) => b.ownUs.compareTo(a.ownUs));
+    final b = StringBuffer(
+        'STYLE_METRICS samples=${_styleSamples.length} '
+        'ownMs=${(own / 1000).toStringAsFixed(1)} '
+        'avgUs=${(own / _styleSamples.length).toStringAsFixed(0)} '
+        'selectorsPer=${(selectorEvaluations / _styleSamples.length).toStringAsFixed(1)} '
+        'candidatesPer=${(candidateRules / _styleSamples.length).toStringAsFixed(1)} '
+        'hits=$styleCacheHits');
+    for (final s in top.take(10)) {
+      b.write(' | ${s.element.localName}'
+          '${s.element.id.isEmpty ? '' : '#${s.element.id}'} '
+          'own=${s.ownUs}us sel=${s.selectors} cand=${s.candidates}'
+          '${s.cacheHit ? ' hit' : ''}');
+    }
+    return b.toString();
+  }
+
+  Map<String, Object?> metricsJson() {
+    final own = _styleSamples.fold<int>(0, (a, s) => a + s.ownUs);
+    final top = List<_StyleSample>.of(_styleSamples)
+      ..sort((a, b) => b.ownUs.compareTo(a.ownUs));
+    return {
+      'samples': _styleSamples.length,
+      'ownMs': own / 1000,
+      'avgOwnUs': _styleSamples.isEmpty ? 0 : own / _styleSamples.length,
+      'selectorsPerElement':
+          _styleSamples.isEmpty ? 0 : selectorEvaluations / _styleSamples.length,
+      'candidatesPerElement':
+          _styleSamples.isEmpty ? 0 : candidateRules / _styleSamples.length,
+      'cacheHits': styleCacheHits,
+      'top': [
+        for (final s in top.take(12))
+          {
+            'tag': s.element.localName,
+            'id': s.element.id,
+            'ownUs': s.ownUs,
+            'selectors': s.selectors,
+            'candidates': s.candidates,
+            'cacheHit': s.cacheHit,
+          }
+      ],
+    };
+  }
+
   List<bool> _evaluateMedia() {
     final state = <bool>[];
     void walk(List<CssRule> rules) {
@@ -469,7 +580,7 @@ class StyleEngine {
     _hoverByTag.clear();
     _hoverUniversal.clear();
     _universal.clear();
-    _pseudoRules.clear();
+    _pseudoBuckets.clear();
     _pseudoStyles.clear();
     _keyframes.clear();
     _usesHover = false;
@@ -568,7 +679,7 @@ class StyleEngine {
         }
         final pseudo = sel.pseudoElement;
         if (pseudo != null) {
-          _pseudoRules.putIfAbsent(pseudo, () => []).add(ir);
+          _pseudoBuckets.putIfAbsent(pseudo, () => _RuleBuckets()).add(ir);
           continue;
         }
         final parts = sel.subject.parts;
@@ -629,9 +740,10 @@ class StyleEngine {
     }
     matchedCacheMisses++;
     final matches = <_Match>[];
-    void consider(List<_IndexedRule>? rules) {
+    void consider(Iterable<_IndexedRule>? rules) {
       if (rules == null) return;
       for (final r in rules) {
+        candidateRules++;
         selectorEvaluations++;
         if (pseudo == null ? !r.selector.matches(e) : !r.selector.matchesPseudo(e, pseudo)) continue;
         for (final d in r.declarations) {
@@ -644,7 +756,8 @@ class StyleEngine {
     }
 
     if (pseudo != null) {
-      consider(_pseudoRules[pseudo]);
+      final pseudoBuckets = _pseudoBuckets[pseudo];
+      if (pseudoBuckets != null) consider(pseudoBuckets.candidates(e));
     } else {
       consider(_universal);
       consider(_byTag[e.localName]);
@@ -697,6 +810,31 @@ class StyleEngine {
   // --- computation -------------------------------------------------------------
 
   ComputedStyle _compute(Element e, {String? pseudo, ComputedStyle? origin, List<Declaration>? extra}) {
+    if (!metricsEnabled) {
+      return _computeInner(e, pseudo: pseudo, origin: origin, extra: extra);
+    }
+    final sample = _StyleSample(e)
+      ..selectorStart = selectorEvaluations
+      ..candidateStart = candidateRules
+      ..cacheHitStart = styleCacheHits;
+    sample.watch.start();
+    _styleStack.add(sample);
+    try {
+      return _computeInner(e, pseudo: pseudo, origin: origin, extra: extra);
+    } finally {
+      sample.watch.stop();
+      sample.totalUs = sample.watch.elapsedMicroseconds;
+      sample.ownUs = sample.totalUs - sample.childUs;
+      sample.selectors = selectorEvaluations - sample.selectorStart;
+      sample.candidates = candidateRules - sample.candidateStart;
+      sample.cacheHit = styleCacheHits > sample.cacheHitStart;
+      _styleStack.removeLast();
+      if (_styleStack.isNotEmpty) _styleStack.last.childUs += sample.totalUs;
+      if (_styleSamples.length < 20000) _styleSamples.add(sample);
+    }
+  }
+
+  ComputedStyle _computeInner(Element e, {String? pseudo, ComputedStyle? origin, List<Declaration>? extra}) {
     _ensureStyleCaches();
     const profile = bool.fromEnvironment('NATIVAX_RENDER_PROFILE', defaultValue: false);
     final watch = profile ? (Stopwatch()..start()) : null;

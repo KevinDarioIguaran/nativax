@@ -64,6 +64,8 @@ void main() async {
 
   runtime.styleEngine.useStyleCaches =
       Platform.environment['NATIVAX_NO_STYLE_CACHE'] != '1';
+  runtime.styleEngine.metricsEnabled =
+      Platform.environment['NATIVAX_METRICS'] == '1';
   print(
     'PHASE create=${createWatch.elapsedMilliseconds}ms '
     'nodes=${runtime.document.querySelectorAll('*').length} '
@@ -346,6 +348,7 @@ class _BenchAppState extends State<BenchApp> {
         'renderObjects': _countRenderObjects(),
         'widgets': _countElements(),
         'createMs': widget.createMs,
+        'styleMetrics': widget.runtime.styleEngine.metricsJson(),
         'style': {
           'computes': widget.runtime.styleEngine.computeCount,
           'selectors': widget.runtime.styleEngine.selectorEvaluations,
@@ -376,6 +379,7 @@ class _BenchAppState extends State<BenchApp> {
       'renderObjects=${_countRenderObjects()} widgets=${_countElements()} '
       'documentHeight=${widget.runtime.document.layoutHost?.documentHeight.toStringAsFixed(0) ?? '-'} '
       'rss=${(ProcessInfo.currentRss / (1024 * 1024)).toStringAsFixed(1)}MB '
+      '${widget.runtime.styleEngine.metricsSummary()} '
       'types=${_renderObjectTypes()} '
       '${LayoutProfile.summary()}',
     );

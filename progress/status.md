@@ -1,8 +1,27 @@
 # Estado actual
 
 Última actualización: 2026-10-24 (layout + CSS, estabilización).
-Tests: **344** en total (`./tools/test_all.sh`, exit 0), incluidos 12 de
+Tests: **346** en total (`./tools/test_all.sh`, exit 0), incluidos 12 de
 virtualización, 5 de caché de estilo y los fixtures de render.
+
+## CSS style cost — 2026-10-24
+
+- Causa raíz: `pseudoStyleOf` evaluaba todas las reglas `::before/::after`
+  para cada elemento (Font Awesome, 600 iconos). Se indexaron por sujeto con
+  `_RuleBuckets`; `pseudoStyleOf` y la cascada pseudo solo miran candidatos.
+- `NATIVAX_METRICS=1` añade métricas por elemento (µs propios, selectores,
+  candidatos, hit/miss) restando el tiempo anidado.
+- Se saltan `script/style/head/title/meta/link/noscript/template` antes de
+  `styleOf`.
+- Medido: fixture sintético **1.089 → 442 ms**; style **0,038 ms/elemento** y
+  1,1 selectores/elemento. Biblia **1.842 → 314 ms** primer contenido; style
+  **0,343 ms/elemento**, 17 selectores/elemento. list 10k **440 ms**, flex
+  10k **611 ms** (426 parseo/JS), article updateAll **26 ms/frame**.
+- Biblia sigue con frames de población de 242–429 ms; ahora domina layout.
+- `./tools/test_all.sh` exit 0; analyze limpio. WPT css/selectors no medido:
+  `.conformance/suites/wpt` ausente en este checkout. JSON en
+  `benchmarks/results/style-*.json`; detalle en
+  `progress/reports/render-stress-latest.md`.
 
 ## Layout + CSS — 2026-10-24
 
