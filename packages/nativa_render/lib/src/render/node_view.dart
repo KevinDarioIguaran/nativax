@@ -27,6 +27,7 @@ import 'control_glyphs.dart';
 import 'fieldset.dart';
 import 'svg.dart';
 import 'render_types.dart';
+import 'draw_trace.dart';
 
 /// Tags that never generate a box. They are excluded before asking the style
 /// engine, so scripts/styles in real pages do not pay selector matching.
@@ -116,6 +117,27 @@ class _RenderElementAnchor extends RenderProxyBox with CssElementBoundary {
   void attach(PipelineOwner owner) {
     super.attach(owner);
     elementRenderBoxes[_element] = this;
+  }
+
+  @override
+  void performLayout() {
+    super.performLayout();
+    if (NativaXDrawTrace.enabled) {
+      NativaXDrawTrace.log(
+          'LAYOUT ${NativaXDrawTrace.describe(_element)} '
+          'size=${size.width.toStringAsFixed(1)}x${size.height.toStringAsFixed(1)}');
+    }
+  }
+
+  @override
+  void paint(PaintingContext context, Offset offset) {
+    if (NativaXDrawTrace.enabled) {
+      NativaXDrawTrace.log(
+          'PAINT ${NativaXDrawTrace.describe(_element)} '
+          'offset=${offset.dx.toStringAsFixed(1)},${offset.dy.toStringAsFixed(1)} '
+          'size=${size.width.toStringAsFixed(1)}x${size.height.toStringAsFixed(1)}');
+    }
+    super.paint(context, offset);
   }
 
   @override
@@ -331,6 +353,7 @@ class _Builder {
   }
 
   Widget _buildItem(dom.Element element, {required bool parentFlex}) {
+    NativaXDrawTrace.log('BUILD ${NativaXDrawTrace.describe(element)}');
     final style = styleEngine.styleOf(element);
     // The animated box rebuilds with interpolated styles during CSS
     // transitions and animations; idle, it just builds the box.

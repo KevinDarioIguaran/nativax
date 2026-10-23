@@ -29,4 +29,9 @@ export 'package:nativa_js/nativa_js.dart'
         TimerLimits;
 export 'package:nativa_dom/nativa_dom.dart' show Document, Element, Event;
 export 'package:nativa_render/nativa_render.dart'
-    show NativaXDocumentView, NativaXImageResolver, nativaxDefaultFontFamily, nativaxFontFallback;
+    show
+        NativaXDocumentView,
+        NativaXDrawTrace,
+        NativaXImageResolver,
+        nativaxDefaultFontFamily,
+        nativaxFontFallback;
