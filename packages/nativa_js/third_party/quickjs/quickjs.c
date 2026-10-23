@@ -44,7 +44,9 @@
 
 #include "cutils.h"
 #include "list.h"
+#define ENABLE_DUMPS
 #include "quickjs.h"
+#include "nativax_jit.h"
 #include "libregexp.h"
 #include "dtoa.h"
 
@@ -888,6 +890,10 @@ typedef struct JSFunctionBytecode {
     int pc2line_len;
     uint8_t *pc2line_buf;
     char *source;
+    /* Optional JIT entry point (NativaJS). NULL in the interpreter-only
+       build or when the function has not been compiled. Owned by the JIT
+       subsystem; freed when the bytecode is freed. */
+    void *jit_code;
 } JSFunctionBytecode;
 
 typedef struct JSBoundFunction {
@@ -18164,7 +18170,23 @@ static JSValue JS_CallInternal(JSContext *caller_ctx, JSValueConst func_obj,
     pc = b->byte_code_buf;
     /* sf->cur_pc must we set to pc before any recursive calls to JS_CallInternal. */
     sf->cur_pc = NULL;
+
     sf->prev_frame = rt->current_stack_frame;
+
+    /* NativaJS: provide counts to portable entry functions. */
+    nx_jit_set_arg_count(sf->arg_count);
+    nx_jit_set_var_count(b->var_count);
+
+    /* NativaJS: if a JIT entry point exists, use it. */
+    if (b->jit_code) {
+        typedef JSValue (*NativaJitEntry)(JSContext *, JSFunctionBytecode *,
+                                          JSStackFrame *, JSValue *, JSValue *,
+                                          JSValue *, JSValue **);
+        JSValue jit_ret = ((NativaJitEntry)b->jit_code)(
+            ctx, b, sf, arg_buf, var_buf, stack_buf, &sp);
+        rt->current_stack_frame = sf->prev_frame;
+        return jit_ret;
+    }
     rt->current_stack_frame = sf;
     ctx = b->realm; /* set the current realm */
 
@@ -37151,6 +37173,27 @@ static JSValue js_create_function(JSContext *ctx, JSFunctionDef *fd)
 
     add_gc_object(ctx->rt, &b->header, JS_GC_OBJ_TYPE_FUNCTION_BYTECODE);
 
+    /* NativaJS: attempt to compile the bytecode to native code. Trivial
+       constant-return cases are compiled for now. */
+    if (b->byte_code_len == 1 && b->byte_code_buf[0] == OP_return_undef) {
+        b->jit_code = nx_jit_compile_return_undef();
+    } else if (b->byte_code_len == 6 && b->byte_code_buf[0] == OP_push_i32 &&
+               b->byte_code_buf[5] == OP_return) {
+        uint32_t imm = *(uint32_t *)(b->byte_code_buf + 1);
+        b->jit_code = nx_jit_compile_return_i32((int32_t)imm);
+    } else if (b->byte_code_len == 2 && b->byte_code_buf[1] == OP_return &&
+               b->byte_code_buf[0] >= OP_push_0 && b->byte_code_buf[0] <= OP_push_7) {
+        b->jit_code = nx_jit_compile_return_i32(b->byte_code_buf[0] - OP_push_0);
+    } else if (b->byte_code_len == 2 && b->byte_code_buf[0] == OP_get_loc0 &&
+               b->byte_code_buf[1] == OP_return) {
+        b->jit_code = nx_jit_compile_return_loc0();
+    } else if (b->byte_code_len == 2 && b->byte_code_buf[0] == OP_get_arg0 &&
+               b->byte_code_buf[1] == OP_return) {
+        b->jit_code = nx_jit_compile_return_arg0();
+    } else {
+        b->jit_code = NULL;
+    }
+
 #ifdef ENABLE_DUMPS // JS_DUMP_BYTECODE_FINAL
     if (check_dump_flag(ctx->rt, JS_DUMP_BYTECODE_FINAL))
         js_dump_function_bytecode(ctx, b);
@@ -37174,6 +37217,8 @@ static void free_function_bytecode(JSRuntime *rt, JSFunctionBytecode *b)
 {
     int i;
 
+    if (b->jit_code)
+        nx_jit_free_code(b->jit_code);
     if (b->byte_code_buf)
         free_bytecode_atoms(rt, b->byte_code_buf, b->byte_code_len, true);
 
@@ -39785,6 +39830,24 @@ static JSValue JS_ReadFunctionTag(BCReaderState *s)
     memcpy(b, &bc, sizeof(*b));
     bc.func_name = JS_ATOM_NULL;
     JS_REF_COUNT(b) = 1;
+    if (b->byte_code_len == 1 && b->byte_code_buf[0] == OP_return_undef) {
+        b->jit_code = nx_jit_compile_return_undef();
+    } else if (b->byte_code_len == 6 && b->byte_code_buf[0] == OP_push_i32 &&
+               b->byte_code_buf[5] == OP_return) {
+        uint32_t imm = *(uint32_t *)(b->byte_code_buf + 1);
+        b->jit_code = nx_jit_compile_return_i32((int32_t)imm);
+    } else if (b->byte_code_len == 2 && b->byte_code_buf[1] == OP_return &&
+               b->byte_code_buf[0] >= OP_push_0 && b->byte_code_buf[0] <= OP_push_7) {
+        b->jit_code = nx_jit_compile_return_i32(b->byte_code_buf[0] - OP_push_0);
+    } else if (b->byte_code_len == 2 && b->byte_code_buf[0] == OP_get_loc0 &&
+               b->byte_code_buf[1] == OP_return) {
+        b->jit_code = nx_jit_compile_return_loc0();
+    } else if (b->byte_code_len == 2 && b->byte_code_buf[0] == OP_get_arg0 &&
+               b->byte_code_buf[1] == OP_return) {
+        b->jit_code = nx_jit_compile_return_arg0();
+    } else {
+        b->jit_code = NULL;
+    }
     if (local_count != 0) {
         b->vardefs = (void *)((uint8_t*)b + vardefs_offset);
     }

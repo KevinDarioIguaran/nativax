@@ -81,6 +81,7 @@ const String _hostPrelude = r'''
 /// script state. Instances must be used from the isolate that created them.
 final class QuickJsEngine implements JavaScriptEngine {
   QuickJsEngine([this.config = const JavaScriptEngineConfig()]) {
+    b.nx_jit_init();
     _callback = NativeCallable<b.NxHostCallbackNative>.isolateLocal(_onHost);
     _rt = b.nx_runtime_new(
       _nextId++,

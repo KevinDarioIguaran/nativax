@@ -117,6 +117,17 @@ external int nx_surface_create();
 @Native<Void Function(Int64)>()
 external void nx_surface_retain(int id);
 
+// Optional JIT (nativax_jit.c). Always available as symbols; return 0/false
+// when the backend is not compiled in (NATIVAX_JIT != 1).
+@Native<Int32 Function()>()
+external int nx_jit_available();
+
+@Native<Void Function()>()
+external void nx_jit_init();
+
+@Native<Int64 Function()>()
+external int nx_jit_code_bytes();
+
 @Native<Void Function(Int64)>()
 external void nx_surface_release(int id);
 
