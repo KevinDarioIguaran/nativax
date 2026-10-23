@@ -6,8 +6,8 @@
 class LayoutProfile {
   LayoutProfile._();
 
-  static const bool enabled =
-      bool.fromEnvironment('NATIVAX_RENDER_PROFILE', defaultValue: false);
+  static bool enabled =
+      const bool.fromEnvironment('NATIVAX_RENDER_PROFILE', defaultValue: false);
 
   static final Map<String, _Bucket> _buckets = {};
   static final List<_Entry> _stack = [];
