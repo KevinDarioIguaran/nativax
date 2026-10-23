@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import 'dart:ui' as ui;
 
 import 'package:flutter/foundation.dart';
@@ -5,7 +6,7 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
-import 'package:nativa_css/nativa_css.dart';
+import 'package:nativa_css/nativa_css.dart' hide MediaQuery;
 import 'package:nativa_dom/nativa_dom.dart' as dom;
 
 import '../layout/css_block.dart';
@@ -16,6 +17,9 @@ import '../layout/css_item.dart';
 import '../layout/css_sticky.dart';
 import '../layout/preferred_width.dart';
 import '../layout/css_transform.dart';
+import '../layout/virtualization.dart';
+import '../layout/layout_profile.dart';
+import '../layout/layout_timed.dart';
 import '../style_mapping.dart';
 import 'animation.dart';
 import 'canvas2d.dart';
@@ -50,6 +54,7 @@ class NativeXNodeView extends StatelessWidget {
   Widget build(BuildContext context) {
     final builder = _Builder(
       styleEngine: styleEngine,
+      context: context,
       imageResolver: imageResolver,
       onDiagnostic: onDiagnostic,
     );
@@ -68,7 +73,7 @@ class NativeXNodeView extends StatelessWidget {
 
 /// The render box drawn for each element, for layout queries from script
 /// (`getBoundingClientRect`, `offsetWidth`, `scrollIntoView`, observers).
-final Expando<RenderBox> elementRenderBoxes = Expando('nativax.renderBox');
+/// Declared in `virtualization.dart` so the virtual window can measure slots.
 
 class _ElementAnchor extends SingleChildRenderObjectWidget {
   const _ElementAnchor({required this.element, super.child});
@@ -174,7 +179,12 @@ class NativeXLayerView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final builder = _Builder(styleEngine: styleEngine, imageResolver: imageResolver, onDiagnostic: onDiagnostic);
+    final builder = _Builder(
+      styleEngine: styleEngine,
+      context: context,
+      imageResolver: imageResolver,
+      onDiagnostic: onDiagnostic,
+    );
     if (!modal) return builder._absoluteWidget(element);
     final style = styleEngine.styleOf(element);
     final backdrop = styleEngine.pseudoStyleOf(element, 'backdrop');
@@ -219,11 +229,13 @@ class NativeXLayerView extends StatelessWidget {
 class _Builder {
   _Builder({
     required this.styleEngine,
+    required this.context,
     this.imageResolver,
     this.onDiagnostic,
   });
 
   final StyleEngine styleEngine;
+  final BuildContext context;
   final NativaXImageResolver? imageResolver;
   final NativaXDiagnostic? onDiagnostic;
 
@@ -285,6 +297,7 @@ class _Builder {
   bool _isInline(Object c) => c is dom.Text || (styleOfChild(c)?.isInlineLevel ?? false);
 
   Widget buildItem(dom.Element element, {required bool parentFlex}) {
+    NativeXBuildStats.elementBuilds++;
     final style = styleEngine.styleOf(element);
     // The animated box rebuilds with interpolated styles during CSS
     // transitions and animations; idle, it just builds the box.
@@ -549,6 +562,12 @@ class _Builder {
       case 'iframe':
         return _placeholder(element, style);
     }
+    final virtual = _virtualContent(element, style);
+    if (virtual != null) return virtual;
+    return _normalContent(element, style);
+  }
+
+  Widget _normalContent(dom.Element element, ComputedStyle style) {
     final all = [for (final c in children(element)) if (!_skipped(c)) c];
     final absolute = all.where(_isAbsolute).toList();
     final normal = all.where((c) => !_isAbsolute(c)).toList();
@@ -604,6 +623,216 @@ class _Builder {
     }
     if (absolute.isEmpty) return content;
     return _positioned(element, content, absolute);
+  }
+
+  /// Returns a virtualized layout for a large in-flow container, or null when
+  /// the container is small or uses a feature the approximation cannot keep
+  /// faithful (generated content, absolute children, inline runs).
+  ///
+  /// The virtual layer is the NativaX equivalent of Blink's display lock: only
+  /// the slots in the viewport (plus overscan) are built, so offscreen DOM
+  /// elements have neither a render object nor a computed style.
+  Widget? _virtualContent(dom.Element element, ComputedStyle style) {
+    final isGrid = style.isGridContainer;
+    final isFlex = style.isFlexContainer;
+    if (!isGrid &&
+        !isFlex &&
+        style.display != Display.block &&
+        style.display != Display.listItem) {
+      return null;
+    }
+    if (isFlex || isGrid) {
+      if (element.localName == 'body' ||
+          element.localName == 'html' ||
+          element.localName == 'fieldset') {
+        return null;
+      }
+    } else if (element.localName == 'body' ||
+        element.localName == 'html' ||
+        element.localName == 'fieldset') {
+      return null;
+    }
+    // Overlays, modal layers and fixed HUDs keep their real boxes; estimating
+    // them (or a child of them) breaks hit testing and geometry queries.
+    if (style.position == 'fixed' || style.position == 'absolute') return null;
+    final optOut = element.getAttribute('data-nativa-virtual') ??
+        element.getAttribute('data-nv-virtual');
+    if (optOut == 'off' || optOut == 'false') return null;
+    final inline = element.getAttribute('style') ?? '';
+    if (inline.contains('content-visibility: visible') ||
+        inline.contains('content-visibility:visible')) {
+      return null;
+    }
+    if (_pseudo(element, 'before') != null || _pseudo(element, 'after') != null) {
+      return null;
+    }
+    final slots = <dom.Element>[];
+    for (final child in element.children) {
+      if (const {'script', 'style', 'template', 'noscript', 'head', 'link', 'meta'}
+          .contains(child.localName)) {
+        continue;
+      }
+      final s = child.getAttribute('style');
+      if (s != null &&
+          (s.contains('position:absolute') ||
+              s.contains('position: absolute') ||
+              s.contains('position:fixed') ||
+              s.contains('position: fixed') ||
+              s.contains('display:contents') ||
+              s.contains('display: contents'))) {
+        return null;
+      }
+      slots.add(child);
+    }
+    for (final node in element.childNodes) {
+      if (node is dom.Text && node.data.trim().isNotEmpty) return null;
+    }
+    if (slots.length < 40) return null;
+
+    if (style.isGridContainer) {
+      final scope = NativaXViewportScope.maybeOf(context);
+      final width = scope?.viewportWidth ??
+          MediaQuery.maybeSizeOf(context)?.width ??
+          800;
+      final gap = _px(style.columnGap) ?? 0;
+      final columns = gridColumnCount(style.gridTemplateColumns, width, gap);
+      if (columns < 2) return _normalContent(element, style);
+      final rows = (slots.length + columns - 1) ~/ columns;
+      final rowGap = _px(style.rowGap) ?? 0;
+      List<dom.Element> rowElements(int row) {
+        final start = row * columns;
+        final end = math.min(slots.length, start + columns);
+        return start >= end ? const [] : slots.sublist(start, end);
+      }
+
+      final owner = <dom.Element, (int, int)>{};
+      for (var r = 0; r < rows; r++) {
+        final row = rowElements(r);
+        for (var c = 0; c < row.length; c++) {
+          owner[row[c]] = (r, c);
+        }
+      }
+      return CssVirtualBlock(
+        key: ValueKey('virtual-grid-${identityHashCode(element)}'),
+        container: element,
+        styleEngine: styleEngine,
+        debugName: 'grid',
+        count: rows,
+        columns: columns,
+        columnGap: gap,
+        elementsAt: rowElements,
+        estimate: (i) => _structuralEstimate(rowElements(i)),
+        extraHeight: (_) => rowGap,
+        indexOfElement: (e) => owner[e]?.$1,
+        rowOfElement: (e) => owner[e]?.$1,
+        columnOfElement: (e) => owner[e]?.$2,
+        itemBuilder: (context, i) {
+          final row = rowElements(i);
+          return CssGridLayout(
+            key: ValueKey('virtual-grid-row-${identityHashCode(element)}-$i'),
+            columns: style.gridTemplateColumns,
+            rows: style.gridTemplateRows,
+            autoColumns: [for (final e in style.gridAutoColumns.entries) ...e.tracks],
+            autoRows: [for (final e in style.gridAutoRows.entries) ...e.tracks],
+            areas: style.gridTemplateAreas,
+            autoFlow: style.gridAutoFlow,
+            rowGap: ResolvedLength.zero,
+            columnGap: style.columnGap,
+            justifyItems: style.justifyItems,
+            alignItems: style.alignItems,
+            justifyContent: style.justifyContent,
+            alignContent: style.alignContent,
+            children: [for (final e in row) buildItem(e, parentFlex: true)],
+          );
+        },
+        layoutBuilder: (context, children) => CssBlockFlow(
+          collapseTop: false,
+          collapseBottom: false,
+          children: children,
+        ),
+      );
+    }
+
+    if (style.isFlexContainer) {
+      if (_isRow(style.flexDirection) ||
+          style.flexWrap != 'nowrap' ||
+          !const {'normal', 'flex-start', 'start', 'stretch'}
+              .contains(style.justifyContent)) {
+        return null;
+      }
+      return CssVirtualBlock(
+        key: ValueKey('virtual-flex-${identityHashCode(element)}'),
+        container: element,
+        styleEngine: styleEngine,
+        debugName: 'flex',
+        count: slots.length,
+        elementsAt: (i) => [slots[i]],
+        estimate: (i) => _structuralEstimate([slots[i]]),
+        indexOfElement: (e) {
+          final i = slots.indexOf(e);
+          return i < 0 ? null : i;
+        },
+        itemBuilder: (context, i) => buildItem(slots[i], parentFlex: true),
+        layoutBuilder: (context, children) => CssFlexLayout(
+          direction: Axis.vertical,
+          reverse: false,
+          wrap: 'nowrap',
+          justifyContent: _justify(style.justifyContent),
+          alignItems: _align(style.alignItems),
+          rowGap: style.rowGap,
+          columnGap: style.columnGap,
+          children: children,
+        ),
+      );
+    }
+
+    final collapse = !_establishesBfc(element, style);
+    return CssVirtualBlock(
+      key: ValueKey('virtual-block-${identityHashCode(element)}'),
+      container: element,
+      styleEngine: styleEngine,
+      debugName: 'block',
+      count: slots.length,
+      elementsAt: (i) => [slots[i]],
+      estimate: (i) => _structuralEstimate([slots[i]]),
+      indexOfElement: (e) {
+        final i = slots.indexOf(e);
+        return i < 0 ? null : i;
+      },
+      itemBuilder: (context, i) => buildItem(slots[i], parentFlex: false),
+      layoutBuilder: (context, children) => CssBlockFlow(
+        collapseTop: collapse && _noEdge(style, 'top'),
+        collapseBottom: collapse &&
+            _noEdge(style, 'bottom') &&
+            style.height == null &&
+            !style.minHeight.isPercent &&
+            style.minHeight.value == 0,
+        children: children,
+      ),
+    );
+  }
+
+  /// Structural height hint used before a slot is measured. It never asks the
+  /// style engine for offscreen elements.
+  double _structuralEstimate(List<dom.Element> elements) {
+    if (elements.isEmpty) return 40;
+    final e = elements.first;
+    final text = e.textContent.trim();
+    final tag = e.localName;
+    final charsPerLine = tag == 'h1' || tag == 'h2' || tag == 'h3' ? 48.0 : 78.0;
+    final lines = text.isEmpty ? 1 : (text.length / charsPerLine).ceil().clamp(1, 40);
+    final lineHeight = switch (tag) {
+      'h1' => 44.0,
+      'h2' => 32.0,
+      'h3' => 28.0,
+      'p' => 26.0,
+      _ => 24.0,
+    };
+    final padding = switch (tag) {
+      'p' => 0.0,
+      _ => 20.0,
+    };
+    return lines * lineHeight + padding;
   }
 
   /// Whether [element] starts a new block formatting context, which keeps
@@ -751,7 +980,7 @@ class _Builder {
         ),
       );
     }
-    if (vertical) return SingleChildScrollView(child: child);
+    if (vertical) return NativaXVirtualScrollView(child: child);
     if (horizontal) {
       return SingleChildScrollView(
         scrollDirection: Axis.horizontal,
@@ -1407,7 +1636,7 @@ class _InlineTextState extends State<_InlineText> {
 
     final ellipsis = widget.style.textOverflow == 'ellipsis' && widget.style.overflowX != 'visible';
     final noWrap = widget.style.whiteSpace == 'pre' || widget.style.whiteSpace == 'nowrap';
-    return Text.rich(
+    final text = Text.rich(
       TextSpan(children: spans),
       style: textStyleFor(widget.style),
       textAlign: textAlignFor(widget.style),
@@ -1415,6 +1644,7 @@ class _InlineTextState extends State<_InlineText> {
       maxLines: ellipsis && noWrap ? 1 : null,
       overflow: ellipsis ? TextOverflow.ellipsis : TextOverflow.clip,
     );
+    return LayoutProfile.enabled ? LayoutTimed(kind: 'text', child: text) : text;
   }
 
   void _visit(

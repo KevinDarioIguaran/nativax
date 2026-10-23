@@ -6,6 +6,7 @@ import 'package:flutter/widgets.dart';
 import 'package:nativa_css/nativa_css.dart';
 
 import 'css_item.dart';
+import 'layout_profile.dart';
 
 /// A grid container implementing the supported subset of CSS Grid Layout:
 ///
@@ -24,6 +25,43 @@ import 'css_item.dart';
 /// contributions, maximize, expand flexible tracks, stretch auto tracks)
 /// with one simplification: items spanning several tracks distribute their
 /// extra size equally over the spanned intrinsic tracks.
+/// Number of columns a grid template expands to for [available] pixels.
+///
+/// Returns 0 when the template cannot be resolved without laying out content
+/// (for example an `auto` track inside `repeat(auto-fit, ...)`), which makes
+/// the caller fall back to normal layout instead of guessing.
+int gridColumnCount(GridTracksValue? template, double available, double gap) {
+  if (template == null || available <= 0) return 0;
+  var count = 0;
+  for (final entry in template.entries) {
+    if (entry.auto == null) {
+      count += entry.count * entry.tracks.length;
+      continue;
+    }
+    var minSize = 0.0;
+    for (final track in entry.tracks) {
+      final breadth = track.min;
+      if (breadth.kind != 'length') return 0;
+      final value = breadth.length;
+      double? px;
+      if (value is Length) {
+        px = value.unit == LengthUnit.percent
+            ? available * value.value / 100
+            : value.value;
+      } else if (value is CalcLength) {
+        px = value.node.evaluate(available);
+      }
+      if (px == null || px <= 0) return 0;
+      minSize += px;
+    }
+    minSize += gap * (entry.tracks.length - 1);
+    final repeats = ((available + gap) / (minSize + gap)).floor();
+    if (repeats < 1) return 0;
+    count += repeats * entry.tracks.length;
+  }
+  return count;
+}
+
 class CssGridLayout extends MultiChildRenderObjectWidget {
   const CssGridLayout({
     super.key,
@@ -753,11 +791,12 @@ class RenderCssGrid extends RenderBox
 
   @override
   void performLayout() {
-    size = _run(constraints, dry: false);
+    size = LayoutProfile.measure('grid.layout', () => _run(constraints, dry: false));
   }
 
   @override
-  Size computeDryLayout(covariant BoxConstraints constraints) => _run(constraints, dry: true);
+  Size computeDryLayout(covariant BoxConstraints constraints) =>
+      LayoutProfile.measure('grid.dry', () => _run(constraints, dry: true));
 
   double _intrinsicWidth({required bool min}) {
     final (colTemplate, _) = _expand(_columns, null, 0);

@@ -6,6 +6,7 @@ import 'package:flutter/widgets.dart';
 import 'package:nativa_css/nativa_css.dart';
 
 import 'css_item.dart';
+import 'layout_profile.dart';
 
 /// Normal flow for block-level children: stacked vertically, auto-width
 /// children fill the line, `margin: auto` centers fixed-width children, and
@@ -181,11 +182,12 @@ class RenderCssBlock extends RenderBox
 
   @override
   void performLayout() {
-    size = _run(constraints, dry: false);
+    size = LayoutProfile.measure('block.layout', () => _run(constraints, dry: false));
   }
 
   @override
-  Size computeDryLayout(covariant BoxConstraints constraints) => _run(constraints, dry: true);
+  Size computeDryLayout(covariant BoxConstraints constraints) =>
+      LayoutProfile.measure('block.dry', () => _run(constraints, dry: true));
 
   double _fixedMargins(CssItemParentData pd, {required bool horizontal}) {
     double px(ResolvedLength? m) => (m != null && !m.isPercent) ? m.value : 0.0;

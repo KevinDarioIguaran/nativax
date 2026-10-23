@@ -412,6 +412,10 @@ class ComputedStyle {
   }
 
   String get gridAutoFlow => _kw('grid-auto-flow');
+
+  /// Author `content-visibility` value (`visible`, `auto`, `hidden`), or an
+  /// empty string when the declaration is absent.
+  String get contentVisibility => this['content-visibility'].toString().trim().toLowerCase();
   GridLineValue get gridRowStart => this['grid-row-start'] as GridLineValue;
   GridLineValue get gridRowEnd => this['grid-row-end'] as GridLineValue;
   GridLineValue get gridColumnStart => this['grid-column-start'] as GridLineValue;

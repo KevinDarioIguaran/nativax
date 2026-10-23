@@ -6,6 +6,7 @@ import 'package:flutter/widgets.dart';
 import 'package:nativa_css/nativa_css.dart' hide MediaQuery;
 
 import 'css_item.dart';
+import 'layout_profile.dart';
 
 /// The CSS box model inputs for one element, derived from its
 /// [ComputedStyle]. Percentages stay unresolved until layout, where
@@ -303,11 +304,12 @@ class RenderCssBox extends RenderBox with RenderObjectWithChildMixin<RenderBox> 
 
   @override
   void performLayout() {
-    size = _layout(constraints, dry: false);
+    size = LayoutProfile.measure('box.layout', () => _layout(constraints, dry: false));
   }
 
   @override
-  Size computeDryLayout(covariant BoxConstraints constraints) => _layout(constraints, dry: true);
+  Size computeDryLayout(covariant BoxConstraints constraints) =>
+      LayoutProfile.measure('box.dry', () => _layout(constraints, dry: true));
 
   double _fixedOr(ResolvedLength? l, double extra, double Function() content) {
     if (l != null && !l.isPercent) return _spec.borderBox ? math.max(l.value, extra) : l.value + extra;
