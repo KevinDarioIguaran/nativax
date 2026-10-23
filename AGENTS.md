@@ -54,6 +54,7 @@ adapter correction is not a product compatibility gain.
 ## Skills
 
 The shared skill library is `.agents/skills`. OpenCode discovers it directly.
+Claude Code uses the symlinked copies under `.claude/skills`.
 
 | Skill | Use when |
 |---|---|

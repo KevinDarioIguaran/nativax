@@ -4,12 +4,16 @@ This directory is the shared skill library for agents working on Nativa. It is
 not a flat notes folder: every skill has a `SKILL.md` entry point and private
 reference files that load only when the skill is used.
 
-## How the harness sees it
+## How the two harnesses see it
 
 - **OpenCode V2** discovers `.agents/skills/<id>/SKILL.md` as a project
   compatibility source. It advertises each skill by its directory ID and loads
   the body on demand.
-- `AGENTS.md` is the always-on entry instructions. It points
+- **Claude Code** discovers `.claude/skills/<id>/SKILL.md`. The directories
+  under `.claude/skills` are symlinks to the canonical skills in
+  `.agents/skills`, so there is one source of truth. Claude Code officially
+  supports symlinked skill directories.
+- `AGENTS.md` and `CLAUDE.md` are the always-on entry instructions. They point
   here; the detailed references stay out of the context until a skill loads.
 
 ## Tree
@@ -94,7 +98,7 @@ reference files that load only when the skill is used.
   extensions belong in the harness-specific directories only when needed.
 - Keep directory IDs lowercase kebab-case and stable; the ID is how the skill
   is loaded.
-- If a skill moves, update `AGENTS.md`, this README, and any agent-specific
-  entry files that remain in the checkout.
+- If a skill moves, update `AGENTS.md`, `CLAUDE.md`, this README, and the
+  `.claude/skills` symlinks.
 - Prefer current, reproducible facts over historical prose. Live numbers belong
   in `progress/status.md`.
