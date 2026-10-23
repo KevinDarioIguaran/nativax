@@ -45,6 +45,21 @@ class LayoutProfile {
     _stack.clear();
   }
 
+  static Map<String, Object?> toJson() {
+    if (!enabled || _buckets.isEmpty) return const {};
+    final out = <String, Object?>{};
+    for (final e in _buckets.entries) {
+      final s = e.value;
+      out[e.key] = {
+        'calls': s.calls,
+        'selfMs': s.selfUs / 1000,
+        'totalMs': s.totalUs / 1000,
+        'maxMs': s.maxUs / 1000,
+      };
+    }
+    return out;
+  }
+
   static String summary() {
     if (!enabled || _buckets.isEmpty) return 'layout profile: no data';
     final entries = _buckets.entries.toList()

@@ -298,6 +298,16 @@ class _Builder {
 
   Widget buildItem(dom.Element element, {required bool parentFlex}) {
     NativeXBuildStats.elementBuilds++;
+    if (!LayoutProfile.enabled) return _buildItem(element, parentFlex: parentFlex);
+    LayoutProfile.begin('widget.buildItem');
+    try {
+      return _buildItem(element, parentFlex: parentFlex);
+    } finally {
+      LayoutProfile.end();
+    }
+  }
+
+  Widget _buildItem(dom.Element element, {required bool parentFlex}) {
     final style = styleEngine.styleOf(element);
     // The animated box rebuilds with interpolated styles during CSS
     // transitions and animations; idle, it just builds the box.
@@ -690,10 +700,7 @@ class _Builder {
     if (slots.length < 40) return null;
 
     if (style.isGridContainer) {
-      final scope = NativaXViewportScope.maybeOf(context);
-      final width = scope?.viewportWidth ??
-          MediaQuery.maybeSizeOf(context)?.width ??
-          800;
+      final width = _availableWidth(element);
       final gap = _px(style.columnGap) ?? 0;
       final columns = gridColumnCount(style.gridTemplateColumns, width, gap);
       if (columns < 2) return _normalContent(element, style);
@@ -712,6 +719,7 @@ class _Builder {
           owner[row[c]] = (r, c);
         }
       }
+      NativaXRenderProfile.log('VIRT_CREATE grid <${element.localName} id=${element.id} class=${element.className}> slots=$rows');
       return CssVirtualBlock(
         key: ValueKey('virtual-grid-${identityHashCode(element)}'),
         container: element,
@@ -760,6 +768,7 @@ class _Builder {
               .contains(style.justifyContent)) {
         return null;
       }
+      NativaXRenderProfile.log('VIRT_CREATE flex <${element.localName} id=${element.id} class=${element.className}> slots=${slots.length}');
       return CssVirtualBlock(
         key: ValueKey('virtual-flex-${identityHashCode(element)}'),
         container: element,
@@ -787,6 +796,7 @@ class _Builder {
     }
 
     final collapse = !_establishesBfc(element, style);
+    NativaXRenderProfile.log('VIRT_CREATE block <${element.localName} id=${element.id} class=${element.className}> slots=${slots.length}');
     return CssVirtualBlock(
       key: ValueKey('virtual-block-${identityHashCode(element)}'),
       container: element,
@@ -810,6 +820,46 @@ class _Builder {
         children: children,
       ),
     );
+  }
+
+  /// Best-effort available width for a virtualized grid. It uses the viewport
+  /// width and subtracts fixed ancestor padding/borders and fixed-width
+  /// siblings of flex rows. This is only used to choose the grid's column
+  /// count before layout; the real layout still constrains every row.
+  double _availableWidth(dom.Element element) {
+    var width = NativaXViewportScope.maybeOf(context)?.viewportWidth ??
+        MediaQuery.maybeSizeOf(context)?.width ??
+        800;
+    for (dom.Element? e = element; e != null; e = e.parentElement) {
+      final s = styleEngine.styleOf(e);
+      for (final side in const ['left', 'right']) {
+        width -= s.borderWidthOf(side);
+        final p = s.paddingOf(side);
+        if (!p.isPercent) width -= p.value;
+        final m = s.marginOf(side);
+        if (m != null && !m.isPercent) width -= m.value;
+      }
+      final declared = _px(s.width);
+      if (declared != null) width = math.min(width, declared);
+      final parent = e.parentElement;
+      if (parent == null) break;
+      final ps = styleEngine.styleOf(parent);
+      if (ps.isFlexContainer && _isRow(ps.flexDirection)) {
+        final gap = _px(ps.columnGap) ?? 0;
+        for (final sibling in parent.children) {
+          if (identical(sibling, e)) continue;
+          final ss = styleEngine.styleOf(sibling);
+          final sw = _px(ss.width);
+          if (sw != null) width -= sw;
+          for (final side in const ['left', 'right']) {
+            final m = ss.marginOf(side);
+            if (m != null && !m.isPercent) width -= m.value;
+          }
+        }
+        width -= gap;
+      }
+    }
+    return math.max(120, width);
   }
 
   /// Structural height hint used before a slot is measured. It never asks the
@@ -1250,7 +1300,7 @@ class _Builder {
             );
     }
     final pointer = style.cursor == 'pointer' || clickable;
-    if (styleEngine.usesHover || pointer || style.cursor != 'auto') {
+    if (styleEngine.mayHover(element) || pointer || style.cursor != 'auto') {
       final doc = element.ownerDocument;
       result = MouseRegion(
         cursor: _cursor(style.cursor, clickable),

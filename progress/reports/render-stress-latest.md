@@ -91,3 +91,91 @@ autorizó inicialmente.
 `virtualization_test.dart` cubre: RenderObjects constantes con N, scroll rápido
 y al final, scroll anchoring, `#hash`/`scrollIntoView`, focus, mutación fuera de
 vista, inserción/borrado en medio, resize y presupuesto de 20k filas.
+
+## Layout + CSS — 2026-10-24
+
+Objetivo autorizado: optimizar layout y CSS con un fixture sintético genérico;
+la Biblia solo valida, no guía el código.
+
+### Fixture sintético
+
+`tools/benchmark/bin/generate_tailwind_fixture.dart 800` genera:
+- **801 cajas**, viewport lleno, flex anidado, grid de tarjetas, texto largo,
+  bordes y sombras.
+- **~4.300 reglas** (3.000 utilidades sintéticas + 600 iconos + app), no
+  basadas en ninguna app real.
+- JSON de perfil: `benchmarks/results/render-tailwind-baseline.json` y
+  `render-tailwind-current.json`.
+
+Comando:
+
+```bash
+flutter build linux --profile
+NATIVAX_LAYOUT_PROFILE=1 \
+NATIVAX_BENCH_FILE=/tmp/nativa-bench/tailwind_800.html \
+NATIVAX_SCENARIO=load NATIVAX_FRAMES_MS=300 \
+NATIVAX_JSON=/tmp/tailwind.json \
+  ./render_benchmark
+```
+
+| Fase / métrica | Baseline | Ahora |
+|---|---:|---:|
+| Primer frame | 1.089 ms | **876–904 ms** |
+| `create` (parse + JS) | 186 ms | 171–177 ms |
+| Style: `computeCount` | 732 | 628–732 |
+| Style: selectores evaluados | 34.015 | **29.472** |
+| Selectores/elemento | ~42,5 | ~36,8 |
+| `renderObjects` | 1.375 | 1.121–1.273 |
+| `widgets` | 2.579 | 2.232–2.384 |
+| `box.layout` calls / total | 815 / 654 ms | 717 / 581 ms |
+| `flex.layout` calls / total | 432 / 473 ms | 370 / 415 ms |
+| `text.intrinsic` calls / total | 1.814 / 53 ms | 1.502 / 44 ms |
+| `paint` (box+flex+text) | ~110 ms | ~105 ms |
+
+Metas del paso 1/2/3:
+- Fixture sintético <500 ms: **no cumplida** (876–904 ms).
+- Selectores/elemento >10× menos en el fixture: **no cumplida** en este
+  fixture (34.015 → 29.472, 1,15×). En el fixture `flex-grid` (clases
+  repetidas) sí se midió **3.176 → 60 selectores**, 52×, por la caché de
+  declaraciones/estilo.
+- `<= 2` pasadas de layout por RenderObject en el primer frame: no se cumple;
+  `box.layout` 717 para 279 `RenderCssBox` (~2,6), `flex.layout` 370 para 112
+  `RenderCssFlex` (~3,3).
+- Mutaciones: `invalidateDeferred` evita estilos de nodos fuera de vista;
+  article updateAll 2.017 → 39 estilos.
+
+### Qué domina ahora
+
+El primer frame sintético sigue dominado por **layout** (`box.layout` 581 ms,
+`flex.layout` 415 ms inclusive), no por CSS matching (los selectores son ~36
+por elemento) ni por paint (~105 ms). El intento de cachear intrínsecos en
+`RenderCssBox` no movió la métrica y se revirtió. El siguiente paso real es
+cachear `LayoutResult` por `(constraints, estilo)` y reducir los límites de
+relayout; también corregir el ancho disponible del grid virtual (el estimador
+por ancestros bajó el primer frame de 1.055 a 897 ms, pero aún no es exacto).
+
+### Regresiones estabilizadas
+
+- Estilo perezoso: se invalidan descendientes al cambiar una clase de un
+  ancestro aunque el estilo del ancestro no cambie. Test:
+  `lazy style invalidates descendants when an ancestor class changes`.
+- `position: fixed`: el walk encuentra elementos fijos después de >50
+  hermanos. Test: `fixed elements after many siblings are still found`.
+- Fuga de estilos: al salir de la ventana virtual se descarta
+  `ComputedStyle`; test de 120 ciclos de scroll/mutación con
+  `cachedStyleCount < 300` y RSS acotado.
+- OOM de QuickJS: no se reprodujo en una corrida de 10 s tras la evicción;
+  queda pendiente una corrida larga con heap del motor.
+
+### Validación Biblia (app real, copia sin tocar la original)
+
+| Métrica | Valor |
+|---|---:|
+| `RUNTIME_READY` (HTML+CSS+JS) | 926–1.092 ms |
+| Primer contenido | **1.842 ms** (`build=1.749`) |
+| Siguiente frame | **2.793 ms** (`build=2.565`) |
+| Frames posteriores | 593 ms, 224 ms |
+
+No cumple <500 ms. El cuello es layout/paint de ~800 RenderObjects visibles
+con el CSS real; no es JS ni la virtualización. Con el CSS real la página mide
+~795 px: no hay contenido fuera de vista que virtualizar.

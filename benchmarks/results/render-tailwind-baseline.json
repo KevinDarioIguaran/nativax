@@ -1,0 +1,118 @@
+{
+  "summary": {
+    "scenario": "load",
+    "frames": 4,
+    "over50": 1,
+    "p95Ms": 56,
+    "maxMs": 56
+  },
+  "metrics": {
+    "nodes": 801,
+    "renderObjects": 1375,
+    "widgets": 2579,
+    "createMs": 186,
+    "style": {
+      "computes": 732,
+      "selectors": 34015,
+      "matchedHits": 0,
+      "matchedMisses": 732,
+      "styleHits": 0,
+      "cachedStyles": 284,
+      "subtreePasses": 0
+    },
+    "layout": {
+      "widget.buildItem": {
+        "calls": 1190,
+        "selfMs": 11.19,
+        "totalMs": 11.19,
+        "maxMs": 0.105
+      },
+      "text.intrinsic": {
+        "calls": 1814,
+        "selfMs": 50.325,
+        "totalMs": 50.325,
+        "maxMs": 9.374
+      },
+      "text.layout": {
+        "calls": 518,
+        "selfMs": 23.729,
+        "totalMs": 59.112,
+        "maxMs": 10.391
+      },
+      "box.layout": {
+        "calls": 815,
+        "selfMs": 38.42,
+        "totalMs": 641.564,
+        "maxMs": 123.4
+      },
+      "flex.layout": {
+        "calls": 432,
+        "selfMs": 7.491,
+        "totalMs": 459.31,
+        "maxMs": 123.405
+      },
+      "block.layout": {
+        "calls": 11,
+        "selfMs": 0.245,
+        "totalMs": 214.861,
+        "maxMs": 123.397
+      },
+      "text.dry": {
+        "calls": 910,
+        "selfMs": 2.136,
+        "totalMs": 2.136,
+        "maxMs": 0.067
+      },
+      "box.dry": {
+        "calls": 1105,
+        "selfMs": 0.99,
+        "totalMs": 11.856,
+        "maxMs": 0.189
+      },
+      "flex.dry": {
+        "calls": 585,
+        "selfMs": 2.596,
+        "totalMs": 8.794,
+        "maxMs": 0.188
+      },
+      "grid.layout": {
+        "calls": 13,
+        "selfMs": 0.818,
+        "totalMs": 32.945,
+        "maxMs": 3.968
+      },
+      "text.paint": {
+        "calls": 930,
+        "selfMs": 5.662,
+        "totalMs": 6.041,
+        "maxMs": 0.122
+      },
+      "box.paint": {
+        "calls": 1469,
+        "selfMs": 3.617,
+        "totalMs": 62.841,
+        "maxMs": 6.899
+      },
+      "flex.paint": {
+        "calls": 731,
+        "selfMs": 1.074,
+        "totalMs": 37.988,
+        "maxMs": 6.9
+      },
+      "block.paint": {
+        "calls": 12,
+        "selfMs": 0.097,
+        "totalMs": 26.48,
+        "maxMs": 6.893
+      },
+      "grid.paint": {
+        "calls": 23,
+        "selfMs": 0.1,
+        "totalMs": 8.392,
+        "maxMs": 0.658
+      }
+    },
+    "rssMb": 257.44140625,
+    "documentHeight": 11300.0
+  }
+}
