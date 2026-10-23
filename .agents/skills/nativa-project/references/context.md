@@ -35,8 +35,9 @@ map and extraction criteria.
    `Stack`, `Flex`, and similar), not a browser surface.
 2. HTML and CSS use in-house parsers; regex over markup is not a general
    solution.
-3. JavaScript is real JavaScript. A JIT is not required because iOS does not
-   allow one.
+3. JavaScript is real JavaScript. QuickJS-ng is the portable fallback; a JIT
+   engine (V8 or JavaScriptCore) is allowed where the platform permits it.
+   iOS keeps QuickJS because third-party JIT is not available there.
 4. Explicit limits cover memory, stack, time, nodes, and storage.
 5. Public APIs are small and documented. Host errors do not leak internal
    details to scripts.

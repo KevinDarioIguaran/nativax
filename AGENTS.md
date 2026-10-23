@@ -19,8 +19,10 @@ Chromium, CEF, Electron, or a local HTTP server for presentation.
   `nativa_render` → Flutter widgets/RenderObjects.
 - Never add `webview_flutter`, `flutter_inappwebview`, `HtmlElementView`,
   Chromium, CEF, Electron, or a browser fallback.
-- JavaScript is real QuickJS-ng without JIT; never replace it with a toy
-  interpreter or text search.
+- JavaScript must run on a real JS engine. QuickJS-ng is the default and the
+  fallback where JIT is unavailable (for example iOS). A V8 or JavaScriptCore
+  JIT backend is allowed behind the same `JavaScriptEngine` contract; never
+  replace the engine with a toy interpreter or text search.
 - Scripts receive only ids, scalars, and JSON; never Dart objects or `JSValue`.
 - Every new feature needs a test. A conformance `SKIP` never counts as
   compatibility.
