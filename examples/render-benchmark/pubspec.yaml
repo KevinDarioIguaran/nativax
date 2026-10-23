@@ -1,0 +1,33 @@
+name: render_benchmark
+description: Profile benchmark for NativaX large documents.
+publish_to: 'none'
+version: 1.0.0+1
+resolution: workspace
+
+environment:
+  sdk: ^3.10.0
+
+dependencies:
+  flutter:
+    sdk: flutter
+  nativax:
+    path: ../../packages/nativax
+  nativa_render:
+    path: ../../packages/nativa_render
+  nativa_css:
+    path: ../../packages/nativa_css
+  nativa_dom_bindings:
+    path: ../../packages/nativa_dom_bindings
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/ten_thousand_nodes.html
+    - assets/realistic_2000.html
+    - assets/realistic_10000.html
+    - assets/bible_reader.html

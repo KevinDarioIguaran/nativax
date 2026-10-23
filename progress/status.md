@@ -1,8 +1,28 @@
 # Estado actual
 
-Última actualización: 2026-10-21 (reorganización Nativa y skills de agentes).
-Tests: **317** en total (`./tools/test_all.sh`), incluido el probe de juego
-real, el test de estadísticas de presentación y el test del scaffold JIT.
+Última actualización: 2026-10-23 (virtualización del renderer).
+Tests: **336** en total (`./tools/test_all.sh`, exit 0), incluidos 9 tests
+nuevos de virtualización y los tests de fixtures de render.
+
+## Virtualización del renderer — 2026-10-23
+
+- `CssVirtualBlock` materializa solo viewport + overscan; el resto no tiene
+  `RenderObject` ni estilo computado. Placeholders constantes, altura estimada
+  y corregida con scroll anchoring.
+- Activa en block, flex column y grid por filas con muchos hijos; opt-out con
+  `data-nativa-virtual="off"`.
+- Scroll anidado y del documento; `#hash`, `scrollIntoView`, `focus()`,
+  `boxOf`/`getBoundingClientRect` materializan el nodo antes de medir.
+- `StyleEngine.lazySubtrees` + invalidación diferida para mutaciones fuera de
+  vista; flex column reutiliza el layout real y evita una pasada dry.
+- Medido en profile/AOT: list 10k **4.037 → 420 ms** (RenderObjects
+  30.095 → 120), flex 10k **3.672 → 630 ms** (183 ms de render + 447 ms de
+  parseo/JS; 55.072 → 517), article 2k updateAll **129 → 33 ms**
+  (6.069 → 133). Biblia: **sigue sin cumplir** (primer contenido 1,82–2,09 s;
+  frames 2,6–6,3 s). El bloqueo es layout/paint de ~800 nodos visibles con el
+  CSS real; no es JS. Detalle y comandos: `progress/reports/render-stress-latest.md`.
+- `./tools/test_all.sh` exit 0; `dart analyze` en `nativa_css` y
+  `flutter analyze` en `nativa_render` limpios.
 
 ## Resumen
 

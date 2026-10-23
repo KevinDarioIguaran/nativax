@@ -10,6 +10,8 @@ import 'package:nativa_dom/nativa_dom.dart' as dom;
 import 'canvas2d.dart';
 import 'node_view.dart';
 import 'render_types.dart';
+import '../layout/virtualization.dart';
+import '../layout/layout_profile.dart';
 
 /// Renders a NativaX [dom.Document] with Flutter widgets.
 ///
@@ -49,8 +51,10 @@ class _NativaXDocumentViewState extends State<NativaXDocumentView> implements do
   final Set<String> _reported = {};
   bool _scheduled = false;
   bool _disposed = false;
+  bool _diagnosedBuild = false;
   void Function(String href, dom.Element anchor)? _previousNavigate;
   void Function(dom.Element form)? _previousSubmit;
+  void Function(dom.Element? element)? _previousFocusRequest;
 
   final GlobalKey _rootKey = GlobalKey();
   final CanvasRegistry _canvases = CanvasRegistry();
@@ -61,14 +65,36 @@ class _NativaXDocumentViewState extends State<NativaXDocumentView> implements do
   @override
   void initState() {
     super.initState();
+    // Virtualized subtrees are styled on demand; computing the whole document
+    // up front would defeat the display-lock equivalent.
+    widget.styleEngine.lazySubtrees = true;
+    LayoutProfile.reset();
     widget.document.layoutHost = this;
     widget.document.canvasHost = _canvases;
     _scroll.addListener(_onScroll);
     widget.document.addMutationListener(_onMutation);
     _previousNavigate = widget.document.onNavigate;
     _previousSubmit = widget.document.onSubmit;
+    _previousFocusRequest = widget.document.onFocusRequest;
+    widget.document.onFocusRequest = _onFocusRequest;
     if (widget.onNavigate != null) widget.document.onNavigate = widget.onNavigate;
     if (widget.onSubmit != null) widget.document.onSubmit = widget.onSubmit;
+  }
+
+  /// `element.focus()` from script may target an element that is currently
+  /// outside the materialized window. Blink activates the display lock for
+  /// script focus; here we materialize the slot and scroll it into view.
+  void _onFocusRequest(dom.Element? element) {
+    _previousFocusRequest?.call(element);
+    if (element == null) return;
+    final owner = virtualOwner[element];
+    if (owner == null || owner.isMaterialized(element)) return;
+    owner.ensureBuilt(element);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      scrollIntoView(element);
+    });
+    WidgetsBinding.instance.scheduleFrame();
   }
 
   @override
@@ -79,6 +105,8 @@ class _NativaXDocumentViewState extends State<NativaXDocumentView> implements do
       if (identical(oldWidget.document.layoutHost, this)) oldWidget.document.layoutHost = null;
       widget.document.addMutationListener(_onMutation);
       widget.document.layoutHost = this;
+      widget.styleEngine.lazySubtrees = true;
+      widget.document.onFocusRequest = _onFocusRequest;
     }
     if (oldWidget.onNavigate != widget.onNavigate) {
       widget.document.onNavigate = widget.onNavigate ?? _previousNavigate;
@@ -102,22 +130,59 @@ class _NativaXDocumentViewState extends State<NativaXDocumentView> implements do
     if (widget.onSubmit != null) {
       widget.document.onSubmit = _previousSubmit;
     }
+    if (identical(widget.document.onFocusRequest, _onFocusRequest)) {
+      widget.document.onFocusRequest = _previousFocusRequest;
+    }
     _revision.dispose();
     _scroll.dispose();
     super.dispose();
   }
 
   void _onMutation(dom.MutationRecord record) {
-    widget.styleEngine.handleMutation(record);
+    if (_shouldDeferMutation(record)) {
+      final target = record.target;
+      final element = target is dom.Element ? target : target.parentElement;
+      if (element != null) widget.styleEngine.invalidateDeferred(element);
+    } else {
+      widget.styleEngine.handleMutation(record);
+    }
     if (_scheduled) return;
     _scheduled = true;
     scheduleMicrotask(_flush);
   }
 
+  /// Mutations inside a virtualized, non-materialized element can update only
+  /// the DOM and drop the style cache. The element is computed when it enters
+  /// the viewport.
+  ///
+  /// Selectors whose subject can be affected by a sibling (`class`, `id`,
+  /// `hidden`, inline `style`, child lists) stay eager: they may change the
+  /// container or a sibling that is visible.
+  bool _shouldDeferMutation(dom.MutationRecord record) {
+    if (record.type == dom.MutationType.childList) return false;
+    final target = record.target;
+    final element = target is dom.Element ? target : target.parentElement;
+    if (element == null) return false;
+    final owner = virtualOwner[element];
+    if (owner == null || owner.hasBox(element)) return false;
+    if (record.type == dom.MutationType.attributes) {
+      const eager = {'class', 'id', 'hidden', 'style'};
+      if (eager.contains(record.name)) return false;
+    }
+    return true;
+  }
+
   void _flush() {
     _scheduled = false;
     if (_disposed || !mounted) return;
-    widget.styleEngine.recompute();
+    final watch = Stopwatch()..start();
+    final changed = widget.styleEngine.recompute();
+    watch.stop();
+    NativaXRenderProfile.log(
+      'FLUSH style=${watch.elapsedMilliseconds}ms changed=${changed.length} '
+      'computes=${widget.styleEngine.computeCount} '
+      'subtreePasses=${widget.styleEngine.subtreePasses}',
+    );
     setState(() {});
   }
 
@@ -148,6 +213,11 @@ class _NativaXDocumentViewState extends State<NativaXDocumentView> implements do
       );
     }
     if (elementRenderBoxes[element] == null) {
+      final virtual = virtualOwner[element];
+      if (virtual != null) {
+        final estimated = virtual.estimatedBoxOf(element);
+        if (estimated != null) return estimated;
+      }
       final inline = _inlineBox(element, root);
       if (inline != null) return inline;
     }
@@ -274,8 +344,18 @@ class _NativaXDocumentViewState extends State<NativaXDocumentView> implements do
 
   @override
   void scrollIntoView(dom.Element element, {bool smooth = false, String block = 'start'}) {
-    // Layout may be pending (the script just changed the DOM).
+    // Layout may be pending (the script just changed the DOM). A virtualized
+    // target is materialized first, like Blink's display-lock activation for
+    // scrollIntoView, and the real box is used on the next frame.
+    var attempts = 0;
     void run() {
+      final owner = virtualOwner[element];
+      if (owner != null && !owner.hasBox(element) && attempts++ < 8) {
+        owner.ensureBuilt(element);
+        WidgetsBinding.instance.addPostFrameCallback((_) => run());
+        WidgetsBinding.instance.scheduleFrame();
+        return;
+      }
       final b = boxOf(element);
       if (b == null) return;
       scrollTo(0, b.offsetY - _scrollPaddingTop(), smooth: smooth);
@@ -425,6 +505,7 @@ class _NativaXDocumentViewState extends State<NativaXDocumentView> implements do
 
   @override
   Widget build(BuildContext context) {
+    final buildWatch = Stopwatch()..start();
     final mediaQuery = MediaQuery.maybeOf(context);
     final direction = Directionality.maybeOf(context) ?? TextDirection.ltr;
 
@@ -456,16 +537,21 @@ class _NativaXDocumentViewState extends State<NativaXDocumentView> implements do
 
           final content = body == null
               ? const SizedBox.shrink()
-              : Padding(
-                  padding: widget.padding,
-                  child: SizedBox(
-                    width: width,
-                    child: NativeXNodeView(
-                      element: body,
-                      isRoot: true,
-                      styleEngine: widget.styleEngine,
-                      imageResolver: widget.imageResolver,
-                      onDiagnostic: _diagnose,
+              : NativaXViewportScope(
+                  controller: _scroll,
+                  viewportHeight: height,
+                  viewportWidth: width,
+                  child: Padding(
+                    padding: widget.padding,
+                    child: SizedBox(
+                      width: width,
+                      child: NativeXNodeView(
+                        element: body,
+                        isRoot: true,
+                        styleEngine: widget.styleEngine,
+                        imageResolver: widget.imageResolver,
+                        onDiagnostic: _diagnose,
+                      ),
                     ),
                   ),
                 );
@@ -498,6 +584,21 @@ class _NativaXDocumentViewState extends State<NativaXDocumentView> implements do
             ),
           );
           final scroll = _dropTarget(scroll0);
+          final constructMs = buildWatch.elapsedMilliseconds;
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (!_diagnosedBuild) {
+              _diagnosedBuild = true;
+              NativaXRenderProfile.log(
+                'DOC_BUILD total=${buildWatch.elapsedMilliseconds}ms '
+                'construct=${constructMs}ms '
+                'fixed=${layers.length} nodes=${document.querySelectorAll('*').length} '
+                'builds=${NativeXBuildStats.elementBuilds} '
+                'computes=${widget.styleEngine.computeCount} '
+                'subtreePasses=${widget.styleEngine.subtreePasses}',
+              );
+              NativaXRenderProfile.log(LayoutProfile.summary());
+            }
+          });
           return Directionality(
             textDirection: direction,
             child: Focus(
@@ -525,12 +626,21 @@ class _NativaXDocumentViewState extends State<NativaXDocumentView> implements do
 
   /// `position: fixed` elements that are rendered (no `display: none`
   /// ancestor), excluding modal dialogs, which live in the top layer.
+  ///
+  /// The walk is bounded and does not descend into containers large enough to
+  /// be virtualized: styling every node of a 10.000-row list just to find a
+  /// fixed header would defeat the display lock. Fixed elements inside a
+  /// virtualized list must opt out with `data-nativa-virtual="off"` (a fixed
+  /// descendant of a virtually scrolled list is not meaningful anyway).
   List<dom.Element> _fixedElements(dom.Element? body) {
     final out = <dom.Element>[];
     if (body == null) return out;
     final modal = widget.document.modalElements.toSet();
+    var visited = 0;
     void walk(dom.Element e) {
       for (final c in e.children) {
+        if (++visited > 2000) return;
+        if (c.children.length >= 40) continue;
         final style = widget.styleEngine.styleOf(c);
         if (style.display == Display.none) continue;
         if (style.position == 'fixed') {

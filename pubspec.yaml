@@ -15,6 +15,7 @@ workspace:
   - packages/nativax
   - examples/web-challenge
   - examples/game-player
+  - examples/render-benchmark
   - tools/conformance
   - tools/benchmark
   - tools/leaks

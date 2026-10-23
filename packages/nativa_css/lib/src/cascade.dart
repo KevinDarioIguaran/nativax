@@ -60,6 +60,13 @@ class StyleEngine {
   final Set<Element> _dirtyRoots = {};
   bool _allDirty = true;
 
+  /// When true, [recompute] only computes the dirty roots (and their
+  /// ancestors) instead of every descendant. Descendants are computed on
+  /// demand by [styleOf], which is what makes it possible to skip style for
+  /// subtrees that a virtualized renderer has not materialized. The default
+  /// keeps the eager behavior expected by existing callers.
+  bool lazySubtrees = false;
+
   // Rule index by the subject compound's most selective simple selector.
   final Map<String, List<_IndexedRule>> _byId = {};
   final Map<String, List<_IndexedRule>> _byClass = {};
@@ -89,6 +96,8 @@ class StyleEngine {
 
   /// Counters for diagnostics and benchmarks.
   int computeCount = 0;
+  int subtreePasses = 0;
+  final Map<String, int> computesByTag = {};
 
   MediaContext get media => _media;
 
@@ -115,7 +124,9 @@ class StyleEngine {
   /// needed.
   ComputedStyle styleOf(Element element) {
     if (_allDirty || _dirtyRoots.isNotEmpty) recompute();
-    return _styles[element] ?? _compute(element);
+    final cached = _styles[element];
+    if (cached != null) return cached;
+    return _styles[element] = _compute(element);
   }
 
   /// The style of [element]'s [pseudo] pseudo-element (`before`, `after`,
@@ -172,8 +183,15 @@ class StyleEngine {
     }
   }
 
-  /// Marks [element] and its subtree for recomputation.
+  /// Marks [element] dirty, and its subtree for recomputation.
   void invalidate(Element element) => _markDirty(element);
+
+  /// Drops cached styles for [element] and its subtree without computing them.
+  ///
+  /// A virtualized renderer calls this for mutations in a subtree that has no
+  /// render object: the DOM is already updated and [styleOf] will compute the
+  /// fresh style when the element enters the viewport.
+  void invalidateDeferred(Element element) => _forget(element);
 
   void invalidateAll() => _allDirty = true;
 
@@ -208,19 +226,55 @@ class StyleEngine {
       _dirtyRoots.clear();
       final root = document.documentElement;
       _pseudoStyles.clear();
-      if (root != null) _computeSubtree(root, changed);
+      if (root != null) {
+        if (lazySubtrees) {
+          // A global invalidation (media change, new stylesheet) invalidates
+          // every cached style; they are recomputed on demand.
+          _styles.clear();
+          final style = _compute(root);
+          _styles[root] = style;
+          changed.add(root);
+        } else {
+          _computeSubtree(root, changed);
+        }
+      }
       _styles.removeWhere((e, _) => !e.isConnected);
       return changed;
     }
     final roots = List.of(_dirtyRoots);
     _dirtyRoots.clear();
     for (final r in roots) {
-      if (r.isConnected) _computeSubtree(r, changed);
+      if (!r.isConnected) continue;
+      if (lazySubtrees) {
+        final old = _styles[r];
+        final style = _compute(r);
+        _styles[r] = style;
+        if (old == null || old != style) changed.add(r);
+        // Selector dependencies below the dirty root (siblings, :has, :empty,
+        // inherited values) may have changed even when the root's own style is
+        // identical. Drop the cached descendants; they are recomputed on
+        // demand, so this stays lazy.
+        _forgetDescendantStyles(r);
+      } else {
+        _computeSubtree(r, changed);
+      }
     }
     return changed;
   }
 
+  /// Drops cached styles below [root] so they are recomputed on demand. The
+  /// root itself keeps its freshly computed style.
+  void _forgetDescendantStyles(Element root) {
+    for (final d in root.descendants) {
+      if (d is Element) {
+        _styles.remove(d);
+        _pseudoStyles.remove(d);
+      }
+    }
+  }
+
   void _computeSubtree(Element root, Set<Element> changed) {
+    subtreePasses++;
     final stack = <Element>[root];
     while (stack.isNotEmpty) {
       final e = stack.removeLast();
@@ -413,12 +467,20 @@ class StyleEngine {
   // --- computation -------------------------------------------------------------
 
   ComputedStyle _compute(Element e, {String? pseudo, ComputedStyle? origin, List<Declaration>? extra}) {
+    const profile = bool.fromEnvironment('NATIVAX_RENDER_PROFILE', defaultValue: false);
+    final watch = profile ? (Stopwatch()..start()) : null;
     computeCount++;
+    computesByTag[e.localName] = (computesByTag[e.localName] ?? 0) + 1;
     // A pseudo-element inherits from its originating element.
     final parentEl = pseudo != null ? e : e.parentElement;
-    final parent = pseudo != null
-        ? origin
-        : (parentEl == null ? null : (_styles[parentEl] ?? _compute(parentEl)));
+    final ComputedStyle? parent;
+    if (pseudo != null) {
+      parent = origin;
+    } else if (parentEl != null) {
+      parent = _styles[parentEl] ??= _compute(parentEl);
+    } else {
+      parent = null;
+    }
     final root = document.documentElement;
     final rootStyle = (root == null || (pseudo == null && identical(root, e))) ? null : _styles[root];
 
@@ -549,7 +611,13 @@ class StyleEngine {
       };
       if (blockified != display) out['display'] = Keyword(blockified);
     }
-    return ComputedStyle(out, customProperties: custom);
+    final result = ComputedStyle(out, customProperties: custom);
+    if (watch != null && watch.elapsedMilliseconds >= 2) {
+      // ignore: avoid_print
+      print('STYLE_SLOW <${e.localName}${e.id.isEmpty ? '' : '#${e.id}'}> '
+          '${watch.elapsedMilliseconds}ms tag=${e.localName}');
+    }
+    return result;
   }
 }
 

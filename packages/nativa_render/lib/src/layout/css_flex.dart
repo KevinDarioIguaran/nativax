@@ -5,6 +5,7 @@ import 'package:flutter/widgets.dart';
 import 'package:nativa_css/nativa_css.dart';
 
 import 'css_item.dart';
+import 'layout_profile.dart';
 
 /// A flex container implementing the CSS Flexible Box Layout algorithm
 /// (§9) for the supported subset: flex-basis/grow/shrink with min-size
@@ -74,6 +75,12 @@ class _Item {
   bool autoMainStart = false;
   bool autoMainEnd = false;
   Size size = Size.zero;
+  /// A real (non-dry) layout performed while measuring the base size. Column
+  /// flex containers reuse it when no flexible length changes the main size,
+  /// avoiding a second text/layout pass per item.
+  Size? measuredSize;
+  BoxConstraints? measuredConstraints;
+  double? measuredMain;
   double get outerHypothetical => hypothetical + mainStart + mainEnd;
   double get outerTarget => target + mainStart + mainEnd;
 }
@@ -148,6 +155,17 @@ class RenderCssFlex extends RenderBox
       return c.size;
     }
 
+    Size measureItem(_Item i, double? crossAvail) {
+      final measuredMain = i.measuredMain;
+      if (!dry &&
+          i.measuredSize != null &&
+          measuredMain != null &&
+          (i.target - measuredMain).abs() < 0.001) {
+        return i.measuredSize!;
+      }
+      return measure(i.child, _constraintsFor(i.target, 0, crossAvail));
+    }
+
     // 1. Collect items and determine hypothetical main sizes.
     final items = <_Item>[];
     for (var c = firstChild; c != null; c = (c.parentData! as CssItemParentData).nextSibling) {
@@ -185,7 +203,18 @@ class RenderCssFlex extends RenderBox
         final cc = stretchCross
             ? BoxConstraints.tightFor(width: crossAvail)
             : BoxConstraints(maxWidth: crossAvail);
-        item.base = c.getDryLayout(cc).height;
+        if (dry) {
+          item.base = c.getDryLayout(cc).height;
+        } else {
+          // Column flex can measure the real child here. Reusing this layout
+          // when no flexible length changes the main size avoids the duplicate
+          // dry pass (and its text intrinsic measurement) for the whole page.
+          c.layout(cc, parentUsesSize: true);
+          item.base = c.size.height;
+          item.measuredSize = c.size;
+          item.measuredConstraints = cc;
+          item.measuredMain = item.base;
+        }
       }
       // Automatic minimum size (min-width: auto): the min-content size on
       // the main axis for rows. Columns use 0 (documented simplification).
@@ -285,7 +314,7 @@ class RenderCssFlex extends RenderBox
       var cross = 0.0;
       for (final i in line) {
         final crossAvail = crossMax.isFinite ? math.max(0.0, crossMax - i.crossStart - i.crossEnd) : null;
-        i.size = measure(i.child, _constraintsFor(i.target, 0, crossAvail));
+        i.size = measureItem(i, crossAvail);
         cross = math.max(cross, _cross(i.size) + i.crossStart + i.crossEnd);
       }
       lineCross.add(cross);
@@ -382,11 +411,12 @@ class RenderCssFlex extends RenderBox
 
   @override
   void performLayout() {
-    size = _run(constraints, dry: false);
+    size = LayoutProfile.measure('flex.layout', () => _run(constraints, dry: false));
   }
 
   @override
-  Size computeDryLayout(covariant BoxConstraints constraints) => _run(constraints, dry: true);
+  Size computeDryLayout(covariant BoxConstraints constraints) =>
+      LayoutProfile.measure('flex.dry', () => _run(constraints, dry: true));
 
   double _px(ResolvedLength? m) => m == null || m.isPercent ? 0 : m.value;
 
