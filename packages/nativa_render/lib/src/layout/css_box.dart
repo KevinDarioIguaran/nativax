@@ -501,6 +501,8 @@ class RenderCssBox extends RenderBox with RenderObjectWithChildMixin<RenderBox> 
 
   @override
   void paint(PaintingContext context, Offset offset) {
+    LayoutProfile.begin('box.paint');
+    try {
     if (_spec.hasDecoration) {
       final decoration = _decorationFor(size);
       _painter ??= decoration.createBoxPainter(markNeedsPaint);
@@ -539,6 +541,9 @@ class RenderCssBox extends RenderBox with RenderObjectWithChildMixin<RenderBox> 
       );
     }
     _paintOutline(context.canvas, offset);
+    } finally {
+      LayoutProfile.end();
+    }
   }
 
   final LayerHandle<ContainerLayer> _clipLayer = LayerHandle<ContainerLayer>();

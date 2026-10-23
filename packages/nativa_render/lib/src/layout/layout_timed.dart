@@ -40,6 +40,16 @@ class RenderLayoutTimed extends RenderProxyBox {
   }
 
   @override
+  void paint(PaintingContext context, Offset offset) {
+    LayoutProfile.begin('$kind.paint');
+    try {
+      super.paint(context, offset);
+    } finally {
+      LayoutProfile.end();
+    }
+  }
+
+  @override
   Size computeDryLayout(covariant BoxConstraints constraints) =>
       LayoutProfile.measure('$kind.dry', () => child?.getDryLayout(constraints) ?? constraints.smallest);
 

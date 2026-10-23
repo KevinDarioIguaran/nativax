@@ -477,7 +477,8 @@ class RenderCssFlex extends RenderBox
       defaultComputeDistanceToHighestActualBaseline(baseline);
 
   @override
-  void paint(PaintingContext context, Offset offset) => paintStacked(context, offset);
+  void paint(PaintingContext context, Offset offset) =>
+      LayoutProfile.measure('flex.paint', () => paintStacked(context, offset));
 
   @override
   bool hitTestChildren(BoxHitTestResult result, {required Offset position}) =>

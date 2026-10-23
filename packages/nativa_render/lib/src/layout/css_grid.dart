@@ -840,7 +840,8 @@ class RenderCssGrid extends RenderBox
       defaultComputeDistanceToFirstActualBaseline(baseline);
 
   @override
-  void paint(PaintingContext context, Offset offset) => paintStacked(context, offset);
+  void paint(PaintingContext context, Offset offset) =>
+      LayoutProfile.measure('grid.paint', () => paintStacked(context, offset));
 
   @override
   bool hitTestChildren(BoxHitTestResult result, {required Offset position}) =>

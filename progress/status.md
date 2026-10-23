@@ -1,8 +1,30 @@
 # Estado actual
 
-Última actualización: 2026-10-23 (virtualización del renderer).
-Tests: **336** en total (`./tools/test_all.sh`, exit 0), incluidos 9 tests
-nuevos de virtualización y los tests de fixtures de render.
+Última actualización: 2026-10-24 (layout + CSS, estabilización).
+Tests: **344** en total (`./tools/test_all.sh`, exit 0), incluidos 12 de
+virtualización, 5 de caché de estilo y los fixtures de render.
+
+## Layout + CSS — 2026-10-24
+
+- Estabilización: invalidación de descendientes con estilo perezoso, walk de
+  `position: fixed` con presupuesto suficiente, y evicción de `ComputedStyle`
+  al salir de la ventana virtual (test de 120 ciclos; `cachedStyleCount < 300`).
+- CSS: `MatchedPropertiesCache` + `ComputedStyle` compartido por firma
+  (tag/id/clases/atributos/pseudo/estado), detección de selectores
+  estructurales, y buckets de `:hover` para no crear `MouseRegion` en todos
+  los nodos. Fixture `flex-grid`: **3.176 → 60 selectores** (52×).
+- Layout: estimación del ancho disponible por ancestros para el grid virtual;
+  primer frame sintético **1.089 → 876–904 ms**; `box.layout` 654 → 581 ms,
+  `flex.layout` 473 → 415 ms, `renderObjects` 1.375 → 1.121.
+- Fixture sintético nuevo (`tailwind-app`, 801 cajas, ~4.300 reglas) y JSON de
+  perfil en `benchmarks/results/render-tailwind-*.json`.
+- Metas: list 10k **397 ms** ✅; flex 10k **606 ms** (152 ms de render + 432 ms
+  de parseo/JS) ⚠️; article 2k updateAll **24 ms/frame** ✅; fixture sintético
+  **876–904 ms** ❌; Biblia **1.842 ms** primer contenido y **2.793 ms**
+  siguiente ❌. Domina layout, no JS.
+- `./tools/test_all.sh` exit 0; `dart analyze` en `nativa_css` y
+  `flutter analyze` en `nativa_render`/benchmark limpios. Detalle:
+  `progress/reports/render-stress-latest.md` y `docs/chromium-mapping.md`.
 
 ## Virtualización del renderer — 2026-10-23
 

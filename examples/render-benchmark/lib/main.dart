@@ -10,6 +10,7 @@
 // Scenarios: load (default), mutate, updateall, scroll, resize.
 // ignore_for_file: avoid_print
 import 'dart:async';
+import 'dart:convert';
 import 'dart:developer' as developer;
 import 'dart:io';
 
@@ -61,6 +62,8 @@ void main() async {
   createWatch.stop();
   developer.Timeline.finishSync();
 
+  runtime.styleEngine.useStyleCaches =
+      Platform.environment['NATIVAX_NO_STYLE_CACHE'] != '1';
   print(
     'PHASE create=${createWatch.elapsedMilliseconds}ms '
     'nodes=${runtime.document.querySelectorAll('*').length} '
@@ -265,6 +268,23 @@ class _BenchAppState extends State<BenchApp> {
     return count;
   }
 
+  String _renderObjectTypes() {
+    final counts = <String, int>{};
+    void visit(RenderObject o) {
+      final name = o.runtimeType.toString();
+      counts[name] = (counts[name] ?? 0) + 1;
+      o.visitChildren(visit);
+    }
+
+    for (final view in RendererBinding.instance.renderViews) {
+      final root = view.child;
+      if (root != null) visit(root);
+    }
+    final entries = counts.entries.toList()
+      ..sort((a, b) => b.value.compareTo(a.value));
+    return entries.take(10).map((e) => '${e.key}:${e.value}').join(',');
+  }
+
   int _countElements() {
     var count = 0;
     void visit(Element element) {
@@ -290,6 +310,7 @@ class _BenchAppState extends State<BenchApp> {
       _frameTotals.add(total);
       if (_first) {
         _first = false;
+        _writeJson({'firstFrame': _metrics(), 'frame': line});
         print('FIRST_FRAME $line nodes=${widget.runtime.document.querySelectorAll('*').length} '
             'renderObjects=${_countRenderObjects()} widgets=${_countElements()} '
             'create=${widget.createMs}ms builds=${NativeXBuildStats.elementBuilds} '
@@ -301,6 +322,7 @@ class _BenchAppState extends State<BenchApp> {
             'styleHit=${widget.runtime.styleEngine.styleCacheHits} '
             'cachedStyles=${widget.runtime.styleEngine.cachedStyleCount} '
             'struct=${widget.runtime.styleEngine.structuralInfo} '
+            'index=${widget.runtime.styleEngine.ruleIndexInfo} '
             'subtreePasses=${widget.runtime.styleEngine.subtreePasses} '
             'lazy=${widget.runtime.styleEngine.lazySubtrees} '
             'tags=${_topTags(widget.runtime.styleEngine.computesByTag)} '
@@ -308,6 +330,35 @@ class _BenchAppState extends State<BenchApp> {
       }
     }
   }
+
+  final String? _jsonPath = Platform.environment['NATIVAX_JSON'];
+
+  void _writeJson(Map<String, Object?> data) {
+    final path = _jsonPath;
+    if (path == null) return;
+    final file = File(path);
+    file.parent.createSync(recursive: true);
+    file.writeAsStringSync(const JsonEncoder.withIndent('  ').convert(data));
+  }
+
+  Map<String, Object?> _metrics() => {
+        'nodes': widget.runtime.document.querySelectorAll('*').length,
+        'renderObjects': _countRenderObjects(),
+        'widgets': _countElements(),
+        'createMs': widget.createMs,
+        'style': {
+          'computes': widget.runtime.styleEngine.computeCount,
+          'selectors': widget.runtime.styleEngine.selectorEvaluations,
+          'matchedHits': widget.runtime.styleEngine.matchedCacheHits,
+          'matchedMisses': widget.runtime.styleEngine.matchedCacheMisses,
+          'styleHits': widget.runtime.styleEngine.styleCacheHits,
+          'cachedStyles': widget.runtime.styleEngine.cachedStyleCount,
+          'subtreePasses': widget.runtime.styleEngine.subtreePasses,
+        },
+        'layout': LayoutProfile.toJson(),
+        'rssMb': ProcessInfo.currentRss / (1024 * 1024),
+        'documentHeight': widget.runtime.document.layoutHost?.documentHeight,
+      };
 
   void _report() {
     if (_reported) return;
@@ -325,11 +376,22 @@ class _BenchAppState extends State<BenchApp> {
       'renderObjects=${_countRenderObjects()} widgets=${_countElements()} '
       'documentHeight=${widget.runtime.document.layoutHost?.documentHeight.toStringAsFixed(0) ?? '-'} '
       'rss=${(ProcessInfo.currentRss / (1024 * 1024)).toStringAsFixed(1)}MB '
+      'types=${_renderObjectTypes()} '
       '${LayoutProfile.summary()}',
     );
     for (final f in _frames) {
       print(f);
     }
+    _writeJson({
+      'summary': {
+        'scenario': widget.scenario,
+        'frames': _frameTotals.length,
+        'over50': over50,
+        'p95Ms': p95,
+        'maxMs': totals.isEmpty ? 0 : totals.last,
+      },
+      'metrics': _metrics(),
+    });
   }
 
   void _finish() {

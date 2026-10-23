@@ -71,6 +71,10 @@ class StyleEngine {
   final Map<String, List<_IndexedRule>> _byId = {};
   final Map<String, List<_IndexedRule>> _byClass = {};
   final Map<String, List<_IndexedRule>> _byTag = {};
+  final Map<String, List<_IndexedRule>> _hoverById = {};
+  final Map<String, List<_IndexedRule>> _hoverByClass = {};
+  final Map<String, List<_IndexedRule>> _hoverByTag = {};
+  final List<_IndexedRule> _hoverUniversal = [];
   final List<_IndexedRule> _universal = [];
   final Map<String, List<_IndexedRule>> _pseudoRules = {};
   final Map<String, KeyframesRule> _keyframes = {};
@@ -80,7 +84,6 @@ class StyleEngine {
   final Map<Element, Map<String, ComputedStyle?>> _pseudoStyles = {};
   List<bool> _mediaState = const [];
   bool _usesSiblingCombinators = false;
-  bool _usesStructuralSelectors = false;
   bool _structuralUniversal = false;
   final Set<String> _structuralTags = {};
   final Set<String> _structuralClasses = {};
@@ -95,6 +98,19 @@ class StyleEngine {
   /// Whether any rule depends on `:hover` / `:active`; renderers only track
   /// pointer state when needed.
   bool get usesHover => _usesHover;
+
+  /// Whether [element] can match a `:hover`-dependent rule. Renderers use it
+  /// to add pointer regions only where they matter instead of on every node.
+  bool mayHover(Element element) {
+    if (!_usesHover) return false;
+    if (_hoverUniversal.isNotEmpty) return true;
+    final id = element.getAttribute('id');
+    if (id != null && (_hoverById[id]?.isNotEmpty ?? false)) return true;
+    for (final c in element.classList) {
+      if (_hoverByClass[c]?.isNotEmpty ?? false) return true;
+    }
+    return _hoverByTag[element.localName]?.isNotEmpty ?? false;
+  }
   bool get usesActive => _usesActive;
 
   final Map<String, List<Declaration>> _inlineCache = {};
@@ -118,6 +134,10 @@ class StyleEngine {
   final Map<String, List<Declaration>> _matchedCache = {};
   final Map<String, ComputedStyle> _computedCache = {};
   bool _cachesDirty = false;
+
+  /// Allows benchmarks/tests to measure the uncached cascade. Production
+  /// always leaves this enabled.
+  bool useStyleCaches = true;
   static const int _maxCacheEntries = 8192;
 
   void _clearStyleCaches() {
@@ -127,7 +147,15 @@ class StyleEngine {
   }
 
   void _ensureStyleCaches() {
-    if (_cachesDirty) _clearStyleCaches();
+    if (!useStyleCaches || _cachesDirty) _clearStyleCaches();
+  }
+
+  String get ruleIndexInfo {
+    final tags = _byTag.entries.toList()..sort((a, b) => b.value.length.compareTo(a.value.length));
+    final classes = _byClass.entries.toList()..sort((a, b) => b.value.length.compareTo(a.value.length));
+    return 'universal=${_universal.length} '
+        'tagTop=${tags.take(6).map((e) => '${e.key}:${e.value.length}').join(',')} '
+        'classTop=${classes.take(6).map((e) => '${e.key}:${e.value.length}').join(',')}';
   }
 
   bool _needsStructuralKey(Element e) {
@@ -436,6 +464,10 @@ class StyleEngine {
     _byId.clear();
     _byClass.clear();
     _byTag.clear();
+    _hoverById.clear();
+    _hoverByClass.clear();
+    _hoverByTag.clear();
+    _hoverUniversal.clear();
     _universal.clear();
     _pseudoRules.clear();
     _pseudoStyles.clear();
@@ -443,7 +475,6 @@ class StyleEngine {
     _usesHover = false;
     _usesActive = false;
     _usesSiblingCombinators = false;
-    _usesStructuralSelectors = false;
     _structuralUniversal = false;
     _structuralTags.clear();
     _structuralClasses.clear();
@@ -464,7 +495,6 @@ class StyleEngine {
           selectorText.contains(':has(') ||
           selectorText.contains('+') ||
           selectorText.contains('~');
-      if (structuralRule) _usesStructuralSelectors = true;
       if (rule.selectorText.contains(':hover')) _usesHover = true;
       if (rule.selectorText.contains(':active')) _usesActive = true;
       for (final d in rule.declarations) {
@@ -516,6 +546,26 @@ class StyleEngine {
           }
         }
         final ir = _IndexedRule(sel, rule.declarations, order++, ua);
+        if (selectorText.contains(':hover')) {
+          for (final compound in sel.compounds) {
+            if (!compound.parts.any(
+                (p) => p is PseudoClassSelector && p.name == 'hover')) {
+              continue;
+            }
+            final hId = compound.parts.whereType<IdSelector>().firstOrNull;
+            final hClass = compound.parts.whereType<ClassSelector>().firstOrNull;
+            final hTag = compound.parts.whereType<TypeSelector>().firstOrNull;
+            if (hId != null) {
+              _hoverById.putIfAbsent(hId.id, () => []).add(ir);
+            } else if (hClass != null) {
+              _hoverByClass.putIfAbsent(hClass.name, () => []).add(ir);
+            } else if (hTag != null) {
+              _hoverByTag.putIfAbsent(hTag.name, () => []).add(ir);
+            } else {
+              _hoverUniversal.add(ir);
+            }
+          }
+        }
         final pseudo = sel.pseudoElement;
         if (pseudo != null) {
           _pseudoRules.putIfAbsent(pseudo, () => []).add(ir);
@@ -572,7 +622,7 @@ class StyleEngine {
   List<Declaration> cascadedDeclarations(Element e, {String? pseudo}) {
     _ensureStyleCaches();
     final cacheKey = _elementSignature(e, pseudo: pseudo, structural: _needsStructuralKey(e));
-    final cached = _matchedCache[cacheKey];
+    final cached = useStyleCaches ? _matchedCache[cacheKey] : null;
     if (cached != null) {
       matchedCacheHits++;
       return cached;
@@ -637,8 +687,10 @@ class StyleEngine {
       return a.order - b.order;
     });
     final result = [for (final m in matches) m.declaration];
-    if (_matchedCache.length >= _maxCacheEntries) _matchedCache.clear();
-    _matchedCache[cacheKey] = result;
+    if (useStyleCaches) {
+      if (_matchedCache.length >= _maxCacheEntries) _matchedCache.clear();
+      _matchedCache[cacheKey] = result;
+    }
     return result;
   }
 
@@ -663,7 +715,7 @@ class StyleEngine {
     String? styleCacheKey;
     if (extra == null) {
       styleCacheKey = _elementSignature(e, pseudo: pseudo, parent: parent, structural: _needsStructuralKey(e));
-      final shared = _computedCache[styleCacheKey];
+      final shared = useStyleCaches ? _computedCache[styleCacheKey] : null;
       if (shared != null) {
         styleCacheHits++;
         return shared;
@@ -800,7 +852,7 @@ class StyleEngine {
       if (blockified != display) out['display'] = Keyword(blockified);
     }
     final result = ComputedStyle(out, customProperties: custom);
-    if (styleCacheKey != null) {
+    if (styleCacheKey != null && useStyleCaches) {
       if (_computedCache.length >= _maxCacheEntries) _computedCache.clear();
       _computedCache[styleCacheKey] = result;
     }

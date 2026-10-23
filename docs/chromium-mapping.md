@@ -161,3 +161,83 @@ con N. El test `virtualization_test.dart` cuenta `RenderObject` vivos para
 - `selection` y `find` siguen siendo APIs limitadas en NativaX; la
   virtualización garantiza que un nodo materializado por esas rutas conserva
   su geometría, pero no se declara compatibilidad completa con Blink.
+
+## 8. CSS: RuleSet, SelectorFilter y MatchedPropertiesCache
+
+**Problema NativaX.** Cada elemento visible recorría las reglas candidatas y
+volvía a construir sus declaraciones; con Tailwind/Font Awesome (~3.600
+reglas) eso domina el arranque.
+
+**Chromium.**
+
+- `core/css/rule_set.h`: `RuleSet::AddRule`, `RuleSet::AddRulesFromSheet` y
+  los buckets por id, clase, tag, universal y pseudo. La cascada solo mira el
+  bucket que puede casar con el sujeto.
+- `core/css/selector_filter.h`: `SelectorFilter::CollectElementIdentifierHashes`
+  y `SelectorFilter::FastRejectSelector`; el filtro de ancestros (Bloom de
+  ids/clases/tags) descarta selectores descendientes antes de evaluarlos.
+- `core/css/resolver/matched_properties_cache.h`: `MatchedPropertiesCache::Find`
+  y `MatchedPropertiesCache::Add`; reutiliza las declaraciones casadas y el
+  estilo resultante para elementos con la misma firma.
+- `core/css/resolver/style_resolver.cc` y `style_cascade.cc`: comparten estilo
+  entre hermanos cuando la firma y el estilo heredado coinciden, y mantienen la
+  herencia por referencia.
+
+**Adaptación Dart.**
+
+- `StyleEngine` ya indexa por `id`/`class`/`tag`/universal; se añadieron
+  buckets específicos de `:hover` para no crear `MouseRegion` en nodos que no
+  pueden casar con una regla de hover.
+- `_elementSignature` + `_matchedCache`: declaraciones casadas compartidas por
+  firma (tag, id, clases, atributos, pseudo, estado de puntero/foco/target).
+- `_computedCache`: `ComputedStyle` compartido por firma + identidad del estilo
+  heredado + contexto estructural (posición, número de hermanos, `:empty`).
+- Las estructuras con selectores estructurales se detectan al indexar
+  (`:first-*`, `:nth-*`, `:empty`, `:has()`, `+`, `~`) y solo esos sujetos
+  incluyen el contexto estructural en la clave.
+- `useStyleCaches` permite medir el camino sin caché; producción lo deja activo.
+- Diferencia: Chromium usa un Bloom de ancestros; NativaX todavía usa la firma
+  del elemento y el índice de sujeto. El Bloom queda como siguiente paso.
+
+## 9. LayoutNG: ConstraintSpace y LayoutResult
+
+**Problema NativaX.** El primer frame hacía varias pasadas por caja
+(`layout`, `dry`, intrínsecos) y cada pasada podía volver a medir texto.
+
+**Chromium.**
+
+- `core/layout/constraint_space.h`: `ConstraintSpace`,
+  `ConstraintSpaceBuilder` y `ConstraintSpace::AvailableSize()`; el espacio de
+  restricciones es un valor inmutable que se reutiliza.
+- `core/layout/layout_result.h`: `LayoutResult` guarda el fragmento, tamaño,
+  baseline y datos de ruptura; un resultado se reutiliza mientras las
+  restricciones y el estilo no cambien.
+- `core/layout/flex/flex_layout_algorithm.cc`: `FlexLayoutAlgorithm::Layout`,
+  `LayoutInternal`, `ConstructAndAppendFlexItems`,
+  `BuildSpaceForFlexBasis` y `BuildSpaceForLayout`; los hijos se miden con un
+  `ConstraintSpace` explícito una vez por fase.
+- `core/layout/layout_box.cc`: `LayoutBox::Layout` y los puntos de invalidación
+  de layout (`SetNeedsLayout`, `SetChildNeedsLayout`) limitan el relayout.
+
+**Adaptación Dart.**
+
+- `RenderCssFlex` ya reutiliza el layout real de los hijos en columnas cuando
+  la longitud flexible no cambia el tamaño principal; evita la pasada dry
+  duplicada.
+- `LayoutProfile` mide `box.layout`, `box.dry`, `box.paint`, `flex.layout`,
+  `flex.dry`, `text.layout`, `text.dry` y `text.intrinsic` por frame.
+- Pendiente: cachear `LayoutResult` por `(constraints, estilo)` en
+  `RenderCssBox`/`RenderCssFlex` y limitar el relayout a un boundary. El
+  primer frame del fixture genérico sigue dominado por layout; los intentos de
+  cachear intrínsecos en `RenderCssBox` no movieron la métrica y se
+  revirtieron.
+
+## 10. Texto y mutación
+
+- Chromium cachea el shaping por `(texto, estilo, ancho)` en
+  `platform/text` y evita re-shaping entre pasadas; NativaX mide con
+  `RenderParagraph` de Flutter y `LayoutTimed` atribuye sus pasadas.
+- Chromium agrupa invalidaciones en el lifecycle del documento
+  (`core/dom/style_engine.cc`, `document_lifecycle.cc`); NativaX mantiene una
+  sola pasada por frame en `NativaXDocumentView._flush` y difiere estilos de
+  nodos virtualizados fuera de vista (`invalidateDeferred`).
