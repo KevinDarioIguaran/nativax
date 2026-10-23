@@ -43,6 +43,8 @@ String cssValueText(CssValue v) {
   };
 }
 
+const bool _traceHost = bool.fromEnvironment('NATIVAX_TRACE_HOST', defaultValue: false);
+
 extension _WebOps on DomBindings {
   Map<String, HostFunction> webOps() => {
         // --- timing and randomness ------------------------------------------
@@ -338,7 +340,16 @@ extension _WebOps on DomBindings {
                 ? Duration(milliseconds: (r['timeout'] as num).toInt())
                 : null,
           );
+          if (_traceHost) {
+            // ignore: avoid_print
+            print('HOST_FETCH start id=$id url=$url method=${request.method}');
+          }
           network.fetch(request).then((res) {
+            if (_traceHost) {
+              // ignore: avoid_print
+              print('HOST_FETCH end id=$id status=${res.status} '
+                  'bytes=${res.body.length} url=$url');
+            }
             if (_aborted.remove(id)) return;
             _asyncDone(id, ok: {
               'status': res.status,
@@ -349,6 +360,10 @@ extension _WebOps on DomBindings {
               'redirected': res.redirected,
             });
           }, onError: (Object e) {
+            if (_traceHost) {
+              // ignore: avoid_print
+              print('HOST_FETCH error id=$id url=$url error=$e');
+            }
             if (_aborted.remove(id)) return;
             _asyncDone(id, error: e is TimeoutException ? 'timeout' : e.toString());
           });

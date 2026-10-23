@@ -10,5 +10,6 @@ export 'src/layout/css_transform.dart';
 export 'src/layout/virtualization.dart';
 export 'src/layout/layout_profile.dart';
 export 'src/render/document_view.dart';
+export 'src/render/draw_trace.dart';
 export 'src/render/render_types.dart';
 export 'src/style_mapping.dart';

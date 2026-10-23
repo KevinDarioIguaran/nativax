@@ -12,6 +12,7 @@ import 'node_view.dart';
 import 'render_types.dart';
 import '../layout/virtualization.dart';
 import '../layout/layout_profile.dart';
+import 'draw_trace.dart';
 
 /// Renders a NativaX [dom.Document] with Flutter widgets.
 ///
@@ -52,6 +53,7 @@ class _NativaXDocumentViewState extends State<NativaXDocumentView> implements do
   bool _scheduled = false;
   bool _disposed = false;
   bool _diagnosedBuild = false;
+  TimingsCallback? _drawTimings;
   void Function(String href, dom.Element anchor)? _previousNavigate;
   void Function(dom.Element form)? _previousSubmit;
   void Function(dom.Element? element)? _previousFocusRequest;
@@ -69,6 +71,11 @@ class _NativaXDocumentViewState extends State<NativaXDocumentView> implements do
     // up front would defeat the display-lock equivalent.
     widget.styleEngine.lazySubtrees = true;
     LayoutProfile.reset();
+    if (NativaXDrawTrace.enabled) {
+      NativaXDrawTrace.start();
+      _drawTimings = _onDrawTimings;
+      SchedulerBinding.instance.addTimingsCallback(_drawTimings!);
+    }
     widget.document.layoutHost = this;
     widget.document.canvasHost = _canvases;
     _scroll.addListener(_onScroll);
@@ -132,6 +139,9 @@ class _NativaXDocumentViewState extends State<NativaXDocumentView> implements do
     }
     if (identical(widget.document.onFocusRequest, _onFocusRequest)) {
       widget.document.onFocusRequest = _previousFocusRequest;
+    }
+    if (_drawTimings != null) {
+      SchedulerBinding.instance.removeTimingsCallback(_drawTimings!);
     }
     _revision.dispose();
     _scroll.dispose();
@@ -501,6 +511,15 @@ class _NativaXDocumentViewState extends State<NativaXDocumentView> implements do
 
   void _diagnose(String message) {
     if (_reported.add(message)) widget.onDiagnostic?.call(message);
+  }
+
+  void _onDrawTimings(List<FrameTiming> timings) {
+    for (final t in timings) {
+      NativaXDrawTrace.log(
+          'FRAME total=${t.totalSpan.inMilliseconds}ms '
+          'build=${t.buildDuration.inMilliseconds}ms '
+          'raster=${t.rasterDuration.inMilliseconds}ms');
+    }
   }
 
   @override
