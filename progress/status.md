@@ -1,8 +1,8 @@
 # Estado actual
 
 Última actualización: 2026-10-21 (reorganización Nativa y skills de agentes).
-Tests: **316** en total (`./tools/test_all.sh`), incluido el probe de juego
-real y el test de estadísticas de presentación.
+Tests: **317** en total (`./tools/test_all.sh`), incluido el probe de juego
+real, el test de estadísticas de presentación y el test del scaffold JIT.
 
 ## Resumen
 
@@ -23,6 +23,30 @@ real y el test de estadísticas de presentación.
 | Seguridad | 🟢 | `tools/security`: 14 PASS / 0 FAIL / 1 SKIP |
 | Conformidad | 🟡 | Test262 97,93 %; html5lib 99,26 %; URL 74,22 %; DOM 59,36 %; CSS 50,28 %; tree 50,37 % |
 | Plataformas | 🟡 solo Linux | build Linux verificado; resto sin probar |
+
+## Spike quickjs-jit — 2026-10-22
+
+- `quickjs-jit-sys` (con `jit-abi`) y `quickjs-jit-runtime` (con `compiler`)
+  compilan con Rust 1.99.1 en `/tmp/opencode`.
+- No integrado: el JIT es un runtime Rust con ABI propia; adaptarlo exige
+  reescribir el bridge o exponer una API C equivalente. Detalle y estimación en
+  `docs/nativa-js-jit-quickjs-jit-spike.md`.
+- El JIT propio sobre QuickJS-ng sigue siendo el que está activo.
+
+## JIT en NativaJS — 2026-10-21
+
+- Backend inicial funcional en x86-64 Linux: W^X (mmap) para constantes y
+  entradas C portables para `return undefined` y `return local0`. Correctitud
+  verificada (`f(){}` → null, `f(){return 42}` → 42, `f(){var x=5;return x}` → 5).
+  Punto de llamada en `JS_CallInternal` activo. Resto cae al intérprete.
+- Plan completo: `docs/nativa-js-jit-plan.md`. Baseline: `progress/jit-baseline.md`.
+
+## Plan JIT para NativaJS — 2026-10-21
+
+- Plan documentado en `docs/nativa-js-jit-plan.md`: JIT por niveles inspirado en
+  V8 (baseline copy-and-patch + feedback), sin V8/JSC, con presupuesto <10 MB
+  (línea base 1,6 MB stripped). Fase 0+1 (flag + optimización del intérprete)
+  recomendada como primer paso; L1/L2/L3 posteriores y opcionales.
 
 ## Reorganización Nativa y skills — 2026-10-21
 

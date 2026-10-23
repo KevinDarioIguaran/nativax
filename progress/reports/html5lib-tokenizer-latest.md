@@ -1,6 +1,6 @@
 # Conformidad: html5lib-tokenizer
 
-- Fecha: 2026-10-21T21:23:58.793357Z
+- Fecha: 2026-10-21T22:16:39.267842Z
 - Duración: 0.1 s
 - Commit de la suite: `c777c408b61078ea2eb4acefc2535f54dbc8b28a`
 - Comando: `run_html5lib`
@@ -16,7 +16,7 @@
 
 ## Delta contra la línea base
 
-- Corregidos: **134**
+- Corregidos: **0**
 - Regresiones: **0**
 - Siguen fallando: **43**
 - Nuevos en esta ejecución: **0**

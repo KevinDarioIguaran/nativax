@@ -19,6 +19,7 @@ void main(List<String> args) async {
       assetName: 'src/ffi/bindings.dart',
       sources: [
         'src/nativax_bridge.c',
+        'src/nativax_jit.c',
         'src/nativax_wasm.c',
         if (os == OS.linux || os == OS.android) 'src/nativax_gl.c' else 'src/nativax_gl_stub.c',
         'third_party/quickjs/quickjs.c',
@@ -45,6 +46,7 @@ void main(List<String> args) async {
         'third_party/wasm3',
         'third_party/khronos',
         'third_party/stb',
+        'third_party/mir',
         'src',
       ],
       defines: {
@@ -57,9 +59,13 @@ void main(List<String> args) async {
         // mode. 32-bit targets keep the documented default.
         if (is64Bit) 'd_m3Use32BitSlots': '0',
         if (os == OS.windows) 'WIN32_LEAN_AND_MEAN': null,
+        // clang on Android fails to honour `musttail` (tail call elimination)
+        // on the wasm3 interpreter dispatch; disable guaranteed tail calls there
+        // so the native asset builds. The interpreter just runs a bit slower.
+        if (os == OS.android) 'M3_HAS_TAIL_CALL': '0',
       },
       flags: [
-        if (os != OS.windows) ...['-w', '-fvisibility=hidden'],
+        if (os != OS.windows) ...['-w', '-fvisibility=hidden', '-fsigned-char'],
         if (os == OS.windows) ...['/experimental:c11atomics', '/w'],
       ],
       libraries: [

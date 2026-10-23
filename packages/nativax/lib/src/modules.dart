@@ -62,12 +62,21 @@ class LocalResourceNetwork implements NativaXNetwork {
   Future<NetworkResponse> fetch(NetworkRequest request) async {
     final url = request.url;
     if (!sameOrigin(url, documentUrl)) return network.fetch(request);
+    // API paths always hit the backend (tunnels), never the bundled/disk
+    // assets: they are dynamic and may mutate state.
+    if (url.path.startsWith('/api/')) return network.fetch(request);
     if (request.method != 'GET' && request.method != 'HEAD') {
-      return NetworkResponse(status: 405, statusText: 'Method Not Allowed', body: Uint8List(0), url: url);
+      return network.fetch(request);
     }
     final bytes = await resources.loadBytes(resourceKey(url, documentUrl));
     if (bytes == null) {
-      return NetworkResponse(status: 404, statusText: 'Not Found', body: Uint8List(0), url: url);
+      // Fall back to the network so a missing local asset can still be
+      // fetched from the backend instead of failing silently.
+      try {
+        return await network.fetch(request);
+      } catch (_) {
+        return NetworkResponse(status: 404, statusText: 'Not Found', body: Uint8List(0), url: url);
+      }
     }
     final ext = url.path.contains('.') ? url.path.split('.').last.toLowerCase() : '';
     return NetworkResponse(

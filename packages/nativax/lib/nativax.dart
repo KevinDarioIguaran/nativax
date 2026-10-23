@@ -6,6 +6,7 @@ export 'src/hot_reload.dart';
 export 'src/modules.dart' show DocumentModules, LocalResourceNetwork;
 export 'src/resources.dart';
 export 'src/runtime.dart';
+export 'src/template_engine.dart';
 export 'src/workers.dart' show IsolateWorkerLauncher;
 export 'src/view.dart';
 export 'package:nativa_css/nativa_css.dart' show MediaContext;

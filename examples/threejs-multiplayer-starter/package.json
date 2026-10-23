@@ -1,0 +1,27 @@
+{
+  "name": "threejs-starter",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview"
+  },
+  "devDependencies": {
+    "@tweakpane/core": "^2.0.5",
+    "@types/node": "^25.0.3",
+    "@types/stats.js": "^0.17.4",
+    "@types/three": "^0.182.0",
+    "typescript": "~5.9.3",
+    "vite": "^8.0.0-beta.7",
+    "vite-plugin-glsl": "^1.5.5"
+  },
+  "dependencies": {
+    "@dimforge/rapier3d-compat": "^0.19.3",
+    "comlink": "^4.4.2",
+    "stats.js": "^0.17.0",
+    "three": "^0.182.0",
+    "tweakpane": "^4.0.5"
+  }
+}
