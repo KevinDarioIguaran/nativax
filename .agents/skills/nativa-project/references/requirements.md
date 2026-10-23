@@ -16,7 +16,9 @@ changes.
    embedded browser or page loaded in a WebView.
 4. Developers continue to write HTML, CSS, and JavaScript. Dart and Flutter are
    internal details; the public language does not change.
-5. JavaScript runs on real QuickJS-ng without JIT. It is not replaced by a toy
+5. JavaScript runs on a real JS engine. QuickJS-ng is the default and the
+   fallback where JIT is unavailable (iOS); a V8 or JavaScriptCore JIT backend
+   is allowed behind the same engine contract. It is never replaced by a toy
    interpreter or text search.
 6. Do not claim full WHATWG/W3C compatibility. Declare the subset and measure
    it.

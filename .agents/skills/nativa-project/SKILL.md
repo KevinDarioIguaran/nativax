@@ -21,8 +21,9 @@ Read the references in this order before making product or scope decisions:
   Electron, or a local HTTP server for presentation.
 - The public languages remain HTML, CSS, and JavaScript. Dart and Flutter are
   implementation details.
-- JavaScript is real QuickJS-ng, without JIT. Do not replace it with a text
-  interpreter.
+- JavaScript is real JavaScript. QuickJS-ng is the default and the fallback
+  where JIT is unavailable; a V8 or JavaScriptCore JIT backend is allowed
+  behind the same engine contract. Do not replace it with a text interpreter.
 - Do not promise compatibility, performance, maturity, or platform support that
   has not been measured.
 

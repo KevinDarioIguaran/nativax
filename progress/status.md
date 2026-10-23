@@ -14,6 +14,9 @@ virtualización, 5 de caché de estilo y los fixtures de render.
   workers ni bridge DOM todavía.
 - Conclusión: V8 sí enlaza desde Dart y elimina el coste del parser; falta el
   puente y la política de hilos. iOS sin JIT → QuickJS de fallback.
+- `AGENTS.md` actualizado: QuickJS-ng sigue siendo el motor por defecto y el
+  fallback, pero se permite un backend V8 o JavaScriptCore con JIT detrás de
+  `JavaScriptEngine`.
 - Detalle: `tools/v8-spike/README.md` y
   `progress/reports/v8-spike-latest.md`.
 
