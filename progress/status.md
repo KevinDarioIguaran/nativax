@@ -4,6 +4,19 @@
 Tests: **346** en total (`./tools/test_all.sh`, exit 0), incluidos 12 de
 virtualización, 5 de caché de estilo y los fixtures de render.
 
+## V8 FFI spike — 2026-10-24
+
+- `tools/v8-spike`: `cdylib` Rust con `v8`/`rusty_v8` 152.2.0 y FFI desde Dart.
+- Medido sobre el mismo `/api/dict/ES` (14.380.093 bytes, 31.966 entradas):
+  **V8 JSON.parse 87 ms**; Node 22 (parse+filter+sort) 76 ms; QuickJS en la
+  app ~6.800 ms bloqueando la UI.
+- `libnx_v8.so`: 62 MB. No integrado en `nativa_js`; no hay host functions,
+  workers ni bridge DOM todavía.
+- Conclusión: V8 sí enlaza desde Dart y elimina el coste del parser; falta el
+  puente y la política de hilos. iOS sin JIT → QuickJS de fallback.
+- Detalle: `tools/v8-spike/README.md` y
+  `progress/reports/v8-spike-latest.md`.
+
 ## CSS style cost — 2026-10-24
 
 - Causa raíz: `pseudoStyleOf` evaluaba todas las reglas `::before/::after`
