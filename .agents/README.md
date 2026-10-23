@@ -13,7 +13,7 @@ reference files that load only when the skill is used.
   under `.claude/skills` are symlinks to the canonical skills in
   `.agents/skills`, so there is one source of truth. Claude Code officially
   supports symlinked skill directories.
-- `AGENTS.md` and `CLAUDE.md` are the always-on entry instructions. They point
+- `AGENTS.md` is the always-on entry instructions. It points
   here; the detailed references stay out of the context until a skill loads.
 
 ## Tree
@@ -98,7 +98,7 @@ reference files that load only when the skill is used.
   extensions belong in the harness-specific directories only when needed.
 - Keep directory IDs lowercase kebab-case and stable; the ID is how the skill
   is loaded.
-- If a skill moves, update `AGENTS.md`, `CLAUDE.md`, this README, and the
-  `.claude/skills` symlinks.
+- If a skill moves, update `AGENTS.md`, this README, and any agent-specific
+  entry files that remain in the checkout.
 - Prefer current, reproducible facts over historical prose. Live numbers belong
   in `progress/status.md`.
