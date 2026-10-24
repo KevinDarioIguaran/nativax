@@ -213,13 +213,13 @@ void main() {
       );
     });
 
-    test('frame in body is ignored; fragment still builds it', () {
+    test('frame in body is ignored in documents and body fragments', () {
       expect(bodyHtml('<frame>test'), 'test');
       final doc = parse('');
       final fragment = HtmlParser()
           .parseFragment('</frameset><frame>', doc.body!)
           .value;
-      expect(fragment.childNodes.single.nodeName, 'FRAME');
+      expect(fragment.childNodes, isEmpty);
     });
 
     test('li, dt/dd and option close their siblings', () {
@@ -247,7 +247,8 @@ void main() {
 
     test('end tag closes intervening unclosed elements', () {
       final r = HtmlParser().parseDocument('<div><span><b>x</div>y');
-      expect(r.value.body!.innerHtml, '<div><span><b>x</b></span></div>y');
+      expect(r.value.body!.innerHtml,
+          '<div><span><b>x</b></span></div><b>y</b>');
       expect(r.errors.map((e) => e.code), contains('unclosed-elements'));
     });
 

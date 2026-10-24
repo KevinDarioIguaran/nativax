@@ -8,6 +8,7 @@ environment:
   sdk: ^3.10.0
 
 dependencies:
+  html: ^0.15.6
   nativa_dom: ^0.1.0
 
 dev_dependencies:

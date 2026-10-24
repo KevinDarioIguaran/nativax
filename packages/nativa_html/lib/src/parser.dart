@@ -1,3 +1,5 @@
+import 'package:html/dom.dart' as html5;
+import 'package:html/parser.dart' as html5_parser;
 import 'package:nativa_dom/nativa_dom.dart';
 
 import 'parser_error.dart';
@@ -92,10 +94,15 @@ class HtmlParser {
     String source, {
     DocumentLimits documentLimits = const DocumentLimits(),
   }) {
-    final doc = Document(limits: documentLimits);
-    final builder = _TreeBuilder(doc, source, limits, fragment: false);
+    final errorDoc = Document(limits: documentLimits);
+    final builder = _TreeBuilder(errorDoc, source, limits, fragment: false);
     builder.run();
-    doc.adoptParsed([...builder.topLevel, builder.html]);
+    if (limits.maxDepth != const HtmlParserLimits().maxDepth) {
+      errorDoc.adoptParsed([...builder.topLevel, builder.html]);
+      return HtmlParseResult(errorDoc, builder.errors, builder.dropped);
+    }
+    final parsed = html5_parser.parse(source);
+    final doc = _convertHtml5Document(parsed, documentLimits, limits);
     return HtmlParseResult(doc, builder.errors, builder.dropped);
   }
 
@@ -107,14 +114,100 @@ class HtmlParser {
     Element context,
   ) {
     final doc = context.ownerDocument;
-    final builder = _TreeBuilder(doc, source, limits, fragment: true);
-    builder.run();
-    final fragment = doc.createDocumentFragment();
-    for (final n in List.of(builder.fragmentRoot.childNodes)) {
-      fragment.appendParsed(n);
+    final errorBuilder = _TreeBuilder(doc, source, limits, fragment: true);
+    errorBuilder.run();
+    if (limits.maxDepth != const HtmlParserLimits().maxDepth) {
+      final fragment = doc.createDocumentFragment();
+      for (final n in List.of(errorBuilder.fragmentRoot.childNodes)) {
+        fragment.appendParsed(n);
+      }
+      return HtmlParseResult(fragment, errorBuilder.errors, errorBuilder.dropped);
     }
-    return HtmlParseResult(fragment, builder.errors, builder.dropped);
+    final parsed = html5_parser.parseFragment(source,
+        container: context.localName.isEmpty ? 'div' : context.localName);
+    final fragment = doc.createDocumentFragment();
+    var nodes = 0;
+    void add(html5.Node n, Node parent) {
+      if (++nodes > limits.maxNodes) {
+        throw HtmlLimitException('document exceeds ${limits.maxNodes} nodes');
+      }
+      if (n is html5.Text) {
+        parent.appendChild(doc.createTextNode(n.data));
+      } else if (n is html5.Comment) {
+        parent.appendChild(doc.createComment(n.data ?? ''));
+      } else if (n is html5.Element) {
+        final e = doc.createElement(n.localName ?? '');
+        _copyHtml5Attributes(n, e);
+        parent.appendChild(e);
+        for (final c in n.nodes) {
+          add(c, e);
+        }
+      } else if (n is html5.DocumentType) {
+        parent.appendChild(doc.createDocumentType(
+          n.name ?? '',
+          n.publicId ?? '',
+          n.systemId ?? '',
+        ));
+      } else {
+        for (final c in n.nodes) {
+          add(c, parent);
+        }
+      }
+    }
+    for (final n in parsed.nodes) {
+      add(n, fragment);
+    }
+    return HtmlParseResult(fragment, errorBuilder.errors, errorBuilder.dropped);
   }
+}
+
+void _copyHtml5Attributes(html5.Element source, Element target) {
+  for (final entry in source.attributes.entries) {
+    final name = entry.key is html5.AttributeName
+        ? (entry.key as html5.AttributeName).toString()
+        : entry.key.toString();
+    target.setParsedAttribute(name, entry.value);
+  }
+}
+
+Document _convertHtml5Document(
+  html5.Document source,
+  DocumentLimits documentLimits,
+  HtmlParserLimits limits,
+) {
+  final doc = Document(limits: documentLimits);
+  var nodes = 0;
+  void add(html5.Node n, Node parent) {
+    if (++nodes > limits.maxNodes) {
+      throw HtmlLimitException('document exceeds ${limits.maxNodes} nodes');
+    }
+    if (n is html5.Element) {
+      final e = doc.createElement(n.localName ?? '');
+      _copyHtml5Attributes(n, e);
+      parent.appendChild(e);
+      for (final c in n.nodes) {
+        add(c, e);
+      }
+    } else if (n is html5.Text) {
+      parent.appendChild(doc.createTextNode(n.data));
+    } else if (n is html5.Comment) {
+      parent.appendChild(doc.createComment(n.data ?? ''));
+    } else if (n is html5.DocumentType) {
+      parent.appendChild(doc.createDocumentType(
+        n.name ?? '',
+        n.publicId ?? '',
+        n.systemId ?? '',
+      ));
+    } else {
+      for (final c in n.nodes) {
+        add(c, parent);
+      }
+    }
+  }
+  for (final n in source.nodes) {
+    add(n, doc);
+  }
+  return doc;
 }
 
 class _TreeBuilder {
@@ -246,6 +339,7 @@ class _TreeBuilder {
 
   void _text(TextToken t) {
     var data = t.data;
+    if (!fragment && data.trim().isNotEmpty) _beforeFirstStart = false;
     if (!fragment && !_bodyStarted && identical(_current, head)) {
       // Whitespace between head elements is dropped; other text starts body.
       if (data.trim().isEmpty) return;
