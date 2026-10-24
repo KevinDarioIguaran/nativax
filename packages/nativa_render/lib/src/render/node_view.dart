@@ -28,6 +28,7 @@ import 'fieldset.dart';
 import 'svg.dart';
 import 'render_types.dart';
 import 'draw_trace.dart';
+import 'widget_cache.dart';
 
 /// Tags that never generate a box. They are excluded before asking the style
 /// engine, so scripts/styles in real pages do not pay selector matching.
@@ -56,6 +57,7 @@ class NativeXNodeView extends StatelessWidget {
     this.isRoot = false,
     this.imageResolver,
     this.onDiagnostic,
+    this.cache,
   });
 
   final dom.Element element;
@@ -63,6 +65,7 @@ class NativeXNodeView extends StatelessWidget {
   final bool isRoot;
   final NativaXImageResolver? imageResolver;
   final NativaXDiagnostic? onDiagnostic;
+  final NativaXWidgetCache? cache;
 
   @override
   Widget build(BuildContext context) {
@@ -71,6 +74,7 @@ class NativeXNodeView extends StatelessWidget {
       context: context,
       imageResolver: imageResolver,
       onDiagnostic: onDiagnostic,
+      cache: cache,
     );
     if (isRoot) {
       // The root item needs a real CSS parent for the containing-block
@@ -219,6 +223,7 @@ class NativeXLayerView extends StatelessWidget {
     required this.modal,
     this.imageResolver,
     this.onDiagnostic,
+    this.cache,
   });
 
   final dom.Element element;
@@ -226,6 +231,7 @@ class NativeXLayerView extends StatelessWidget {
   final bool modal;
   final NativaXImageResolver? imageResolver;
   final NativaXDiagnostic? onDiagnostic;
+  final NativaXWidgetCache? cache;
 
   @override
   Widget build(BuildContext context) {
@@ -234,6 +240,7 @@ class NativeXLayerView extends StatelessWidget {
       context: context,
       imageResolver: imageResolver,
       onDiagnostic: onDiagnostic,
+      cache: cache,
     );
     if (!modal) return builder._absoluteWidget(element);
     final style = styleEngine.styleOf(element);
@@ -282,12 +289,14 @@ class _Builder {
     required this.context,
     this.imageResolver,
     this.onDiagnostic,
+    this.cache,
   });
 
   final StyleEngine styleEngine;
   final BuildContext context;
   final NativaXImageResolver? imageResolver;
   final NativaXDiagnostic? onDiagnostic;
+  final NativaXWidgetCache? cache;
 
   static const _zeroMargins = [
     ResolvedLength.zero,
@@ -357,14 +366,22 @@ class _Builder {
   bool _isInline(Object c) => c is dom.Text || (styleOfChild(c)?.isInlineLevel ?? false);
 
   Widget buildItem(dom.Element element, {required bool parentFlex}) {
+    final cached = cache?.get(element);
+    if (cached != null) return cached;
     NativeXBuildStats.elementBuilds++;
-    if (!LayoutProfile.enabled) return _buildItem(element, parentFlex: parentFlex);
-    LayoutProfile.begin('widget.buildItem');
-    try {
-      return _buildItem(element, parentFlex: parentFlex);
-    } finally {
-      LayoutProfile.end();
+    final Widget result;
+    if (!LayoutProfile.enabled) {
+      result = _buildItem(element, parentFlex: parentFlex);
+    } else {
+      LayoutProfile.begin('widget.buildItem');
+      try {
+        result = _buildItem(element, parentFlex: parentFlex);
+      } finally {
+        LayoutProfile.end();
+      }
     }
+    cache?.put(element, result);
+    return result;
   }
 
   Widget _buildItem(dom.Element element, {required bool parentFlex}) {

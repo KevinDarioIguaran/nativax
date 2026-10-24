@@ -13,6 +13,7 @@ import 'render_types.dart';
 import '../layout/virtualization.dart';
 import '../layout/layout_profile.dart';
 import 'draw_trace.dart';
+import 'widget_cache.dart';
 
 /// Renders a NativaX [dom.Document] with Flutter widgets.
 ///
@@ -60,6 +61,9 @@ class _NativaXDocumentViewState extends State<NativaXDocumentView> implements do
 
   final GlobalKey _rootKey = GlobalKey();
   final CanvasRegistry _canvases = CanvasRegistry();
+  final NativaXWidgetCache _widgetCache = NativaXWidgetCache();
+  double? _lastBuildWidth;
+  double? _lastBuildHeight;
   final FocusNode _keyboard = FocusNode(debugLabel: 'nativax.document');
   double _lastScroll = 0;
   bool _scrollEventScheduled = false;
@@ -105,6 +109,12 @@ class _NativaXDocumentViewState extends State<NativaXDocumentView> implements do
   }
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _widgetCache.clear();
+  }
+
+  @override
   void didUpdateWidget(covariant NativaXDocumentView oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (!identical(oldWidget.document, widget.document)) {
@@ -114,6 +124,7 @@ class _NativaXDocumentViewState extends State<NativaXDocumentView> implements do
       widget.document.layoutHost = this;
       widget.styleEngine.lazySubtrees = true;
       widget.document.onFocusRequest = _onFocusRequest;
+      _widgetCache.clear();
     }
     if (oldWidget.onNavigate != widget.onNavigate) {
       widget.document.onNavigate = widget.onNavigate ?? _previousNavigate;
@@ -131,6 +142,7 @@ class _NativaXDocumentViewState extends State<NativaXDocumentView> implements do
     if (identical(widget.document.canvasHost, _canvases)) widget.document.canvasHost = null;
     _canvases.dispose();
     _keyboard.dispose();
+    _widgetCache.clear();
     if (widget.onNavigate != null) {
       widget.document.onNavigate = _previousNavigate;
     }
@@ -149,6 +161,28 @@ class _NativaXDocumentViewState extends State<NativaXDocumentView> implements do
   }
 
   void _onMutation(dom.MutationRecord record) {
+    final target = record.target;
+    final element = target is dom.Element ? target : target.parentElement;
+    if (element != null) {
+      switch (record.type) {
+        case dom.MutationType.childList:
+          _widgetCache.invalidateSubtree(element);
+          for (final n in record.removedNodes) {
+            _widgetCache.remove(n);
+          }
+        case dom.MutationType.attributes:
+          final name = (record.name ?? '').toLowerCase();
+          if (name == 'class' || name == 'id' || name == 'style') {
+            _widgetCache.invalidateSubtree(element);
+          } else {
+            _widgetCache.invalidatePath(element);
+          }
+        case dom.MutationType.property:
+          _widgetCache.invalidateSubtree(element);
+        case dom.MutationType.characterData:
+          _widgetCache.invalidatePath(element);
+      }
+    }
     if (NativaXDrawTrace.enabled) {
       final target = record.target;
       final element = target is dom.Element ? target : target.parentElement;
@@ -196,6 +230,9 @@ class _NativaXDocumentViewState extends State<NativaXDocumentView> implements do
     final watch = Stopwatch()..start();
     final changed = widget.styleEngine.recompute();
     watch.stop();
+    for (final e in changed) {
+      _widgetCache.invalidateSubtree(e);
+    }
     NativaXRenderProfile.log(
       'FLUSH style=${watch.elapsedMilliseconds}ms changed=${changed.length} '
       'computes=${widget.styleEngine.computeCount} '
@@ -564,6 +601,11 @@ class _NativaXDocumentViewState extends State<NativaXDocumentView> implements do
         builder: (context, constraints) {
           final width = constraints.maxWidth.isFinite ? constraints.maxWidth : mediaQuery?.size.width ?? 800;
           final height = constraints.maxHeight.isFinite ? constraints.maxHeight : mediaQuery?.size.height ?? 600;
+          if (_lastBuildWidth != width || _lastBuildHeight != height) {
+            _lastBuildWidth = width;
+            _lastBuildHeight = height;
+            _widgetCache.clear();
+          }
           final media = MediaContext(
             width: width,
             height: height,
@@ -597,6 +639,7 @@ class _NativaXDocumentViewState extends State<NativaXDocumentView> implements do
                         styleEngine: widget.styleEngine,
                         imageResolver: widget.imageResolver,
                         onDiagnostic: _diagnose,
+                        cache: _widgetCache,
                       ),
                     ),
                   ),
@@ -610,6 +653,7 @@ class _NativaXDocumentViewState extends State<NativaXDocumentView> implements do
                 modal: false,
                 imageResolver: widget.imageResolver,
                 onDiagnostic: _diagnose,
+                cache: _widgetCache,
               ),
             for (final e in document.modalElements)
               if (e.isConnected && e.hasAttribute('open'))
@@ -619,6 +663,7 @@ class _NativaXDocumentViewState extends State<NativaXDocumentView> implements do
                   modal: true,
                   imageResolver: widget.imageResolver,
                   onDiagnostic: _diagnose,
+                  cache: _widgetCache,
                 ),
           ];
 
