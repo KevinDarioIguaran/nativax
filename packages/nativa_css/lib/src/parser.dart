@@ -77,8 +77,12 @@ class FontFaceRule extends CssRule {
 }
 
 class StyleSheet {
-  StyleSheet(this.rules, this.warnings,
-      {this.fontFaces = const [], this.baseUrl});
+  StyleSheet(
+    this.rules,
+    this.warnings, {
+    this.fontFaces = const [],
+    this.baseUrl,
+  });
   final List<CssRule> rules;
   final List<CssWarning> warnings;
   final List<FontFaceRule> fontFaces;
@@ -90,8 +94,49 @@ class StyleSheet {
       CssParser(source, baseUrl: baseUrl).parseStyleSheet();
 }
 
+const Map<String, String> _vendorAliases = {
+  '-webkit-transform': 'transform',
+  '-webkit-transition': 'transition',
+  '-webkit-box-shadow': 'box-shadow',
+  '-moz-box-shadow': 'box-shadow',
+  '-webkit-user-select': 'user-select',
+  '-moz-user-select': 'user-select',
+  '-ms-user-select': 'user-select',
+  '-webkit-column-gap': 'column-gap',
+  '-moz-column-gap': 'column-gap',
+  '-webkit-column-count': 'column-count',
+  '-webkit-box-flex': 'flex-grow',
+  '-webkit-box-ordinal-group': 'order',
+  '-webkit-box-align': 'align-items',
+  '-webkit-box-pack': 'justify-content',
+  '-webkit-box-direction': 'flex-direction',
+  '-ms-flex': 'flex',
+  '-ms-flex-positive': 'flex-grow',
+  '-ms-flex-negative': 'flex-shrink',
+  '-ms-flex-preferred-size': 'flex-basis',
+  '-ms-flex-align': 'align-items',
+  '-ms-flex-pack': 'justify-content',
+  '-ms-flex-direction': 'flex-direction',
+  '-ms-flex-wrap': 'flex-wrap',
+  '-ms-flex-line-pack': 'align-content',
+  '-ms-flex-order': 'order',
+  '-ms-flex-item-align': 'align-self',
+  '-o-object-fit': 'object-fit',
+  '-o-object-position': 'object-position',
+  '-webkit-animation': 'animation',
+  '-webkit-animation-name': 'animation-name',
+  '-webkit-animation-duration': 'animation-duration',
+  '-webkit-animation-delay': 'animation-delay',
+  '-webkit-animation-direction': 'animation-direction',
+  '-webkit-animation-iteration-count': 'animation-iteration-count',
+  '-webkit-animation-timing-function': 'animation-timing-function',
+  '-webkit-animation-fill-mode': 'animation-fill-mode',
+  '-webkit-animation-play-state': 'animation-play-state',
+};
+
 class CssParser {
-  CssParser(this.source, {this.baseUrl}) : _tokens = CssTokenizer(source).tokenize();
+  CssParser(this.source, {this.baseUrl})
+    : _tokens = CssTokenizer(source).tokenize();
 
   final String source;
   final Uri? baseUrl;
@@ -108,7 +153,12 @@ class CssParser {
 
   StyleSheet parseStyleSheet() {
     final rules = _ruleList(topLevel: true, depth: 0);
-    return StyleSheet(rules, _warnings, fontFaces: _fontFaces, baseUrl: baseUrl);
+    return StyleSheet(
+      rules,
+      _warnings,
+      fontFaces: _fontFaces,
+      baseUrl: baseUrl,
+    );
   }
 
   /// Parses an inline `style` attribute.
@@ -146,9 +196,12 @@ class CssParser {
     var depth = 0;
     for (var j = _i; j < _tokens.length; j++) {
       final t = _tokens[j].type;
-      if (t == CssTokenType.leftParen || t == CssTokenType.function || t == CssTokenType.leftBracket) {
+      if (t == CssTokenType.leftParen ||
+          t == CssTokenType.function ||
+          t == CssTokenType.leftBracket) {
         depth++;
-      } else if (t == CssTokenType.rightParen || t == CssTokenType.rightBracket) {
+      } else if (t == CssTokenType.rightParen ||
+          t == CssTokenType.rightBracket) {
         depth--;
       } else if (depth <= 0 && t == CssTokenType.leftBrace) {
         return j;
@@ -189,8 +242,12 @@ class CssParser {
       _i = end + 1;
       return;
     }
-    if ((name == 'keyframes' || name == '-webkit-keyframes') && depth < _maxNesting) {
-      final nameToks = _tokens.sublist(_i, end).where((t) => t.type != CssTokenType.whitespace).toList();
+    if ((name == 'keyframes' || name == '-webkit-keyframes') &&
+        depth < _maxNesting) {
+      final nameToks = _tokens
+          .sublist(_i, end)
+          .where((t) => t.type != CssTokenType.whitespace)
+          .toList();
       final kfName = nameToks.isEmpty ? '' : nameToks.first.value;
       final blockEnd = _blockEnd(end);
       _i = end + 1;
@@ -255,10 +312,15 @@ class CssParser {
       _i = end + 1;
       final raw = _rawDeclarations(blockEnd - 1);
       _i = blockEnd;
-      final family = (raw['font-family'] ?? '').replaceAll(RegExp(r'''^["']|["']$'''), '').trim();
+      final family = (raw['font-family'] ?? '')
+          .replaceAll(RegExp(r'''^["']|["']$'''), '')
+          .trim();
       final sources = <String>[];
       final src = raw['src'] ?? '';
-      for (final m in RegExp(r'url\(\s*([^\s\)]+)\s*\)', caseSensitive: false).allMatches(src)) {
+      for (final m in RegExp(
+        r'url\(\s*([^\s\)]+)\s*\)',
+        caseSensitive: false,
+      ).allMatches(src)) {
         var url = m.group(1)!.trim();
         if ((url.startsWith('"') && url.endsWith('"')) ||
             (url.startsWith("'") && url.endsWith("'"))) {
@@ -267,17 +329,19 @@ class CssParser {
         if (url.isNotEmpty) sources.add(url);
       }
       if (family.isNotEmpty && sources.isNotEmpty) {
-        _fontFaces.add(FontFaceRule(
-          family: family,
-          sources: sources,
-          weight: int.tryParse((raw['font-weight'] ?? '').trim()),
-          style: (raw['font-style'] ?? '').trim().isEmpty
-              ? null
-              : (raw['font-style'] ?? '').trim(),
-          display: (raw['font-display'] ?? '').trim().isEmpty
-              ? null
-              : (raw['font-display'] ?? '').trim(),
-        ));
+        _fontFaces.add(
+          FontFaceRule(
+            family: family,
+            sources: sources,
+            weight: int.tryParse((raw['font-weight'] ?? '').trim()),
+            style: (raw['font-style'] ?? '').trim().isEmpty
+                ? null
+                : (raw['font-style'] ?? '').trim(),
+            display: (raw['font-display'] ?? '').trim().isEmpty
+                ? null
+                : (raw['font-display'] ?? '').trim(),
+          ),
+        );
       } else {
         _warnings.add(CssWarning('invalid @font-face rule', at.offset));
       }
@@ -302,8 +366,12 @@ class CssParser {
     _i = blockEnd;
     final selectors = SelectorList.tryParse(selectorText);
     if (selectors == null) {
-      _warnings.add(CssWarning('invalid or unsupported selector "$selectorText"',
-          _tokens[start].offset));
+      _warnings.add(
+        CssWarning(
+          'invalid or unsupported selector "$selectorText"',
+          _tokens[start].offset,
+        ),
+      );
       return;
     }
     out.add(StyleRule(selectorText, selectors, declarations));
@@ -315,7 +383,8 @@ class CssParser {
     final out = <String, String>{};
     while (_i < end) {
       final t = _tokens[_i];
-      if (t.type == CssTokenType.whitespace || t.type == CssTokenType.semicolon) {
+      if (t.type == CssTokenType.whitespace ||
+          t.type == CssTokenType.semicolon) {
         _i++;
         continue;
       }
@@ -324,10 +393,13 @@ class CssParser {
       var j = _i;
       for (; j < end; j++) {
         final k = _tokens[j].type;
-        if (k == CssTokenType.leftParen || k == CssTokenType.function ||
-            k == CssTokenType.leftBrace || k == CssTokenType.leftBracket) {
+        if (k == CssTokenType.leftParen ||
+            k == CssTokenType.function ||
+            k == CssTokenType.leftBrace ||
+            k == CssTokenType.leftBracket) {
           depth++;
-        } else if (k == CssTokenType.rightParen || k == CssTokenType.rightBrace ||
+        } else if (k == CssTokenType.rightParen ||
+            k == CssTokenType.rightBrace ||
             k == CssTokenType.rightBracket) {
           depth--;
         } else if (depth <= 0 && k == CssTokenType.colon) {
@@ -361,7 +433,8 @@ class CssParser {
     final out = <Declaration>[];
     while (_i < end) {
       final t = _tokens[_i];
-      if (t.type == CssTokenType.whitespace || t.type == CssTokenType.semicolon) {
+      if (t.type == CssTokenType.whitespace ||
+          t.type == CssTokenType.semicolon) {
         _i++;
         continue;
       }
@@ -370,10 +443,13 @@ class CssParser {
       var j = _i;
       for (; j < end; j++) {
         final k = _tokens[j].type;
-        if (k == CssTokenType.leftParen || k == CssTokenType.function ||
-            k == CssTokenType.leftBrace || k == CssTokenType.leftBracket) {
+        if (k == CssTokenType.leftParen ||
+            k == CssTokenType.function ||
+            k == CssTokenType.leftBrace ||
+            k == CssTokenType.leftBracket) {
           depth++;
-        } else if (k == CssTokenType.rightParen || k == CssTokenType.rightBrace ||
+        } else if (k == CssTokenType.rightParen ||
+            k == CssTokenType.rightBrace ||
             k == CssTokenType.rightBracket) {
           depth--;
         } else if (k == CssTokenType.semicolon && depth <= 0) {
@@ -411,7 +487,9 @@ class CssParser {
       k++;
     }
     if (k >= ts.length || ts[k].type != CssTokenType.colon) {
-      _warnings.add(CssWarning('expected ":" after ${nameTok.value}', nameTok.offset));
+      _warnings.add(
+        CssWarning('expected ":" after ${nameTok.value}', nameTok.offset),
+      );
       return;
     }
     var value = ts.sublist(k + 1);
@@ -427,7 +505,8 @@ class CssParser {
       important = true;
       value = value.sublist(0, meaningful[meaningful.length - 2]);
     }
-    final name = nameTok.value.toLowerCase();
+    final rawName = nameTok.value.toLowerCase();
+    final name = _vendorAliases[rawName] ?? rawName;
     final raw = value.map((t) => t.toString()).join().trim();
     if (name.startsWith('--')) {
       out.add(Declaration(name, RawValue(raw), important: important));
@@ -437,8 +516,18 @@ class CssParser {
       _warnings.add(CssWarning('unsupported property "$name"', nameTok.offset));
       return;
     }
-    if (value.any((t) => t.type == CssTokenType.function &&
-        const {'var', 'env', 'calc', 'min', 'max', 'clamp'}.contains(t.value.toLowerCase()))) {
+    if (value.any(
+      (t) =>
+          t.type == CssTokenType.function &&
+          const {
+            'var',
+            'env',
+            'calc',
+            'min',
+            'max',
+            'clamp',
+          }.contains(t.value.toLowerCase()),
+    )) {
       // Keep the declaration: variables are inherited and can only be
       // substituted while computing an element. The cascade resolves this
       // RawValue (and reports a warning if it still cannot be parsed).
@@ -450,7 +539,8 @@ class CssParser {
       _warnings.add(CssWarning('invalid value for "$name"', nameTok.offset));
       return;
     }
-    expanded.forEach((p, v) =>
-        out.add(Declaration(p, _resolveUrl(v), important: important)));
+    expanded.forEach(
+      (p, v) => out.add(Declaration(p, _resolveUrl(v), important: important)),
+    );
   }
 }

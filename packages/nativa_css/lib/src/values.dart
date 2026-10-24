@@ -83,7 +83,8 @@ class Length extends CssValue {
   final LengthUnit unit;
 
   @override
-  bool operator ==(Object o) => o is Length && o.value == value && o.unit == unit;
+  bool operator ==(Object o) =>
+      o is Length && o.value == value && o.unit == unit;
   @override
   int get hashCode => Object.hash(value, unit);
   @override
@@ -142,7 +143,7 @@ class UrlValue extends CssValue {
 /// it separates values; helpers below consume them.
 class ValueStream {
   ValueStream(List<CssToken> tokens)
-      : _tokens = tokens.where((t) => t.type != CssTokenType.whitespace).toList();
+    : _tokens = tokens.where((t) => t.type != CssTokenType.whitespace).toList();
 
   final List<CssToken> _tokens;
   int _i = 0;
@@ -163,7 +164,8 @@ class ValueStream {
       if (t.type == CssTokenType.rightParen) {
         if (depth == 0) return args;
         depth--;
-      } else if (t.type == CssTokenType.function || t.type == CssTokenType.leftParen) {
+      } else if (t.type == CssTokenType.function ||
+          t.type == CssTokenType.leftParen) {
         depth++;
       } else if (t.type == CssTokenType.comma && depth == 0) {
         args.add([]);
@@ -175,7 +177,11 @@ class ValueStream {
   }
 }
 
-Length? lengthFromToken(CssToken t, {bool allowPercent = true, bool allowNegative = true}) {
+Length? lengthFromToken(
+  CssToken t, {
+  bool allowPercent = true,
+  bool allowNegative = true,
+}) {
   if (!allowNegative && t.number < 0) return null;
   switch (t.type) {
     case CssTokenType.number:
@@ -183,15 +189,20 @@ Length? lengthFromToken(CssToken t, {bool allowPercent = true, bool allowNegativ
     case CssTokenType.percentage:
       return allowPercent ? Length(t.number, LengthUnit.percent) : null;
     case CssTokenType.dimension:
-      final unit = switch (t.unit) {
+      var value = t.number;
+      final rawUnit = t.unit.toLowerCase();
+      final unit = switch (rawUnit) {
         'px' => LengthUnit.px,
         'em' => LengthUnit.em,
         'rem' => LengthUnit.rem,
         'vw' => LengthUnit.vw,
         'vh' => LengthUnit.vh,
+        // `ch` is the advance of "0"; approximate it as 0.5em.
+        'ch' => LengthUnit.em,
         _ => null,
       };
-      if (unit != null) return Length(t.number, unit);
+      if (rawUnit == 'ch') value *= 0.5;
+      if (unit != null) return Length(value, unit);
       // Absolute units convert to px at 96 dpi.
       final factor = switch (t.unit) {
         'pt' => 96 / 72,
@@ -271,7 +282,9 @@ CssColor? _functionColor(String name, List<List<CssToken>> args) {
   List<CssToken> parts;
   CssToken? alpha;
   if (args.length == 1) {
-    final flat = args.single.where((t) => t.type != CssTokenType.whitespace).toList();
+    final flat = args.single
+        .where((t) => t.type != CssTokenType.whitespace)
+        .toList();
     final slash = flat.indexWhere((t) => t.isDelim('/'));
     if (slash >= 0) {
       if (slash != flat.length - 2) return null;
@@ -319,15 +332,16 @@ CssColor? _functionColor(String name, List<List<CssToken>> args) {
     CssTokenType.number => hTok.number,
     CssTokenType.dimension when hTok.unit == 'deg' => hTok.number,
     CssTokenType.dimension when hTok.unit == 'turn' => hTok.number * 360,
-    CssTokenType.dimension when hTok.unit == 'rad' => hTok.number * 180 / math.pi,
+    CssTokenType.dimension when hTok.unit == 'rad' =>
+      hTok.number * 180 / math.pi,
     _ => null,
   };
   if (h == null) return null;
   double? pct(CssToken t) => switch (t.type) {
-        CssTokenType.percentage => t.number / 100,
-        CssTokenType.number => t.number / 100,
-        _ => null,
-      };
+    CssTokenType.percentage => t.number / 100,
+    CssTokenType.number => t.number / 100,
+    _ => null,
+  };
   final sat = pct(parts[1]);
   final light = pct(parts[2]);
   if (sat == null || light == null) return null;
@@ -461,7 +475,8 @@ class CalcFn extends CalcNode {
   String toString() => '$name(${args.join(', ')})';
 }
 
-String _num(double v) => v == v.truncateToDouble() ? v.toInt().toString() : '$v';
+String _num(double v) =>
+    v == v.truncateToDouble() ? v.toInt().toString() : '$v';
 
 /// A length given by a math function.
 class CalcLength extends CssValue implements RelativeValue {
@@ -501,7 +516,9 @@ CalcNode? parseMathFunction(ValueStream s) {
   if (args != null) {
     final nodes = <CalcNode>[];
     for (final a in args) {
-      final n = _CalcParser(a.where((x) => x.type != CssTokenType.whitespace).toList()).parse();
+      final n = _CalcParser(
+        a.where((x) => x.type != CssTokenType.whitespace).toList(),
+      ).parse();
       if (n == null) {
         nodes.clear();
         break;
@@ -534,7 +551,8 @@ class _CalcParser {
 
   CalcNode? _sum() {
     var left = _product();
-    while (left != null && i < tokens.length &&
+    while (left != null &&
+        i < tokens.length &&
         (tokens[i].isDelim('+') || tokens[i].isDelim('-'))) {
       final op = tokens[i++].value;
       final right = _product();
@@ -542,7 +560,8 @@ class _CalcParser {
       left = CalcOp(op, left, right);
     }
     // `a -5px` tokenizes as a signed number; treat it as subtraction.
-    while (left != null && i < tokens.length &&
+    while (left != null &&
+        i < tokens.length &&
         (tokens[i].type == CssTokenType.number ||
             tokens[i].type == CssTokenType.dimension ||
             tokens[i].type == CssTokenType.percentage) &&
@@ -556,7 +575,8 @@ class _CalcParser {
 
   CalcNode? _product() {
     var left = _unit();
-    while (left != null && i < tokens.length &&
+    while (left != null &&
+        i < tokens.length &&
         (tokens[i].isDelim('*') || tokens[i].isDelim('/'))) {
       final op = tokens[i++].value;
       final right = _unit();
@@ -584,7 +604,8 @@ class _CalcParser {
       case CssTokenType.leftParen:
         i++;
         final inner = _sum();
-        if (inner == null || i >= tokens.length ||
+        if (inner == null ||
+            i >= tokens.length ||
             tokens[i].type != CssTokenType.rightParen) {
           return null;
         }
@@ -596,7 +617,8 @@ class _CalcParser {
         final start = i;
         for (; i < tokens.length; i++) {
           final k = tokens[i].type;
-          if (k == CssTokenType.function || k == CssTokenType.leftParen) depth++;
+          if (k == CssTokenType.function || k == CssTokenType.leftParen)
+            depth++;
           if (k == CssTokenType.rightParen) {
             depth--;
             if (depth == 0) {
@@ -648,17 +670,29 @@ class ContentValue extends CssValue {
   }
 
   @override
-  bool operator ==(Object o) => o is ContentValue && o.parts.join('\u0001') == parts.join('\u0001');
+  bool operator ==(Object o) =>
+      o is ContentValue && o.parts.join('\u0001') == parts.join('\u0001');
   @override
   int get hashCode => parts.join('\u0001').hashCode;
   @override
-  String toString() => parts.map((p) => p.startsWith('\u0000attr:') ? 'attr(${p.substring(6)})' : '"$p"').join(' ');
+  String toString() => parts
+      .map(
+        (p) => p.startsWith('\u0000attr:') ? 'attr(${p.substring(6)})' : '"$p"',
+      )
+      .join(' ');
 }
 
 // --- shadows ---------------------------------------------------------------------
 
 class CssShadow {
-  const CssShadow(this.x, this.y, this.blur, this.spread, this.color, {this.inset = false});
+  const CssShadow(
+    this.x,
+    this.y,
+    this.blur,
+    this.spread,
+    this.color, {
+    this.inset = false,
+  });
   final Length x;
   final Length y;
   final Length blur;
@@ -676,10 +710,16 @@ class ShadowValue extends CssValue implements RelativeValue {
 
   @override
   CssValue absolutize(Length Function(Length) toAbsolute) => ShadowValue([
-        for (final s in shadows)
-          CssShadow(toAbsolute(s.x), toAbsolute(s.y), toAbsolute(s.blur), toAbsolute(s.spread), s.color,
-              inset: s.inset),
-      ]);
+    for (final s in shadows)
+      CssShadow(
+        toAbsolute(s.x),
+        toAbsolute(s.y),
+        toAbsolute(s.blur),
+        toAbsolute(s.spread),
+        s.color,
+        inset: s.inset,
+      ),
+  ]);
 
   @override
   bool operator ==(Object o) => o is ShadowValue && o.toString() == toString();
@@ -702,7 +742,12 @@ class GradientStop {
 }
 
 class GradientValue extends CssValue {
-  const GradientValue(this.kind, this.angle, this.stops, {this.repeating = false});
+  const GradientValue(
+    this.kind,
+    this.angle,
+    this.stops, {
+    this.repeating = false,
+  });
 
   /// `linear`, `radial` or `conic`.
   final String kind;
@@ -713,11 +758,13 @@ class GradientValue extends CssValue {
   final bool repeating;
 
   @override
-  bool operator ==(Object o) => o is GradientValue && o.toString() == toString();
+  bool operator ==(Object o) =>
+      o is GradientValue && o.toString() == toString();
   @override
   int get hashCode => toString().hashCode;
   @override
-  String toString() => '${repeating ? 'repeating-' : ''}$kind-gradient(${angle}deg, ${stops.join(', ')})';
+  String toString() =>
+      '${repeating ? 'repeating-' : ''}$kind-gradient(${angle}deg, ${stops.join(', ')})';
 }
 
 /// Parses a `*-gradient()` function at the stream position.
@@ -727,7 +774,12 @@ GradientValue? parseGradient(ValueStream s) {
   var name = t.value.toLowerCase();
   final repeating = name.startsWith('repeating-');
   if (repeating) name = name.substring(10);
-  if (!const {'linear-gradient', 'radial-gradient', 'conic-gradient'}.contains(name)) return null;
+  if (!const {
+    'linear-gradient',
+    'radial-gradient',
+    'conic-gradient',
+  }.contains(name))
+    return null;
   final start = s._i;
   s.next();
   final args = s.functionArgs();
@@ -738,7 +790,9 @@ GradientValue? parseGradient(ValueStream s) {
   final kind = name.substring(0, name.indexOf('-'));
   var angle = 180.0;
   var first = 0;
-  final head = args.first.where((x) => x.type != CssTokenType.whitespace).toList();
+  final head = args.first
+      .where((x) => x.type != CssTokenType.whitespace)
+      .toList();
   if (head.isNotEmpty && parseColor(ValueStream(head)) == null) {
     first = 1;
     if (kind == 'linear') {
@@ -753,9 +807,15 @@ GradientValue? parseGradient(ValueStream s) {
         };
       } else if (a.isIdent('to')) {
         final dirs = head.skip(1).map((x) => x.value.toLowerCase()).toSet();
-        final dx = dirs.contains('right') ? 1 : (dirs.contains('left') ? -1 : 0);
-        final dy = dirs.contains('bottom') ? 1 : (dirs.contains('top') ? -1 : 0);
-        angle = (math.atan2(dx.toDouble(), -dy.toDouble()) * 180 / math.pi + 360) % 360;
+        final dx = dirs.contains('right')
+            ? 1
+            : (dirs.contains('left') ? -1 : 0);
+        final dy = dirs.contains('bottom')
+            ? 1
+            : (dirs.contains('top') ? -1 : 0);
+        angle =
+            (math.atan2(dx.toDouble(), -dy.toDouble()) * 180 / math.pi + 360) %
+            360;
       }
     }
   }
@@ -774,7 +834,8 @@ GradientValue? parseGradient(ValueStream s) {
     // A second position duplicates the stop.
     if (!ps.done) {
       final p = ps.next();
-      if (p.type == CssTokenType.percentage) stops.add(GradientStop(c, p.number / 100));
+      if (p.type == CssTokenType.percentage)
+        stops.add(GradientStop(c, p.number / 100));
     }
   }
   if (stops.isEmpty) {
@@ -805,12 +866,15 @@ class TransformValue extends CssValue implements RelativeValue {
 
   @override
   CssValue absolutize(Length Function(Length) toAbsolute) => TransformValue([
-        for (final f in functions)
-          TransformFunction(f.name, [for (final a in f.args) a is Length ? toAbsolute(a) : a]),
-      ]);
+    for (final f in functions)
+      TransformFunction(f.name, [
+        for (final a in f.args) a is Length ? toAbsolute(a) : a,
+      ]),
+  ]);
 
   @override
-  bool operator ==(Object o) => o is TransformValue && o.toString() == toString();
+  bool operator ==(Object o) =>
+      o is TransformValue && o.toString() == toString();
   @override
   int get hashCode => toString().hashCode;
   @override
@@ -841,7 +905,9 @@ TransformValue? parseTransform(ValueStream s) {
     for (final a in args) {
       final parts = a.where((x) => x.type != CssTokenType.whitespace).toList();
       for (final p in parts) {
-        final angle = name.startsWith('rotate') || name.startsWith('skew') ? angleFromToken(p) : null;
+        final angle = name.startsWith('rotate') || name.startsWith('skew')
+            ? angleFromToken(p)
+            : null;
         if (angle != null) {
           values.add(NumberValue(angle));
           continue;
@@ -872,7 +938,9 @@ class TrackBreadth {
   const TrackBreadth.length(CssValue this.length) : kind = 'length', fr = 0;
   const TrackBreadth.fr(this.fr) : kind = 'fr', length = null;
   const TrackBreadth.keyword(this.kind) : length = null, fr = 0;
-  const TrackBreadth.fitContent(CssValue this.length) : kind = 'fit-content', fr = 0;
+  const TrackBreadth.fitContent(CssValue this.length)
+    : kind = 'fit-content',
+      fr = 0;
 
   static const auto = TrackBreadth.keyword('auto');
 
@@ -886,21 +954,26 @@ class TrackBreadth {
   TrackBreadth absolutize(Length Function(Length) toAbsolute) {
     final l = length;
     if (l == null) return this;
-    final abs = l is Length ? toAbsolute(l) : (l as CalcLength).absolutize(toAbsolute);
-    return kind == 'fit-content' ? TrackBreadth.fitContent(abs) : TrackBreadth.length(abs);
+    final abs = l is Length
+        ? toAbsolute(l)
+        : (l as CalcLength).absolutize(toAbsolute);
+    return kind == 'fit-content'
+        ? TrackBreadth.fitContent(abs)
+        : TrackBreadth.length(abs);
   }
 
   @override
   String toString() => switch (kind) {
-        'length' => '$length',
-        'fr' => '${_num(fr)}fr',
-        'fit-content' => 'fit-content($length)',
-        _ => kind,
-      };
+    'length' => '$length',
+    'fr' => '${_num(fr)}fr',
+    'fit-content' => 'fit-content($length)',
+    _ => kind,
+  };
 }
 
 class TrackSize {
   const TrackSize(this.min, this.max);
+
   /// A single breadth: `1fr` means `minmax(auto, 1fr)`.
   factory TrackSize.single(TrackBreadth b) =>
       TrackSize(b.kind == 'fr' ? TrackBreadth.auto : b, b);
@@ -927,12 +1000,15 @@ class TrackEntry {
   final String? auto;
 
   TrackEntry absolutize(Length Function(Length) toAbsolute) => TrackEntry(
-      [for (final t in tracks) t.absolutize(toAbsolute)],
-      count: count,
-      auto: auto);
+    [for (final t in tracks) t.absolutize(toAbsolute)],
+    count: count,
+    auto: auto,
+  );
 
   @override
-  String toString() => auto == null && count == 1 ? tracks.join(' ') : 'repeat(${auto ?? count}, ${tracks.join(' ')})';
+  String toString() => auto == null && count == 1
+      ? tracks.join(' ')
+      : 'repeat(${auto ?? count}, ${tracks.join(' ')})';
 }
 
 class GridTracksValue extends CssValue implements RelativeValue {
@@ -944,7 +1020,8 @@ class GridTracksValue extends CssValue implements RelativeValue {
       GridTracksValue([for (final e in entries) e.absolutize(toAbsolute)]);
 
   @override
-  bool operator ==(Object o) => o is GridTracksValue && o.toString() == toString();
+  bool operator ==(Object o) =>
+      o is GridTracksValue && o.toString() == toString();
   @override
   int get hashCode => toString().hashCode;
   @override
@@ -955,7 +1032,8 @@ class GridAreasValue extends CssValue {
   const GridAreasValue(this.rows);
   final List<List<String>> rows;
   @override
-  bool operator ==(Object o) => o is GridAreasValue && o.toString() == toString();
+  bool operator ==(Object o) =>
+      o is GridAreasValue && o.toString() == toString();
   @override
   int get hashCode => toString().hashCode;
   @override
@@ -973,11 +1051,13 @@ class GridLineValue extends CssValue {
   bool get isAuto => line == null && span == null && name == null;
 
   @override
-  bool operator ==(Object o) => o is GridLineValue && o.line == line && o.span == span && o.name == name;
+  bool operator ==(Object o) =>
+      o is GridLineValue && o.line == line && o.span == span && o.name == name;
   @override
   int get hashCode => Object.hash(line, span, name);
   @override
-  String toString() => isAuto ? 'auto' : (span != null ? 'span $span' : (name ?? '$line'));
+  String toString() =>
+      isAuto ? 'auto' : (span != null ? 'span $span' : (name ?? '$line'));
 }
 
 TrackBreadth? _breadth(ValueStream s, {bool allowFr = true}) {
@@ -991,14 +1071,18 @@ TrackBreadth? _breadth(ValueStream s, {bool allowFr = true}) {
   }
   if (t.type == CssTokenType.ident) {
     final k = t.value.toLowerCase();
-    if (const {'auto', 'min-content', 'max-content'}.contains(k)) return TrackBreadth.keyword(k);
+    if (const {'auto', 'min-content', 'max-content'}.contains(k))
+      return TrackBreadth.keyword(k);
     return null;
   }
-  if (t.type == CssTokenType.function && t.value.toLowerCase() == 'fit-content') {
+  if (t.type == CssTokenType.function &&
+      t.value.toLowerCase() == 'fit-content') {
     final args = s.functionArgs();
     if (args == null || args.length != 1) return null;
     final inner = ValueStream(args.single);
-    final l = inner.done ? null : lengthFromToken(inner.next(), allowNegative: false);
+    final l = inner.done
+        ? null
+        : lengthFromToken(inner.next(), allowNegative: false);
     if (l == null || !inner.done) return null;
     return TrackBreadth.fitContent(l);
   }
@@ -1034,11 +1118,15 @@ GridTracksValue? parseTrackList(ValueStream s, {bool allowRepeat = true}) {
       while (!s.done && s.next().type != CssTokenType.rightBracket) {}
       continue;
     }
-    if (allowRepeat && t.type == CssTokenType.function && t.value.toLowerCase() == 'repeat') {
+    if (allowRepeat &&
+        t.type == CssTokenType.function &&
+        t.value.toLowerCase() == 'repeat') {
       s.next();
       final args = s.functionArgs();
       if (args == null || args.length < 2) return null;
-      final countToks = args[0].where((x) => x.type != CssTokenType.whitespace).toList();
+      final countToks = args[0]
+          .where((x) => x.type != CssTokenType.whitespace)
+          .toList();
       if (countToks.length != 1) return null;
       final c = countToks.single;
       String? auto;
@@ -1060,7 +1148,8 @@ GridTracksValue? parseTrackList(ValueStream s, {bool allowRepeat = true}) {
       final tracks = <TrackSize>[];
       while (!inner.done) {
         if (inner.peek!.type == CssTokenType.leftBracket) {
-          while (!inner.done && inner.next().type != CssTokenType.rightBracket) {}
+          while (!inner.done &&
+              inner.next().type != CssTokenType.rightBracket) {}
           continue;
         }
         final ts = _trackSize(inner);
@@ -1098,13 +1187,21 @@ class FilterValue extends CssValue implements RelativeValue {
 
   @override
   CssValue absolutize(Length Function(Length) toAbsolute) => FilterValue([
-        for (final f in functions)
-          f.shadow == null
-              ? f
-              : FilterFunction(f.name, f.amount,
-                  shadow: CssShadow(toAbsolute(f.shadow!.x), toAbsolute(f.shadow!.y), toAbsolute(f.shadow!.blur),
-                      toAbsolute(f.shadow!.spread), f.shadow!.color)),
-      ]);
+    for (final f in functions)
+      f.shadow == null
+          ? f
+          : FilterFunction(
+              f.name,
+              f.amount,
+              shadow: CssShadow(
+                toAbsolute(f.shadow!.x),
+                toAbsolute(f.shadow!.y),
+                toAbsolute(f.shadow!.blur),
+                toAbsolute(f.shadow!.spread),
+                f.shadow!.color,
+              ),
+            ),
+  ]);
 
   @override
   bool operator ==(Object o) => o is FilterValue && o.toString() == toString();
@@ -1120,23 +1217,23 @@ class FilterValue extends CssValue implements RelativeValue {
 /// `steps()`.
 class CssEasing {
   const CssEasing.cubic(this.x1, this.y1, this.x2, this.y2)
-      : kind = 'cubic',
-        steps = 0,
-        jump = '';
+    : kind = 'cubic',
+      steps = 0,
+      jump = '';
   const CssEasing.steps(this.steps, this.jump)
-      : kind = 'steps',
-        x1 = 0,
-        y1 = 0,
-        x2 = 0,
-        y2 = 0;
+    : kind = 'steps',
+      x1 = 0,
+      y1 = 0,
+      x2 = 0,
+      y2 = 0;
   const CssEasing.linear()
-      : kind = 'linear',
-        x1 = 0,
-        y1 = 0,
-        x2 = 1,
-        y2 = 1,
-        steps = 0,
-        jump = '';
+    : kind = 'linear',
+      x1 = 0,
+      y1 = 0,
+      x2 = 1,
+      y2 = 1,
+      steps = 0,
+      jump = '';
 
   static const ease = CssEasing.cubic(0.25, 0.1, 0.25, 1);
   static const easeIn = CssEasing.cubic(0.42, 0, 1, 1);
@@ -1157,16 +1254,25 @@ class CssEasing {
       final n = steps <= 0 ? 1 : steps;
       var current = (t * n).floor();
       if (jump == 'jump-start' || jump == 'jump-both') current++;
-      final jumps = switch (jump) { 'jump-none' => n - 1, 'jump-both' => n + 1, _ => n };
+      final jumps = switch (jump) {
+        'jump-none' => n - 1,
+        'jump-both' => n + 1,
+        _ => n,
+      };
       if (t >= 1) return 1;
       return (current / (jumps <= 0 ? 1 : jumps)).clamp(0.0, 1.0);
     }
     if (t <= 0) return 0;
     if (t >= 1) return 1;
     // Solve x(s) = t for s with Newton's method, then return y(s).
-    double bx(double s) => 3 * (1 - s) * (1 - s) * s * x1 + 3 * (1 - s) * s * s * x2 + s * s * s;
-    double by(double s) => 3 * (1 - s) * (1 - s) * s * y1 + 3 * (1 - s) * s * s * y2 + s * s * s;
-    double dx(double s) => 3 * (1 - s) * (1 - s) * x1 + 6 * (1 - s) * s * (x2 - x1) + 3 * s * s * (1 - x2);
+    double bx(double s) =>
+        3 * (1 - s) * (1 - s) * s * x1 + 3 * (1 - s) * s * s * x2 + s * s * s;
+    double by(double s) =>
+        3 * (1 - s) * (1 - s) * s * y1 + 3 * (1 - s) * s * s * y2 + s * s * s;
+    double dx(double s) =>
+        3 * (1 - s) * (1 - s) * x1 +
+        6 * (1 - s) * s * (x2 - x1) +
+        3 * s * s * (1 - x2);
     var s = t;
     for (var i = 0; i < 8; i++) {
       final err = bx(s) - t;
@@ -1180,7 +1286,9 @@ class CssEasing {
   }
 
   @override
-  String toString() => kind == 'steps' ? 'steps($steps, $jump)' : (kind == 'linear' ? 'linear' : 'cubic-bezier($x1, $y1, $x2, $y2)');
+  String toString() => kind == 'steps'
+      ? 'steps($steps, $jump)'
+      : (kind == 'linear' ? 'linear' : 'cubic-bezier($x1, $y1, $x2, $y2)');
 }
 
 /// A comma-separated list value (`animation-*`, `transition-*`).
@@ -1199,7 +1307,11 @@ class ListValue<T> extends CssValue {
 double? timeFromToken(CssToken t) {
   if (t.type == CssTokenType.number && t.number == 0) return 0;
   if (t.type != CssTokenType.dimension) return null;
-  return switch (t.unit) { 's' => t.number * 1000, 'ms' => t.number, _ => null };
+  return switch (t.unit) {
+    's' => t.number * 1000,
+    'ms' => t.number,
+    _ => null,
+  };
 }
 
 /// Parses a timing function at the stream position.
@@ -1222,7 +1334,8 @@ CssEasing? parseEasing(ValueStream s) {
   }
   if (t.type != CssTokenType.function) return null;
   final name = t.value.toLowerCase();
-  if (name != 'cubic-bezier' && name != 'steps' && name != 'linear') return null;
+  if (name != 'cubic-bezier' && name != 'steps' && name != 'linear')
+    return null;
   final start = s._i;
   s.next();
   final args = s.functionArgs();
@@ -1230,8 +1343,15 @@ CssEasing? parseEasing(ValueStream s) {
     s._i = start;
     return null;
   }
-  final flat = [for (final a in args) a.where((x) => x.type != CssTokenType.whitespace).toList()];
-  if (name == 'cubic-bezier' && flat.length == 4 && flat.every((a) => a.length == 1 && a.single.type == CssTokenType.number)) {
+  final flat = [
+    for (final a in args)
+      a.where((x) => x.type != CssTokenType.whitespace).toList(),
+  ];
+  if (name == 'cubic-bezier' &&
+      flat.length == 4 &&
+      flat.every(
+        (a) => a.length == 1 && a.single.type == CssTokenType.number,
+      )) {
     final v = [for (final a in flat) a.single.number];
     if (v[0] < 0 || v[0] > 1 || v[2] < 0 || v[2] > 1) {
       s._i = start;
@@ -1239,7 +1359,10 @@ CssEasing? parseEasing(ValueStream s) {
     }
     return CssEasing.cubic(v[0], v[1], v[2], v[3]);
   }
-  if (name == 'steps' && flat.isNotEmpty && flat.first.length == 1 && flat.first.single.type == CssTokenType.number) {
+  if (name == 'steps' &&
+      flat.isNotEmpty &&
+      flat.first.length == 1 &&
+      flat.first.single.type == CssTokenType.number) {
     var jump = 'jump-end';
     if (flat.length > 1 && flat[1].length == 1) {
       jump = switch (flat[1].single.value.toLowerCase()) {
@@ -1251,7 +1374,8 @@ CssEasing? parseEasing(ValueStream s) {
     }
     return CssEasing.steps(flat.first.single.number.toInt(), jump);
   }
-  if (name == 'linear') return const CssEasing.linear(); // linear() stops approximated
+  if (name == 'linear')
+    return const CssEasing.linear(); // linear() stops approximated
   s._i = start;
   return null;
 }
@@ -1289,7 +1413,16 @@ class CssAnimation {
       o.fill == fill &&
       o.paused == paused;
   @override
-  int get hashCode => Object.hash(name, duration, '$easing', delay, iterations, direction, fill, paused);
+  int get hashCode => Object.hash(
+    name,
+    duration,
+    '$easing',
+    delay,
+    iterations,
+    direction,
+    fill,
+    paused,
+  );
 }
 
 /// One resolved `transition` entry.

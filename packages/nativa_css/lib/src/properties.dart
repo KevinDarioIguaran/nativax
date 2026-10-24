@@ -9,7 +9,12 @@ import 'values.dart';
 typedef LonghandParser = CssValue? Function(ValueStream s);
 
 class PropertySpec {
-  const PropertySpec(this.name, this.parse, this.initial, {this.inherited = false});
+  const PropertySpec(
+    this.name,
+    this.parse,
+    this.initial, {
+    this.inherited = false,
+  });
   final String name;
   final LonghandParser parse;
   final CssValue initial;
@@ -21,42 +26,44 @@ const _none = Keyword('none');
 const _normal = Keyword('normal');
 
 LonghandParser _keywords(Set<String> allowed) => (s) {
-      final t = s.next();
-      if (t.type != CssTokenType.ident) return null;
-      final k = t.value.toLowerCase();
-      return allowed.contains(k) ? Keyword(k) : null;
-    };
+  final t = s.next();
+  if (t.type != CssTokenType.ident) return null;
+  final k = t.value.toLowerCase();
+  return allowed.contains(k) ? Keyword(k) : null;
+};
 
 LonghandParser _length({
   Set<String> keywords = const {},
   bool percent = true,
   bool negative = true,
-}) =>
-    (s) {
-      final math = parseMathFunction(s);
-      if (math != null) return CalcLength(math);
-      final t = s.next();
-      if (t.type == CssTokenType.ident) {
-        final k = t.value.toLowerCase();
-        return keywords.contains(k) ? Keyword(k) : null;
-      }
-      return lengthFromToken(t, allowPercent: percent, allowNegative: negative);
-    };
+}) => (s) {
+  final math = parseMathFunction(s);
+  if (math != null) return CalcLength(math);
+  final t = s.next();
+  if (t.type == CssTokenType.ident) {
+    final k = t.value.toLowerCase();
+    return keywords.contains(k) ? Keyword(k) : null;
+  }
+  return lengthFromToken(t, allowPercent: percent, allowNegative: negative);
+};
 
 CssValue? _color(ValueStream s) => parseColor(s);
 
-LonghandParser _number({bool negative = false, bool integer = false, Set<String> keywords = const {}}) =>
-    (s) {
-      final t = s.next();
-      if (t.type == CssTokenType.ident) {
-        final k = t.value.toLowerCase();
-        return keywords.contains(k) ? Keyword(k) : null;
-      }
-      if (t.type != CssTokenType.number) return null;
-      if (!negative && t.number < 0) return null;
-      if (integer && t.number != t.number.truncateToDouble()) return null;
-      return NumberValue(t.number);
-    };
+LonghandParser _number({
+  bool negative = false,
+  bool integer = false,
+  Set<String> keywords = const {},
+}) => (s) {
+  final t = s.next();
+  if (t.type == CssTokenType.ident) {
+    final k = t.value.toLowerCase();
+    return keywords.contains(k) ? Keyword(k) : null;
+  }
+  if (t.type != CssTokenType.number) return null;
+  if (!negative && t.number < 0) return null;
+  if (integer && t.number != t.number.truncateToDouble()) return null;
+  return NumberValue(t.number);
+};
 
 CssValue? _opacity(ValueStream s) {
   final t = s.next();
@@ -81,7 +88,18 @@ CssValue? _borderWidth(ValueStream s) {
   return lengthFromToken(t, allowPercent: false, allowNegative: false);
 }
 
-const _borderStyles = {'none', 'hidden', 'solid', 'dashed', 'dotted', 'double', 'groove', 'ridge', 'inset', 'outset'};
+const _borderStyles = {
+  'none',
+  'hidden',
+  'solid',
+  'dashed',
+  'dotted',
+  'double',
+  'groove',
+  'ridge',
+  'inset',
+  'outset',
+};
 
 CssValue? _fontSize(ValueStream s) {
   final t = s.next();
@@ -103,7 +121,9 @@ CssValue? _fontWeight(ValueStream s) {
   final t = s.next();
   if (t.type == CssTokenType.ident) {
     final k = t.value.toLowerCase();
-    return const {'normal', 'bold', 'bolder', 'lighter'}.contains(k) ? Keyword(k) : null;
+    return const {'normal', 'bold', 'bolder', 'lighter'}.contains(k)
+        ? Keyword(k)
+        : null;
   }
   if (t.type == CssTokenType.number && t.number >= 1 && t.number <= 1000) {
     return NumberValue(t.number);
@@ -136,7 +156,8 @@ CssValue? _fontFamily(ValueStream s) {
 CssValue? _lineHeight(ValueStream s) {
   final t = s.next();
   if (t.type == CssTokenType.ident) return t.isIdent('normal') ? _normal : null;
-  if (t.type == CssTokenType.number) return t.number < 0 ? null : NumberValue(t.number);
+  if (t.type == CssTokenType.number)
+    return t.number < 0 ? null : NumberValue(t.number);
   return lengthFromToken(t, allowNegative: false);
 }
 
@@ -147,7 +168,8 @@ CssValue? _textDecorationLine(ValueStream s) {
     if (t.type != CssTokenType.ident) return null;
     final k = t.value.toLowerCase();
     if (k == 'none' && lines.isEmpty && s.done) return _none;
-    if (!const {'underline', 'overline', 'line-through'}.contains(k) || !lines.add(k)) {
+    if (!const {'underline', 'overline', 'line-through'}.contains(k) ||
+        !lines.add(k)) {
       return null;
     }
   }
@@ -162,8 +184,12 @@ CssValue? _backgroundImage(ValueStream s) {
   if (t.type == CssTokenType.url) return UrlValue(t.value);
   if (t.type == CssTokenType.function && t.value.toLowerCase() == 'url') {
     final args = s.functionArgs();
-    final inner = args?.single.where((x) => x.type != CssTokenType.whitespace).toList();
-    if (inner == null || inner.length != 1 || inner.single.type != CssTokenType.string) {
+    final inner = args?.single
+        .where((x) => x.type != CssTokenType.whitespace)
+        .toList();
+    if (inner == null ||
+        inner.length != 1 ||
+        inner.single.type != CssTokenType.string) {
       return null;
     }
     return UrlValue(inner.single.value);
@@ -186,9 +212,12 @@ CssValue? _content(ValueStream s) {
     final t = s.next();
     if (t.type == CssTokenType.string) {
       parts.add(t.value);
-    } else if (t.type == CssTokenType.function && t.value.toLowerCase() == 'attr') {
+    } else if (t.type == CssTokenType.function &&
+        t.value.toLowerCase() == 'attr') {
       final args = s.functionArgs();
-      final name = args?.first.where((x) => x.type == CssTokenType.ident).firstOrNull;
+      final name = args?.first
+          .where((x) => x.type == CssTokenType.ident)
+          .firstOrNull;
       if (name == null) return null;
       parts.add('\u0000attr:${name.value.toLowerCase()}');
     } else if (t.type == CssTokenType.ident) {
@@ -227,7 +256,8 @@ CssValue? _boxShadow(ValueStream s) {
   var depth = 0;
   while (!s.done) {
     final t = s.next();
-    if (t.type == CssTokenType.function || t.type == CssTokenType.leftParen) depth++;
+    if (t.type == CssTokenType.function || t.type == CssTokenType.leftParen)
+      depth++;
     if (t.type == CssTokenType.rightParen) depth--;
     if (t.type == CssTokenType.comma && depth == 0) {
       layers.add([]);
@@ -257,14 +287,16 @@ CssValue? _boxShadow(ValueStream s) {
       lengths.add(l);
     }
     if (lengths.length < 2 || lengths.length > 4) return null;
-    shadows.add(CssShadow(
-      lengths[0],
-      lengths[1],
-      lengths.length > 2 ? lengths[2] : Length.zero,
-      lengths.length > 3 ? lengths[3] : Length.zero,
-      color ?? const ColorValue(null),
-      inset: inset,
-    ));
+    shadows.add(
+      CssShadow(
+        lengths[0],
+        lengths[1],
+        lengths.length > 2 ? lengths[2] : Length.zero,
+        lengths.length > 3 ? lengths[3] : Length.zero,
+        color ?? const ColorValue(null),
+        inset: inset,
+      ),
+    );
   }
   return ShadowValue(shadows);
 }
@@ -289,7 +321,8 @@ CssValue? _paint(ValueStream s) {
 
 CssValue? _strokeWidth(ValueStream s) {
   final t = s.next();
-  if (t.type == CssTokenType.number && t.number >= 0) return Length.px(t.number);
+  if (t.type == CssTokenType.number && t.number >= 0)
+    return Length.px(t.number);
   return lengthFromToken(t, allowNegative: false);
 }
 
@@ -326,7 +359,9 @@ CssValue? _filter(ValueStream s) {
     final name = t.value.toLowerCase();
     final args = s.functionArgs();
     if (args == null) return null;
-    final parts = args.first.where((x) => x.type != CssTokenType.whitespace).toList();
+    final parts = args.first
+        .where((x) => x.type != CssTokenType.whitespace)
+        .toList();
     double amount(double fallback) {
       if (parts.isEmpty) return fallback;
       final p = parts.first;
@@ -339,14 +374,42 @@ CssValue? _filter(ValueStream s) {
 
     switch (name) {
       case 'blur':
-        final l = parts.isEmpty ? Length.zero : lengthFromToken(parts.first, allowPercent: false, allowNegative: false);
+        final l = parts.isEmpty
+            ? Length.zero
+            : lengthFromToken(
+                parts.first,
+                allowPercent: false,
+                allowNegative: false,
+              );
         if (l == null) return null;
-        fns.add(FilterFunction(name, l.unit == LengthUnit.px ? l.value : l.value * 16));
-      case 'brightness' || 'contrast' || 'grayscale' || 'invert' || 'opacity' || 'saturate' || 'sepia':
-        final def = name == 'brightness' || name == 'contrast' || name == 'saturate' || name == 'opacity' ? 1.0 : 1.0;
+        fns.add(
+          FilterFunction(
+            name,
+            l.unit == LengthUnit.px ? l.value : l.value * 16,
+          ),
+        );
+      case 'brightness' ||
+          'contrast' ||
+          'grayscale' ||
+          'invert' ||
+          'opacity' ||
+          'saturate' ||
+          'sepia':
+        final def =
+            name == 'brightness' ||
+                name == 'contrast' ||
+                name == 'saturate' ||
+                name == 'opacity'
+            ? 1.0
+            : 1.0;
         fns.add(FilterFunction(name, amount(def)));
       case 'hue-rotate':
-        fns.add(FilterFunction(name, parts.isEmpty ? 0 : (angleFromToken(parts.first) ?? 0)));
+        fns.add(
+          FilterFunction(
+            name,
+            parts.isEmpty ? 0 : (angleFromToken(parts.first) ?? 0),
+          ),
+        );
       case 'drop-shadow':
         final sh = _boxShadow(ValueStream(args.first));
         if (sh is! ShadowValue) return null;
@@ -385,7 +448,11 @@ CssValue? _areas(ValueStream s) {
   while (!s.done) {
     final t = s.next();
     if (t.type != CssTokenType.string) return null;
-    final cells = t.value.trim().split(RegExp(r'\s+')).where((c) => c.isNotEmpty).toList();
+    final cells = t.value
+        .trim()
+        .split(RegExp(r'\s+'))
+        .where((c) => c.isNotEmpty)
+        .toList();
     if (cells.isEmpty) return null;
     if (rows.isNotEmpty && rows.first.length != cells.length) return null;
     rows.add(cells);
@@ -401,11 +468,15 @@ GridLineValue? _gridLine(ValueStream s) {
   if (t.isIdent('span')) {
     if (s.done) return null;
     final n = s.next();
-    if (n.type == CssTokenType.number && n.number >= 1) return GridLineValue(span: n.number.toInt());
-    if (n.type == CssTokenType.ident) return GridLineValue(span: 1, name: n.value);
+    if (n.type == CssTokenType.number && n.number >= 1)
+      return GridLineValue(span: n.number.toInt());
+    if (n.type == CssTokenType.ident)
+      return GridLineValue(span: 1, name: n.value);
     return null;
   }
-  if (t.type == CssTokenType.number && t.number != 0 && t.number == t.number.truncateToDouble()) {
+  if (t.type == CssTokenType.number &&
+      t.number != 0 &&
+      t.number == t.number.truncateToDouble()) {
     return GridLineValue(line: t.number.toInt());
   }
   if (t.type == CssTokenType.ident) return GridLineValue(name: t.value);
@@ -433,7 +504,16 @@ Map<String, CssValue>? _gridPair(ValueStream s, String start, String end) {
 const _sides = ['top', 'right', 'bottom', 'left'];
 const _corners = ['top-left', 'top-right', 'bottom-right', 'bottom-left'];
 const _alignKeywords = {
-  'stretch', 'flex-start', 'flex-end', 'center', 'baseline', 'start', 'end', 'normal', 'self-start', 'self-end', //
+  'stretch',
+  'flex-start',
+  'flex-end',
+  'center',
+  'baseline',
+  'start',
+  'end',
+  'normal',
+  'self-start',
+  'self-end', //
 };
 
 extension _Let<T> on T {
@@ -462,24 +542,44 @@ CssValue? _display(ValueStream s) {
   if (words.length == 2) {
     final outer = words[0];
     final inner = words[1];
-    if (outer == 'inline' && inner == 'flex') return const Keyword('inline-flex');
-    if (outer == 'inline' && inner == 'grid') return const Keyword('inline-grid');
-    if (outer == 'inline' && (inner == 'flow-root' || inner == 'flow')) return const Keyword('inline-block');
-    if (outer == 'block' && const {'flex', 'grid'}.contains(inner)) return Keyword(inner);
-    if (outer == 'block' && (inner == 'flow' || inner == 'flow-root')) return const Keyword('block');
+    if (outer == 'inline' && inner == 'flex')
+      return const Keyword('inline-flex');
+    if (outer == 'inline' && inner == 'grid')
+      return const Keyword('inline-grid');
+    if (outer == 'inline' && (inner == 'flow-root' || inner == 'flow'))
+      return const Keyword('inline-block');
+    if (outer == 'block' && const {'flex', 'grid'}.contains(inner))
+      return Keyword(inner);
+    if (outer == 'block' && (inner == 'flow' || inner == 'flow-root'))
+      return const Keyword('block');
     return null;
   }
   if (words.length != 1) return null;
   return switch (words.single) {
-    'block' || 'inline' || 'inline-block' || 'flex' || 'inline-flex' || 'none' || 'list-item' || 'grid' ||
-    'inline-grid' || 'contents' =>
-      Keyword(words.single),
+    'block' ||
+    'inline' ||
+    'inline-block' ||
+    'flex' ||
+    'inline-flex' ||
+    'none' ||
+    'list-item' ||
+    'grid' ||
+    'inline-grid' ||
+    'contents' => Keyword(words.single),
+    // Legacy flexbox display values: treat as flex so old rules still layout.
+    '-webkit-box' || '-ms-flexbox' => const Keyword('flex'),
+    '-webkit-inline-box' || '-ms-inline-flexbox' => const Keyword('inline-flex'),
     'flow-root' => const Keyword('block'),
     // Tables are laid out as blocks/rows until a table layout exists.
-    'table' || 'table-row-group' || 'table-header-group' || 'table-footer-group' || 'table-caption' =>
-      const Keyword('block'),
+    'table' ||
+    'table-row-group' ||
+    'table-header-group' ||
+    'table-footer-group' ||
+    'table-caption' => const Keyword('block'),
     'table-row' => const Keyword('flex'),
-    'table-cell' || 'table-column' || 'table-column-group' => const Keyword('block'),
+    'table-cell' ||
+    'table-column' ||
+    'table-column-group' => const Keyword('block'),
     'inline-table' => const Keyword('inline-block'),
     'ruby' || 'ruby-text' => const Keyword('inline'),
     _ => null,
@@ -508,27 +608,27 @@ typedef _Item<T> = T? Function(ValueStream s);
 
 /// A comma-separated list of [item] values.
 LonghandParser _listOf<T>(_Item<T> item) => (s) {
-      final out = <T>[];
-      while (!s.done) {
-        final v = item(s);
-        if (v == null) return null;
-        out.add(v);
-        if (s.done) break;
-        if (s.peek!.type != CssTokenType.comma) return null;
-        s.next();
-      }
-      return out.isEmpty ? null : ListValue<T>(out);
-    };
+  final out = <T>[];
+  while (!s.done) {
+    final v = item(s);
+    if (v == null) return null;
+    out.add(v);
+    if (s.done) break;
+    if (s.peek!.type != CssTokenType.comma) return null;
+    s.next();
+  }
+  return out.isEmpty ? null : ListValue<T>(out);
+};
 
 double? _time(ValueStream s) => s.done ? null : timeFromToken(s.next());
 
 _Item<String> _kw(Set<String> allowed) => (s) {
-      if (s.done) return null;
-      final t = s.next();
-      if (t.type != CssTokenType.ident) return null;
-      final k = t.value.toLowerCase();
-      return allowed.contains(k) ? k : null;
-    };
+  if (s.done) return null;
+  final t = s.next();
+  if (t.type != CssTokenType.ident) return null;
+  final k = t.value.toLowerCase();
+  return allowed.contains(k) ? k : null;
+};
 
 String? _transitionProperty(ValueStream s) {
   if (s.done) return null;
@@ -559,7 +659,8 @@ List<List<CssToken>> _layers(ValueStream s) {
   var depth = 0;
   while (!s.done) {
     final t = s.next();
-    if (t.type == CssTokenType.function || t.type == CssTokenType.leftParen) depth++;
+    if (t.type == CssTokenType.function || t.type == CssTokenType.leftParen)
+      depth++;
     if (t.type == CssTokenType.rightParen) depth--;
     if (t.type == CssTokenType.comma && depth == 0) {
       layers.add([]);
@@ -618,7 +719,10 @@ Map<String, CssValue>? _transitionShorthand(ValueStream s) {
 }
 
 Map<String, CssValue>? _animationShorthand(ValueStream s) {
-  final names = <String>[], durations = <double>[], delays = <double>[], counts = <double>[];
+  final names = <String>[],
+      durations = <double>[],
+      delays = <double>[],
+      counts = <double>[];
   final easings = <CssEasing>[];
   final directions = <String>[], fills = <String>[], states = <String>[];
   for (final layer in _layers(s)) {
@@ -634,7 +738,10 @@ Map<String, CssValue>? _animationShorthand(ValueStream s) {
       }
       final t = ls.next();
       final time = timeFromToken(t);
-      if (time != null && !(t.type == CssTokenType.number && count == null && duration != null)) {
+      if (time != null &&
+          !(t.type == CssTokenType.number &&
+              count == null &&
+              duration != null)) {
         if (duration == null) {
           duration = time;
         } else if (delay == null) {
@@ -652,11 +759,20 @@ Map<String, CssValue>? _animationShorthand(ValueStream s) {
         final k = t.value.toLowerCase();
         if (k == 'infinite' && count == null) {
           count = double.infinity;
-        } else if (direction == null && const {'normal', 'reverse', 'alternate', 'alternate-reverse'}.contains(k) && name != null) {
+        } else if (direction == null &&
+            const {
+              'normal',
+              'reverse',
+              'alternate',
+              'alternate-reverse',
+            }.contains(k) &&
+            name != null) {
           direction = k;
-        } else if (direction == null && const {'reverse', 'alternate', 'alternate-reverse'}.contains(k)) {
+        } else if (direction == null &&
+            const {'reverse', 'alternate', 'alternate-reverse'}.contains(k)) {
           direction = k;
-        } else if (fill == null && const {'forwards', 'backwards', 'both'}.contains(k)) {
+        } else if (fill == null &&
+            const {'forwards', 'backwards', 'both'}.contains(k)) {
           fill = k;
         } else if (state == null && const {'running', 'paused'}.contains(k)) {
           state = k;
@@ -697,16 +813,45 @@ Map<String, CssValue>? _animationShorthand(ValueStream s) {
 final Map<String, PropertySpec> longhands = {
   for (final spec in <PropertySpec>[
     PropertySpec('display', _display, const Keyword('inline')),
-    PropertySpec('position', _keywords({'static', 'relative', 'absolute', 'fixed', 'sticky'}), const Keyword('static')),
-    for (final side in _sides) PropertySpec(side, _length(keywords: {'auto'}), _auto),
-    PropertySpec('z-index', _number(negative: true, integer: true, keywords: {'auto'}), _auto),
-    PropertySpec('box-sizing', _keywords({'content-box', 'border-box'}), const Keyword('content-box')),
+    PropertySpec(
+      'position',
+      _keywords({'static', 'relative', 'absolute', 'fixed', 'sticky'}),
+      const Keyword('static'),
+    ),
+    for (final side in _sides)
+      PropertySpec(side, _length(keywords: {'auto'}), _auto),
+    PropertySpec(
+      'z-index',
+      _number(negative: true, integer: true, keywords: {'auto'}),
+      _auto,
+    ),
+    PropertySpec(
+      'box-sizing',
+      _keywords({'content-box', 'border-box'}),
+      const Keyword('content-box'),
+    ),
     PropertySpec('width', _length(keywords: {'auto'}, negative: false), _auto),
     PropertySpec('height', _length(keywords: {'auto'}, negative: false), _auto),
-    PropertySpec('min-width', _length(keywords: {'auto'}, negative: false), _auto),
-    PropertySpec('min-height', _length(keywords: {'auto'}, negative: false), _auto),
-    PropertySpec('max-width', _length(keywords: {'none'}, negative: false), _none),
-    PropertySpec('max-height', _length(keywords: {'none'}, negative: false), _none),
+    PropertySpec(
+      'min-width',
+      _length(keywords: {'auto'}, negative: false),
+      _auto,
+    ),
+    PropertySpec(
+      'min-height',
+      _length(keywords: {'auto'}, negative: false),
+      _auto,
+    ),
+    PropertySpec(
+      'max-width',
+      _length(keywords: {'none'}, negative: false),
+      _none,
+    ),
+    PropertySpec(
+      'max-height',
+      _length(keywords: {'none'}, negative: false),
+      _none,
+    ),
     for (final side in _sides) ...[
       PropertySpec('margin-$side', _length(keywords: {'auto'}), Length.zero),
       PropertySpec('padding-$side', _length(negative: false), Length.zero),
@@ -715,51 +860,212 @@ final Map<String, PropertySpec> longhands = {
       PropertySpec('border-$side-color', _color, const ColorValue(null)),
     ],
     for (final corner in _corners)
-      PropertySpec('border-$corner-radius', _length(negative: false), Length.zero),
-    PropertySpec('background-color', _color, const ColorValue(CssColor.transparent)),
+      PropertySpec(
+        'border-$corner-radius',
+        _length(negative: false),
+        Length.zero,
+      ),
+    PropertySpec(
+      'background-color',
+      _color,
+      const ColorValue(CssColor.transparent),
+    ),
     PropertySpec('background-image', _backgroundImage, _none),
-    PropertySpec('color', _color, const ColorValue(CssColor.black), inherited: true),
+    PropertySpec(
+      'color',
+      _color,
+      const ColorValue(CssColor.black),
+      inherited: true,
+    ),
     PropertySpec('opacity', _opacity, const NumberValue(1)),
-    PropertySpec('visibility', _keywords({'visible', 'hidden', 'collapse'}), const Keyword('visible'), inherited: true),
-    PropertySpec('font-family', _fontFamily, const FontFamilyValue(['sans-serif']), inherited: true),
+    PropertySpec(
+      'visibility',
+      _keywords({'visible', 'hidden', 'collapse'}),
+      const Keyword('visible'),
+      inherited: true,
+    ),
+    PropertySpec(
+      'font-family',
+      _fontFamily,
+      const FontFamilyValue(['sans-serif']),
+      inherited: true,
+    ),
     PropertySpec('font-size', _fontSize, const Length.px(16), inherited: true),
     PropertySpec('font-weight', _fontWeight, _normal, inherited: true),
-    PropertySpec('font-style', _keywords({'normal', 'italic', 'oblique'}), _normal, inherited: true),
-    PropertySpec('text-align', _keywords({'left', 'right', 'center', 'justify', 'start', 'end'}), const Keyword('start'), inherited: true),
+    PropertySpec(
+      'font-style',
+      _keywords({'normal', 'italic', 'oblique'}),
+      _normal,
+      inherited: true,
+    ),
+    PropertySpec(
+      'text-align',
+      _keywords({'left', 'right', 'center', 'justify', 'start', 'end'}),
+      const Keyword('start'),
+      inherited: true,
+    ),
     PropertySpec('text-decoration-line', _textDecorationLine, _none),
     PropertySpec('text-decoration-color', _color, const ColorValue(null)),
-    PropertySpec('text-decoration-style', _keywords({'solid', 'double', 'dotted', 'dashed', 'wavy'}), const Keyword('solid')),
-    PropertySpec('text-transform', _keywords({'none', 'uppercase', 'lowercase', 'capitalize'}), _none, inherited: true),
-    PropertySpec('letter-spacing', _length(keywords: {'normal'}, percent: false), _normal, inherited: true),
+    PropertySpec(
+      'text-decoration-style',
+      _keywords({'solid', 'double', 'dotted', 'dashed', 'wavy'}),
+      const Keyword('solid'),
+    ),
+    PropertySpec(
+      'text-transform',
+      _keywords({'none', 'uppercase', 'lowercase', 'capitalize'}),
+      _none,
+      inherited: true,
+    ),
+    PropertySpec(
+      'letter-spacing',
+      _length(keywords: {'normal'}, percent: false),
+      _normal,
+      inherited: true,
+    ),
     PropertySpec('line-height', _lineHeight, _normal, inherited: true),
-    PropertySpec('white-space', _keywords({'normal', 'nowrap', 'pre', 'pre-wrap', 'pre-line'}), _normal, inherited: true),
-    PropertySpec('overflow-x', _keywords({'visible', 'hidden', 'scroll', 'auto', 'clip'}), const Keyword('visible')),
-    PropertySpec('overflow-y', _keywords({'visible', 'hidden', 'scroll', 'auto', 'clip'}), const Keyword('visible')),
-    PropertySpec('flex-direction', _keywords({'row', 'row-reverse', 'column', 'column-reverse'}), const Keyword('row')),
-    PropertySpec('flex-wrap', _keywords({'nowrap', 'wrap', 'wrap-reverse'}), const Keyword('nowrap')),
+    PropertySpec(
+      'white-space',
+      _keywords({'normal', 'nowrap', 'pre', 'pre-wrap', 'pre-line'}),
+      _normal,
+      inherited: true,
+    ),
+    PropertySpec(
+      'overflow-x',
+      _keywords({'visible', 'hidden', 'scroll', 'auto', 'clip'}),
+      const Keyword('visible'),
+    ),
+    PropertySpec(
+      'overflow-y',
+      _keywords({'visible', 'hidden', 'scroll', 'auto', 'clip'}),
+      const Keyword('visible'),
+    ),
+    PropertySpec(
+      'flex-direction',
+      _keywords({'row', 'row-reverse', 'column', 'column-reverse'}),
+      const Keyword('row'),
+    ),
+    PropertySpec(
+      'flex-wrap',
+      _keywords({'nowrap', 'wrap', 'wrap-reverse'}),
+      const Keyword('nowrap'),
+    ),
     PropertySpec('flex-grow', _number(), const NumberValue(0)),
     PropertySpec('flex-shrink', _number(), const NumberValue(1)),
-    PropertySpec('flex-basis', _length(keywords: {'auto', 'content'}, negative: false), _auto),
-    PropertySpec('justify-content', _keywords({'flex-start', 'flex-end', 'center', 'space-between', 'space-around', 'space-evenly', 'start', 'end', 'normal', 'left', 'right', 'stretch'}), _normal),
+    PropertySpec(
+      'flex-basis',
+      _length(keywords: {'auto', 'content'}, negative: false),
+      _auto,
+    ),
+    PropertySpec(
+      'justify-content',
+      _keywords({
+        'flex-start',
+        'flex-end',
+        'center',
+        'space-between',
+        'space-around',
+        'space-evenly',
+        'start',
+        'end',
+        'normal',
+        'left',
+        'right',
+        'stretch',
+      }),
+      _normal,
+    ),
     PropertySpec('align-items', _keywords(_alignKeywords), _normal),
     PropertySpec('align-self', _keywords({..._alignKeywords, 'auto'}), _auto),
-    PropertySpec('row-gap', _length(keywords: {'normal'}, negative: false), _normal),
-    PropertySpec('column-gap', _length(keywords: {'normal'}, negative: false), _normal),
-    PropertySpec('list-style-type', _keywords({'none', 'disc', 'circle', 'square', 'decimal'}), const Keyword('disc'), inherited: true),
-    PropertySpec('object-fit', _keywords({'fill', 'contain', 'cover', 'none', 'scale-down'}), const Keyword('fill')),
+    PropertySpec(
+      'row-gap',
+      _length(keywords: {'normal'}, negative: false),
+      _normal,
+    ),
+    PropertySpec(
+      'column-gap',
+      _length(keywords: {'normal'}, negative: false),
+      _normal,
+    ),
+    PropertySpec(
+      'list-style-type',
+      _keywords({'none', 'disc', 'circle', 'square', 'decimal'}),
+      const Keyword('disc'),
+      inherited: true,
+    ),
+    PropertySpec(
+      'object-fit',
+      _keywords({'fill', 'contain', 'cover', 'none', 'scale-down'}),
+      const Keyword('fill'),
+    ),
     PropertySpec('cursor', _cursor, _auto, inherited: true),
     PropertySpec('content', _content, _normal),
     // SVG painting.
-    PropertySpec('fill', _paint, const ColorValue(CssColor.black), inherited: true),
+    PropertySpec(
+      'fill',
+      _paint,
+      const ColorValue(CssColor.black),
+      inherited: true,
+    ),
     PropertySpec('stroke', _paint, _none, inherited: true),
-    PropertySpec('stroke-width', _strokeWidth, const Length.px(1), inherited: true),
-    PropertySpec('fill-opacity', _opacity, const NumberValue(1), inherited: true),
-    PropertySpec('stroke-opacity', _opacity, const NumberValue(1), inherited: true),
-    PropertySpec('stroke-linecap', _keywords({'butt', 'round', 'square'}), const Keyword('butt'), inherited: true),
-    PropertySpec('stroke-linejoin', _keywords({'miter', 'round', 'bevel', 'miter-clip', 'arcs'}), const Keyword('miter'), inherited: true),
-    PropertySpec('fill-rule', _keywords({'nonzero', 'evenodd'}), const Keyword('nonzero'), inherited: true),
-    PropertySpec('text-anchor', _keywords({'start', 'middle', 'end'}), const Keyword('start'), inherited: true),
-    PropertySpec('dominant-baseline', _keywords({'auto', 'middle', 'central', 'hanging', 'alphabetic', 'text-top', 'text-bottom', 'ideographic', 'mathematical'}), _auto, inherited: true),
+    PropertySpec(
+      'stroke-width',
+      _strokeWidth,
+      const Length.px(1),
+      inherited: true,
+    ),
+    PropertySpec(
+      'fill-opacity',
+      _opacity,
+      const NumberValue(1),
+      inherited: true,
+    ),
+    PropertySpec(
+      'stroke-opacity',
+      _opacity,
+      const NumberValue(1),
+      inherited: true,
+    ),
+    PropertySpec(
+      'stroke-linecap',
+      _keywords({'butt', 'round', 'square'}),
+      const Keyword('butt'),
+      inherited: true,
+    ),
+    PropertySpec(
+      'stroke-linejoin',
+      _keywords({'miter', 'round', 'bevel', 'miter-clip', 'arcs'}),
+      const Keyword('miter'),
+      inherited: true,
+    ),
+    PropertySpec(
+      'fill-rule',
+      _keywords({'nonzero', 'evenodd'}),
+      const Keyword('nonzero'),
+      inherited: true,
+    ),
+    PropertySpec(
+      'text-anchor',
+      _keywords({'start', 'middle', 'end'}),
+      const Keyword('start'),
+      inherited: true,
+    ),
+    PropertySpec(
+      'dominant-baseline',
+      _keywords({
+        'auto',
+        'middle',
+        'central',
+        'hanging',
+        'alphabetic',
+        'text-top',
+        'text-bottom',
+        'ideographic',
+        'mathematical',
+      }),
+      _auto,
+      inherited: true,
+    ),
     PropertySpec('stroke-dasharray', _dashArray, _none, inherited: true),
     PropertySpec('box-shadow', _boxShadow, _none),
     PropertySpec('text-shadow', _boxShadow, _none, inherited: true),
@@ -767,23 +1073,73 @@ final Map<String, PropertySpec> longhands = {
     PropertySpec('backdrop-filter', _filter, _none),
     PropertySpec('-webkit-backdrop-filter', _filter, _none),
     PropertySpec('transform', _transform, _none),
-    PropertySpec('pointer-events', _keywords({'auto', 'none'}), _auto, inherited: true),
-    PropertySpec('accent-color', (s) => s.peek!.isIdent('auto') ? (s..next()).let(_auto) : parseColor(s), _auto, inherited: true),
+    PropertySpec(
+      'pointer-events',
+      _keywords({
+        'auto',
+        'none',
+        'stroke',
+        'fill',
+        'all',
+        'painted',
+        'visible',
+        'bounding-box',
+      }),
+      _auto,
+      inherited: true,
+    ),
+    PropertySpec(
+      'accent-color',
+      (s) => s.peek!.isIdent('auto') ? (s..next()).let(_auto) : parseColor(s),
+      _auto,
+      inherited: true,
+    ),
     PropertySpec('vertical-align', (s) {
       final t = s.next();
       if (t.type == CssTokenType.ident) {
         final k = t.value.toLowerCase();
-        return const {'baseline', 'middle', 'top', 'bottom', 'text-top', 'text-bottom', 'sub', 'super'}.contains(k)
+        return const {
+              'baseline',
+              'middle',
+              'top',
+              'bottom',
+              'text-top',
+              'text-bottom',
+              'sub',
+              'super',
+            }.contains(k)
             ? Keyword(k)
             : null;
       }
       return lengthFromToken(t);
     }, const Keyword('baseline')),
-    PropertySpec('text-overflow', _keywords({'clip', 'ellipsis'}), const Keyword('clip')),
-    PropertySpec('word-break', _keywords({'normal', 'break-all', 'keep-all', 'break-word'}), _normal, inherited: true),
-    PropertySpec('overflow-wrap', _keywords({'normal', 'anywhere', 'break-word'}), _normal, inherited: true),
-    PropertySpec('user-select', _keywords({'auto', 'none', 'text', 'all', 'contain'}), _auto),
-    PropertySpec('order', _number(negative: true, integer: true), const NumberValue(0)),
+    PropertySpec(
+      'text-overflow',
+      _keywords({'clip', 'ellipsis'}),
+      const Keyword('clip'),
+    ),
+    PropertySpec(
+      'word-break',
+      _keywords({'normal', 'break-all', 'keep-all', 'break-word'}),
+      _normal,
+      inherited: true,
+    ),
+    PropertySpec(
+      'overflow-wrap',
+      _keywords({'normal', 'anywhere', 'break-word'}),
+      _normal,
+      inherited: true,
+    ),
+    PropertySpec(
+      'user-select',
+      _keywords({'auto', 'none', 'text', 'all', 'contain'}),
+      _auto,
+    ),
+    PropertySpec(
+      'order',
+      _number(negative: true, integer: true),
+      const NumberValue(0),
+    ),
     PropertySpec('aspect-ratio', (s) {
       final t = s.next();
       if (t.isIdent('auto')) return _auto;
@@ -806,8 +1162,20 @@ final Map<String, PropertySpec> longhands = {
     PropertySpec('grid-template-columns', _trackList, _none),
     PropertySpec('grid-template-rows', _trackList, _none),
     PropertySpec('grid-template-areas', _areas, _none),
-    PropertySpec('grid-auto-columns', _autoTracks, const GridTracksValue([TrackEntry([TrackSize.auto])])),
-    PropertySpec('grid-auto-rows', _autoTracks, const GridTracksValue([TrackEntry([TrackSize.auto])])),
+    PropertySpec(
+      'grid-auto-columns',
+      _autoTracks,
+      const GridTracksValue([
+        TrackEntry([TrackSize.auto]),
+      ]),
+    ),
+    PropertySpec(
+      'grid-auto-rows',
+      _autoTracks,
+      const GridTracksValue([
+        TrackEntry([TrackSize.auto]),
+      ]),
+    ),
     PropertySpec('grid-auto-flow', (s) {
       final words = <String>[];
       while (!s.done) {
@@ -815,53 +1183,224 @@ final Map<String, PropertySpec> longhands = {
         if (t.type != CssTokenType.ident) return null;
         words.add(t.value.toLowerCase());
       }
-      if (words.isEmpty || words.any((w) => !const {'row', 'column', 'dense'}.contains(w))) return null;
+      if (words.isEmpty ||
+          words.any((w) => !const {'row', 'column', 'dense'}.contains(w)))
+        return null;
       return Keyword(words.contains('column') ? 'column' : 'row');
     }, const Keyword('row')),
     PropertySpec('grid-row-start', _gridLineLonghand, GridLineValue.auto),
     PropertySpec('grid-row-end', _gridLineLonghand, GridLineValue.auto),
     PropertySpec('grid-column-start', _gridLineLonghand, GridLineValue.auto),
     PropertySpec('grid-column-end', _gridLineLonghand, GridLineValue.auto),
-    PropertySpec('justify-items', _keywords({..._alignKeywords, 'left', 'right', 'legacy', 'self-start', 'self-end'}), _normal),
-    PropertySpec('justify-self', _keywords({..._alignKeywords, 'auto', 'left', 'right', 'self-start', 'self-end'}), _auto),
-    PropertySpec('align-content', _keywords({..._alignKeywords, 'space-between', 'space-around', 'space-evenly'}), _normal),
+    PropertySpec(
+      'justify-items',
+      _keywords({
+        ..._alignKeywords,
+        'left',
+        'right',
+        'legacy',
+        'self-start',
+        'self-end',
+      }),
+      _normal,
+    ),
+    PropertySpec(
+      'justify-self',
+      _keywords({
+        ..._alignKeywords,
+        'auto',
+        'left',
+        'right',
+        'self-start',
+        'self-end',
+      }),
+      _auto,
+    ),
+    PropertySpec(
+      'align-content',
+      _keywords({
+        ..._alignKeywords,
+        'space-between',
+        'space-around',
+        'space-evenly',
+      }),
+      _normal,
+    ),
     // Parsed so that declarations are not reported as invalid; NativaX does
     // not animate yet.
-    PropertySpec('transition-property', _listOf(_transitionProperty), const ListValue<String>(['all'])),
-    PropertySpec('transition-duration', _listOf(_time), const ListValue<double>([0])),
-    PropertySpec('transition-delay', _listOf(_time), const ListValue<double>([0])),
-    PropertySpec('transition-timing-function', _listOf(parseEasing), const ListValue<CssEasing>([CssEasing.ease])),
-    PropertySpec('animation-name', _listOf(_animationName), const ListValue<String>(['none'])),
-    PropertySpec('animation-duration', _listOf(_time), const ListValue<double>([0])),
-    PropertySpec('animation-delay', _listOf(_time), const ListValue<double>([0])),
-    PropertySpec('animation-timing-function', _listOf(parseEasing), const ListValue<CssEasing>([CssEasing.ease])),
-    PropertySpec('animation-iteration-count', _listOf(_iterationCount), const ListValue<double>([1])),
-    PropertySpec('animation-direction', _listOf(_kw({'normal', 'reverse', 'alternate', 'alternate-reverse'})), const ListValue<String>(['normal'])),
-    PropertySpec('animation-fill-mode', _listOf(_kw({'none', 'forwards', 'backwards', 'both'})), const ListValue<String>(['none'])),
-    PropertySpec('animation-play-state', _listOf(_kw({'running', 'paused'})), const ListValue<String>(['running'])),
+    PropertySpec(
+      'transition-property',
+      _listOf(_transitionProperty),
+      const ListValue<String>(['all']),
+    ),
+    PropertySpec(
+      'transition-duration',
+      _listOf(_time),
+      const ListValue<double>([0]),
+    ),
+    PropertySpec(
+      'transition-delay',
+      _listOf(_time),
+      const ListValue<double>([0]),
+    ),
+    PropertySpec(
+      'transition-timing-function',
+      _listOf(parseEasing),
+      const ListValue<CssEasing>([CssEasing.ease]),
+    ),
+    PropertySpec(
+      'animation-name',
+      _listOf(_animationName),
+      const ListValue<String>(['none']),
+    ),
+    PropertySpec(
+      'animation-duration',
+      _listOf(_time),
+      const ListValue<double>([0]),
+    ),
+    PropertySpec(
+      'animation-delay',
+      _listOf(_time),
+      const ListValue<double>([0]),
+    ),
+    PropertySpec(
+      'animation-timing-function',
+      _listOf(parseEasing),
+      const ListValue<CssEasing>([CssEasing.ease]),
+    ),
+    PropertySpec(
+      'animation-iteration-count',
+      _listOf(_iterationCount),
+      const ListValue<double>([1]),
+    ),
+    PropertySpec(
+      'animation-direction',
+      _listOf(_kw({'normal', 'reverse', 'alternate', 'alternate-reverse'})),
+      const ListValue<String>(['normal']),
+    ),
+    PropertySpec(
+      'animation-fill-mode',
+      _listOf(_kw({'none', 'forwards', 'backwards', 'both'})),
+      const ListValue<String>(['none']),
+    ),
+    PropertySpec(
+      'animation-play-state',
+      _listOf(_kw({'running', 'paused'})),
+      const ListValue<String>(['running']),
+    ),
     for (final name in const [
-      'transition-behavior', 'animation-composition', 'animation-timeline', 'animation-range',
-      'will-change', 'perspective', 'perspective-origin',
-      'transform-origin', 'transform-style', 'backface-visibility', 'color-scheme', 'scrollbar-width',
-      'scrollbar-color', 'scroll-behavior', 'scroll-padding-top', 'scroll-padding', 'scroll-margin-top',
-      'scroll-snap-type', 'scroll-snap-align', 'overscroll-behavior', 'touch-action', 'appearance',
-      '-webkit-appearance', '-webkit-tap-highlight-color', '-webkit-font-smoothing', '-moz-osx-font-smoothing',
-      'text-rendering', 'font-feature-settings', 'font-variant-numeric', 'font-display', 'font-kerning',
-      'hyphens', 'tab-size', 'caret-color', 'resize', 'contain', 'content-visibility', 'isolation',
-      'mix-blend-mode', 'image-rendering', 'text-size-adjust', '-webkit-text-size-adjust', 'speak',
-      'print-color-adjust', 'forced-color-adjust', 'mask', 'clip-path', 'shape-outside', 'counter-reset',
-      'counter-increment', 'quotes', 'background-size', 'background-position', 'background-repeat',
-      'background-attachment', 'background-clip', 'background-origin', 'text-indent',
-      'text-underline-offset', 'text-decoration-thickness', 'table-layout', 'border-collapse',
-      'border-spacing', 'caption-side', 'empty-cells', 'list-style-position', 'list-style-image',
-      'object-position', 'writing-mode', 'direction', 'unicode-bidi', 'float', 'clear', 'columns',
-      'column-count', 'column-width', 'column-rule', 'break-inside', 'page-break-inside', 'widows',
-      'orphans', 'zoom', 'inset-inline', 'inset-block', 'interpolate-size', 'field-sizing',
-      'font-variant-emoji', 'font-variant', 'font-stretch', 'font-optical-sizing', 'font-synthesis', 'text-wrap',
-      'text-wrap-mode', 'text-wrap-style', 'white-space-collapse', 'line-clamp', '-webkit-line-clamp',
-      '-webkit-box-orient', 'text-align-last', 'text-justify', 'word-spacing', 'scrollbar-gutter',
-      'overscroll-behavior-x', 'overscroll-behavior-y', 'container-type', 'container-name', 'container',
-      'anchor-name', 'position-anchor', 'view-transition-name', 'offset-path', 'offset-distance',
+      'transition-behavior',
+      'animation-composition',
+      'animation-timeline',
+      'animation-range',
+      'will-change',
+      'perspective',
+      'perspective-origin',
+      'transform-origin',
+      'transform-style',
+      'backface-visibility',
+      'color-scheme',
+      'scrollbar-width',
+      'scrollbar-color',
+      'scroll-behavior',
+      'scroll-padding-top',
+      'scroll-padding',
+      'scroll-margin-top',
+      'scroll-snap-type',
+      'scroll-snap-align',
+      'overscroll-behavior',
+      'touch-action',
+      'appearance',
+      '-webkit-appearance',
+      '-webkit-tap-highlight-color',
+      '-webkit-font-smoothing',
+      '-moz-osx-font-smoothing',
+      'text-rendering',
+      'font-feature-settings',
+      'font-variant-numeric',
+      'font-display',
+      'font-kerning',
+      'hyphens',
+      'tab-size',
+      'caret-color',
+      'resize',
+      'contain',
+      'content-visibility',
+      'isolation',
+      'mix-blend-mode',
+      'image-rendering',
+      'text-size-adjust',
+      '-webkit-text-size-adjust',
+      'speak',
+      'print-color-adjust',
+      'forced-color-adjust',
+      'mask',
+      'clip-path',
+      'shape-outside',
+      'counter-reset',
+      'counter-increment',
+      'quotes',
+      'background-size',
+      'background-position',
+      'background-repeat',
+      'background-attachment',
+      'background-clip',
+      'background-origin',
+      'text-indent',
+      'text-underline-offset',
+      'text-decoration-thickness',
+      'table-layout',
+      'border-collapse',
+      'border-spacing',
+      'caption-side',
+      'empty-cells',
+      'list-style-position',
+      'list-style-image',
+      'object-position',
+      'writing-mode',
+      'direction',
+      'unicode-bidi',
+      'float',
+      'clear',
+      'columns',
+      'column-count',
+      'column-width',
+      'column-rule',
+      'break-inside',
+      'page-break-inside',
+      'widows',
+      'orphans',
+      'zoom',
+      'inset-inline',
+      'inset-block',
+      'interpolate-size',
+      'field-sizing',
+      'font-variant-emoji',
+      'font-variant',
+      'font-stretch',
+      'font-optical-sizing',
+      'font-synthesis',
+      'text-wrap',
+      'text-wrap-mode',
+      'text-wrap-style',
+      'white-space-collapse',
+      'line-clamp',
+      '-webkit-line-clamp',
+      '-webkit-box-orient',
+      'text-align-last',
+      'text-justify',
+      'word-spacing',
+      'scrollbar-gutter',
+      'overscroll-behavior-x',
+      'overscroll-behavior-y',
+      'container-type',
+      'container-name',
+      'container',
+      'anchor-name',
+      'position-anchor',
+      'view-transition-name',
+      'offset-path',
+      'offset-distance',
     ])
       PropertySpec(name, _any, const RawValue('')),
   ])
@@ -878,7 +1417,9 @@ Map<String, CssValue>? expandDeclaration(String name, List<CssToken> tokens) {
   if (s.remaining == 1 && s.peek!.type == CssTokenType.ident) {
     final k = s.peek!.value.toLowerCase();
     if (k == 'inherit' || k == 'initial' || k == 'unset') {
-      final targets = longhands.containsKey(name) ? [name] : _shorthandTargets[name];
+      final targets = longhands.containsKey(name)
+          ? [name]
+          : _shorthandTargets[name];
       if (targets == null) return null;
       return {for (final t in targets) t: GlobalKeyword(k)};
     }
@@ -899,7 +1440,11 @@ bool isSupportedProperty(String name) =>
     longhands.containsKey(name) || _shorthands.containsKey(name);
 
 /// 1–4 value box shorthand (top, right, bottom, left).
-Map<String, CssValue>? _box(ValueStream s, String Function(String side) key, LonghandParser p) {
+Map<String, CssValue>? _box(
+  ValueStream s,
+  String Function(String side) key,
+  LonghandParser p,
+) {
   final values = <CssValue>[];
   while (!s.done && values.length < 4) {
     final v = p(s);
@@ -919,7 +1464,9 @@ Map<String, CssValue>? _borderSide(ValueStream s, List<String> sides) {
   CssValue? width, style, color;
   while (!s.done) {
     final t = s.peek!;
-    if (style == null && t.type == CssTokenType.ident && _borderStyles.contains(t.value.toLowerCase())) {
+    if (style == null &&
+        t.type == CssTokenType.ident &&
+        _borderStyles.contains(t.value.toLowerCase())) {
       s.next();
       style = Keyword(t.value.toLowerCase());
       continue;
@@ -954,9 +1501,11 @@ typedef _Expander = Map<String, CssValue>? Function(ValueStream s);
 
 final Map<String, _Expander> _shorthands = {
   'margin': (s) => _box(s, (x) => 'margin-$x', longhands['margin-top']!.parse),
-  'padding': (s) => _box(s, (x) => 'padding-$x', longhands['padding-top']!.parse),
+  'padding': (s) =>
+      _box(s, (x) => 'padding-$x', longhands['padding-top']!.parse),
   'border-width': (s) => _box(s, (x) => 'border-$x-width', _borderWidth),
-  'border-style': (s) => _box(s, (x) => 'border-$x-style', _keywords(_borderStyles)),
+  'border-style': (s) =>
+      _box(s, (x) => 'border-$x-style', _keywords(_borderStyles)),
   'border-color': (s) => _box(s, (x) => 'border-$x-color', _color),
   'border': (s) => _borderSide(s, _sides),
   for (final side in _sides) 'border-$side': (s) => _borderSide(s, [side]),
@@ -982,7 +1531,8 @@ final Map<String, _Expander> _shorthands = {
           s.next();
           continue;
         }
-        if (weight == null && (k == 'bold' || k == 'bolder' || k == 'lighter')) {
+        if (weight == null &&
+            (k == 'bold' || k == 'bolder' || k == 'lighter')) {
           weight = Keyword(k);
           s.next();
           continue;
@@ -992,8 +1542,10 @@ final Map<String, _Expander> _shorthands = {
           continue;
         }
       }
-      if (weight == null && t.type == CssTokenType.number &&
-          t.number >= 1 && t.number <= 1000) {
+      if (weight == null &&
+          t.type == CssTokenType.number &&
+          t.number >= 1 &&
+          t.number <= 1000) {
         weight = NumberValue(t.number);
         s.next();
         continue;
@@ -1055,13 +1607,34 @@ final Map<String, _Expander> _shorthands = {
       // and ignored.
       final n = s.next();
       if (n.type == CssTokenType.ident &&
-          const {'repeat', 'no-repeat', 'repeat-x', 'repeat-y', 'space', 'round', 'center', 'top', 'left',
-                  'right', 'bottom', 'cover', 'contain', 'auto', 'fixed', 'scroll', 'local', 'border-box',
-                  'padding-box', 'content-box', 'text'}
-              .contains(n.value.toLowerCase())) {
+          const {
+            'repeat',
+            'no-repeat',
+            'repeat-x',
+            'repeat-y',
+            'space',
+            'round',
+            'center',
+            'top',
+            'left',
+            'right',
+            'bottom',
+            'cover',
+            'contain',
+            'auto',
+            'fixed',
+            'scroll',
+            'local',
+            'border-box',
+            'padding-box',
+            'content-box',
+            'text',
+          }.contains(n.value.toLowerCase())) {
         continue;
       }
-      if (n.isDelim('/') || n.type == CssTokenType.percentage || n.type == CssTokenType.dimension ||
+      if (n.isDelim('/') ||
+          n.type == CssTokenType.percentage ||
+          n.type == CssTokenType.dimension ||
           (n.type == CssTokenType.number && n.number == 0)) {
         continue;
       }
@@ -1093,8 +1666,16 @@ final Map<String, _Expander> _shorthands = {
     if (s.remaining == 1 && first.type == CssTokenType.ident) {
       s.next();
       return switch (first.value.toLowerCase()) {
-        'none' => {'flex-grow': const NumberValue(0), 'flex-shrink': const NumberValue(0), 'flex-basis': _auto},
-        'auto' => {'flex-grow': const NumberValue(1), 'flex-shrink': const NumberValue(1), 'flex-basis': _auto},
+        'none' => {
+          'flex-grow': const NumberValue(0),
+          'flex-shrink': const NumberValue(0),
+          'flex-basis': _auto,
+        },
+        'auto' => {
+          'flex-grow': const NumberValue(1),
+          'flex-shrink': const NumberValue(1),
+          'flex-basis': _auto,
+        },
         _ => null,
       };
     }
@@ -1132,9 +1713,16 @@ final Map<String, _Expander> _shorthands = {
     while (!s.done) {
       final t = s.next();
       final k = t.type == CssTokenType.ident ? t.value.toLowerCase() : '';
-      if (dir == null && const {'row', 'row-reverse', 'column', 'column-reverse'}.contains(k)) {
+      if (dir == null &&
+          const {
+            'row',
+            'row-reverse',
+            'column',
+            'column-reverse',
+          }.contains(k)) {
         dir = Keyword(k);
-      } else if (wrap == null && const {'nowrap', 'wrap', 'wrap-reverse'}.contains(k)) {
+      } else if (wrap == null &&
+          const {'nowrap', 'wrap', 'wrap-reverse'}.contains(k)) {
         wrap = Keyword(k);
       } else {
         return null;
@@ -1153,7 +1741,8 @@ final Map<String, _Expander> _shorthands = {
       final k = t.type == CssTokenType.ident ? t.value.toLowerCase() : '';
       if (const {'none', 'underline', 'overline', 'line-through'}.contains(k)) {
         lineTokens.add(s.next());
-      } else if (style == null && const {'solid', 'double', 'dotted', 'dashed', 'wavy'}.contains(k)) {
+      } else if (style == null &&
+          const {'solid', 'double', 'dotted', 'dashed', 'wavy'}.contains(k)) {
         s.next();
         style = Keyword(k);
       } else if (color == null && (color = parseColor(s)) != null) {
@@ -1162,7 +1751,9 @@ final Map<String, _Expander> _shorthands = {
         return null;
       }
     }
-    final line = lineTokens.isEmpty ? _none : _textDecorationLine(ValueStream(lineTokens));
+    final line = lineTokens.isEmpty
+        ? _none
+        : _textDecorationLine(ValueStream(lineTokens));
     if (line == null) return null;
     return {
       'text-decoration-line': line,
@@ -1174,7 +1765,9 @@ final Map<String, _Expander> _shorthands = {
     CssValue? type;
     while (!s.done) {
       final t = s.peek!;
-      if (t.isIdent('inside') || t.isIdent('outside') || t.type == CssTokenType.url) {
+      if (t.isIdent('inside') ||
+          t.isIdent('outside') ||
+          t.type == CssTokenType.url) {
         s.next();
         continue;
       }
@@ -1189,7 +1782,8 @@ final Map<String, _Expander> _shorthands = {
     CssValue? width, style, color;
     while (!s.done) {
       final t = s.peek!;
-      if (style == null && t.type == CssTokenType.ident &&
+      if (style == null &&
+          t.type == CssTokenType.ident &&
           ({..._borderStyles, 'auto'}).contains(t.value.toLowerCase())) {
         s.next();
         style = Keyword(t.value.toLowerCase());
@@ -1264,7 +1858,11 @@ final Map<String, _Expander> _shorthands = {
     final r = _trackList(ValueStream(rows));
     final c = _trackList(ValueStream(cols));
     if (r == null || c == null) return null;
-    return {'grid-template-rows': r, 'grid-template-columns': c, 'grid-template-areas': _none};
+    return {
+      'grid-template-rows': r,
+      'grid-template-columns': c,
+      'grid-template-areas': _none,
+    };
   },
   'place-items': (s) {
     final a = longhands['align-items']!.parse(s);
@@ -1296,7 +1894,11 @@ final Map<String, List<String>> _shorthandTargets = {
   'border-style': [for (final x in _sides) 'border-$x-style'],
   'border-color': [for (final x in _sides) 'border-$x-color'],
   'border': [
-    for (final x in _sides) ...['border-$x-width', 'border-$x-style', 'border-$x-color'],
+    for (final x in _sides) ...[
+      'border-$x-width',
+      'border-$x-style',
+      'border-$x-color',
+    ],
   ],
   for (final x in _sides)
     'border-$x': ['border-$x-width', 'border-$x-style', 'border-$x-color'],
@@ -1306,20 +1908,50 @@ final Map<String, List<String>> _shorthandTargets = {
   'gap': ['row-gap', 'column-gap'],
   'flex': ['flex-grow', 'flex-shrink', 'flex-basis'],
   'flex-flow': ['flex-direction', 'flex-wrap'],
-  'text-decoration': ['text-decoration-line', 'text-decoration-color', 'text-decoration-style'],
+  'text-decoration': [
+    'text-decoration-line',
+    'text-decoration-color',
+    'text-decoration-style',
+  ],
   'list-style': ['list-style-type'],
-  'font': ['font-style', 'font-weight', 'font-size', 'line-height', 'font-family'],
-  'transition': ['transition-property', 'transition-duration', 'transition-delay', 'transition-timing-function'],
+  'font': [
+    'font-style',
+    'font-weight',
+    'font-size',
+    'line-height',
+    'font-family',
+  ],
+  'transition': [
+    'transition-property',
+    'transition-duration',
+    'transition-delay',
+    'transition-timing-function',
+  ],
   'animation': [
-    'animation-name', 'animation-duration', 'animation-delay', 'animation-iteration-count',
-    'animation-timing-function', 'animation-direction', 'animation-fill-mode', 'animation-play-state',
+    'animation-name',
+    'animation-duration',
+    'animation-delay',
+    'animation-iteration-count',
+    'animation-timing-function',
+    'animation-direction',
+    'animation-fill-mode',
+    'animation-play-state',
   ],
   'inset': ['top', 'right', 'bottom', 'left'],
   'outline': ['outline-width', 'outline-style', 'outline-color'],
   'grid-row': ['grid-row-start', 'grid-row-end'],
   'grid-column': ['grid-column-start', 'grid-column-end'],
-  'grid-area': ['grid-row-start', 'grid-column-start', 'grid-row-end', 'grid-column-end'],
-  'grid-template': ['grid-template-rows', 'grid-template-columns', 'grid-template-areas'],
+  'grid-area': [
+    'grid-row-start',
+    'grid-column-start',
+    'grid-row-end',
+    'grid-column-end',
+  ],
+  'grid-template': [
+    'grid-template-rows',
+    'grid-template-columns',
+    'grid-template-areas',
+  ],
   'place-items': ['align-items', 'justify-items'],
   'place-self': ['align-self', 'justify-self'],
   'place-content': ['align-content', 'justify-content'],
