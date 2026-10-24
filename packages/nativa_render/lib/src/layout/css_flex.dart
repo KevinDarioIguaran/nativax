@@ -229,7 +229,10 @@ class RenderCssFlex extends RenderBox
       if (basisLen != null) {
         item.base = basisLen;
       } else if (_isRow) {
-        item.base = c.getMaxIntrinsicWidth(crossAvail);
+        // `flex-basis: auto` falls back to the main size property (width)
+        // when set, per CSS; only content size otherwise.
+        final wLen = pd.width?.resolve(mainDefinite ? mainMax : null);
+        item.base = wLen ?? c.getMaxIntrinsicWidth(crossAvail);
       } else {
         final stretchCross =
             _alignOf(item) == 'stretch' &&

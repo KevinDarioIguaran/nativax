@@ -533,6 +533,7 @@ class _Builder {
       autoWidth: autoWidth,
       autoHeight: style.height == null,
       maxWidth: style.maxWidth,
+      width: style.width,
       flexGrow: style.flexGrow,
       flexShrink: style.flexShrink,
       flexBasis: style.flexBasis,
