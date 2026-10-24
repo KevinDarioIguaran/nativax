@@ -7,6 +7,24 @@ const String webIndexedDb = r'''
 // IndexedDB
 // ============================================================================
 const idbDatabases = new Map(); // name -> { version, stores: Map<name, store> }
+// IndexedDB tasks are macrotasks in browsers. A single coalesced queue avoids
+// one engine timer per request (the Bible app creates thousands while caching
+// a book) while the 4 ms budget still yields to the UI.
+const idbQueue = [];
+let idbScheduled = false;
+const idbRun = () => {
+  idbScheduled = false;
+  const start = Date.now();
+  while (idbQueue.length && Date.now() - start < 4) {
+    const task = idbQueue.shift();
+    try { task(); } catch (e) { setTimeout(() => { throw e; }, 0); }
+  }
+  if (idbQueue.length) { idbScheduled = true; setTimeout(idbRun, 0); }
+};
+const scheduleIdb = (task) => {
+  idbQueue.push(task);
+  if (!idbScheduled) { idbScheduled = true; setTimeout(idbRun, 0); }
+};
 const compareKeys = (a, b) => {
   const rank = (k) => (typeof k === 'number' ? 1 : k instanceof Date ? 2 : typeof k === 'string' ? 3 : k instanceof ArrayBuffer || ArrayBuffer.isView(k) ? 4 : Array.isArray(k) ? 5 : 0);
   const ra = rank(a), rb = rank(b);
@@ -93,7 +111,7 @@ class IDBTransaction extends EventTarget {
     if (this._s.done || this._s.aborted) throw new DOMException('The transaction has finished.', 'TransactionInactiveError');
     const req = new IDBRequest(source, this);
     this._s.pending++;
-    setTimeout(() => {
+    scheduleIdb(() => {
       this._s.pending--;
       if (this._s.aborted) return;
       try { succeed(req, fn()); } catch (e) { fail(req, e instanceof DOMException ? e : new DOMException(String(e && e.message || e), 'DataError')); }
@@ -102,7 +120,7 @@ class IDBTransaction extends EventTarget {
     return req;
   }
   _maybeFinish() {
-    setTimeout(() => {
+    scheduleIdb(() => {
       if (this._s.done || this._s.aborted || this._s.pending > 0) return;
       this._s.done = true;
       this._snapshots.clear();
@@ -259,7 +277,7 @@ class IDBCursor {
     const c = this._c;
     const tx = (this.source.transaction || this.source.objectStore.transaction);
     tx._s.pending++;
-    setTimeout(() => {
+    scheduleIdb(() => {
       tx._s.pending--;
       c.pos += n;
       succeed(c.req, c.pos < c.entries.length ? this : null);
@@ -288,7 +306,7 @@ const openCursor = (source, select, direction, withValue) => {
   const tx = source.transaction || source.objectStore.transaction;
   const req = new IDBRequest(source, tx);
   tx._s.pending++;
-  setTimeout(() => {
+  scheduleIdb(() => {
     tx._s.pending--;
     let entries = select();
     if (direction.startsWith('prev')) entries = entries.reverse();
@@ -331,7 +349,7 @@ class IDBFactory {
     name = String(name);
     if (version !== undefined && (!Number.isInteger(version) || version < 1)) throw new TypeError("Failed to execute 'open' on 'IDBFactory': The version provided must not be 0.");
     const req = new IDBOpenDBRequest(null, null);
-    setTimeout(() => {
+    scheduleIdb(() => {
       let data = idbDatabases.get(name);
       const oldVersion = data ? data.version : 0;
       const newVersion = version === undefined ? Math.max(oldVersion, 1) : version;
@@ -372,7 +390,7 @@ class IDBFactory {
   }
   deleteDatabase(name) {
     const req = new IDBOpenDBRequest(null, null);
-    setTimeout(() => {
+    scheduleIdb(() => {
       const data = idbDatabases.get(String(name));
       idbDatabases.delete(String(name));
       req.readyState = 'done';
