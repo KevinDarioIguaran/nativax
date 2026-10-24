@@ -4,9 +4,9 @@ Runners y suites pinneadas en `tools/conformance` / `.conformance/suites`.
 
 | Suite | PASS | FAIL | SKIP | ERROR | Tasa sin SKIP |
 |---|---:|---:|---:|---:|---:|
-| `dom/events` | 51 | 22 | 103 | 0 | 69,86 % |
-| `css/selectors` | 106 | 74 | 348 | 0 | 58,89 % |
-| `dom/nodes` | 175 | 106 | 46 | 0 | 62,28 % |
+| `dom/events` | 52 | 21 | 103 | 0 | 71,23 % |
+| `css/selectors` | 126 | 54 | 348 | 0 | 70,00 % |
+| `dom/nodes` | 174 | 107 | 46 | 0 | 61,92 % |
 | WPT URL | 665 | 231 | 0 | 0 | 74,22 % |
 | WPT tree construction | 944 | 930 | 99 | 0 | 50,37 % |
 
@@ -28,15 +28,15 @@ más completo. Esa corrección **no cuenta como compatibilidad de producto**;
 elimina falsos fallos del arnés. Los deltas de motor de esta sesión incluyen
 invalidación de sujetos `:has()` y la API legacy de eventos.
 
-`dom/events` queda en 69,86 % (51/73 no-SKIP), a un archivo de 70 %. No se
-redondea ni se cambia el denominador.
+`dom/events` alcanza 71,23 % (52/73 no-SKIP) y `css/selectors` 70,00 %
+(126/180). No se redondea ni se cambia el denominador.
 
 ## Pendiente para 70 %
 
 - `dom/events`: activación de `input`/`form`, propagación con listeners
-  mutados, errores de listeners, iframes/realm, `scroll`/`scrollend`.
-- `css/selectors`: `:dir`, `:focus-visible`, Shadow DOM, `:has()` relativo
-  complejo, quirks mode y selectores namespaced.
+  mutados, iframes/realm y `scroll`/`scrollend`.
+- `css/selectors`: `:focus-visible`, Shadow DOM, quirks mode, selectores
+  namespaced y partes de `:dir`.
 - `dom/nodes`: registros de `createElement`, namespaces, `Range`,
   `MutationObserver` restante, `moveBefore` y realms.
 - tree construction: adoption agency, foster parenting, `template`, foreign
