@@ -158,6 +158,7 @@ class StyleEngine {
   final Map<Element, Map<String, ComputedStyle?>> _pseudoStyles = {};
   List<bool> _mediaState = const [];
   bool _usesSiblingCombinators = false;
+  bool _usesHas = false;
   bool _structuralUniversal = false;
   final Set<String> _structuralTags = {};
   final Set<String> _structuralClasses = {};
@@ -500,6 +501,16 @@ class StyleEngine {
   /// Marks styles affected by [record] dirty.
   void handleMutation(MutationRecord record) {
     final target = record.target;
+    if (_usesHas && target is Element) {
+      // A structural/state mutation can change a :has() subject that is an
+      // ancestor or sibling of the target. Invalidate the whole connected
+      // tree; :has() is relatively rare and correctness wins here.
+      Element root = target;
+      while (root.parentElement != null) {
+        root = root.parentElement!;
+      }
+      _markDirty(root);
+    }
     switch (record.type) {
       case MutationType.childList:
         // Structure (and therefore sibling/positional selectors) changed.
@@ -786,6 +797,7 @@ class StyleEngine {
     _attributeTags.clear();
     _attributeUniversal.clear();
     _usesSiblingCombinators = false;
+    _usesHas = false;
     _structuralUniversal = false;
     _structuralTags.clear();
     _structuralClasses.clear();
@@ -857,6 +869,7 @@ class StyleEngine {
           selectorText.contains(':has(') ||
           selectorText.contains('+') ||
           selectorText.contains('~');
+      if (rule.selectorText.contains(':has(')) _usesHas = true;
       if (rule.selectorText.contains(':hover')) _usesHover = true;
       if (rule.selectorText.contains(':active')) _usesActive = true;
       for (final d in rule.declarations) {
