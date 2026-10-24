@@ -537,7 +537,7 @@ class StyleEngine {
         // DOM state (:checked, :disabled, :empty via value changes, ...).
         _matchedDirty = true;
         if (target is! Element) return;
-        _dirtyMayAffectDescendants = _needsStatefulAncestorKey(target);
+        _dirtyMayAffectDescendants |= _needsStatefulAncestorKey(target);
         _markDirty(target);
       case MutationType.characterData:
         // Text data only affects structural selectors (`:empty`, `:has`, and
@@ -549,7 +549,7 @@ class StyleEngine {
           _matchedDirty = true;
           _computedDirty = true;
         }
-        _dirtyMayAffectDescendants = structural;
+        _dirtyMayAffectDescendants |= structural;
         if (parent != null) {
           _markDirty(parent);
         } else {
