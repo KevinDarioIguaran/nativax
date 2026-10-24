@@ -532,6 +532,7 @@ class _Builder {
       ],
       autoWidth: autoWidth,
       autoHeight: style.height == null,
+      maxWidth: style.maxWidth,
       flexGrow: style.flexGrow,
       flexShrink: style.flexShrink,
       flexBasis: style.flexBasis,
@@ -808,15 +809,17 @@ class _Builder {
       case 'input':
         return _input(element, style);
       case 'textarea':
+        final child = _TextControl(
+          element: element,
+          style: style,
+          multiline: true,
+          builder: this,
+        );
+        if (style.width != null) return child;
         final cols = int.tryParse(element.getAttribute('cols') ?? '') ?? 20;
         return PreferredWidth(
           width: cols * style.fontSize * 0.6,
-          child: _TextControl(
-            element: element,
-            style: style,
-            multiline: true,
-            builder: this,
-          ),
+          child: child,
         );
       case 'select':
         return _select(element, style);
@@ -1350,18 +1353,24 @@ class _Builder {
         style.whiteSpace == 'nowrap';
     if (horizontal && !wideContent) horizontal = false;
     if (vertical && horizontal) {
-      return SingleChildScrollView(
+      return Scrollbar(
         child: SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          child: child,
+          child: Scrollbar(
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: child,
+            ),
+          ),
         ),
       );
     }
     if (vertical) return NativaXVirtualScrollView(child: child);
     if (horizontal) {
-      return SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        child: child,
+      return Scrollbar(
+        child: SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: child,
+        ),
       );
     }
     return child;
@@ -1939,16 +1948,19 @@ class _Builder {
         );
       default:
         // Text fields are as wide as `size` average characters (20 by
-        // default), like browsers.
+        // default), like browsers. When CSS sets an explicit width, let the
+        // normal box constraints apply instead of forcing the intrinsic size.
+        final child = _TextControl(
+          element: element,
+          style: style,
+          multiline: false,
+          builder: this,
+        );
+        if (style.width != null) return child;
         final size = int.tryParse(element.getAttribute('size') ?? '') ?? 20;
         return PreferredWidth(
           width: size * style.fontSize * 0.55,
-          child: _TextControl(
-            element: element,
-            style: style,
-            multiline: false,
-            builder: this,
-          ),
+          child: child,
         );
     }
   }
@@ -2279,6 +2291,44 @@ class _InlineTextState extends State<_InlineText> {
           ),
         );
         return;
+    }
+
+    // vertical-align: super/sub raise or lower the inline run. Flutter has no
+    // direct baseline shift on TextSpan, so render these as WidgetSpans with an
+    // above/below-baseline placeholder alignment.
+    final vaRaw = childStyle['vertical-align'];
+    final va = vaRaw is Keyword ? vaRaw.name : vaRaw.toString();
+    if (node.localName == 'sup' ||
+        node.localName == 'sub' ||
+        va == 'super' ||
+        va == 'sub') {
+      final innerSpans = <InlineSpan>[];
+      final before = whitespace.afterSpace;
+      whitespace.afterSpace = false;
+      final start = _offset;
+      for (final child in widget.builder.children(node)) {
+        _visit(child, childStyle, innerSpans, whitespace, recognizers);
+      }
+      inlineRanges[node] = InlineRange(this, start, _offset);
+      if (innerSpans.isNotEmpty) {
+        final isSub = node.localName == 'sub' || va == 'sub';
+        _add(
+          spans,
+          WidgetSpan(
+            alignment: isSub
+                ? PlaceholderAlignment.belowBaseline
+                : PlaceholderAlignment.aboveBaseline,
+            child: Text.rich(
+              TextSpan(children: innerSpans),
+              style: textStyleFor(childStyle, inlineBackground: true),
+            ),
+          ),
+        );
+      } else {
+        whitespace.afterSpace = before;
+      }
+      whitespace.afterSpace = false;
+      return;
     }
 
     if (childStyle.display == Display.inlineBlock ||

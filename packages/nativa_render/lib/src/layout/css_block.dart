@@ -110,7 +110,12 @@ class RenderCssBlock extends RenderBox
       final mB = pd.resolveMargin(pd.marginBottom, basis);
       final BoxConstraints cc;
       if (w != null && pd.autoWidth) {
-        cc = BoxConstraints.tightFor(width: math.max(0, w - mL - mR));
+        var avail = math.max(0.0, w - mL - mR);
+        final maxW = pd.maxWidth?.resolve(w);
+        if (maxW != null && maxW.isFinite && maxW < avail) {
+          avail = math.max(0.0, maxW - mL - mR);
+        }
+        cc = BoxConstraints.tightFor(width: avail);
       } else if (w != null) {
         cc = BoxConstraints(maxWidth: math.max(0, w - mL - mR));
       } else {
@@ -149,7 +154,7 @@ class RenderCssBlock extends RenderBox
       placed = true;
       if (!dry) {
         double x = mL;
-        if (w != null && !pd.autoWidth) {
+        if (w != null) {
           final free = w - s.width - mL - mR;
           if (pd.marginLeft == null && pd.marginRight == null) {
             x = (w - s.width) / 2;

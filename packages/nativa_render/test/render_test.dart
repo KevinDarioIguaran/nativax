@@ -59,6 +59,21 @@ void main() {
     expect(tester.getSize(item), const Size(120, 70));
   });
 
+  testWidgets('auto-width block honors max-width and centers with margin auto',
+      (tester) async {
+    final ctx = _document(
+      '<!doctype html><html><body>'
+      '<div id="box" style="max-width:400px;margin:0 auto;'
+      'background:#00ff00">x</div></body></html>',
+    );
+    await tester.pumpWidget(_app(ctx.document, ctx.engine));
+    await tester.pump();
+
+    final item = find.byKey(ObjectKey(ctx.document.getElementById('box')));
+    expect(item, findsOneWidget);
+    expect(tester.getSize(item).width, 400);
+  });
+
   testWidgets('display:none blocks and closed dialogs draw no box',
       (tester) async {
     final ctx = _document(

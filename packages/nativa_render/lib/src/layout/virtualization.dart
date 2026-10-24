@@ -2,7 +2,7 @@ import 'dart:io' as io;
 import 'dart:math' as math;
 
 import 'package:flutter/scheduler.dart';
-import 'package:flutter/widgets.dart';
+import 'package:flutter/material.dart';
 import 'package:nativa_css/nativa_css.dart' hide MediaQuery;
 import 'package:nativa_dom/nativa_dom.dart' as dom;
 
@@ -182,19 +182,23 @@ class _NativaXVirtualScrollViewState extends State<NativaXVirtualScrollView> {
     }
     if (widget.vertical) {
       WidgetsBinding.instance.addPostFrameCallback((_) => _measure());
-      return NativaXViewportScope(
+      return Scrollbar(
         controller: _controller,
-        viewportHeight: _viewportHeight > 0
-            ? _viewportHeight
-            : media?.size.height ?? 600,
-        viewportWidth: _viewportWidth > 0
-            ? _viewportWidth
-            : media?.size.width ?? 800,
-        parent: NativaXViewportScope.maybeOf(context),
-        child: scroll,
+        thumbVisibility: false,
+        child: NativaXViewportScope(
+          controller: _controller,
+          viewportHeight: _viewportHeight > 0
+              ? _viewportHeight
+              : media?.size.height ?? 600,
+          viewportWidth: _viewportWidth > 0
+              ? _viewportWidth
+              : media?.size.width ?? 800,
+          parent: NativaXViewportScope.maybeOf(context),
+          child: scroll,
+        ),
       );
     }
-    return scroll;
+    return Scrollbar(controller: _controller, child: scroll);
   }
 }
 

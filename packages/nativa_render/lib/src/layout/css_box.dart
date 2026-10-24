@@ -275,8 +275,17 @@ class RenderCssBox extends RenderBox with RenderObjectWithChildMixin<RenderBox> 
     );
     // Minimums from CSS still apply inside loose parent constraints, and the
     // box can never be smaller than its padding and border.
+    // When the box has no explicit width but a finite max-width, cap the
+    // incoming (possibly tight) constraints to that max-width so max-width
+    // is honored instead of being overridden by the parent's tight width.
+    BoxConstraints c = constraints;
+    if (w == null && maxW.isFinite && constraints.hasBoundedWidth &&
+        !constraints.isTight && constraints.maxWidth > maxW) {
+      final cap = math.max(minW, maxW);
+      c = constraints.copyWith(maxWidth: math.min(constraints.maxWidth, cap));
+    }
     return wanted
-        .enforce(constraints)
+        .enforce(c)
         .enforce(BoxConstraints(minWidth: math.min(inset.horizontal, constraints.maxWidth),
             minHeight: math.min(inset.vertical, constraints.maxHeight)));
   }

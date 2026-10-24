@@ -15,6 +15,10 @@ class CssItemParentData extends ContainerBoxParentData<RenderBox> {
   /// `width: auto` — block parents stretch such children to fill the line.
   bool autoWidth = true;
 
+  /// Resolved `max-width` of the item (border-box basis applied later by the
+  /// parent). Used to cap the stretched width of auto-width children.
+  ResolvedLength? maxWidth;
+
   /// `height: auto` — flex parents may stretch such children on the cross
   /// axis.
   bool autoHeight = true;
@@ -114,6 +118,7 @@ class CssItem extends ParentDataWidget<CssItemParentData> {
     required this.margin,
     required this.autoWidth,
     required this.autoHeight,
+    this.maxWidth,
     this.flexGrow = 0,
     this.flexShrink = 1,
     this.flexBasis,
@@ -133,6 +138,7 @@ class CssItem extends ParentDataWidget<CssItemParentData> {
   final List<ResolvedLength?> margin;
   final bool autoWidth;
   final bool autoHeight;
+  final ResolvedLength? maxWidth;
   final double flexGrow;
   final double flexShrink;
   final ResolvedLength? flexBasis;
@@ -163,6 +169,7 @@ class CssItem extends ParentDataWidget<CssItemParentData> {
     set(pd.marginLeft, margin[3], (v) => pd.marginLeft = v);
     set(pd.autoWidth, autoWidth, (v) => pd.autoWidth = v);
     set(pd.autoHeight, autoHeight, (v) => pd.autoHeight = v);
+    set(pd.maxWidth, maxWidth, (v) => pd.maxWidth = v);
     set(pd.flexGrow, flexGrow, (v) => pd.flexGrow = v);
     set(pd.flexShrink, flexShrink, (v) => pd.flexShrink = v);
     set(pd.flexBasis, flexBasis, (v) => pd.flexBasis = v);
