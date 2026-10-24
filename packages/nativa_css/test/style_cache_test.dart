@@ -51,6 +51,23 @@ void main() {
     );
   });
 
+  test(':has() subject is invalidated by descendant changes', () {
+    final (doc, engine) = _doc(
+      '<!doctype html><html><body>'
+          '<div class="card" id="card"><span id="child"></span></div>'
+          '</body></html>',
+      '.card { color: #000000 } .card:has(.active) { color: #ff0000 }',
+    );
+    doc.addMutationListener(engine.handleMutation);
+    final card = doc.getElementById('card')!;
+    final child = doc.getElementById('child')!;
+    expect(engine.styleOf(card).color, CssColor.black);
+    child.className = 'active';
+    expect(engine.styleOf(card).color, const CssColor(0xffff0000));
+    child.className = '';
+    expect(engine.styleOf(card).color, CssColor.black);
+  });
+
   test(
     'a later state change does not clear a pending structural invalidation',
     () {
