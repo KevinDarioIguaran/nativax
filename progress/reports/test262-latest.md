@@ -1,7 +1,7 @@
 # Conformidad: test262
 
-- Fecha: 2026-10-21T04:20:57.787582Z
-- Duración: 45.0 s
+- Fecha: 2026-10-24T03:13:34.191313Z
+- Duración: 57.2 s
 - Commit de la suite: `d53ebc8b1931d9f1541e43d59650776e4b766248`
 - Comando: `run_test262 test/language/expressions test/language/statements test/language/types test/language/literals`
 - Total: **21098** tests
@@ -13,14 +13,6 @@
 | FAIL | 413 |
 | SKIP | 1108 |
 | ERROR | 0 |
-
-## Delta contra la línea base
-
-- Corregidos: **0**
-- Regresiones: **0**
-- Siguen fallando: **413**
-- Nuevos en esta ejecución: **0**
-- Ausentes respecto a la base: **0**
 
 ## Por característica
 
