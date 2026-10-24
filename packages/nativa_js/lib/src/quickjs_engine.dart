@@ -316,6 +316,14 @@ final class QuickJsEngine implements JavaScriptEngine {
     } finally {
       if (watch != null) {
         watch.stop();
+        _jsTotalUs += watch.elapsedMicroseconds;
+        _jsCalls++;
+        if (_jsCalls % 100 == 0) {
+          stderr.writeln(
+            'QJS_JS_TOTAL calls=$_jsCalls '
+            'totalMs=${(_jsTotalUs / 1000).toStringAsFixed(1)}',
+          );
+        }
         if (watch.elapsedMilliseconds >= 20) {
           stderr.writeln('QJS_JS $label ${watch.elapsedMilliseconds}ms');
         }
@@ -368,6 +376,8 @@ final class QuickJsEngine implements JavaScriptEngine {
   int _lastRequestBytes = 0;
   String? _lastHostName;
   final bool _traceJs = Platform.environment['NATIVAX_TRACE_JS'] == '1';
+  int _jsTotalUs = 0;
+  int _jsCalls = 0;
 
   void _onHost(
     int runtimeId,
