@@ -244,16 +244,42 @@ CssBoxSpec boxSpecFor(
 /// Collapses white space per the `white-space` property. Returns the text
 /// and whether it ends with a collapsible space (so the next run can drop a
 /// leading space).
+final RegExp _collapsibleSpace = RegExp(r'[ \t\n\r\f]+');
+final RegExp _preLineSpace = RegExp(r'[ \t\r\f]+');
+final RegExp _preLineNewline = RegExp(r' ?\n ?');
+
+bool _hasCollapsibleRun(String text, {required bool newlines}) {
+  var previousSpace = false;
+  for (var i = 0; i < text.length; i++) {
+    final c = text.codeUnitAt(i);
+    final space = c == 0x20 || c == 0x09 || c == 0x0c || c == 0x0d || (newlines && c == 0x0a);
+    if (space && previousSpace) return true;
+    previousSpace = space;
+  }
+  return false;
+}
+
 (String, bool) processWhiteSpace(String text, String mode, {required bool afterSpace}) {
   switch (mode) {
     case 'pre':
     case 'pre-wrap':
       return (text, false);
     case 'pre-line':
-      final t = text.replaceAll(RegExp(r'[ \t\r\f]+'), ' ').replaceAll(RegExp(r' ?\n ?'), '\n');
+      if (!text.contains('\n') && !_hasCollapsibleRun(text, newlines: false)) {
+        return (text, text.endsWith(' '));
+      }
+      final t = text.replaceAll(_preLineSpace, ' ').replaceAll(_preLineNewline, '\n');
       return (t, t.endsWith(' '));
     default:
-      var t = text.replaceAll(RegExp(r'[ \t\n\r\f]+'), ' ');
+      if (!_hasCollapsibleRun(text, newlines: true) &&
+          !text.contains('\t') &&
+          !text.contains('\f') &&
+          !text.contains('\r')) {
+        var t = text;
+        if (afterSpace && t.startsWith(' ')) t = t.substring(1);
+        return (t, t.isEmpty ? afterSpace : t.endsWith(' '));
+      }
+      var t = text.replaceAll(_collapsibleSpace, ' ');
       if (afterSpace && t.startsWith(' ')) t = t.substring(1);
       return (t, t.isEmpty ? afterSpace : t.endsWith(' '));
   }
