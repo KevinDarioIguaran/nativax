@@ -164,13 +164,16 @@ El siguiente cuello sigue siendo **layout**, no build.
   resuelve cada `src` contra la hoja, carga bytes con `NativaXResourceLoader` y
   registra la familia con `FontLoader`. La app de la Biblia ya no avisa
   `unsupported at-rule @font-face`; Font Awesome carga sus tres familias.
+  Las fuentes se cargan en paralelo y por familia: `FIRST_VERSE` bajó de
+  ~2,76 s a ~2,23 s en la misma corrida.
 - Tailwind: probado con clases escapadas (`w-\[100px\]`, `md\:flex`) y
   `@media` responsive. `@layer`, `:where`, `var()` y valores arbitrarios ya
   estaban cubiertos por la cascada.
 - Etiquetas personalizadas: el parser/HTML las conserva, el CSS las estiliza
   como cualquier elemento y `customElements.define` actualiza `:defined`.
   Antes de definir, `my-el:defined` es falso; después, verdadero.
-- Añadido test de render de `<my-card>` con CSS normal.
+- Añadido test de render de `<my-card>` con CSS normal. Al definir un custom
+  element se fuerza un pase de estilos para que `:defined` no quede obsoleto.
 
 ### Límites actuales
 
