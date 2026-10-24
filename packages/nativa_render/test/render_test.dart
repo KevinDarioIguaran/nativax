@@ -242,4 +242,23 @@ void main() {
     expect(input.value, 'abc');
     expect(inputs, 1);
   });
+  testWidgets('text mutation rebuilds only the affected subtree', (tester) async {
+    final html = StringBuffer('<!doctype html><html><body>');
+    for (var i = 0; i < 80; i++) {
+      html.write('<div id="r$i" style="height:10px"><p>row $i</p></div>');
+    }
+    html.write('</body></html>');
+    final ctx = _document(html.toString(), css: 'p { margin: 0 } div { margin: 0 }');
+    await tester.pumpWidget(_app(ctx.document, ctx.engine));
+    await tester.pump();
+    NativeXBuildStats.reset();
+    final text = ctx.document.getElementById('r40')!.querySelector('p')!.firstChild! as dom.Text;
+    text.data = 'changed';
+    await tester.pump();
+    await tester.pump();
+    expect(NativeXBuildStats.elementBuilds, lessThan(20),
+        reason: 'only the changed text path should build');
+    expect(find.text('changed'), findsOneWidget);
+  });
+
 }
