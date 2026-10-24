@@ -2586,73 +2586,63 @@ class _TextControlState extends State<_TextControl> {
       label: label,
       child: Material(
         type: MaterialType.transparency,
-        child: Align(
-          alignment: Alignment.centerLeft,
-          child: SizedBox(
-            width: double.infinity,
-            child: TextField(
-              controller: _controller,
-              focusNode: _focus,
-              style: style,
-              cursorColor: style.color,
-              enabled: !element.disabled,
-              readOnly: element.hasAttribute('readonly'),
-              autofocus: element.hasAttribute('autofocus'),
-              obscureText: !widget.multiline && element.inputType == 'password',
-              maxLines: widget.multiline ? null : 1,
-              minLines: widget.multiline ? rows : null,
-              textAlignVertical:
-                  widget.multiline ? null : TextAlignVertical.center,
-              maxLength: maxLength,
-              maxLengthEnforcement: MaxLengthEnforcement.enforced,
-              keyboardType: widget.multiline
-                  ? TextInputType.multiline
-                  : switch (element.inputType) {
-                      'email' => TextInputType.emailAddress,
-                      'number' => const TextInputType.numberWithOptions(
-                        decimal: true,
-                        signed: true,
-                      ),
-                      'tel' => TextInputType.phone,
-                      'url' => TextInputType.url,
-                      _ => TextInputType.text,
-                    },
-              decoration: InputDecoration(
-                hintText: element.getAttribute('placeholder'),
-                hintStyle: widget.builder.placeholderStyle(element, widget.style),
-                border: InputBorder.none,
-                contentPadding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 0),
-              ).copyWith(counterText: ''),
-              buildCounter:
-                  (
-                    context, {
-                    required currentLength,
-                    required isFocused,
-                    required maxLength,
-                  }) => null,
-              onChanged: (value) => _userInput(element, value),
-              onSubmitted: (_) {
-                _committed = element.value;
-                _fire(element, 'change');
-                // Enter in a single-line field submits its form (implicit
-                // submission).
-                if (!widget.multiline) {
-                  final form = element.closest('form');
-                  if (form != null) {
-                    final submitter = form.querySelector(
-                      'button:not([type=button]):not([type=reset]), input[type=submit]',
-                    );
-                    if (submitter != null) {
-                      submitter.click(trusted: true);
-                    } else {
-                      form.requestSubmit(trusted: true);
-                    }
-                  }
+        child: TextField(
+          controller: _controller,
+          focusNode: _focus,
+          style: style,
+          cursorColor: style.color,
+          enabled: !element.disabled,
+          readOnly: element.hasAttribute('readonly'),
+          autofocus: element.hasAttribute('autofocus'),
+          obscureText: !widget.multiline && element.inputType == 'password',
+          maxLines: widget.multiline ? null : 1,
+          minLines: widget.multiline ? rows : null,
+          maxLength: maxLength,
+          maxLengthEnforcement: MaxLengthEnforcement.enforced,
+          keyboardType: widget.multiline
+              ? TextInputType.multiline
+              : switch (element.inputType) {
+                  'email' => TextInputType.emailAddress,
+                  'number' => const TextInputType.numberWithOptions(
+                    decimal: true,
+                    signed: true,
+                  ),
+                  'tel' => TextInputType.phone,
+                  'url' => TextInputType.url,
+                  _ => TextInputType.text,
+                },
+          decoration: InputDecoration.collapsed(
+            hintText: element.getAttribute('placeholder'),
+            hintStyle: widget.builder.placeholderStyle(element, widget.style),
+            border: InputBorder.none,
+          ).copyWith(counterText: ''),
+          buildCounter:
+              (
+                context, {
+                required currentLength,
+                required isFocused,
+                required maxLength,
+              }) => null,
+          onChanged: (value) => _userInput(element, value),
+          onSubmitted: (_) {
+            _committed = element.value;
+            _fire(element, 'change');
+            // Enter in a single-line field submits its form (implicit
+            // submission).
+            if (!widget.multiline) {
+              final form = element.closest('form');
+              if (form != null) {
+                final submitter = form.querySelector(
+                  'button:not([type=button]):not([type=reset]), input[type=submit]',
+                );
+                if (submitter != null) {
+                  submitter.click(trusted: true);
+                } else {
+                  form.requestSubmit(trusted: true);
                 }
-              },
-            ),
-          ),
+              }
+            }
+          },
         ),
       ),
     );
