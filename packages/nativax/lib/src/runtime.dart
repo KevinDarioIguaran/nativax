@@ -159,13 +159,7 @@ class NativaXRuntime {
       final faceSources = <FontFaceRule, List<String>>{};
       final requests = <String>[];
       for (final face in sheet.fontFaces) {
-        final iconFamily =
-            face.family.toLowerCase().contains('font awesome') ||
-            face.family.toLowerCase().contains('fontawesome') ||
-            face.family.toLowerCase().contains('material icons');
-        if (!iconFamily && only != null && !only.contains(face.family)) {
-          continue;
-        }
+        if (only != null && !only.contains(face.family)) continue;
         final urls = <String>[];
         for (final source in face.sources) {
           final resolved = base.resolve(source).toString();

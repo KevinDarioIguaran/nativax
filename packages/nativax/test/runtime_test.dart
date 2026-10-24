@@ -56,7 +56,7 @@ void main() {
 <!doctype html><html><head><style>
 @font-face { font-family: 'Font Awesome 6 Free'; src: url('/fa.ttf'); }
 @font-face { font-family: Unused; src: url('/unused.ttf'); }
-body { font-family: Inter, sans-serif; }
+body { font-family: 'Font Awesome 6 Free', sans-serif; }
 </style></head><body><p>x</p></body></html>
 ''',
       config: NativaXRuntimeConfig(resources: loader),
