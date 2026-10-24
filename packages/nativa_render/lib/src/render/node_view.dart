@@ -365,18 +365,21 @@ class _Builder {
 
   bool _isInline(Object c) => c is dom.Text || (styleOfChild(c)?.isInlineLevel ?? false);
 
-  Widget buildItem(dom.Element element, {required bool parentFlex}) {
+  Widget buildItem(dom.Element element,
+      {required bool parentFlex, bool repaintBoundary = false}) {
     final cached = cache?.get(element);
     if (cached != null) return cached;
     NativeXBuildStats.elementBuilds++;
     final buildWatch = NativaXDrawTrace.enabled ? (Stopwatch()..start()) : null;
     final Widget result;
     if (!LayoutProfile.enabled) {
-      result = _buildItem(element, parentFlex: parentFlex);
+      result =
+          _buildItem(element, parentFlex: parentFlex, repaintBoundary: repaintBoundary);
     } else {
       LayoutProfile.begin('widget.buildItem');
       try {
-        result = _buildItem(element, parentFlex: parentFlex);
+        result = _buildItem(element,
+            parentFlex: parentFlex, repaintBoundary: repaintBoundary);
       } finally {
         LayoutProfile.end();
       }
@@ -391,7 +394,8 @@ class _Builder {
     return result;
   }
 
-  Widget _buildItem(dom.Element element, {required bool parentFlex}) {
+  Widget _buildItem(dom.Element element,
+      {required bool parentFlex, bool repaintBoundary = false}) {
     final style = styleEngine.styleOf(element);
     // The animated box rebuilds with interpolated styles during CSS
     // transitions and animations; idle, it just builds the box.
@@ -410,6 +414,7 @@ class _Builder {
     if (style.position == 'sticky' && (style.top != null || style.bottom != null)) {
       item = CssSticky(top: _px(style.top), bottom: _px(style.bottom), child: item);
     }
+    if (repaintBoundary) item = RepaintBoundary(child: item);
     return itemFor(style, item,
         key: ObjectKey(element), parentFlex: parentFlex, replaced: _replacedElements.contains(element.localName));
   }
@@ -865,7 +870,8 @@ class _Builder {
           final i = slots.indexOf(e);
           return i < 0 ? null : i;
         },
-        itemBuilder: (context, i) => buildItem(slots[i], parentFlex: true),
+        itemBuilder: (context, i) =>
+            buildItem(slots[i], parentFlex: true, repaintBoundary: true),
         layoutBuilder: (context, children) => CssFlexLayout(
           direction: Axis.vertical,
           reverse: false,
@@ -893,7 +899,8 @@ class _Builder {
         final i = slots.indexOf(e);
         return i < 0 ? null : i;
       },
-      itemBuilder: (context, i) => buildItem(slots[i], parentFlex: false),
+      itemBuilder: (context, i) =>
+          buildItem(slots[i], parentFlex: false, repaintBoundary: true),
       layoutBuilder: (context, children) => CssBlockFlow(
         collapseTop: collapse && _noEdge(style, 'top'),
         collapseBottom: collapse &&
@@ -1391,6 +1398,10 @@ class _Builder {
         opaque: false,
         onEnter: styleEngine.usesHover
             ? (_) {
+                // Scrolling moves content under a stationary pointer. Let
+                // hover settle after the scroll instead of restyling the
+                // document on every wheel frame.
+                if (doc.layoutHost?.isScrolling ?? false) return;
                 // Keep a deeper hovered descendant; otherwise this element
                 // becomes the hovered one.
                 final current = doc.hoverElement;
@@ -1399,6 +1410,7 @@ class _Builder {
             : null,
         onExit: styleEngine.usesHover
             ? (_) {
+                if (doc.layoutHost?.isScrolling ?? false) return;
                 final current = doc.hoverElement;
                 if (current != null && (identical(current, element) || element.contains(current))) {
                   doc.hoverElement = element.parentElement;
