@@ -893,7 +893,9 @@ class ClassList extends IterableBase<String> {
       ...current,
       ...args.where((t) => !current.contains(t) && added.add(t)),
     ];
-    if (before != null || next.isNotEmpty) _element.className = next.join(' ');
+    final value = next.join(' ');
+    if (value == before) return;
+    if (before != null || next.isNotEmpty) _element.className = value;
   }
 
   void remove(Iterable<String> tokens) {
@@ -902,7 +904,9 @@ class ClassList extends IterableBase<String> {
     final before = _element.getAttribute('class');
     final current = _tokens;
     final next = current.where((t) => !args.contains(t)).toList();
-    if (before != null) _element.className = next.join(' ');
+    final value = next.join(' ');
+    if (value == before) return;
+    if (before != null) _element.className = value;
   }
 
   bool toggle(String token, [bool? force]) {

@@ -115,6 +115,15 @@ void main() {
       expect(div.childNodes, isEmpty);
     });
 
+    test('textContent with the same value does not emit a mutation', () {
+      final d = sample();
+      final div = d.getElementById('a')!..textContent = 'plain';
+      final records = <MutationRecord>[];
+      d.addMutationListener(records.add);
+      div.textContent = 'plain';
+      expect(records, isEmpty);
+    });
+
     test('cloneNode copies attributes and, when deep, children', () {
       final d = sample();
       final div = d.getElementById('a')!;
@@ -151,6 +160,16 @@ void main() {
       expect(div.className, 'z');
       expect(div.classList.replace('z', 'w'), isTrue);
       expect(() => div.classList.add(['a b']), throwsA(isA<DomException>()));
+    });
+
+    test('classList add/remove of an unchanged token does not emit', () {
+      final d = sample();
+      final div = d.getElementById('a')!;
+      final records = <MutationRecord>[];
+      d.addMutationListener(records.add);
+      div.classList.add(['x']);
+      div.classList.remove(['missing']);
+      expect(records, isEmpty);
     });
   });
 
