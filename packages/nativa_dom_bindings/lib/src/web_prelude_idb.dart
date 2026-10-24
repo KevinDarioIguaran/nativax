@@ -71,13 +71,23 @@ class IDBTransaction extends EventTarget {
     super();
     Object.assign(this, { db, mode, objectStoreNames: names.slice(), error: null, durability: 'default' });
     hidden(this, '_s', { pending: 0, done: false, aborted: false, snapshot: null, active: true });
-    if (mode !== 'readonly') hidden(this, '_backup', new Map(names.map((n) => [n, db._data.stores.get(n) && cloneStore(db._data.stores.get(n))])));
+    hidden(this, '_snapshots', new Map());
+    if (mode === 'versionchange') hidden(this, '_backup', new Map(names.map((n) => [n, db._data.stores.get(n) && cloneStore(db._data.stores.get(n))])));
     queueMicrotask(() => this._maybeFinish());
   }
   objectStore(name) {
     if (!this.objectStoreNames.includes(name)) throw new DOMException(`No objectStore named ${name} in this transaction`, 'NotFoundError');
     if (this._s.done) throw new DOMException('The transaction has finished.', 'InvalidStateError');
     return new IDBObjectStore(this, name);
+  }
+  _snapshot(name) {
+    let s = this._snapshots.get(name);
+    if (!s) {
+      const st = storeData(this, name);
+      s = { records: st.records, next: st.next, indexes: new Map(st.indexes) };
+      this._snapshots.set(name, s);
+    }
+    return s;
   }
   _request(source, fn) {
     if (this._s.done || this._s.aborted) throw new DOMException('The transaction has finished.', 'TransactionInactiveError');
@@ -95,6 +105,7 @@ class IDBTransaction extends EventTarget {
     setTimeout(() => {
       if (this._s.done || this._s.aborted || this._s.pending > 0) return;
       this._s.done = true;
+      this._snapshots.clear();
       this.dispatchEvent(new Event('complete'));
     }, 0);
   }
@@ -102,6 +113,14 @@ class IDBTransaction extends EventTarget {
     if (this._s.done || this._s.aborted) return;
     this._s.aborted = true;
     this.error = error || null;
+    for (const [n, snap] of this._snapshots) {
+      const st = this.db._data.stores.get(n);
+      if (!st) continue;
+      st.records = snap.records;
+      st.next = snap.next;
+      st.indexes = snap.indexes;
+    }
+    this._snapshots.clear();
     if (this._backup) for (const [n, s] of this._backup) { if (s) this.db._data.stores.set(n, s); else this.db._data.stores.delete(n); }
     setTimeout(() => this.dispatchEvent(new Event('abort', { bubbles: true })), 0);
   }
@@ -143,7 +162,9 @@ class IDBObjectStore {
     } else if (k === undefined && s.autoIncrement) k = s.next++;
     if (!validKey(k)) throw new DOMException('Evaluating the object store\'s key path did not yield a value.', 'DataError');
     return tx._request(this, () => {
+      tx._snapshot(this.name);
       const st = storeData(tx, this.name);
+      st.records = st.records.slice();
       if (typeof k === 'number' && st.autoIncrement && k >= st.next) st.next = Math.floor(k) + 1;
       const i = findIndex(st.records, k);
       const exists = i < st.records.length && compareKeys(st.records[i].key, k) === 0;
@@ -156,7 +177,7 @@ class IDBObjectStore {
           }
         }
       }
-      if (exists) st.records[i].value = v; else st.records.splice(i, 0, { key: k, value: v });
+      if (exists) st.records[i] = { key: k, value: v }; else st.records.splice(i, 0, { key: k, value: v });
       return k;
     });
   }
@@ -177,6 +198,7 @@ class IDBObjectStore {
   delete(query) {
     if (this.transaction.mode === 'readonly') throw new DOMException('The transaction is read-only.', 'ReadOnlyError');
     return this.transaction._request(this, () => {
+      this.transaction._snapshot(this.name);
       const s = storeData(this.transaction, this.name);
       const range = asRange(query);
       s.records = s.records.filter((r) => !range.includes(r.key));
@@ -185,18 +207,19 @@ class IDBObjectStore {
   }
   clear() {
     if (this.transaction.mode === 'readonly') throw new DOMException('The transaction is read-only.', 'ReadOnlyError');
-    return this.transaction._request(this, () => { storeData(this.transaction, this.name).records = []; return undefined; });
+    return this.transaction._request(this, () => { this.transaction._snapshot(this.name); storeData(this.transaction, this.name).records = []; return undefined; });
   }
   openCursor(query, direction = 'next') { return openCursor(this, () => this._select(query).map((r) => ({ key: r.key, primaryKey: r.key, value: r.value })), direction, true); }
   openKeyCursor(query, direction = 'next') { return openCursor(this, () => this._select(query).map((r) => ({ key: r.key, primaryKey: r.key, value: r.value })), direction, false); }
   createIndex(name, keyPath, options = {}) {
     if (!this.transaction._upgrade) throw new DOMException('The database is not running a version change transaction.', 'InvalidStateError');
+    this.transaction._snapshot(this.name);
     const s = storeData(this.transaction, this.name);
     if (s.indexes.has(name)) throw new DOMException(`An index named '${name}' already exists.`, 'ConstraintError');
     s.indexes.set(name, { name, keyPath, unique: !!options.unique, multiEntry: !!options.multiEntry });
     return new IDBIndex(this, name);
   }
-  deleteIndex(name) { storeData(this.transaction, this.name).indexes.delete(name); }
+  deleteIndex(name) { this.transaction._snapshot(this.name); storeData(this.transaction, this.name).indexes.delete(name); }
   index(name) {
     if (!storeData(this.transaction, this.name).indexes.has(name)) throw new DOMException(`The specified index '${name}' was not found.`, 'NotFoundError');
     return new IDBIndex(this, name);

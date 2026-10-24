@@ -249,6 +249,31 @@ void main() {
     expect(out, [1, ['people'], ['Ana', 'Eva'], 3]);
   });
 
+  test('IndexedDB abort restores the records changed by the transaction',
+      () async {
+    h = WebHarness('<p>x</p>');
+    final out = await h.async('''
+      const req = indexedDB.open("abortdb", 1);
+      req.onupgradeneeded = () => req.result.createObjectStore("items", { autoIncrement: true });
+      req.onsuccess = () => {
+        const db = req.result;
+        const seed = db.transaction("items", "readwrite").objectStore("items");
+        seed.add("one"); seed.add("two");
+        seed.transaction.oncomplete = () => {
+          const tx = db.transaction("items", "readwrite");
+          const store = tx.objectStore("items");
+          const put = store.put("changed", 1);
+          put.onsuccess = () => tx.abort();
+          tx.onabort = () => {
+            const read = db.transaction("items").objectStore("items");
+            read.getAll().onsuccess = (e) => { out = e.target.result; };
+          };
+        };
+      };
+    ''', ms: 200);
+    expect(out, ['one', 'two']);
+  });
+
   test('custom elements upgrade and lifecycle callbacks', () async {
     h = WebHarness('<x-greet name="Ana"></x-greet>');
     final out = await h.async('''
