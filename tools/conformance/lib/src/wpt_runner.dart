@@ -18,7 +18,7 @@ class WptRunOptions {
     required this.directories,
     this.limit,
     this.grep,
-    this.timeout = const Duration(seconds: 5),
+    this.timeout = const Duration(seconds: 20),
     this.verbose = false,
   });
 

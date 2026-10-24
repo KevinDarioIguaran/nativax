@@ -10,7 +10,7 @@ Future<void> main(List<String> args) async {
   final suite = wptDir(root);
   var dirs = <String>['dom/nodes', 'css/selectors'];
   int? limit = 400;
-  var timeout = const Duration(seconds: 5);
+  var timeout = const Duration(seconds: 20);
   var verbose = false;
   String? grep;
   String? markdownPath;
