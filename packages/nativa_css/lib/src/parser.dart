@@ -77,18 +77,24 @@ class FontFaceRule extends CssRule {
 }
 
 class StyleSheet {
-  StyleSheet(this.rules, this.warnings, {this.fontFaces = const []});
+  StyleSheet(this.rules, this.warnings,
+      {this.fontFaces = const [], this.baseUrl});
   final List<CssRule> rules;
   final List<CssWarning> warnings;
   final List<FontFaceRule> fontFaces;
 
-  static StyleSheet parse(String source) => CssParser(source).parseStyleSheet();
+  /// Base used to resolve relative `url(...)` values in this sheet.
+  final Uri? baseUrl;
+
+  static StyleSheet parse(String source, {Uri? baseUrl}) =>
+      CssParser(source, baseUrl: baseUrl).parseStyleSheet();
 }
 
 class CssParser {
-  CssParser(this.source) : _tokens = CssTokenizer(source).tokenize();
+  CssParser(this.source, {this.baseUrl}) : _tokens = CssTokenizer(source).tokenize();
 
   final String source;
+  final Uri? baseUrl;
   final List<CssToken> _tokens;
   final List<CssWarning> _warnings = [];
   final List<FontFaceRule> _fontFaces = [];
@@ -102,7 +108,7 @@ class CssParser {
 
   StyleSheet parseStyleSheet() {
     final rules = _ruleList(topLevel: true, depth: 0);
-    return StyleSheet(rules, _warnings, fontFaces: _fontFaces);
+    return StyleSheet(rules, _warnings, fontFaces: _fontFaces, baseUrl: baseUrl);
   }
 
   /// Parses an inline `style` attribute.
@@ -381,6 +387,18 @@ class CssParser {
     return out;
   }
 
+  CssValue _resolveUrl(CssValue value) {
+    if (value is UrlValue && baseUrl != null) {
+      final raw = value.url;
+      if (!raw.contains('://') &&
+          !raw.startsWith('data:') &&
+          !raw.startsWith('//')) {
+        return UrlValue(baseUrl!.resolve(raw).toString());
+      }
+    }
+    return value;
+  }
+
   void _declaration(List<CssToken> ts, List<Declaration> out) {
     if (ts.isEmpty) return;
     final nameTok = ts.first;
@@ -432,6 +450,7 @@ class CssParser {
       _warnings.add(CssWarning('invalid value for "$name"', nameTok.offset));
       return;
     }
-    expanded.forEach((p, v) => out.add(Declaration(p, v, important: important)));
+    expanded.forEach((p, v) =>
+        out.add(Declaration(p, _resolveUrl(v), important: important)));
   }
 }
