@@ -1,4 +1,5 @@
 import 'dart:collection';
+import 'dart:io' show Platform, stderr;
 import 'dart:convert';
 import 'dart:ffi';
 import 'dart:typed_data';
@@ -145,6 +146,7 @@ final class QuickJsEngine implements JavaScriptEngine {
         return _invoke(
           (out, outLen) =>
               b.nx_eval_module(_rt, src.ptr, src.length, file.ptr, out, outLen),
+          label: 'module:$url',
         );
       } finally {
         src.free();
@@ -185,6 +187,7 @@ final class QuickJsEngine implements JavaScriptEngine {
         return _invoke(
           (out, outLen) =>
               b.nx_eval(_rt, src.ptr, src.length, file.ptr, out, outLen),
+          label: 'eval:$filename',
         );
       } finally {
         src.free();
@@ -203,6 +206,7 @@ final class QuickJsEngine implements JavaScriptEngine {
         return _invoke(
           (out, outLen) =>
               b.nx_call(_rt, name.ptr, arg.ptr, arg.length, out, outLen),
+          label: 'call:$functionName',
         );
       } finally {
         name.free();
@@ -297,13 +301,26 @@ final class QuickJsEngine implements JavaScriptEngine {
     });
   }
 
-  Object? _invoke(int Function(Pointer<Pointer<Char>>, Pointer<Int64>) call) {
-    return _withOut((out, outLen) {
-      final status = call(out, outLen);
-      final text = _readOut(out, outLen);
-      if (status != b.nxOk) throw _decodeError(text);
-      return text.isEmpty ? null : jsonDecode(text);
-    });
+  Object? _invoke(
+    int Function(Pointer<Pointer<Char>>, Pointer<Int64>) call, {
+    String label = 'js',
+  }) {
+    final watch = _traceJs ? (Stopwatch()..start()) : null;
+    try {
+      return _withOut((out, outLen) {
+        final status = call(out, outLen);
+        final text = _readOut(out, outLen);
+        if (status != b.nxOk) throw _decodeError(text);
+        return text.isEmpty ? null : jsonDecode(text);
+      });
+    } finally {
+      if (watch != null) {
+        watch.stop();
+        if (watch.elapsedMilliseconds >= 20) {
+          stderr.writeln('QJS_JS $label ${watch.elapsedMilliseconds}ms');
+        }
+      }
+    }
   }
 
   T _withOut<T>(T Function(Pointer<Pointer<Char>>, Pointer<Int64>) body) {
@@ -342,6 +359,16 @@ final class QuickJsEngine implements JavaScriptEngine {
     return JavaScriptException(name: name, message: message, stack: stack);
   }
 
+  final bool _traceHost = Platform.environment['NATIVAX_TRACE_HOST'] == '1';
+  int _hostTotal = 0;
+  final Map<String, int> _hostCounts = {};
+  final Map<String, int> _hostMicros = {};
+  final Map<String, int> _hostMaxUs = {};
+  final Map<String, int> _hostBytes = {};
+  int _lastRequestBytes = 0;
+  String? _lastHostName;
+  final bool _traceJs = Platform.environment['NATIVAX_TRACE_JS'] == '1';
+
   void _onHost(
     int runtimeId,
     Pointer<Char> request,
@@ -350,6 +377,8 @@ final class QuickJsEngine implements JavaScriptEngine {
     Pointer<Int64> responseLen,
   ) {
     String reply;
+    _lastRequestBytes = requestLen;
+    final watch = _traceHost ? (Stopwatch()..start()) : null;
     try {
       reply = _dispatchHost(
         utf8.decode(request.cast<Uint8>().asTypedList(requestLen)),
@@ -357,6 +386,39 @@ final class QuickJsEngine implements JavaScriptEngine {
     } catch (error, stack) {
       onHostError?.call(error, stack);
       reply = '{"error":{"type":"Error","message":"internal host error"}}';
+    }
+    if (watch != null) {
+      watch.stop();
+      final us = watch.elapsedMicroseconds;
+      final name = _lastHostName ?? '?';
+      _hostTotal++;
+      _hostCounts[name] = (_hostCounts[name] ?? 0) + 1;
+      _hostMicros[name] = (_hostMicros[name] ?? 0) + us;
+      if (us > (_hostMaxUs[name] ?? 0)) _hostMaxUs[name] = us;
+      _hostBytes[name] =
+          (_hostBytes[name] ?? 0) + _lastRequestBytes + reply.length;
+      if (_hostTotal % 1000 == 0 || us >= 20000) {
+        final names = _hostCounts.keys.toList()
+          ..sort(
+            (a, b) => (_hostMicros[b] ?? 0).compareTo(_hostMicros[a] ?? 0),
+          );
+        final byMax = _hostCounts.keys.toList()
+          ..sort((a, b) {
+            final ma = _hostMaxUs[a] ?? 0;
+            final mb = _hostMaxUs[b] ?? 0;
+            return mb.compareTo(ma);
+          });
+        String row(String n) =>
+            '$n calls=${_hostCounts[n]} '
+            'totalMs=${((_hostMicros[n] ?? 0) / 1000).toStringAsFixed(1)} '
+            'maxMs=${((_hostMaxUs[n] ?? 0) / 1000).toStringAsFixed(1)} '
+            'bytes=${_hostBytes[n]}';
+        stderr.writeln(
+          'QJS_HOST total=$_hostTotal last=${us}us '
+          'top=${names.take(10).map(row).join(' | ')}',
+        );
+        stderr.writeln('QJS_HOST_MAX ${byMax.take(10).map(row).join(' | ')}');
+      }
     }
     final bytes = utf8.encode(reply);
     // QuickJS' JSON parser requires a NUL-terminated buffer.
@@ -372,6 +434,7 @@ final class QuickJsEngine implements JavaScriptEngine {
     final decoded = jsonDecode(request) as List;
     final name = decoded[0] as String;
     final args = (decoded[1] as List).cast<Object?>();
+    _lastHostName = name;
     final fn = _hostFunctions[name];
     if (fn == null) {
       return jsonEncode({
