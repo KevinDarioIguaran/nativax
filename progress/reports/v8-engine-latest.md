@@ -140,6 +140,24 @@ sigue consumiendo menos memoria, pero en esta carga se queda al 97 % de CPU y
 una corrida de 55 s terminó sin proceso. El backend V8 sigue siendo opt-in;
 QuickJS es el default.
 
+## Rebuild incremental (2026-10-24)
+
+`NativaXWidgetCache` reutiliza el `Widget` ya construido por elemento. Una
+mutación invalida el camino hasta la raíz; los hijos no afectados se devuelven
+como la **misma instancia**, así Flutter omite su build. Los cambios de
+atributos/clase invalidan el subárbol; los de texto solo el camino.
+
+Medido en la Biblia (V8, 20 s):
+
+- frames de texto/timers: **0–100 builds** (antes 300–500).
+- frame de reemplazo de capítulo: 378–628 builds; sigue costando **~300–400 ms**
+  porque el layout de los 31 versículos se recalcula aunque los widgets se
+  reutilicen.
+- `FIRST_VERSE` ~1,84 s.
+- Test de regresión: 80 filas, cambiar un texto construye **<20** elementos.
+
+El siguiente cuello sigue siendo **layout**, no build.
+
 ## Hilos
 
 Ahora mismo **no están separados**: V8 corre en el isolate de UI de Dart, igual
