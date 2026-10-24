@@ -1,16 +1,16 @@
 # Conformidad: wpt
 
-- Fecha: 2026-10-21T22:42:44.323909Z
-- Duración: 25.8 s
+- Fecha: 2026-10-24T03:28:40.543475Z
+- Duración: 24.0 s
 - Commit de la suite: `e7d77cd1e0353d7b37ce35eb912b6992df8dfab0`
-- Comando: `run_wpt css/selectors --limit 100000`
+- Comando: `run_wpt css/selectors --limit 2000`
 - Total: **528** tests
-- Tasa de éxito (sin SKIP): **50.28 %**
+- Tasa de éxito (sin SKIP): **46.41 %**
 
 | Estado | Tests |
 |---|---:|
-| PASS | 91 |
-| FAIL | 90 |
+| PASS | 84 |
+| FAIL | 97 |
 | SKIP | 347 |
 | ERROR | 0 |
 
@@ -26,13 +26,13 @@
 
 | Grupo | PASS | FAIL | SKIP | ERROR | Éxito |
 |---|---:|---:|---:|---:|---:|
-| `css/selectors` | 91 | 90 | 347 | 0 | 50.3 % |
+| `css/selectors` | 84 | 97 | 347 | 0 | 46.4 % |
 
 ## Por directorio
 
 | Grupo | PASS | FAIL | SKIP | ERROR | Éxito |
 |---|---:|---:|---:|---:|---:|
-| `css/selectors/invalidation` | 18 | 51 | 69 | 0 | 26.1 % |
+| `css/selectors/invalidation` | 11 | 58 | 69 | 0 | 15.9 % |
 | `css/selectors/i18n` | 43 | 0 | 1 | 0 | 100.0 % |
 | `css/selectors/selectors-4` | 0 | 1 | 29 | 0 | 0.0 % |
 | `css/selectors/parsing` | 0 | 1 | 23 | 0 | 0.0 % |
@@ -114,7 +114,7 @@
 | `css/selectors/focus-visible-018.html` | 0 | 0 | 1 | 0 | 0.0 % |
 | _(+202 grupos)_ | | | | | |
 
-## Fallos (90)
+## Fallos (97)
 
 ### `css/selectors/attribute-selectors/attribute-case/cssom.html`
 
@@ -190,9 +190,10 @@ Expected DIV element to match :last-of-type with matches: assert_equals: expecte
 ### `css/selectors/class-prefix-selector-invalidation.tentative.html`
 
 - Características: css/selectors
-- Motivo: 1 subtest(s) failed
+- Motivo: 2 subtest(s) failed
 
 ```text
+a class change on an ancestor invalidates descendants selected through the class prefix selector: assert_equals: expected rgb(4, 5, 6), got rgb(0, 0, 0)
 a class change on a preceding sibling invalidates a following sibling selected through the class prefix selector: assert_equals: expected rgb(7, 8, 9), got rgb(0, 0, 0)
 ```
 
@@ -409,11 +410,11 @@ script 0: ReferenceError: div_descendant is not defined
 - Motivo: 6 subtest(s) failed
 
 ```text
-[att] selector is effective: assert_equals: expected rgb(255, 255, 0), got rgb(128, 128, 128)
-[att=val] selector is effective: assert_equals: expected rgb(255, 255, 0), got rgb(128, 128, 128)
-[att~=val] selector is effective: assert_equals: expected rgb(255, 255, 0), got rgb(128, 128, 128)
-[att|=val] selector is effective: assert_equals: expected rgb(255, 255, 0), got rgb(128, 128, 128)
-#id selector is effective: assert_equals: expected rgb(255, 255, 0), got rgb(128, 128, 128)
+[att] selector is effective: assert_equals: expected rgb(0, 128, 0), got rgb(128, 128, 128)
+[att=val] selector is effective: assert_equals: expected rgb(0, 128, 0), got rgb(128, 128, 128)
+[att~=val] selector is effective: assert_equals: expected rgb(0, 128, 0), got rgb(128, 128, 128)
+[att|=val] selector is effective: assert_equals: expected rgb(0, 128, 0), got rgb(128, 128, 128)
+#id selector is effective: assert_equals: expected rgb(0, 128, 0), got rgb(128, 128, 128)
 ```
 
 ### `css/selectors/invalidation/child-indexed-pseudo-classes-in-has.html`
@@ -427,24 +428,6 @@ Prepend #div1.green: #first_child: assert_equals: expected rgb(0, 128, 0), got r
 Prepend #div1.green: #last_child: assert_equals: expected rgb(0, 128, 0), got rgb(128, 128, 128)
 Prepend #div1.green: #nth_child_3n_1: assert_equals: expected rgb(0, 128, 0), got rgb(128, 128, 128)
 Prepend #div2.yellow: #first_child: assert_equals: expected rgb(255, 255, 0), got rgb(128, 128, 128)
-```
-
-### `css/selectors/invalidation/defined-in-has.html`
-
-- Características: css/selectors
-- Motivo: 1 subtest(s) failed
-
-```text
-Test :has() invalidation with :defined pseudo-class: assert_equals: expected rgb(255, 0, 0), got rgb(0, 128, 0)
-```
-
-### `css/selectors/invalidation/defined.html`
-
-- Características: css/selectors
-- Motivo: 1 subtest(s) failed
-
-```text
-:defined selector is effective: assert_equals: expected rgb(128, 128, 128), got rgb(0, 0, 255)
 ```
 
 ### `css/selectors/invalidation/empty-pseudo-in-has-display-none.html`
@@ -495,7 +478,7 @@ add .test to trigger3 - check subject3_1: assert_equals: expected rgb(0, 0, 255)
 ### `css/selectors/invalidation/has-in-adjacent-position.html`
 
 - Características: css/selectors
-- Motivo: 91 subtest(s) failed
+- Motivo: 110 subtest(s) failed
 
 ```text
 add .test to previous_sibling_child: assert_equals: expected rgb(0, 128, 0), got rgb(128, 128, 128)
@@ -508,33 +491,42 @@ add .test to next_sibling_descendant: assert_equals: expected rgb(128, 0, 128), 
 ### `css/selectors/invalidation/has-in-ancestor-position.html`
 
 - Características: css/selectors
-- Motivo: 101 subtest(s) failed
+- Motivo: 132 subtest(s) failed
 
 ```text
+add .test to subject_parent: assert_equals: expected rgb(0, 128, 0), got rgb(128, 128, 128)
 add .test to subject_child: assert_equals: expected rgb(255, 0, 0), got rgb(128, 128, 128)
 add .test to subject_descendant: assert_equals: expected rgb(255, 0, 0), got rgb(128, 128, 128)
 add .test to next_sibling: assert_equals: expected rgb(0, 0, 255), got rgb(128, 128, 128)
 add .test to next_sibling_child: assert_equals: expected rgb(255, 192, 203), got rgb(128, 128, 128)
-add .test to next_sibling_descendant: assert_equals: expected rgb(255, 192, 203), got rgb(128, 128, 128)
+```
+
+### `css/selectors/invalidation/has-in-is-non-subject-compound.html`
+
+- Características: css/selectors
+- Motivo: 1 subtest(s) failed
+
+```text
+insert .test under #trigger: #subject becomes red: assert_equals: expected rgb(255, 0, 0), got rgb(128, 128, 128)
 ```
 
 ### `css/selectors/invalidation/has-in-parent-position.html`
 
 - Características: css/selectors
-- Motivo: 43 subtest(s) failed
+- Motivo: 64 subtest(s) failed
 
 ```text
 add .test to subject_child: assert_equals: expected rgb(255, 0, 0), got rgb(128, 128, 128)
 add .test to subject_descendant: assert_equals: expected rgb(255, 0, 0), got rgb(128, 128, 128)
 remove the class 'test' from the element inserted before subject: assert_equals: expected rgb(128, 128, 128), got rgb(0, 128, 0)
-add the class 'test' to the element inserted again before subject: assert_equals: expected rgb(0, 128, 0), got rgb(128, 128, 128)
-remove the class 'test' from the element inserted before subject_child: assert_equals: expected rgb(128, 128, 128), got rgb(255, 0, 0)
+insert element div before subject: assert_equals: expected rgb(128, 128, 128), got rgb(0, 128, 0)
+remove the class 'test' from the element inserted again before subject: assert_equals: expected rgb(128, 128, 128), got rgb(0, 128, 0)
 ```
 
 ### `css/selectors/invalidation/has-in-sibling-position.html`
 
 - Características: css/selectors
-- Motivo: 103 subtest(s) failed
+- Motivo: 122 subtest(s) failed
 
 ```text
 add .test to previous_sibling_child: assert_equals: expected rgb(0, 128, 0), got rgb(128, 128, 128)
@@ -544,12 +536,23 @@ add .test to next_sibling_child: assert_equals: expected rgb(128, 0, 128), got r
 add .test to next_sibling_descendant: assert_equals: expected rgb(128, 0, 128), got rgb(128, 128, 128)
 ```
 
+### `css/selectors/invalidation/has-invalidation-after-removing-non-first-element.html`
+
+- Características: css/selectors
+- Motivo: 1 subtest(s) failed
+
+```text
+remove descendant: div#subject.color: assert_equals: expected rgb(128, 128, 128), got rgb(255, 0, 0)
+```
+
 ### `css/selectors/invalidation/has-invalidation-first-in-sibling-chain.html`
 
 - Características: css/selectors
-- Motivo: 2 subtest(s) failed
+- Motivo: 4 subtest(s) failed
 
 ```text
+#subject1 invalidated after adding first sibling: assert_equals: expected rgb(255, 0, 0), got rgb(128, 128, 128)
+#subject2 invalidated after adding first sibling: assert_equals: expected rgb(255, 69, 0), got rgb(128, 128, 128)
 #subject3 invalidated after adding first sibling: assert_equals: expected rgb(0, 128, 0), got rgb(128, 128, 128)
 #subject4 invalidated after adding first sibling: assert_equals: expected rgb(144, 238, 144), got rgb(128, 128, 128)
 ```
@@ -557,9 +560,10 @@ add .test to next_sibling_descendant: assert_equals: expected rgb(128, 0, 128), 
 ### `css/selectors/invalidation/has-invalidation-for-wiping-an-element.html`
 
 - Características: css/selectors
-- Motivo: 0 subtest(s) failed
+- Motivo: 1 subtest(s) failed
 
 ```text
+color after wiping #child to remove div > .descendant: div#subject.color: assert_equals: expected rgb(128, 128, 128), got rgb(0, 128, 0)
 script 0: ReferenceError: child is not defined
 ```
 
@@ -579,7 +583,7 @@ subject7: initial color should be rgb(0, 0, 255): assert_equals: expected rgb(0,
 ### `css/selectors/invalidation/has-sibling.html`
 
 - Características: css/selectors
-- Motivo: 29 subtest(s) failed
+- Motivo: 34 subtest(s) failed
 
 ```text
 add .test to first_sibling: assert_equals: expected rgb(0, 128, 0), got rgb(128, 128, 128)
@@ -624,14 +628,26 @@ add .deep-parent to direct_child: assert_equals: expected rgb(255, 0, 0), got rg
 ### `css/selectors/invalidation/has-with-not.html`
 
 - Características: css/selectors
-- Motivo: 6 subtest(s) failed
+- Motivo: 10 subtest(s) failed
 
 ```text
 remove .test to subject_child: assert_equals: expected rgb(0, 128, 0), got rgb(128, 128, 128)
 remove .test to subject_descendant: assert_equals: expected rgb(255, 0, 0), got rgb(128, 128, 128)
+insert element div before subject_child: assert_equals: expected rgb(0, 128, 0), got rgb(128, 128, 128)
 insert element div before subject_descendant: assert_equals: expected rgb(255, 0, 0), got rgb(128, 128, 128)
-insert element div after subject_descendant: assert_equals: expected rgb(255, 0, 0), got rgb(128, 128, 128)
-insert tree div>div before subject_descendant: assert_equals: expected rgb(255, 0, 0), got rgb(128, 128, 128)
+insert element div after subject_child: assert_equals: expected rgb(0, 128, 0), got rgb(128, 128, 128)
+```
+
+### `css/selectors/invalidation/has-with-nth-child.html`
+
+- Características: css/selectors
+- Motivo: 4 subtest(s) failed
+
+```text
+:nth-child() no longer matching after removal: assert_equals: expected rgb(0, 128, 0), got rgb(255, 0, 0)
+:nth-last-child() no longer matching after removal: assert_equals: expected rgb(0, 128, 0), got rgb(255, 0, 0)
+:nth-child() in non-subject no longer matching after removal: assert_equals: expected rgb(0, 128, 0), got rgb(255, 0, 0)
+:nth-last-child() in non-subject no longer matching after removal: assert_equals: expected rgb(0, 128, 0), got rgb(255, 0, 0)
 ```
 
 ### `css/selectors/invalidation/has-with-pseudo-class.html`
@@ -745,30 +761,57 @@ After adding 'a' to #host: Check #subject2 color: assert_equals: expected rgb(0,
 :valid invalidation: ancestor should be black: expected rgb(0, 0, 0), got rgb(173, 216, 230)
 ```
 
+### `css/selectors/invalidation/insert-sibling-002.html`
+
+- Características: css/selectors
+- Motivo: 1 subtest(s) failed
+
+```text
+Remove/Insert adjacent sibling of parent: color after removal: expected rgb(0, 0, 255), got rgb(0, 128, 0)
+```
+
+### `css/selectors/invalidation/insert-sibling-003.html`
+
+- Características: css/selectors
+- Motivo: 1 subtest(s) failed
+
+```text
+Remove/Insert earlier sibling of ancestor: color after removal: expected rgb(0, 0, 255), got rgb(0, 128, 0)
+```
+
+### `css/selectors/invalidation/insert-sibling-004.html`
+
+- Características: css/selectors
+- Motivo: 1 subtest(s) failed
+
+```text
+Remove/Insert earlier sibling of parent: color after removal: expected rgb(0, 0, 255), got rgb(0, 128, 0)
+```
+
 ### `css/selectors/invalidation/is-pseudo-containing-complex-in-has.html`
 
 - Características: css/selectors
-- Motivo: 59 subtest(s) failed
+- Motivo: 94 subtest(s) failed
 
 ```text
+[ .red:has(#descendant:is(.a_has_scope .b)) ] #parent.classList.add('a_has_scope') : check #has_scope color: assert_equals: expected rgb(255, 0, 0), got rgb(128, 128, 128)
 [ .red:has(#descendant:is(.a_has_scope .b)) ] #child.classList.add('a_has_scope') : check #has_scope color: assert_equals: expected rgb(255, 0, 0), got rgb(128, 128, 128)
-[ .darkred:has(#descendant:is(.a_indirect_next .b)) ~ #indirect_next ] #has_scope.classList.add('a_indirect_next') : check #indirect_next color: assert_equals: expected rgb(139, 0, 0), got rgb(128, 128, 128)
-[ .darkred:has(#descendant:is(.a_indirect_next .b)) ~ #indirect_next ] #child.classList.add('a_indirect_next') : check #indirect_next color: assert_equals: expected rgb(139, 0, 0), got rgb(128, 128, 128)
-[ .pink:has(#descendant:is(.a_indirect_next_child .b)) ~ #indirect_next #indirect_next_child ] #has_scope.classList.add('a_indirect_next_child') : check #indirect_next_child color: assert_equals: expected rgb(255, 192, 203), got rgb(128, 128, 128)
-[ .pink:has(#descendant:is(.a_indirect_next_child .b)) ~ #indirect_next #indirect_next_child ] #child.classList.add('a_indirect_next_child') : check #indirect_next_child color: assert_equals: expected rgb(255, 192, 203), got rgb(128, 128, 128)
+[ .orangered:has(#descendant:is(.a_descendant .b)) #descendant ] #parent.classList.add('a_descendant') : check #descendant color: assert_equals: expected rgb(255, 69, 0), got rgb(128, 128, 128)
+[ .orangered:has(#descendant:is(.a_descendant .b)) #descendant ] #has_scope.classList.add('a_descendant') : check #descendant color: assert_equals: expected rgb(255, 69, 0), got rgb(128, 128, 128)
+[ .orangered:has(#descendant:is(.a_descendant .b)) #descendant ] #child.classList.add('a_descendant') : check #descendant color: assert_equals: expected rgb(255, 69, 0), got rgb(128, 128, 128)
 ```
 
 ### `css/selectors/invalidation/is-pseudo-containing-sibling-relationship-in-has.html`
 
 - Características: css/selectors
-- Motivo: 5 subtest(s) failed
+- Motivo: 18 subtest(s) failed
 
 ```text
 Initially red: assert_equals: expected rgb(255, 0, 0), got rgb(0, 128, 0)
+sibling selector enclosed by :is() no longer matching after removal (1): assert_equals: expected rgb(0, 128, 0), got rgb(255, 0, 0)
+sibling selector enclosed by :is() no longer matching after removal (2): assert_equals: expected rgb(0, 128, 0), got rgb(255, 0, 0)
 sibling selector enclosed by :is() no longer matching after removal (3): assert_equals: expected rgb(0, 128, 0), got rgb(255, 0, 0)
 sibling selector enclosed by :is() no longer matching after removal (4): assert_equals: expected rgb(0, 128, 0), got rgb(255, 0, 0)
-:nth-child() enclosed by :is() no longer matching after removal (2): assert_equals: expected rgb(0, 128, 0), got rgb(255, 0, 0)
-:nth-last-child() enclosed by :is() no longer matching after removal (2): assert_equals: expected rgb(0, 128, 0), got rgb(255, 0, 0)
 ```
 
 ### `css/selectors/invalidation/is-where-pseudo-containing-hard-pseudo-and-never-matching.html`
@@ -783,13 +826,29 @@ subject3 color after focus is darkred: assert_equals: expected rgb(139, 0, 0), g
 subject4 color after focus is pink: assert_equals: expected rgb(255, 192, 203), got rgb(128, 128, 128)
 ```
 
+### `css/selectors/invalidation/is-where-pseudo-containing-hard-pseudo.html`
+
+- Características: css/selectors
+- Motivo: 4 subtest(s) failed
+
+```text
+subject1 is orangered when .parent added to parent: assert_equals: expected rgb(255, 69, 0), got rgb(255, 0, 0)
+subject2 is pink when .parent added to parent: assert_equals: expected rgb(255, 192, 203), got rgb(139, 0, 0)
+subject3 is lightgreen when .parent added to parent: assert_equals: expected rgb(144, 238, 144), got rgb(0, 128, 0)
+subject4 is yellowgreen when .parent added to parent: assert_equals: expected rgb(154, 205, 50), got rgb(0, 100, 0)
+```
+
 ### `css/selectors/invalidation/is.html`
 
 - Características: css/selectors
-- Motivo: 1 subtest(s) failed
+- Motivo: 6 subtest(s) failed
 
 ```text
+Invalidate :is() for simple selector arguments.: assert_equals: expected rgb(255, 0, 0), got rgb(255, 255, 0)
+Invalidate :is() for compound selector arguments.: assert_equals: expected rgb(0, 128, 0), got rgb(0, 0, 0)
+Invalidate :is() for complex selector arguments.: assert_equals: expected rgb(0, 0, 255), got rgb(0, 0, 0)
 Invalidate nested :is().: assert_equals: expected rgb(255, 0, 0), got rgb(0, 0, 0)
+Test specificity of :is().: assert_equals: expected rgb(0, 0, 255), got rgb(0, 0, 0)
 ```
 
 ### `css/selectors/invalidation/link-pseudo-in-has.html`
@@ -823,23 +882,37 @@ Invalidation of sibling combinators in :not(): assert_equals: expected rgb(255, 
 ### `css/selectors/invalidation/not-002.html`
 
 - Características: css/selectors
-- Motivo: 1 subtest(s) failed
+- Motivo: 5 subtest(s) failed
 
 ```text
+Invalidate :not() for simple selector arguments.: assert_equals: expected rgb(255, 0, 0), got rgb(255, 255, 0)
+Invalidate :not() for compound selector arguments.: assert_equals: expected rgb(0, 128, 0), got rgb(0, 0, 0)
+Invalidate :not() for complex selector arguments.: assert_equals: expected rgb(0, 0, 255), got rgb(0, 0, 0)
 Invalidate nested :is() inside :not().: assert_equals: expected rgb(255, 0, 0), got rgb(0, 0, 0)
+Test specificity of :not().: assert_equals: expected rgb(0, 0, 255), got rgb(0, 0, 0)
 ```
 
 ### `css/selectors/invalidation/not-pseudo-containing-complex-in-has.html`
 
 - Características: css/selectors
-- Motivo: 69 subtest(s) failed
+- Motivo: 103 subtest(s) failed
 
 ```text
+[ .red:has(#descendant:not(.a_has_scope .b)) ] #parent.classList.add('a_has_scope') : check #has_scope color: assert_equals: expected rgb(128, 128, 128), got rgb(255, 0, 0)
 [ .red:has(#descendant:not(.a_has_scope .b)) ] #child.classList.add('a_has_scope') : check #has_scope color: assert_equals: expected rgb(128, 128, 128), got rgb(255, 0, 0)
-[ .darkred:has(#descendant:not(.a_indirect_next .b)) ~ #indirect_next ] #has_scope.classList.add('darkred') : check #indirect_next color: assert_equals: expected rgb(139, 0, 0), got rgb(128, 128, 128)
-[ .darkred:has(#descendant:not(.a_indirect_next .b)) ~ #indirect_next ] #has_scope.classList.add('a_indirect_next') : check #indirect_next color: assert_equals: expected rgb(128, 128, 128), got rgb(139, 0, 0)
-[ .darkred:has(#descendant:not(.a_indirect_next .b)) ~ #indirect_next ] #child.classList.add('a_indirect_next') : check #indirect_next color: assert_equals: expected rgb(128, 128, 128), got rgb(139, 0, 0)
-[ .darkred:has(#descendant:not(.a_indirect_next .b)) ~ #indirect_next ] #has_scope.classList.remove('darkred') : check #indirect_next color: assert_equals: expected rgb(128, 128, 128), got rgb(139, 0, 0)
+[ .orangered:has(#descendant:not(.a_descendant .b)) #descendant ] #has_scope.classList.add('orangered') : check #descendant color: assert_equals: expected rgb(255, 69, 0), got rgb(128, 128, 128)
+[ .orangered:has(#descendant:not(.a_descendant .b)) #descendant ] #parent.classList.remove('a_descendant') : check #descendant color: assert_equals: expected rgb(255, 69, 0), got rgb(128, 128, 128)
+[ .orangered:has(#descendant:not(.a_descendant .b)) #descendant ] #has_scope.classList.remove('a_descendant') : check #descendant color: assert_equals: expected rgb(255, 69, 0), got rgb(128, 128, 128)
+```
+
+### `css/selectors/invalidation/not-pseudo-containing-sibling-relationship-in-has.html`
+
+- Características: css/selectors
+- Motivo: 2 subtest(s) failed
+
+```text
+:nth-child() enclosed by :not() matching after insertion: assert_equals: expected rgb(0, 128, 0), got rgb(255, 0, 0)
+:nth-last-child() enclosed by :not() matching after insertion: assert_equals: expected rgb(0, 128, 0), got rgb(255, 0, 0)
 ```
 
 ### `css/selectors/invalidation/nth-child-whole-subtree.html`
@@ -905,14 +978,14 @@ Style should've changed to a green background: assert_equals: expected rgb(0, 12
 ### `css/selectors/invalidation/sibling.html`
 
 - Características: css/selectors
-- Motivo: 5 subtest(s) failed
+- Motivo: 7 subtest(s) failed
 
 ```text
+Adjacent with universal selector: Background color is green after class change: expected rgb(0, 128, 0), got rgba(0, 0, 0, 0)
+Indirect adjacent with universal selector: Background color is green after class change: expected rgb(0, 128, 0), got rgba(0, 0, 0, 0)
 Indirect adjacent with two adjacent selectors: Background color is green after class change: expected rgb(0, 128, 0), got rgba(0, 0, 0, 0)
 Adjacent class: Background color is green after class change: expected rgb(0, 128, 0), got rgba(0, 0, 0, 0)
 Adjacent universal: Background color is green after class change: expected rgb(0, 128, 0), got rgba(0, 0, 0, 0)
-Sibling subtree through an indirect adjacent combinator: Background color is green after class change: expected rgb(0, 128, 0), got rgba(0, 0, 0, 0)
-Sibling descendant through a universal selector: Background color is green after class change: expected rgb(0, 128, 0), got rgba(0, 0, 0, 0)
 ```
 
 ### `css/selectors/invalidation/state-in-has.html`
@@ -933,6 +1006,15 @@ Test :has() invalidation with :state() pseudo-classes: cannot read property 'sta
 : target display should be none: expected none, got block
 ```
 
+### `css/selectors/invalidation/target-pseudo-in-has.html`
+
+- Características: css/selectors
+- Motivo: 1 subtest(s) failed
+
+```text
+: parent2 should be blue after removing only child: expected rgb(0, 0, 255), got rgb(0, 128, 0)
+```
+
 ### `css/selectors/invalidation/typed-child-indexed-pseudo-classes-in-has.html`
 
 - Características: css/selectors
@@ -949,11 +1031,12 @@ Prepend span (2): #only_of_type: assert_equals: expected rgb(255, 0, 0), got rgb
 ### `css/selectors/invalidation/where.html`
 
 - Características: css/selectors
-- Motivo: 2 subtest(s) failed
+- Motivo: 3 subtest(s) failed
 
 ```text
 Invalidate :where() for compound selector arguments.: assert_equals: expected rgb(0, 128, 0), got rgb(255, 0, 0)
 Invalidate :where() for complex selector arguments.: assert_equals: expected rgb(255, 255, 0), got rgb(0, 0, 0)
+Invalidate nested :where().: assert_equals: expected rgb(0, 0, 255), got rgb(0, 0, 0)
 ```
 
 ### `css/selectors/is-specificity-shadow.html`

@@ -1,4 +1,4 @@
-# Conformidad: línea base 2026-10-20 (actualizada en la sesión 16)
+# Conformidad: línea base 2026-10-24 (actualizada en la sesión V8/CSS)
 
 Los runners viven en `tools/conformance` y reutilizan suites oficiales. Los
 checkouts están pinneados y no se versionan (`.conformance/` está ignorado).
@@ -10,11 +10,18 @@ checkouts están pinneados y no se versionan (`.conformance/` está ignorado).
 | Test262 | `language/{expressions,statements,types,literals}` | 19.577 | 413 | 1.108 | 0 | **97,93 %** | `d53ebc8` |
 | html5lib tokenizer | todos los `.test` | 5.759 | 43 | 1.025 | 0 | **99,26 %** | `e7d77cd` |
 | WPT `dom/nodes` | 327 archivos | 168 | 115 | 44 | 0 | **59,36 %** | `e7d77cd` |
-| WPT `css/selectors` | 528 archivos | 91 | 90 | 347 | 0 | **50,28 %** | `e7d77cd` |
+| WPT `css/selectors` | 528 archivos | 84 | 97 | 347 | 0 | **46,41 %** | `e7d77cd` |
 | WPT URL | 896 casos del fixture | 665 | 231 | 0 | 0 | **74,22 %** | `e7d77cd` |
+| WPT `dom/events` | 176 archivos | 19 | 55 | 102 | 0 | **25,68 %** | `e7d77cd` |
 | WPT tree construction | 1.973 casos `.dat` | 944 | 930 | 99 | 0 | **50,37 %** | `e7d77cd` |
 
 La tasa excluye `SKIP`. Un `SKIP` **no** cuenta como compatibilidad.
+
+Comandos de esta corrida: `run_test262`, `run_html5lib`, `run_url`,
+`run_html_tree`, `run_wpt --dirs dom/nodes --limit 2000`, `dom/events` y
+`css/selectors` (suites fijadas arriba). La base de la rama `c428bbc` daba
+82 PASS en `css/selectors`; esta corrida da 84, y `dom/nodes` vuelve a 168 tras
+corregir la caché de `classList`.
 
 ## Objetivo 70 % (fase 4)
 
@@ -24,7 +31,7 @@ La tasa excluye `SKIP`. Un `SKIP` **no** cuenta como compatibilidad.
 | html5lib tokenizer | 70 % | 99,26 % | ✅ |
 | WPT URL | 70 % | 74,22 % | ✅ |
 | WPT `dom/nodes` | 70 % | 59,36 % | ❌ |
-| WPT `css/selectors` | 70 % | 50,28 % | ❌ |
+| WPT `css/selectors` | 70 % | 46,41 % | ❌ |
 | WPT tree construction | 70 % | 50,37 % | ❌ |
 
 Para DOM/CSS/parser, el 70 % exige CSSOM, `DOMParser`, Shadow DOM,

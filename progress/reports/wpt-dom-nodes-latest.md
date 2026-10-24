@@ -1,9 +1,9 @@
 # Conformidad: wpt
 
-- Fecha: 2026-10-21T21:08:00.429532Z
-- Duración: 138.0 s
+- Fecha: 2026-10-24T03:26:16.602321Z
+- Duración: 138.6 s
 - Commit de la suite: `e7d77cd1e0353d7b37ce35eb912b6992df8dfab0`
-- Comando: `run_wpt dom/nodes --limit 100000`
+- Comando: `run_wpt dom/nodes --limit 2000`
 - Total: **327** tests
 - Tasa de éxito (sin SKIP): **59.36 %**
 
@@ -238,10 +238,12 @@ has a namespace, *|, webkitMatchesSelector: "*|h" is not a valid selector: unexp
 ### `dom/nodes/Element-setAttributeNodeNS.html`
 
 - Características: dom/nodes
-- Motivo: 1 subtest(s) failed
+- Motivo: 3 subtest(s) failed
 
 ```text
-Replacing an attribute prefix preserves other attributes with the old qualified name: assert_equals: expected plain, got null
+Replacing an attribute prefix preserves name lookup order with namespacedFirst=false: assert_equals: expected null, got replacement
+Replacing an attribute prefix preserves name lookup order with namespacedFirst=true: assert_equals: expected null, got replacement
+Replacing an attribute prefix preserves other attributes with the old qualified name: assert_equals: expected plain, got replacement
 ```
 
 ### `dom/nodes/Element-tagName.html`
@@ -558,14 +560,14 @@ html compound class: cannot read property 'add_cleanup' of undefined
 ### `dom/nodes/ParentNode-querySelector-namespace-tagname-attribute.html`
 
 - Características: dom/nodes
-- Motivo: 6 subtest(s) failed
+- Motivo: 5 subtest(s) failed
 
 ```text
 match selector without prefix: assert_equals: expected [object Object], got null
 match namespace selector with universal prefix: "*|coreProperties" is not a valid selector: unexpected "|" at offset 1
 does not throw on specified namespace selector if forgiven: ":is(cp|coreProperties)" is not a valid selector: unexpected "|" at offset 6
-does not match attriubte selector without prefix: assert_equals: expected null, got [object Object]
 match namespace attriubte selector with universal prefix: "[*|lang]" is not a valid selector: expected a name at offset 1
+does not throw on specified namespace attriubte selector if forgiven: ":is([xml|lang])" is not a valid selector: bad attribute operator at offset 8
 ```
 
 ### `dom/nodes/ParentNode-querySelectorAll-namespace.html`
@@ -647,7 +649,7 @@ setting an attribute should not overwrite the length property of an `NamedNodeMa
 ### `dom/nodes/attributes.html`
 
 - Características: dom/nodes
-- Motivo: 26 subtest(s) failed
+- Motivo: 25 subtest(s) failed
 
 ```text
 When qualifiedName does not match the Name production, an INVALID_CHARACTER_ERR exception is to be thrown. (toggleAttribute): toggleAttribute("", false): did not throw
@@ -886,15 +888,6 @@ moveBefore() with disconnected target node throws a HierarchyRequestError: canno
 moveBefore() on a cross-document target node throws a HierarchyRequestError: cannot read property 'add_cleanup' of undefined
 ```
 
-### `dom/nodes/moveBefore/child-style-preserve.html`
-
-- Características: dom/nodes
-- Motivo: 1 subtest(s) failed
-
-```text
-: assert_equals: expected 100, got 0
-```
-
 ### `dom/nodes/moveBefore/custom-element-move-reactions.html`
 
 - Características: dom/nodes
@@ -1024,6 +1017,15 @@ moveBefore() runs NodeIterator pre-remove steps: assert_equals: expected oldPare
 
 ```text
 An optgroup moved out of a select renders like one inserted outside a select: cannot read property 'add_cleanup' of undefined
+```
+
+### `dom/nodes/moveBefore/moveBefore-selector-matching.html`
+
+- Características: dom/nodes
+- Motivo: 1 subtest(s) failed
+
+```text
+moveBefore() should invalidate target when descendant selector changes: assert_equals: expected rgb(0, 128, 0), got rgb(0, 0, 0)
 ```
 
 ### `dom/nodes/moveBefore/moveBefore-shadow-boundary-id-change.html`

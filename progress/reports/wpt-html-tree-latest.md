@@ -1,6 +1,6 @@
 # Conformidad: wpt-html-tree
 
-- Fecha: 2026-10-21T22:27:28.409848Z
+- Fecha: 2026-10-24T03:13:00.910752Z
 - Duración: 0.2 s
 - Comando: `run_html_tree`
 - Total: **1973** tests
@@ -12,14 +12,6 @@
 | FAIL | 930 |
 | SKIP | 99 |
 | ERROR | 0 |
-
-## Delta contra la línea base
-
-- Corregidos: **31**
-- Regresiones: **0**
-- Siguen fallando: **930**
-- Nuevos en esta ejecución: **0**
-- Ausentes respecto a la base: **0**
 
 ## Por característica
 

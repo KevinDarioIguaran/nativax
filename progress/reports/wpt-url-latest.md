@@ -1,6 +1,6 @@
 # Conformidad: wpt-url
 
-- Fecha: 2026-10-21T22:22:34.626428Z
+- Fecha: 2026-10-24T03:12:58.289856Z
 - Duración: 0.2 s
 - Comando: `run_url`
 - Total: **896** tests
@@ -12,14 +12,6 @@
 | FAIL | 231 |
 | SKIP | 0 |
 | ERROR | 0 |
-
-## Delta contra la línea base
-
-- Corregidos: **18**
-- Regresiones: **0**
-- Siguen fallando: **231**
-- Nuevos en esta ejecución: **0**
-- Ausentes respecto a la base: **0**
 
 ## Por característica
 

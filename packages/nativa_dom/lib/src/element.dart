@@ -852,35 +852,14 @@ class ClassList extends IterableBase<String> {
   final Element _element;
 
   static final RegExp _whitespace = RegExp(r'[\t\n\f\r ]');
-  List<String>? _tokenCache;
-  String? _tokenSource;
+  static final RegExp _splitWhitespace = RegExp(r'[\t\n\f\r ]+');
 
   List<String> get _tokens {
-    final source = _element.className;
-    if (identical(source, _tokenSource)) return _tokenCache!;
-    final out = <String>[];
     final seen = <String>{};
-    var start = -1;
-    for (var i = 0; i < source.length; i++) {
-      final c = source.codeUnitAt(i);
-      final space = c == 0x20 || c == 0x09 || c == 0x0a || c == 0x0c || c == 0x0d;
-      if (space) {
-        if (start >= 0) {
-          final token = source.substring(start, i);
-          if (seen.add(token)) out.add(token);
-          start = -1;
-        }
-      } else if (start < 0) {
-        start = i;
-      }
-    }
-    if (start >= 0) {
-      final token = source.substring(start);
-      if (seen.add(token)) out.add(token);
-    }
-    _tokenSource = source;
-    _tokenCache = out;
-    return out;
+    return _element.className
+        .split(_splitWhitespace)
+        .where((t) => t.isNotEmpty && seen.add(t))
+        .toList();
   }
 
   @override
