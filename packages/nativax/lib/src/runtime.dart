@@ -19,6 +19,13 @@ export 'package:nativa_dom_bindings/nativa_dom_bindings.dart'
         NetworkSocket,
         PlatformServices;
 
+int _fontSourceRank(String url) {
+  final path = Uri.tryParse(url)?.path.toLowerCase() ?? url.toLowerCase();
+  if (path.endsWith('.ttf') || path.endsWith('.otf')) return 0;
+  if (path.endsWith('.woff2') || path.endsWith('.woff')) return 2;
+  return 1;
+}
+
 class NativaXRuntimeConfig {
   const NativaXRuntimeConfig({
     this.engine = defaultEngineConfig,
@@ -164,9 +171,13 @@ class NativaXRuntime {
       }
       final families = <String, FontLoader>{};
       for (final entry in faceSources.entries) {
+        // Flutter's FontLoader accepts SFNT (TTF/OTF), not WOFF2. Prefer the
+        // uncompressed fallback when a stylesheet provides both.
+        final candidates = entry.value.toList()
+          ..sort((a, b) => _fontSourceRank(a).compareTo(_fontSourceRank(b)));
         Uint8List? bytes;
         String? usedUrl;
-        for (final url in entry.value) {
+        for (final url in candidates) {
           final candidate = loaded[url];
           if (candidate != null && candidate.isNotEmpty) {
             bytes = candidate;
@@ -176,6 +187,12 @@ class NativaXRuntime {
         }
         if (bytes == null) continue;
         final face = entry.key;
+        if (usedUrl != null && usedUrl.toLowerCase().contains('.woff')) {
+          config.onDiagnostic?.call(
+              'font "${face.family}" ($usedUrl): WOFF/WOFF2 is not supported '
+              'by Flutter FontLoader; provide TTF/OTF');
+          continue;
+        }
         try {
           families
               .putIfAbsent(face.family, () => FontLoader(face.family))
