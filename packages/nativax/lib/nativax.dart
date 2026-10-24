@@ -34,5 +34,6 @@ export 'package:nativa_render/nativa_render.dart'
         NativaXDocumentView,
         NativaXDrawTrace,
         NativaXImageResolver,
+        NativaXSvgImageProvider,
         nativaxDefaultFontFamily,
         nativaxFontFallback;

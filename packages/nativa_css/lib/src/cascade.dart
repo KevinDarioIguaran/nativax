@@ -349,6 +349,10 @@ class StyleEngine {
 
   bool _signatureAttribute(Element e, String name) {
     if (_signatureAttributes.contains(name)) return true;
+    if (_svgElements.contains(e.localName) &&
+        _presentationAttributes.contains(name)) {
+      return true;
+    }
     if (_attributeUniversal.contains(name)) return true;
     return _attributeTags[name]?.contains(e.localName) ?? false;
   }
