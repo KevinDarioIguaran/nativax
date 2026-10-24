@@ -159,6 +159,18 @@ class NativaXRuntime {
           final resolved = base.resolve(source).toString();
           if (loadedFonts.add(resolved)) requests.add(resolved);
           urls.add(resolved);
+          // Flutter cannot load WOFF/WOFF2. Some sites ship only the WOFF2
+          // URL in CSS but keep an SFNT fallback next to it; probe for it
+          // without changing the stylesheet.
+          final lower = resolved.toLowerCase();
+          if (lower.endsWith('.woff2') || lower.endsWith('.woff')) {
+            final stem = resolved.substring(0, resolved.lastIndexOf('.'));
+            for (final ext in const ['.ttf', '.otf']) {
+              final fallback = '$stem$ext';
+              if (loadedFonts.add(fallback)) requests.add(fallback);
+              urls.add(fallback);
+            }
+          }
         }
         if (urls.isNotEmpty) faceSources[face] = urls;
       }
