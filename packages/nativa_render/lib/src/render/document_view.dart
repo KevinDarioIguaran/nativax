@@ -149,6 +149,14 @@ class _NativaXDocumentViewState extends State<NativaXDocumentView> implements do
   }
 
   void _onMutation(dom.MutationRecord record) {
+    if (NativaXDrawTrace.enabled) {
+      final target = record.target;
+      final element = target is dom.Element ? target : target.parentElement;
+      NativaXDrawTrace.log(
+          'MUTATION ${record.type.name} '
+          '${element == null ? '?' : NativaXDrawTrace.describe(element)} '
+          'name=${record.name ?? ''}');
+    }
     if (_shouldDeferMutation(record)) {
       final target = record.target;
       final element = target is dom.Element ? target : target.parentElement;
@@ -193,6 +201,12 @@ class _NativaXDocumentViewState extends State<NativaXDocumentView> implements do
       'computes=${widget.styleEngine.computeCount} '
       'subtreePasses=${widget.styleEngine.subtreePasses}',
     );
+    if (NativaXDrawTrace.enabled) {
+      NativaXDrawTrace.log(
+          'FLUSH style=${watch.elapsedMilliseconds}ms changed=${changed.length} '
+          'computes=${widget.styleEngine.computeCount} '
+          'roots=${widget.styleEngine.dirtyRootCount}');
+    }
     setState(() {});
   }
 
@@ -513,12 +527,25 @@ class _NativaXDocumentViewState extends State<NativaXDocumentView> implements do
     if (_reported.add(message)) widget.onDiagnostic?.call(message);
   }
 
+  int _lastBuildCount = 0;
+  int _lastComputeCount = 0;
+  int _lastStyleUs = 0;
+
   void _onDrawTimings(List<FrameTiming> timings) {
     for (final t in timings) {
+      final builds = NativeXBuildStats.elementBuilds;
+      final computes = widget.styleEngine.computeCount;
+      final styleUs = widget.styleEngine.metricsOwnUs;
       NativaXDrawTrace.log(
           'FRAME total=${t.totalSpan.inMilliseconds}ms '
           'build=${t.buildDuration.inMilliseconds}ms '
-          'raster=${t.rasterDuration.inMilliseconds}ms');
+          'raster=${t.rasterDuration.inMilliseconds}ms '
+          'builds=${builds - _lastBuildCount} '
+          'computes=${computes - _lastComputeCount} '
+          'styleMs=${((styleUs - _lastStyleUs) / 1000).toStringAsFixed(1)}');
+      _lastBuildCount = builds;
+      _lastComputeCount = computes;
+      _lastStyleUs = styleUs;
     }
   }
 

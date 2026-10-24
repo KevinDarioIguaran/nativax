@@ -121,8 +121,15 @@ class _RenderElementAnchor extends RenderProxyBox with CssElementBoundary {
 
   @override
   void performLayout() {
+    final watch = NativaXDrawTrace.enabled ? (Stopwatch()..start()) : null;
     super.performLayout();
     if (NativaXDrawTrace.enabled) {
+      final elapsed = watch!.elapsedMilliseconds;
+      if (elapsed >= 20) {
+        NativaXDrawTrace.log(
+            'SLOW_LAYOUT ${elapsed}ms ${NativaXDrawTrace.describe(_element)} '
+            'size=${size.width.toStringAsFixed(1)}x${size.height.toStringAsFixed(1)}');
+      }
       NativaXDrawTrace.log(
           'LAYOUT ${NativaXDrawTrace.describe(_element)} '
           'size=${size.width.toStringAsFixed(1)}x${size.height.toStringAsFixed(1)}');
@@ -131,6 +138,7 @@ class _RenderElementAnchor extends RenderProxyBox with CssElementBoundary {
 
   @override
   void paint(PaintingContext context, Offset offset) {
+    final watch = NativaXDrawTrace.enabled ? (Stopwatch()..start()) : null;
     if (NativaXDrawTrace.enabled) {
       NativaXDrawTrace.log(
           'PAINT ${NativaXDrawTrace.describe(_element)} '
@@ -138,6 +146,13 @@ class _RenderElementAnchor extends RenderProxyBox with CssElementBoundary {
           'size=${size.width.toStringAsFixed(1)}x${size.height.toStringAsFixed(1)}');
     }
     super.paint(context, offset);
+    if (NativaXDrawTrace.enabled) {
+      final elapsed = watch!.elapsedMilliseconds;
+      if (elapsed >= 20) {
+        NativaXDrawTrace.log(
+            'SLOW_PAINT ${elapsed}ms ${NativaXDrawTrace.describe(_element)}');
+      }
+    }
   }
 
   @override

@@ -145,6 +145,8 @@ class StyleEngine {
   final Set<String> _structuralAncestorClasses = {};
   final Set<String> _structuralAncestorIds = {};
   bool _usesViewportUnits = false;
+  final Map<String, Set<String>> _attributeTags = {};
+  final Set<String> _attributeUniversal = {};
   bool _usesHover = false;
   bool _usesActive = false;
 
@@ -167,6 +169,7 @@ class StyleEngine {
   bool get usesActive => _usesActive;
 
   final Map<String, List<Declaration>> _inlineCache = {};
+  final Map<String, Map<String, CssValue>?> _expandedCache = {};
 
   /// Warnings from parsing inline `style` attributes.
   final List<CssWarning> inlineWarnings = [];
@@ -194,7 +197,9 @@ class StyleEngine {
   /// shared style finder.
   final Map<String, List<Declaration>> _matchedCache = {};
   final Map<String, ComputedStyle> _computedCache = {};
-  bool _cachesDirty = false;
+  bool _matchedDirty = false;
+  bool _computedDirty = false;
+  bool _dirtyMayAffectDescendants = false;
 
   /// Allows benchmarks/tests to measure the uncached cascade. Production
   /// always leaves this enabled.
@@ -204,12 +209,32 @@ class StyleEngine {
   void _clearStyleCaches() {
     _matchedCache.clear();
     _computedCache.clear();
-    _cachesDirty = false;
+    _matchedDirty = false;
+    _computedDirty = false;
   }
 
   void _ensureStyleCaches() {
-    if (!useStyleCaches || _cachesDirty) _clearStyleCaches();
+    if (!useStyleCaches) {
+      _clearStyleCaches();
+      return;
+    }
+    if (_matchedDirty) _matchedCache.clear();
+    if (_computedDirty) _computedCache.clear();
+    _matchedDirty = false;
+    _computedDirty = false;
   }
+
+  int get dirtyRootCount => _dirtyRoots.length;
+
+  bool get _hasStructuralSelectors =>
+      _structuralUniversal ||
+      _structuralTags.isNotEmpty ||
+      _structuralClasses.isNotEmpty ||
+      _structuralIds.isNotEmpty ||
+      _structuralAncestorTags.isNotEmpty ||
+      _structuralAncestorClasses.isNotEmpty ||
+      _structuralAncestorIds.isNotEmpty ||
+      _usesSiblingCombinators;
 
   String get ruleIndexInfo {
     final tags = _byTag.entries.toList()..sort((a, b) => b.value.length.compareTo(a.value.length));
@@ -242,6 +267,22 @@ class StyleEngine {
     return false;
   }
 
+  /// Attributes that participate in selector matching or pseudo-class state
+  /// even when no `[attr]` selector mentions them. Everything else (title,
+  /// aria-*, data-* used only by scripts, ...) must not fragment the style
+  /// cache for otherwise identical elements.
+  static const Set<String> _signatureAttributes = {
+    'style', 'href', 'disabled', 'checked', 'selected', 'type', 'open',
+    'hidden', 'contenteditable', 'multiple', 'required', 'readonly',
+    'placeholder', 'value', 'lang', 'dir', 'popover',
+  };
+
+  bool _signatureAttribute(Element e, String name) {
+    if (_signatureAttributes.contains(name)) return true;
+    if (_attributeUniversal.contains(name)) return true;
+    return _attributeTags[name]?.contains(e.localName) ?? false;
+  }
+
   String _elementSignature(Element e,
       {String? pseudo, ComputedStyle? parent, bool structural = false}) {
     final b = StringBuffer()
@@ -255,6 +296,8 @@ class StyleEngine {
     final attrs = e.attributes;
     final names = attrs.keys.toList()..sort();
     for (final name in names) {
+      if (name == 'class' || name == 'id') continue;
+      if (!_signatureAttribute(e, name)) continue;
       b
         ..write(name)
         ..write('=')
@@ -355,10 +398,12 @@ class StyleEngine {
 
   /// Marks styles affected by [record] dirty.
   void handleMutation(MutationRecord record) {
-    _cachesDirty = true;
     final target = record.target;
     switch (record.type) {
       case MutationType.childList:
+        // Structure (and therefore sibling/positional selectors) changed.
+        _matchedDirty = true;
+        _dirtyMayAffectDescendants = true;
         if (target is Element) {
           _markDirty(target);
         } else {
@@ -368,19 +413,41 @@ class StyleEngine {
           _forget(n);
         }
       case MutationType.attributes:
-      case MutationType.property:
         if (target is! Element) return;
-        if (record.name == 'style' && record.type == MutationType.attributes) {
+        final name = (record.name ?? '').toLowerCase();
+        if (name != 'class' &&
+            name != 'id' &&
+            name != 'style' &&
+            !_attributeUniversal.contains(name) &&
+            !(_attributeTags[name]?.contains(target.localName) ?? false)) {
+          // No selector in the UA or author sheets reads this attribute.
+          return;
+        }
+        // class/id/style and attributes used by selectors can change any
+        // selector that descends from this element.
+        _matchedDirty = true;
+        _dirtyMayAffectDescendants = true;
+        if (record.name == 'style') {
           _markDirty(target);
         } else if (_usesSiblingCombinators && target.parentElement != null) {
           _markDirty(target.parentElement!);
         } else {
           _markDirty(target);
         }
+      case MutationType.property:
+        // DOM state (:checked, :disabled, :empty via value changes, ...).
+        _matchedDirty = true;
+        _dirtyMayAffectDescendants = _hasStructuralSelectors;
+        if (target is! Element) return;
+        _markDirty(target);
       case MutationType.characterData:
-        // `:empty` depends on whether a child text node has data, so the
-        // parent selector may now match or stop matching.
+        // Text data only affects structural selectors (`:empty`, `:has`, and
+        // sibling combinators) on the parent. Unrelated UA/author structural
+        // rules must not force a full subtree recompute.
         final parent = target.parentElement;
+        final structural = parent != null && _needsStructuralKey(parent);
+        if (structural) _matchedDirty = true;
+        _dirtyMayAffectDescendants = structural;
         if (parent != null) {
           _markDirty(parent);
         } else {
@@ -427,6 +494,8 @@ class StyleEngine {
   /// changed (including newly styled elements).
   Set<Element> recompute() {
     final changed = <Element>{};
+    final mayAffectDescendants = _dirtyMayAffectDescendants;
+    _dirtyMayAffectDescendants = false;
     if (_allDirty) {
       _allDirty = false;
       _dirtyRoots.clear();
@@ -445,6 +514,7 @@ class StyleEngine {
         }
       }
       _styles.removeWhere((e, _) => !e.isConnected);
+      if (changed.isNotEmpty) _computedDirty = true;
       return changed;
     }
     final roots = List.of(_dirtyRoots);
@@ -455,16 +525,20 @@ class StyleEngine {
         final old = _styles[r];
         final style = _compute(r);
         _styles[r] = style;
-        if (old == null || old != style) changed.add(r);
-        // Selector dependencies below the dirty root (siblings, :has, :empty,
-        // inherited values) may have changed even when the root's own style is
-        // identical. Drop the cached descendants; they are recomputed on
-        // demand, so this stays lazy.
-        _forgetDescendantStyles(r);
+        final styleChanged = old == null || old != style;
+        if (styleChanged) changed.add(r);
+        // Descendants only need to be dropped when the mutation can affect
+        // selector matching below this root or when the root's inherited
+        // values changed. A plain text update with no structural selectors
+        // keeps the whole subtree cached.
+        if (mayAffectDescendants || styleChanged) {
+          _forgetDescendantStyles(r);
+        }
       } else {
         _computeSubtree(r, changed);
       }
     }
+    if (changed.isNotEmpty) _computedDirty = true;
     return changed;
   }
 
@@ -504,6 +578,9 @@ class StyleEngine {
     styleOf(element);
     return _compute(element, extra: extra);
   }
+
+  int get metricsOwnUs =>
+      _styleSamples.fold<int>(0, (a, s) => a + s.ownUs);
 
   String metricsSummary() {
     if (!metricsEnabled || _styleSamples.isEmpty) return 'style metrics: off';
@@ -585,6 +662,8 @@ class StyleEngine {
     _keyframes.clear();
     _usesHover = false;
     _usesActive = false;
+    _attributeTags.clear();
+    _attributeUniversal.clear();
     _usesSiblingCombinators = false;
     _structuralUniversal = false;
     _structuralTags.clear();
@@ -598,6 +677,29 @@ class StyleEngine {
 
     void add(StyleRule rule, bool ua) {
       final selectorText = rule.selectorText;
+      final direct = <String>{};
+      for (final sel in rule.selectors.selectors) {
+        for (final compound in sel.compounds) {
+          final tag = compound.parts.whereType<TypeSelector>().firstOrNull?.name;
+          for (final part in compound.parts) {
+            if (part is! AttributeSelector) continue;
+            final name = part.name.toLowerCase();
+            direct.add(name);
+            if (tag == null) {
+              _attributeUniversal.add(name);
+            } else {
+              _attributeTags.putIfAbsent(name, () => <String>{}).add(tag);
+            }
+          }
+        }
+      }
+      // Attributes inside :not()/:is()/:has() are collected conservatively:
+      // if the attribute is not a direct part of any compound, assume it can
+      // apply to any tag.
+      for (final match in RegExp(r'\[\s*(?:[-\w*]+\|)?([-\w:]+)').allMatches(selectorText)) {
+        final name = match.group(1)!.toLowerCase();
+        if (!direct.contains(name)) _attributeUniversal.add(name);
+      }
       final structuralRule = selectorText.contains(':first-') ||
           selectorText.contains(':last-') ||
           selectorText.contains(':only-') ||
@@ -716,6 +818,7 @@ class StyleEngine {
       walk(s.rules, false);
     }
     _mediaState = _evaluateMedia();
+    _expandedCache.clear();
     _clearStyleCaches();
   }
 
@@ -834,10 +937,26 @@ class StyleEngine {
     }
   }
 
+  Map<String, CssValue>? _expandCached(String property, String text) {
+    final key = '$property\u0000$text';
+    if (_expandedCache.containsKey(key)) return _expandedCache[key];
+    final expanded = expandDeclaration(property, CssTokenizer(text).tokenize());
+    if (_expandedCache.length >= 4096) _expandedCache.clear();
+    _expandedCache[key] = expanded;
+    return expanded;
+  }
+
   ComputedStyle _computeInner(Element e, {String? pseudo, ComputedStyle? origin, List<Declaration>? extra}) {
     _ensureStyleCaches();
     const profile = bool.fromEnvironment('NATIVAX_RENDER_PROFILE', defaultValue: false);
     final watch = profile ? (Stopwatch()..start()) : null;
+    var _lastUs = 0;
+    int lap() {
+      final now = watch!.elapsedMicroseconds;
+      final d = now - _lastUs;
+      _lastUs = now;
+      return d;
+    }
     computeCount++;
     computesByTag[e.localName] = (computesByTag[e.localName] ?? 0) + 1;
     // A pseudo-element inherits from its originating element.
@@ -850,6 +969,7 @@ class StyleEngine {
     } else {
       parent = null;
     }
+    final parentUs = profile ? lap() : 0;
     String? styleCacheKey;
     if (extra == null) {
       styleCacheKey = _elementSignature(e, pseudo: pseudo, parent: parent, structural: _needsStructuralKey(e));
@@ -864,6 +984,7 @@ class StyleEngine {
 
     final cascaded = cascadedDeclarations(e, pseudo: pseudo);
     if (extra != null) cascaded.addAll(extra);
+    final cascadeUs = profile ? lap() : 0;
     final custom = <String, String>{};
     if (parent != null) custom.addAll(parent.customProperties);
     // Custom properties cascade and inherit independently of the order in
@@ -877,6 +998,7 @@ class StyleEngine {
       final resolved = _substituteVariables(custom[key]!, custom);
       if (resolved != null) custom[key] = resolved;
     }
+    final customUs = profile ? lap() : 0;
 
     final specified = <String, CssValue>{};
     for (final d in cascaded) {
@@ -885,14 +1007,14 @@ class StyleEngine {
       if (value is RawValue) {
         final text = _substituteVariables(value.text, custom);
         if (text == null) continue;
-        final expanded = expandDeclaration(
-            d.property, CssTokenizer(text).tokenize());
+        final expanded = _expandCached(d.property, text);
         if (expanded != null) specified.addAll(expanded);
         continue;
       }
       specified[d.property] = value;
     }
 
+    final specifiedUs = profile ? lap() : 0;
     CssValue specifiedOf(String p) {
       final spec = longhands[p]!;
       var v = specified[p];
@@ -961,6 +1083,7 @@ class StyleEngine {
       }
       if (v != longhands[p]!.initial) out[p] = v;
     }
+    final longhandUs = profile ? lap() : 0;
 
     // Border and outline widths snap to whole device pixels (CSS Values 4
     // "snap as a border width"): below one device pixel rounds up to one,
@@ -995,9 +1118,12 @@ class StyleEngine {
       _computedCache[styleCacheKey] = result;
     }
     if (watch != null && watch.elapsedMilliseconds >= 2) {
+      final restUs = lap();
       // ignore: avoid_print
-      print('STYLE_SLOW <${e.localName}${e.id.isEmpty ? '' : '#${e.id}'}> '
-          '${watch.elapsedMilliseconds}ms tag=${e.localName}');
+      print('STYLE_SECTIONS <${e.localName}${e.id.isEmpty ? '' : '#${e.id}'}> '
+          'total=${watch.elapsedMilliseconds}ms parent=${parentUs ~/ 1000}ms '
+          'cascade=$cascadeUs custom=$customUs specified=$specifiedUs '
+          'longhands=$longhandUs rest=$restUs');
     }
     return result;
   }
@@ -1022,6 +1148,9 @@ const _presentationAttributes = [
 /// Returns null when a reference cannot be resolved.
 String? _substituteVariables(String text, Map<String, String> custom) {
   var out = text;
+  // Fast path: the vast majority of declarations contain neither a custom
+  // property reference nor env(); avoid lowercasing and scanning them.
+  if (!out.contains('var(') && !out.contains('env(')) return out;
   for (var pass = 0; pass < 32; pass++) {
     final lower = out.toLowerCase();
     var start = -1;
