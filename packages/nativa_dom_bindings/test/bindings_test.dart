@@ -245,6 +245,18 @@ void main() {
       expect(h.js('ret'), true);
     });
 
+    test('CharacterData mutation methods are available', () {
+      h.js('''
+        const t = document.createTextNode('a');
+        t.appendData('b');
+        t.insertData(0, 'x');
+        t.deleteData(0, 1);
+        t.replaceData(0, 1, 'y');
+        globalThis.text = t.data;
+      ''');
+      expect(h.js('text'), 'yb');
+    });
+
     test('event handler properties can be cleared', () {
       h.js('''
         const d = document.createElement('div');

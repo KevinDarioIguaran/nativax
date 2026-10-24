@@ -149,6 +149,18 @@ abstract class Node extends EventTarget {
   Node appendChild(Node child) => insertBefore(child, null);
 
   Node insertBefore(Node child, Node? reference) {
+    // Parent/ancestor checks precede the reference check; the child type
+    // check comes after it (DOM insertBefore validation order).
+    if (this is Text || this is Comment || this is ProcessingInstruction ||
+        this is DocumentType) {
+      throw DomException('HierarchyRequestError', '$nodeName nodes cannot have children');
+    }
+    if (child.contains(this)) {
+      throw DomException('HierarchyRequestError', 'the new child contains the parent');
+    }
+    if (reference != null && !identical(reference._parent, this)) {
+      throw DomException('NotFoundError', 'reference node is not a child of this node');
+    }
     _checkInsertable(child, reference);
     if (child is DocumentFragment) {
       final moved = List<Node>.of(child._children);
@@ -216,6 +228,13 @@ abstract class Node extends EventTarget {
   }
 
   Node replaceChild(Node newChild, Node oldChild) {
+    if (this is Text || this is Comment || this is ProcessingInstruction ||
+        this is DocumentType) {
+      throw DomException('HierarchyRequestError', '$nodeName nodes cannot have children');
+    }
+    if (newChild.contains(this)) {
+      throw DomException('HierarchyRequestError', 'the new child contains the parent');
+    }
     if (!identical(oldChild._parent, this)) {
       throw DomException('NotFoundError', 'node is not a child of this node');
     }
