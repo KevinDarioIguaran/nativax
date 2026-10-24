@@ -2613,10 +2613,11 @@ class _TextControlState extends State<_TextControl> {
                   'url' => TextInputType.url,
                   _ => TextInputType.text,
                 },
-          decoration: InputDecoration.collapsed(
+          decoration: InputDecoration(
             hintText: element.getAttribute('placeholder'),
             hintStyle: widget.builder.placeholderStyle(element, widget.style),
             border: InputBorder.none,
+            contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
           ).copyWith(counterText: ''),
           buildCounter:
               (
