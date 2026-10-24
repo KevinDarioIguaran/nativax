@@ -251,7 +251,10 @@ class PseudoClassSelector extends SimpleSelector {
         }
         return false;
       case 'heading':
-        return RegExp(r'^h[1-6]$').hasMatch(e.localName);
+        final m = RegExp(r'^h([1-6])$').firstMatch(e.localName);
+        if (m == null) return false;
+        if (arg == null || arg!.isEmpty) return true;
+        return int.tryParse(arg!) == int.tryParse(m.group(1)!);
       case 'link':
       case 'any-link':
         return (e.localName == 'a' || e.localName == 'area') &&
@@ -391,6 +394,7 @@ class PseudoClassSelector extends SimpleSelector {
   Specificity get specificity {
     if (name == 'where') return Specificity.zero;
     if (name == 'not' || name == 'is') {
+      if (inner!.selectors.isEmpty) return Specificity.zero;
       return inner!.selectors
           .map((s) => s.specificity)
           .reduce((x, y) => x.compareTo(y) >= 0 ? x : y);
@@ -807,16 +811,62 @@ class _SelectorParser {
         name == 'has' ||
         name == 'dir' ||
         name == 'lang' ||
+        name == 'heading' ||
         name.startsWith('nth-');
-    if (!functional) return PseudoClassSelector(name);
+    if (!functional || (name == 'heading' && (_done || _ch != '('))) {
+      return PseudoClassSelector(name);
+    }
     if (_done || _ch != '(') _fail(':$name requires arguments');
     pos++;
     _skipWs();
     if (name == 'not' || name == 'is' || name == 'where') {
-      final inner = parseList(nested: true);
-      if (_done || _ch != ')') _fail('expected ")"');
-      pos++;
-      return PseudoClassSelector(name, inner: inner);
+      if (name == 'not') {
+        final inner = parseList(nested: true);
+        if (_done || _ch != ')') _fail('expected ")"');
+        pos++;
+        return PseudoClassSelector(name, inner: inner);
+      }
+      // :is()/:where() take a forgiving selector list: invalid arguments
+      // are ignored and an empty list matches nothing.
+      final selectors = <ComplexSelector>[];
+      while (true) {
+        _skipWs();
+        if (_done || _ch == ')') {
+          if (!_done) pos++;
+          break;
+        }
+        final start = pos;
+        try {
+          selectors.add(_complex());
+        } on DomException {
+          pos = start;
+          var depth = 0;
+          while (!_done) {
+            final c = _ch;
+            if (c == '(') {
+              depth++;
+            } else if (c == ')') {
+              if (depth == 0) break;
+              depth--;
+            } else if (c == ',' && depth == 0) {
+              break;
+            }
+            pos++;
+          }
+        }
+        _skipWs();
+        if (_done) _fail('expected ")"');
+        if (_ch == ',') {
+          pos++;
+          continue;
+        }
+        if (_ch == ')') {
+          pos++;
+          break;
+        }
+        _fail('unexpected "$_ch" in :$name()');
+      }
+      return PseudoClassSelector(name, inner: SelectorList(selectors));
     }
     if (name == 'has') {
       final parts = <(Combinator?, ComplexSelector)>[];
@@ -846,6 +896,17 @@ class _SelectorParser {
         _fail('unexpected "$_ch" in :has()');
       }
       return PseudoClassSelector(name, hasParts: parts);
+    }
+    if (name == 'heading') {
+      _skipWs();
+      final start = pos;
+      while (!_done && _ch != ')') {
+        pos++;
+      }
+      final value = src.substring(start, pos).trim();
+      if (_done || _ch != ')') _fail('expected ")"');
+      pos++;
+      return PseudoClassSelector(name, arg: value);
     }
     if (name == 'dir' || name == 'lang') {
       String value;
