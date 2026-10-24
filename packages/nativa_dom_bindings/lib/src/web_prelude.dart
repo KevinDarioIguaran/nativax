@@ -849,8 +849,38 @@ NP.compareDocumentPosition = function (other) {
   const siblings = [...a[i - 1].childNodes];
   return siblings.indexOf(a[i]) < siblings.indexOf(b[i]) ? 4 : 2;
 };
-NP.lookupNamespaceURI = function () { return 'http://www.w3.org/1999/xhtml'; };
-NP.isDefaultNamespace = function (ns) { return ns === 'http://www.w3.org/1999/xhtml'; };
+const XMLNS_NS = 'http://www.w3.org/2000/xmlns/';
+NP.lookupNamespaceURI = function (prefix) {
+  const p = prefix === null || prefix === undefined ? '' : String(prefix);
+  if (this.nodeType === 9) return this.documentElement ? this.documentElement.namespaceURI : null;
+  if (this.nodeType !== 1 && this.nodeType !== 3 && this.nodeType !== 7 && this.nodeType !== 8) return null;
+  let n = this.nodeType === 1 ? this : this.parentElement;
+  for (; n; n = n.parentElement) {
+    if (p === 'xml') return XML_NS;
+    if (p === 'xmlns') return XMLNS_NS;
+    if (p === (n.prefix || '')) {
+      if (n.namespaceURI) return n.namespaceURI;
+    }
+    for (const a of n.attributes) {
+      if (p === '' && a.name === 'xmlns') return a.value || null;
+      if (p !== '' && a.name === 'xmlns:' + p) return a.value || null;
+    }
+  }
+  return null;
+};
+NP.isDefaultNamespace = function (ns) {
+  const want = ns === null || ns === undefined || ns === '' ? null : String(ns);
+  let n = this.nodeType === 1 ? this : this.parentElement;
+  let found = null;
+  for (; n; n = n.parentElement) {
+    for (const a of n.attributes) {
+      if (a.name === 'xmlns') { found = a.value || null; return found === want; }
+    }
+    if (n.namespaceURI) { found = n.namespaceURI; break; }
+  }
+  if (this.nodeType === 9) found = 'http://www.w3.org/1999/xhtml';
+  return found === want;
+};
 accessor(NP, 'baseURI', function () { return document.baseURI; });
 const NodeFilter = Object.freeze({
   FILTER_ACCEPT: 1, FILTER_REJECT: 2, FILTER_SKIP: 3, SHOW_ALL: 0xFFFFFFFF, SHOW_ELEMENT: 0x1,
