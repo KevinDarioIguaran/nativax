@@ -983,6 +983,8 @@ class StyleEngine {
             if (r.media.evaluate(_media)) walk(r.rules, ua);
           case KeyframesRule():
             _keyframes[r.name] = r;
+          case FontFaceRule():
+            break;
         }
       }
     }

@@ -59,10 +59,28 @@ class KeyframesRule extends CssRule {
   final List<Keyframe> frames;
 }
 
+/// One `@font-face` declaration. Sources are URLs in declaration order.
+class FontFaceRule extends CssRule {
+  const FontFaceRule({
+    required this.family,
+    required this.sources,
+    this.weight,
+    this.style,
+    this.display,
+  });
+
+  final String family;
+  final List<String> sources;
+  final int? weight;
+  final String? style;
+  final String? display;
+}
+
 class StyleSheet {
-  StyleSheet(this.rules, this.warnings);
+  StyleSheet(this.rules, this.warnings, {this.fontFaces = const []});
   final List<CssRule> rules;
   final List<CssWarning> warnings;
+  final List<FontFaceRule> fontFaces;
 
   static StyleSheet parse(String source) => CssParser(source).parseStyleSheet();
 }
@@ -73,6 +91,7 @@ class CssParser {
   final String source;
   final List<CssToken> _tokens;
   final List<CssWarning> _warnings = [];
+  final List<FontFaceRule> _fontFaces = [];
   int _i = 0;
 
   /// Nesting guard for `@media` blocks.
@@ -83,7 +102,7 @@ class CssParser {
 
   StyleSheet parseStyleSheet() {
     final rules = _ruleList(topLevel: true, depth: 0);
-    return StyleSheet(rules, _warnings);
+    return StyleSheet(rules, _warnings, fontFaces: _fontFaces);
   }
 
   /// Parses an inline `style` attribute.
@@ -225,6 +244,39 @@ class CssParser {
       out.add(MediaRule(text, MediaQueryList.parse(prelude), rules));
       return;
     }
+    if (name == 'font-face' && depth < _maxNesting) {
+      final blockEnd = _blockEnd(end);
+      _i = end + 1;
+      final raw = _rawDeclarations(blockEnd - 1);
+      _i = blockEnd;
+      final family = (raw['font-family'] ?? '').replaceAll(RegExp(r'''^["']|["']$'''), '').trim();
+      final sources = <String>[];
+      final src = raw['src'] ?? '';
+      for (final m in RegExp(r'url\(\s*([^\s\)]+)\s*\)', caseSensitive: false).allMatches(src)) {
+        var url = m.group(1)!.trim();
+        if ((url.startsWith('"') && url.endsWith('"')) ||
+            (url.startsWith("'") && url.endsWith("'"))) {
+          url = url.substring(1, url.length - 1);
+        }
+        if (url.isNotEmpty) sources.add(url);
+      }
+      if (family.isNotEmpty && sources.isNotEmpty) {
+        _fontFaces.add(FontFaceRule(
+          family: family,
+          sources: sources,
+          weight: int.tryParse((raw['font-weight'] ?? '').trim()),
+          style: (raw['font-style'] ?? '').trim().isEmpty
+              ? null
+              : (raw['font-style'] ?? '').trim(),
+          display: (raw['font-display'] ?? '').trim().isEmpty
+              ? null
+              : (raw['font-display'] ?? '').trim(),
+        ));
+      } else {
+        _warnings.add(CssWarning('invalid @font-face rule', at.offset));
+      }
+      return;
+    }
     _warnings.add(CssWarning('unsupported at-rule @$name', at.offset));
     _i = _blockEnd(end);
   }
@@ -249,6 +301,53 @@ class CssParser {
       return;
     }
     out.add(StyleRule(selectorText, selectors, declarations));
+  }
+
+  /// Like [_declarations], but preserves unsupported raw declarations such as
+  /// `src` and `font-family` inside `@font-face`.
+  Map<String, String> _rawDeclarations(int end) {
+    final out = <String, String>{};
+    while (_i < end) {
+      final t = _tokens[_i];
+      if (t.type == CssTokenType.whitespace || t.type == CssTokenType.semicolon) {
+        _i++;
+        continue;
+      }
+      var depth = 0;
+      var colon = -1;
+      var j = _i;
+      for (; j < end; j++) {
+        final k = _tokens[j].type;
+        if (k == CssTokenType.leftParen || k == CssTokenType.function ||
+            k == CssTokenType.leftBrace || k == CssTokenType.leftBracket) {
+          depth++;
+        } else if (k == CssTokenType.rightParen || k == CssTokenType.rightBrace ||
+            k == CssTokenType.rightBracket) {
+          depth--;
+        } else if (depth <= 0 && k == CssTokenType.colon) {
+          colon = j;
+        } else if (depth <= 0 && k == CssTokenType.semicolon) {
+          break;
+        }
+      }
+      if (colon >= 0 && colon < j) {
+        final name = _tokens
+            .sublist(_i, colon)
+            .where((x) => x.type != CssTokenType.whitespace)
+            .map((x) => x.value)
+            .join()
+            .toLowerCase();
+        final value = _tokens
+            .sublist(colon + 1, j)
+            .map((x) => x.toString())
+            .join()
+            .trim();
+        if (name.isNotEmpty) out[name] = value;
+      }
+      _i = j + 1;
+    }
+    _i = end;
+    return out;
   }
 
   /// Parses declarations from the current position up to token index [end].

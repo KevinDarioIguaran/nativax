@@ -1,3 +1,4 @@
+import 'package:flutter/services.dart';
 import 'package:nativa_css/nativa_css.dart';
 import 'package:nativa_dom/nativa_dom.dart' as dom;
 import 'package:nativa_dom_bindings/nativa_dom_bindings.dart';
@@ -139,6 +140,27 @@ class NativaXRuntime {
     final styleEngine = StyleEngine(document: document, media: env.media);
     final styleSheets = <dom.Element, StyleSheet>{};
     final linkedSheets = <StyleSheet>[];
+    final loadedFonts = <String>{};
+    final documentBase = Uri.parse(documentUrl ?? config.documentUrl);
+
+    Future<void> loadFontFaces(StyleSheet sheet, Uri base) async {
+      for (final face in sheet.fontFaces) {
+        for (final source in face.sources) {
+          final resolved = base.resolve(source).toString();
+          final key = '${face.family}\u0000${face.weight}\u0000${face.style}\u0000$resolved';
+          if (!loadedFonts.add(key)) continue;
+          try {
+            final bytes = await config.resources.loadBytes(resolved);
+            if (bytes == null) continue;
+            final loader = FontLoader(face.family)
+              ..addFont(Future<ByteData>.value(ByteData.sublistView(Uint8List.fromList(bytes))));
+            await loader.load();
+          } catch (error) {
+            config.onDiagnostic?.call('font "${face.family}" ($resolved) failed: $error');
+          }
+        }
+      }
+    }
 
     StyleSheet addSheet(String text, String origin) {
       final sheet = StyleSheet.parse(text);
@@ -150,6 +172,7 @@ class NativaXRuntime {
 
     for (final style in document.querySelectorAll('style')) {
       styleSheets[style] = addSheet(style.textContent, '<style>');
+      await loadFontFaces(styleSheets[style]!, documentBase);
     }
     for (final link in document.querySelectorAll('link')) {
       final rel = (link.getAttribute('rel') ?? '').toLowerCase().split(' ');
@@ -163,7 +186,9 @@ class NativaXRuntime {
             'stylesheet "$href" was not loaded (resource denied)',
           );
         } else {
-          linkedSheets.add(addSheet(css, href));
+          final sheet = addSheet(css, href);
+          linkedSheets.add(sheet);
+          await loadFontFaces(sheet, documentBase.resolve(href));
         }
       } catch (error) {
         config.onDiagnostic?.call('stylesheet "$href" failed: $error');

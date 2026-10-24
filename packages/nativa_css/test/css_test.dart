@@ -51,6 +51,23 @@ void main() {
       expect(sheet.warnings, isEmpty);
     });
 
+    test('@font-face records family and URL sources', () {
+      final sheet = StyleSheet.parse(
+        '@font-face{font-family:"Font Awesome 6 Free";font-style:normal;font-weight:900;'
+        'src:url(../webfonts/fa-solid-900.woff2) format("woff2"),'
+        'url(../webfonts/fa-solid-900.ttf) format("truetype")}'
+        '.fa::before{content:"\\f007";font-family:"Font Awesome 6 Free"}',
+      );
+      expect(sheet.warnings, isEmpty);
+      final face = sheet.fontFaces.single;
+      expect(face.family, 'Font Awesome 6 Free');
+      expect(face.weight, 900);
+      expect(face.sources, [
+        '../webfonts/fa-solid-900.woff2',
+        '../webfonts/fa-solid-900.ttf',
+      ]);
+    });
+
     test('invalid declarations are dropped with warnings, others kept', () {
       final sheet = StyleSheet.parse(
           'p { color: nope; width: -5px; colr: red; padding: 4px; zork: left; --x: 1; width: calc(1px) }');
@@ -296,6 +313,16 @@ void main() {
       final changed = engine.recompute();
       expect(changed, contains(s.$1.querySelector('p')));
       expect(styleOf(s, 'p').color, const CssColor(0xffff0000));
+    });
+
+    test('Tailwind escaped classes and responsive media rules apply', () {
+      final s = styled(
+        '<div id="x" class="w-[100px] md:flex"></div>',
+        r'.w-\[100px\]{width:100px}@media (min-width:768px){.md\:flex{display:flex}}',
+        media: const MediaContext(width: 900, height: 700),
+      );
+      expect(styleOf(s, '#x').width!.value, 100);
+      expect(styleOf(s, '#x').display, Display.flex);
     });
 
     test('unknown features are false; invalid queries do not break the list', () {
