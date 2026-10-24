@@ -37,9 +37,18 @@ const normal = (a, b) => typeof a === 'function'
   : { fn: b, name: typeof a === 'string' ? a : '' };
 const runSync = (name, fn) => {
   const cleanups = [];
-  const t = { add_cleanup(f) { if (typeof f === 'function') cleanups.push(f); } };
+  let stepError = null;
+  const t = {
+    add_cleanup(f) { if (typeof f === 'function') cleanups.push(f); },
+    step(f) { try { f(); } catch (e) { stepError = e; throw e; } },
+    step_func(f) { return (...args) => { try { return f.apply(this, args); } catch (e) { stepError = e; throw e; } }; },
+    step_func_done(f) { return (...args) => { try { if (f) f.apply(this, args); } catch (e) { stepError = e; throw e; } }; },
+    unreached_func(desc) { return () => { throw new AssertionError(desc || 'unreachable'); }; },
+    step_timeout(f, ms) { setTimeout(() => { try { f(); } catch (e) { stepError = e; } }, ms); },
+  };
   try {
-    fn.call(t);
+    fn.call(t, t);
+    if (stepError) throw stepError;
     report(name, 'PASS');
   } catch (e) {
     if (e instanceof PreconditionError) report(name, 'SKIP', e.message);
@@ -68,13 +77,31 @@ globalThis.generate_tests = (fn, tests) => {
 globalThis.promise_test = (a, b) => {
   const { fn, name } = normal(a, b);
   state.pending++;
-  Promise.resolve().then(fn).then(
-    () => report(name, 'PASS'),
-    (e) => {
-      if (e instanceof PreconditionError) report(name, 'SKIP', e.message);
-      else report(name, 'FAIL', e && e.message ? String(e.message) + (e.stack ? '\n' + e.stack : '') : (e && e.stack ? e.stack : String(e)));
-    },
-  ).finally(() => { state.pending--; finishIfDone(); });
+  const cleanups = [];
+  let finished = false;
+  const finish = (kind, e) => {
+    if (finished) return;
+    finished = true;
+    for (let i = cleanups.length - 1; i >= 0; i--) {
+      try { cleanups[i](); } catch (_) {}
+    }
+    if (kind === 'PASS') report(name, 'PASS');
+    else if (e instanceof PreconditionError) report(name, 'SKIP', e.message);
+    else report(name, 'FAIL', e && e.message ? String(e.message) + (e.stack ? '\n' + e.stack : '') : (e && e.stack ? e.stack : String(e)));
+    state.pending--;
+    finishIfDone();
+  };
+  const t = {
+    add_cleanup(f) { if (typeof f === 'function') cleanups.push(f); },
+    step(f) { try { f(); } catch (e) { finish('FAIL', e); throw e; } },
+    step_func(f) { return (...args) => t.step(() => f.apply(this, args)); },
+    unreached_func(desc) { return () => { throw new AssertionError(desc || 'unreachable'); }; },
+    step_timeout(f, ms) { setTimeout(() => t.step(f), ms); },
+  };
+  Promise.resolve().then(() => fn.call(t, t)).then(
+    () => finish('PASS'),
+    (e) => finish('FAIL', e),
+  );
 };
 
 globalThis.async_test = (a, b) => {
@@ -212,6 +239,16 @@ globalThis.promise_rejects_dom = (name, promise, m) => promise.then(
   () => { throw new AssertionError(`${m || 'promise_rejects_dom'}: resolved`); },
   (e) => { if (!(e && e.name === name)) throw new AssertionError(`${m || 'promise_rejects_dom'}: wrong rejection`); },
 );
+globalThis.assert_greater_than = (a, b, m) => assert(a > b, m || `${a} is not greater than ${b}`);
+globalThis.assert_greater_than_equal = (a, b, m) => assert(a >= b, m || `${a} is not greater than or equal to ${b}`);
+globalThis.assert_less_than = (a, b, m) => assert(a < b, m || `${a} is not less than ${b}`);
+globalThis.assert_less_than_equal = (a, b, m) => assert(a <= b, m || `${a} is not less than or equal to ${b}`);
+globalThis.assert_approx_equals = (a, b, eps, m) => assert(Math.abs(a - b) <= eps, m || `${a} is not approximately ${b}`);
+globalThis.promise_rejects_exactly = (expected, promise, m) => promise.then(
+  () => { throw new AssertionError(`${m || 'promise_rejects_exactly'}: resolved`); },
+  (e) => { if (e !== expected) throw new AssertionError(`${m || 'promise_rejects_exactly'}: wrong rejection`); },
+);
+globalThis.assert_regexp_match = (actual, regex, m) => assert(regex.test(String(actual)), m || `${actual} does not match ${regex}`);
 globalThis.format_value = (v) => {
   try { return JSON.stringify(v); } catch (e) { return String(v); }
 };

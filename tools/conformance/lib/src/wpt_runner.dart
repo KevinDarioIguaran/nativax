@@ -268,11 +268,9 @@ class WptRunner {
       }
 
       void refreshStyles(dom.MutationRecord r) {
-        if (r.target is dom.Element) {
-          styleEngine.invalidate(r.target as dom.Element);
-        } else if (r.target.parentElement != null) {
-          styleEngine.invalidate(r.target.parentElement!);
-        }
+        // Use the same incremental invalidation as the renderer. Calling only
+        // invalidate() leaves :has()/structural matched caches stale.
+        styleEngine.handleMutation(r);
         final relevant = r.type == dom.MutationType.childList
             ? hasStyle(r.target) ||
                   r.addedNodes.any(hasStyle) ||
