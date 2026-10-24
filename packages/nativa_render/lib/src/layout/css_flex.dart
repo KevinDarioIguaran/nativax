@@ -74,7 +74,10 @@ class _Item {
   double crossEnd = 0;
   bool autoMainStart = false;
   bool autoMainEnd = false;
+  bool autoCrossStart = false;
+  bool autoCrossEnd = false;
   Size size = Size.zero;
+
   /// A real (non-dry) layout performed while measuring the base size. Column
   /// flex containers reuse it when no flexible length changes the main size,
   /// avoiding a second text/layout pass per item.
@@ -104,7 +107,8 @@ class RenderCssFlex extends RenderBox
   set justifyContent(String v) => _set(_justify != v, () => _justify = v);
   set alignItems(String v) => _set(_alignItems != v, () => _alignItems = v);
   set rowGap(ResolvedLength v) => _set(_rowGap != v, () => _rowGap = v);
-  set columnGap(ResolvedLength v) => _set(_columnGap != v, () => _columnGap = v);
+  set columnGap(ResolvedLength v) =>
+      _set(_columnGap != v, () => _columnGap = v);
 
   void _set(bool changed, void Function() apply) {
     if (!changed) return;
@@ -116,20 +120,33 @@ class RenderCssFlex extends RenderBox
 
   @override
   void setupParentData(RenderBox child) {
-    if (child.parentData is! CssItemParentData) child.parentData = CssItemParentData();
+    if (child.parentData is! CssItemParentData)
+      child.parentData = CssItemParentData();
   }
 
   double _main(Size s) => _isRow ? s.width : s.height;
   double _cross(Size s) => _isRow ? s.height : s.width;
 
-  BoxConstraints _constraintsFor(double? main, double? minCross, double? maxCross) {
+  BoxConstraints _constraintsFor(
+    double? main,
+    double? minCross,
+    double? maxCross,
+  ) {
     final crossMin = minCross ?? 0;
     final crossMax = maxCross ?? double.infinity;
     return _isRow
         ? BoxConstraints(
-            minWidth: main ?? 0, maxWidth: main ?? double.infinity, minHeight: crossMin, maxHeight: crossMax)
+            minWidth: main ?? 0,
+            maxWidth: main ?? double.infinity,
+            minHeight: crossMin,
+            maxHeight: crossMax,
+          )
         : BoxConstraints(
-            minHeight: main ?? 0, maxHeight: main ?? double.infinity, minWidth: crossMin, maxWidth: crossMax);
+            minHeight: main ?? 0,
+            maxHeight: main ?? double.infinity,
+            minWidth: crossMin,
+            maxWidth: crossMax,
+          );
   }
 
   String _alignOf(_Item item) {
@@ -137,7 +154,8 @@ class RenderCssFlex extends RenderBox
     return a == 'normal' ? 'stretch' : a;
   }
 
-  bool _autoCross(_Item item) => _isRow ? item.pd.autoHeight : item.pd.autoWidth;
+  bool _autoCross(_Item item) =>
+      _isRow ? item.pd.autoHeight : item.pd.autoWidth;
 
   Size _run(BoxConstraints constraints, {required bool dry}) {
     final cbw = constraints.hasBoundedWidth ? constraints.maxWidth : null;
@@ -145,9 +163,13 @@ class RenderCssFlex extends RenderBox
     final mainMax = _isRow ? constraints.maxWidth : constraints.maxHeight;
     final mainDefinite = mainMax.isFinite;
     final crossMax = _isRow ? constraints.maxHeight : constraints.maxWidth;
-    final crossDefinite = _isRow ? constraints.hasTightHeight : constraints.hasTightWidth;
-    final mainGap = (_isRow ? _columnGap : _rowGap).resolve(_isRow ? cbw : cbh) ?? 0;
-    final crossGap = (_isRow ? _rowGap : _columnGap).resolve(_isRow ? cbh : cbw) ?? 0;
+    final crossDefinite = _isRow
+        ? constraints.hasTightHeight
+        : constraints.hasTightWidth;
+    final mainGap =
+        (_isRow ? _columnGap : _rowGap).resolve(_isRow ? cbw : cbh) ?? 0;
+    final crossGap =
+        (_isRow ? _rowGap : _columnGap).resolve(_isRow ? cbh : cbw) ?? 0;
 
     Size measure(RenderBox c, BoxConstraints cc) {
       if (dry) return c.getDryLayout(cc);
@@ -168,7 +190,11 @@ class RenderCssFlex extends RenderBox
 
     // 1. Collect items and determine hypothetical main sizes.
     final items = <_Item>[];
-    for (var c = firstChild; c != null; c = (c.parentData! as CssItemParentData).nextSibling) {
+    for (
+      var c = firstChild;
+      c != null;
+      c = (c.parentData! as CssItemParentData).nextSibling
+    ) {
       final pd = c.parentData! as CssItemParentData;
       pd.containingWidth = cbw;
       pd.containingHeight = cbh;
@@ -182,7 +208,9 @@ class RenderCssFlex extends RenderBox
           ..crossStart = m(pd.marginTop)
           ..crossEnd = m(pd.marginBottom)
           ..autoMainStart = pd.marginLeft == null
-          ..autoMainEnd = pd.marginRight == null;
+          ..autoMainEnd = pd.marginRight == null
+          ..autoCrossStart = pd.marginTop == null
+          ..autoCrossEnd = pd.marginBottom == null;
       } else {
         item
           ..mainStart = m(pd.marginTop)
@@ -190,16 +218,23 @@ class RenderCssFlex extends RenderBox
           ..crossStart = m(pd.marginLeft)
           ..crossEnd = m(pd.marginRight)
           ..autoMainStart = pd.marginTop == null
-          ..autoMainEnd = pd.marginBottom == null;
+          ..autoMainEnd = pd.marginBottom == null
+          ..autoCrossStart = pd.marginLeft == null
+          ..autoCrossEnd = pd.marginRight == null;
       }
-      final crossAvail = crossMax.isFinite ? math.max(0.0, crossMax - item.crossStart - item.crossEnd) : double.infinity;
+      final crossAvail = crossMax.isFinite
+          ? math.max(0.0, crossMax - item.crossStart - item.crossEnd)
+          : double.infinity;
       final basisLen = pd.flexBasis?.resolve(mainDefinite ? mainMax : null);
       if (basisLen != null) {
         item.base = basisLen;
       } else if (_isRow) {
         item.base = c.getMaxIntrinsicWidth(crossAvail);
       } else {
-        final stretchCross = _alignOf(item) == 'stretch' && _autoCross(item) && crossAvail.isFinite;
+        final stretchCross =
+            _alignOf(item) == 'stretch' &&
+            _autoCross(item) &&
+            crossAvail.isFinite;
         final cc = stretchCross
             ? BoxConstraints.tightFor(width: crossAvail)
             : BoxConstraints(maxWidth: crossAvail);
@@ -231,7 +266,10 @@ class RenderCssFlex extends RenderBox
       var line = <_Item>[];
       var used = 0.0;
       for (final item in items) {
-        final outer = math.max(item.outerHypothetical, item.minMain + item.mainStart + item.mainEnd);
+        final outer = math.max(
+          item.outerHypothetical,
+          item.minMain + item.mainStart + item.mainEnd,
+        );
         final next = line.isEmpty ? outer : used + mainGap + outer;
         if (line.isNotEmpty && next > mainMax + 0.001) {
           lines.add(line);
@@ -249,7 +287,8 @@ class RenderCssFlex extends RenderBox
     var containerMain = 0.0;
     for (final line in lines) {
       final gaps = mainGap * math.max(0, line.length - 1);
-      final usedHypo = line.fold<double>(0, (s, i) => s + i.outerHypothetical) + gaps;
+      final usedHypo =
+          line.fold<double>(0, (s, i) => s + i.outerHypothetical) + gaps;
       final available = mainDefinite ? mainMax : usedHypo;
       final growing = available > usedHypo;
       for (final i in line) {
@@ -257,7 +296,8 @@ class RenderCssFlex extends RenderBox
         final factor = growing ? i.pd.flexGrow : i.pd.flexShrink;
         // Inflexible items, and items that would move the wrong way, freeze
         // at their hypothetical size.
-        i.frozen = factor == 0 ||
+        i.frozen =
+            factor == 0 ||
             available == usedHypo ||
             (growing && i.base > i.hypothetical) ||
             (!growing && i.base < i.hypothetical);
@@ -265,8 +305,13 @@ class RenderCssFlex extends RenderBox
       for (var guard = 0; guard < line.length + 1; guard++) {
         final unfrozen = line.where((i) => !i.frozen).toList();
         if (unfrozen.isEmpty) break;
-        final frozenSpace = line.where((i) => i.frozen).fold<double>(0, (s, i) => s + i.outerTarget);
-        final unfrozenSpace = unfrozen.fold<double>(0, (s, i) => s + i.base + i.mainStart + i.mainEnd);
+        final frozenSpace = line
+            .where((i) => i.frozen)
+            .fold<double>(0, (s, i) => s + i.outerTarget);
+        final unfrozenSpace = unfrozen.fold<double>(
+          0,
+          (s, i) => s + i.base + i.mainStart + i.mainEnd,
+        );
         var free = available - gaps - frozenSpace - unfrozenSpace;
         if (growing) {
           final sum = unfrozen.fold<double>(0, (s, i) => s + i.pd.flexGrow);
@@ -275,9 +320,13 @@ class RenderCssFlex extends RenderBox
             i.target = i.base + (sum == 0 ? 0 : free * i.pd.flexGrow / sum);
           }
         } else {
-          final sum = unfrozen.fold<double>(0, (s, i) => s + i.pd.flexShrink * i.base);
+          final sum = unfrozen.fold<double>(
+            0,
+            (s, i) => s + i.pd.flexShrink * i.base,
+          );
           for (final i in unfrozen) {
-            i.target = i.base + (sum == 0 ? 0 : free * i.pd.flexShrink * i.base / sum);
+            i.target =
+                i.base + (sum == 0 ? 0 : free * i.pd.flexShrink * i.base / sum);
           }
         }
         // Clamp to min sizes; freeze violators.
@@ -313,7 +362,9 @@ class RenderCssFlex extends RenderBox
     for (final line in lines) {
       var cross = 0.0;
       for (final i in line) {
-        final crossAvail = crossMax.isFinite ? math.max(0.0, crossMax - i.crossStart - i.crossEnd) : null;
+        final crossAvail = crossMax.isFinite
+            ? math.max(0.0, crossMax - i.crossStart - i.crossEnd)
+            : null;
         i.size = measureItem(i, crossAvail);
         cross = math.max(cross, _cross(i.size) + i.crossStart + i.crossEnd);
       }
@@ -324,23 +375,37 @@ class RenderCssFlex extends RenderBox
     // Stretch.
     for (var l = 0; l < lines.length; l++) {
       for (final i in lines[l]) {
-        if (_alignOf(i) != 'stretch' || !_autoCross(i)) continue;
+        if (_alignOf(i) != 'stretch' ||
+            !_autoCross(i) ||
+            i.autoCrossStart ||
+            i.autoCrossEnd) {
+          continue;
+        }
         final c = math.max(0.0, lineCross[l] - i.crossStart - i.crossEnd);
         if ((_cross(i.size) - c).abs() < 0.001) continue;
         i.size = measure(i.child, _constraintsFor(i.target, c, c));
       }
     }
 
-    final totalCross = lineCross.fold<double>(0, (s, c) => s + c) + crossGap * math.max(0, lines.length - 1);
+    final totalCross =
+        lineCross.fold<double>(0, (s, c) => s + c) +
+        crossGap * math.max(0, lines.length - 1);
     final mainSize = mainDefinite ? mainMax : containerMain;
     final crossSize = crossDefinite ? crossMax : totalCross;
-    final size = constraints.constrain(_isRow ? Size(mainSize, crossSize) : Size(crossSize, mainSize));
+    final size = constraints.constrain(
+      _isRow ? Size(mainSize, crossSize) : Size(crossSize, mainSize),
+    );
     // A single line takes the container's (min/max-clamped) cross size, so
     // `min-height` on a row container centers or stretches its items.
     if (lines.length == 1 && _cross(size) > lineCross[0]) {
       lineCross[0] = _cross(size);
       for (final i in lines[0]) {
-        if (_alignOf(i) != 'stretch' || !_autoCross(i)) continue;
+        if (_alignOf(i) != 'stretch' ||
+            !_autoCross(i) ||
+            i.autoCrossStart ||
+            i.autoCrossEnd) {
+          continue;
+        }
         final c = math.max(0.0, lineCross[0] - i.crossStart - i.crossEnd);
         if ((_cross(i.size) - c).abs() < 0.001) continue;
         i.size = measure(i.child, _constraintsFor(i.target, c, c));
@@ -358,9 +423,17 @@ class RenderCssFlex extends RenderBox
       final lc = lineCross[l];
       if (wrapReverse) crossCursor -= lc;
       final gaps = mainGap * math.max(0, line.length - 1);
-      final used = line.fold<double>(0, (s, i) => s + _main(i.size) + i.mainStart + i.mainEnd) + gaps;
+      final used =
+          line.fold<double>(
+            0,
+            (s, i) => s + _main(i.size) + i.mainStart + i.mainEnd,
+          ) +
+          gaps;
       var free = finalMain - used;
-      final autoCount = line.fold<int>(0, (s, i) => s + (i.autoMainStart ? 1 : 0) + (i.autoMainEnd ? 1 : 0));
+      final autoCount = line.fold<int>(
+        0,
+        (s, i) => s + (i.autoMainStart ? 1 : 0) + (i.autoMainEnd ? 1 : 0),
+      );
       final autoShare = autoCount > 0 && free > 0 ? free / autoCount : 0.0;
       if (autoCount > 0 && free > 0) free = 0;
       double lead = 0, between = mainGap;
@@ -396,22 +469,40 @@ class RenderCssFlex extends RenderBox
         if (k < ordered.length - 1) cursor += between;
         final itemCross = _cross(i.size);
         final space = lc - itemCross - i.crossStart - i.crossEnd;
-        final double crossOffset = switch (_alignOf(i)) {
-          'center' => i.crossStart + space / 2,
-          'flex-end' || 'end' => i.crossStart + space,
-          _ => i.crossStart,
-        };
-        final crossPos = crossCursor + (wrapReverse ? lc - itemCross - crossOffset : crossOffset);
-        i.pd.offset = _isRow ? Offset(mainPos, crossPos) : Offset(crossPos, mainPos);
+        final double crossOffset;
+        if (i.autoCrossStart && i.autoCrossEnd) {
+          crossOffset = i.crossStart + math.max(0.0, space) / 2;
+        } else if (i.autoCrossStart) {
+          crossOffset = i.crossStart + math.max(0.0, space);
+        } else if (i.autoCrossEnd) {
+          crossOffset = i.crossStart;
+        } else {
+          crossOffset = switch (_alignOf(i)) {
+            'center' => i.crossStart + space / 2,
+            'flex-end' || 'end' => i.crossStart + space,
+            _ => i.crossStart,
+          };
+        }
+        final crossPos =
+            crossCursor +
+            (wrapReverse ? lc - itemCross - crossOffset : crossOffset);
+        i.pd.offset = _isRow
+            ? Offset(mainPos, crossPos)
+            : Offset(crossPos, mainPos);
       }
-      crossCursor = wrapReverse ? crossCursor - crossGap : crossCursor + lc + crossGap;
+      crossCursor = wrapReverse
+          ? crossCursor - crossGap
+          : crossCursor + lc + crossGap;
     }
     return size;
   }
 
   @override
   void performLayout() {
-    size = LayoutProfile.measure('flex.layout', () => _run(constraints, dry: false));
+    size = LayoutProfile.measure(
+      'flex.layout',
+      () => _run(constraints, dry: false),
+    );
   }
 
   @override
@@ -427,12 +518,23 @@ class RenderCssFlex extends RenderBox
 
   double _intrinsicMain(double crossExtent, {required bool min}) {
     var sum = 0.0, max = 0.0, count = 0;
-    for (var c = firstChild; c != null; c = (c.parentData! as CssItemParentData).nextSibling) {
+    for (
+      var c = firstChild;
+      c != null;
+      c = (c.parentData! as CssItemParentData).nextSibling
+    ) {
       final pd = c.parentData! as CssItemParentData;
-      final margins = _isRow ? _px(pd.marginLeft) + _px(pd.marginRight) : _px(pd.marginTop) + _px(pd.marginBottom);
-      final v = (_isRow
-              ? (min ? c.getMinIntrinsicWidth(crossExtent) : c.getMaxIntrinsicWidth(crossExtent))
-              : (min ? c.getMinIntrinsicHeight(crossExtent) : c.getMaxIntrinsicHeight(crossExtent))) +
+      final margins = _isRow
+          ? _px(pd.marginLeft) + _px(pd.marginRight)
+          : _px(pd.marginTop) + _px(pd.marginBottom);
+      final v =
+          (_isRow
+              ? (min
+                    ? c.getMinIntrinsicWidth(crossExtent)
+                    : c.getMaxIntrinsicWidth(crossExtent))
+              : (min
+                    ? c.getMinIntrinsicHeight(crossExtent)
+                    : c.getMaxIntrinsicHeight(crossExtent))) +
           margins;
       sum += v;
       max = math.max(max, v);
@@ -444,12 +546,23 @@ class RenderCssFlex extends RenderBox
 
   double _intrinsicCross(double mainExtent, {required bool min}) {
     var max = 0.0;
-    for (var c = firstChild; c != null; c = (c.parentData! as CssItemParentData).nextSibling) {
+    for (
+      var c = firstChild;
+      c != null;
+      c = (c.parentData! as CssItemParentData).nextSibling
+    ) {
       final pd = c.parentData! as CssItemParentData;
-      final margins = _isRow ? _px(pd.marginTop) + _px(pd.marginBottom) : _px(pd.marginLeft) + _px(pd.marginRight);
-      final v = (_isRow
-              ? (min ? c.getMinIntrinsicHeight(double.infinity) : c.getMaxIntrinsicHeight(double.infinity))
-              : (min ? c.getMinIntrinsicWidth(double.infinity) : c.getMaxIntrinsicWidth(double.infinity))) +
+      final margins = _isRow
+          ? _px(pd.marginTop) + _px(pd.marginBottom)
+          : _px(pd.marginLeft) + _px(pd.marginRight);
+      final v =
+          (_isRow
+              ? (min
+                    ? c.getMinIntrinsicHeight(double.infinity)
+                    : c.getMaxIntrinsicHeight(double.infinity))
+              : (min
+                    ? c.getMinIntrinsicWidth(double.infinity)
+                    : c.getMaxIntrinsicWidth(double.infinity))) +
           margins;
       max = math.max(max, v);
     }
@@ -457,20 +570,24 @@ class RenderCssFlex extends RenderBox
   }
 
   @override
-  double computeMinIntrinsicWidth(double height) =>
-      _isRow ? _intrinsicMain(height, min: true) : _intrinsicCross(height, min: true);
+  double computeMinIntrinsicWidth(double height) => _isRow
+      ? _intrinsicMain(height, min: true)
+      : _intrinsicCross(height, min: true);
 
   @override
-  double computeMaxIntrinsicWidth(double height) =>
-      _isRow ? _intrinsicMain(height, min: false) : _intrinsicCross(height, min: false);
+  double computeMaxIntrinsicWidth(double height) => _isRow
+      ? _intrinsicMain(height, min: false)
+      : _intrinsicCross(height, min: false);
 
   @override
-  double computeMinIntrinsicHeight(double width) =>
-      _isRow ? _intrinsicCross(width, min: true) : _intrinsicMain(width, min: true);
+  double computeMinIntrinsicHeight(double width) => _isRow
+      ? _intrinsicCross(width, min: true)
+      : _intrinsicMain(width, min: true);
 
   @override
-  double computeMaxIntrinsicHeight(double width) =>
-      _isRow ? _intrinsicCross(width, min: false) : _intrinsicMain(width, min: false);
+  double computeMaxIntrinsicHeight(double width) => _isRow
+      ? _intrinsicCross(width, min: false)
+      : _intrinsicMain(width, min: false);
 
   @override
   double? computeDistanceToActualBaseline(TextBaseline baseline) =>
