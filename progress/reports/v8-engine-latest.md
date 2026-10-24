@@ -91,6 +91,38 @@ Biblia real, V8, 20 s:
   espera de compositor (build 58–170 ms)
 - RSS ~795 MB (V8)
 
+## IndexedDB: el coste real de CPU (2026-10-24)
+
+Las trazas de timers (`NATIVAX_TRACE_TIMERS=1`) mostraron cientos de callbacks
+de `IDBTransaction._maybeFinish` de **200–330 ms**. La causa estaba en el
+polyfill: cada transacción `readwrite` hacía `cloneStore()` de **todo** el
+object store (`structuredClone` de cada registro) para poder abortar. La app
+cachea el libro completo capítulo a capítulo, así que el coste crecía de forma
+cuadrática.
+
+Cambios:
+
+- Snapshot de deshacer perezoso: al primer write se guarda la **referencia** al
+  array de registros, `next` e índices; el write copia el array y reemplaza el
+  registro (no muta el objeto antiguo). `abort()` restaura el snapshot.
+- Las tareas de IndexedDB se agrupan en una cola con presupuesto de 4 ms por
+  macrotarea, en vez de un `setTimeout` por request.
+- Test de abort añadido (`IndexedDB abort restores...`).
+- `getAttribute`/`className` ya no compilan regex por llamada; `ClassList`
+  cachea tokens por valor de `class`.
+- `processWhiteSpace` tiene fast-path sin regex.
+
+Medido en la Biblia con V8:
+
+| Métrica | Antes | Después |
+|---|---:|---:|
+| timers IDB | 200–330 ms cada uno | 0–22 ms (pico aislado 99 ms) |
+| hilo UI | ~98 % | 28–51 % |
+| hilo V8 GC | ~35 % | ~1,5 % |
+| RSS | ~788 MB | 612–615 MB |
+| `FIRST_VERSE` | 2,1–2,3 s | 1,99–2,22 s |
+| peor frame | 1,5–3,8 s | 824 ms al arrancar; 350–467 ms después |
+
 ## Hilos
 
 Ahora mismo **no están separados**: V8 corre en el isolate de UI de Dart, igual
