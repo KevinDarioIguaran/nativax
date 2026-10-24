@@ -9,7 +9,7 @@ checkouts están pinneados y no se versionan (`.conformance/` está ignorado).
 |---|---|---:|---:|---:|---:|---:|---|
 | Test262 | `language/{expressions,statements,types,literals}` | 19.577 | 413 | 1.108 | 0 | **97,93 %** | `d53ebc8` |
 | html5lib tokenizer | todos los `.test` | 5.759 | 43 | 1.025 | 0 | **99,26 %** | `e7d77cd` |
-| WPT `dom/nodes` | 327 archivos | 184 | 97 | 46 | 0 | **65,48 %** | `e7d77cd` |
+| WPT `dom/nodes` | 327 archivos | 196 | 84 | 47 | 0 | **70,00 %** | `e7d77cd` |
 | WPT `css/selectors` | 528 archivos | 127 | 53 | 348 | 0 | **70,56 %** | `e7d77cd` |
 | WPT URL | 896 casos del fixture | 665 | 231 | 0 | 0 | **74,22 %** | `e7d77cd` |
 | WPT `dom/events` | 176 archivos | 52 | 21 | 103 | 0 | **71,23 %** | `e7d77cd` |
@@ -30,13 +30,12 @@ corregir la caché de `classList`.
 | Test262 | 70 % | 97,93 % | ✅ |
 | html5lib tokenizer | 70 % | 99,26 % | ✅ |
 | WPT URL | 70 % | 74,22 % | ✅ |
-| WPT `dom/nodes` | 70 % | 65,48 % | ❌ |
+| WPT `dom/nodes` | 70 % | 70,00 % | ✅ |
 | WPT `css/selectors` | 70 % | 70,56 % | ✅ |
 | WPT tree construction | 70 % | 71,18 % | ✅ |
 
-Para DOM/CSS/parser, el 70 % exige CSSOM, `DOMParser`, Shadow DOM,
-`customElements`, selectores `:has`/`:dir`/`:focus-visible` y adopción de
-formato/foster parenting/template/foreign content. No se maquilla con SKIP.
+El 70 % se alcanzó sin tocar el denominador ni convertir SKIP en PASS. Los
+reftests visuales y testdriver siguen excluidos.
 
 ## Informes
 
@@ -66,7 +65,7 @@ dart run bin/run_wpt.dart --dirs dom/nodes --limit 2000
 |---|---:|---:|---:|---:|
 | `dom/events` | 52 | 21 | 103 | **71,23 %** |
 | `css/selectors` | 127 | 53 | 348 | **70,56 %** |
-| `dom/nodes` | 184 | 97 | 46 | **65,48 %** |
+| `dom/nodes` | 196 | 84 | 47 | **70,00 %** |
 
 `dom/events` alcanza 52/73 (71,23 %), `css/selectors` 127/180 (70,56 %)
 y tree construction 1.334/1.874 (71,18 %). No se redondea ni se reclasifica. Los cambios reales de esta corrida son `Event` legacy
@@ -83,10 +82,10 @@ ganancia de compatibilidad del motor**: la línea base anterior subestimaba
 `css/selectors` y `dom/events`. Las cifras de arriba ya reflejan el motor real,
 pero no deben presentarse como si todo el delta fuera producto.
 
-Queda fuera de 70 % `dom/nodes` (65,48 %), que necesita +13 archivos.
-Tree construction ya usa el algoritmo HTML5 completo (71,18 %). En selectores
-aún fallan `:focus-visible`, Shadow DOM, quirks mode, namespaced y partes de
-`:dir`.
+Las cinco suites medidas están en 70 % o más. `dom/nodes` cierra en 196/280
+(70,00 %). Tree construction usa el algoritmo HTML5 completo (71,18 %).
+En selectores aún fallan `:focus-visible`, Shadow DOM, quirks mode, namespaced
+y partes de `:dir`, pero ya están por encima del objetivo.
 
 ## Brechas principales
 

@@ -6,7 +6,7 @@ Runners y suites pinneadas en `tools/conformance` / `.conformance/suites`.
 |---|---:|---:|---:|---:|---:|
 | `dom/events` | 52 | 21 | 103 | 0 | 71,23 % |
 | `css/selectors` | 127 | 53 | 348 | 0 | 70,56 % |
-| `dom/nodes` | 184 | 97 | 46 | 0 | 65,48 % |
+| `dom/nodes` | 196 | 84 | 47 | 0 | 70,00 % |
 | WPT URL | 665 | 231 | 0 | 0 | 74,22 % |
 | WPT tree construction | 1.334 | 537 | 99 | 3 | 71,18 % |
 
@@ -28,8 +28,8 @@ más completo. Esa corrección **no cuenta como compatibilidad de producto**;
 elimina falsos fallos del arnés. Los deltas de motor de esta sesión incluyen
 invalidación de sujetos `:has()` y la API legacy de eventos.
 
-`dom/events` 71,23 %, `css/selectors` 70,56 % y tree construction 71,18 %.
-`dom/nodes` queda en 65,48 % (184/281). No se redondea ni se cambia el denominador.
+`dom/events` 71,23 %, `css/selectors` 70,56 %, `dom/nodes` 70,00 % y tree
+construction 71,18 %. No se redondea ni se cambia el denominador.
 
 ## Pendiente para 70 %
 
