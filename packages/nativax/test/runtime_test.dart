@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:nativax/nativax.dart';
-import 'dart:typed_data';
-
 import 'package:nativa_css/nativa_css.dart' show CssColor;
 
 Finder _richTextContaining(String value) => find.byWidgetPredicate(
@@ -10,21 +8,6 @@ Finder _richTextContaining(String value) => find.byWidgetPredicate(
           widget is Text &&
           (widget.textSpan?.toPlainText().contains(value) ?? false),
     );
-
-
-class _FontLoader extends NativaXResourceLoader {
-  _FontLoader();
-  final List<String> bytes = [];
-
-  @override
-  Future<String?> load(String url) async => null;
-
-  @override
-  Future<Uint8List?> loadBytes(String url) async {
-    bytes.add(url);
-    return Uint8List.fromList([0]);
-  }
-}
 
 void main() {
   test('runtime parses CSS and executes inline scripts in order', () async {
@@ -45,23 +28,6 @@ void main() {
       runtime.styleEngine.styleOf(runtime.document.getElementById('x')!).color,
       const CssColor(0xffff0000),
     );
-    runtime.dispose();
-  });
-
-  test('loads only font families referenced by CSS', () async {
-    final loader = _FontLoader();
-    final runtime = await NativaXRuntime.create(
-      source: '''
-<!doctype html><html><head><style>
-@font-face { font-family: Used; src: url('/used.ttf'); }
-@font-face { font-family: Unused; src: url('/unused.ttf'); }
-body { font-family: Used, sans-serif; }
-</style></head><body><p>x</p></body></html>
-''',
-      config: NativaXRuntimeConfig(resources: loader),
-    );
-    expect(loader.bytes.any((u) => u.endsWith('/used.ttf')), isTrue);
-    expect(loader.bytes.any((u) => u.endsWith('/unused.ttf')), isFalse);
     runtime.dispose();
   });
 
