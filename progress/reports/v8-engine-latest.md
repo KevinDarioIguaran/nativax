@@ -52,6 +52,43 @@ STYLE_METRICS samples=3483 ownMs=1140.7 avgUs=328 selectorsPer=15.7 hits=197
 - El renderer reconstruye el árbol completo en cada batch de mutaciones
   (`document_view.dart`), y el capítulo inserta 31 versículos (~3.627 nodos).
 
+## Arreglo de la cascada CSS (2026-10-24)
+
+El HTML carga seis hojas (Font Awesome, flag-icons, Tailwind, app, knowledge,
+qm-text) sin enlaces duplicados. El coste no era "copiar CSS": era que cada
+elemento pagaba una clave estructural global y el caché de estilos no se
+compartía entre subárboles equivalentes.
+
+Cambios:
+
+- Cada regla indexada sabe si depende de posición (`:first-*`, `:nth-*`,
+  `:empty`, `:has`, ...) o de hermanos (`+`, `~`). Solo los elementos con
+  candidatos estructurales pagan clave posicional.
+- El caché de estilos calculados usa el **valor** del estilo del padre
+  (`hashCode`), no su identidad, y las propiedades custom participan en
+  `==`/`hashCode`.
+- Los cambios de estado (`:hover`, `:focus`, ...) solo invalidan descendientes
+  si el elemento puede ser el ancestro de una regla con estado.
+- Los atributos que ningún selector lee (`title`, `data-strong`, ...) ya no
+  fragmentan la firma.
+
+Benchmark reproducible con las hojas reales de la app y un DOM de 5.924 nodos
+(31 versículos densos):
+
+| Métrica | Antes | Después |
+|---|---:|---:|
+| `STYLE total` | 9.417 ms | **1.362 ms (6,9×)** |
+| candidatos/elemento | 39,3 | **6,8** |
+| `styleCacheHits` | 94 | **4.982** |
+
+Biblia real, V8, 20 s:
+
+- style medio **343 → 206 µs/elemento**
+- selectores/elemento **17 → 9,7**
+- `FIRST_VERSE` **3.081 ms**
+- ningún frame > 500 ms (antes: 1,5–3,8 s)
+- RSS ~795 MB (V8)
+
 ## Hilos
 
 Ahora mismo **no están separados**: V8 corre en el isolate de UI de Dart, igual

@@ -19,6 +19,17 @@ virtualización, 5 de caché de estilo y los fixtures de render.
   hilos V8 de GC ~13 %, JS de la app 50–150 ms.
 - Detalle: `progress/reports/v8-engine-latest.md`.
 
+## Cascada CSS — 2026-10-24
+
+- Reglas indexadas con flags `structural`/`sibling`; solo los candidatos que
+  dependen de posición pagan clave estructural. El caché calculado usa el
+  valor del padre y las custom properties.
+- Benchmark con las 6 hojas reales de la Biblia y 5.924 nodos: estilo
+  **9.417 → 1.362 ms (6,9×)**, candidatos **39,3 → 6,8**, hits **94 → 4.982**.
+- App real (V8): style **343 → 206 µs/elemento**, selectores **17 → 9,7**,
+  `FIRST_VERSE` **3.081 ms**, sin frames > 500 ms en 20 s. RSS ~795 MB.
+- Detalle: `progress/reports/v8-engine-latest.md`.
+
 ## V8 FFI spike — 2026-10-24
 
 - `tools/v8-spike`: `cdylib` Rust con `v8`/`rusty_v8` 152.2.0 y FFI desde Dart.
