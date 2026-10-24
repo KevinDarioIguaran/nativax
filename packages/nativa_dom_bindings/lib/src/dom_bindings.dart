@@ -389,14 +389,14 @@ class DomBindings {
 
   void _observe(MutationRecord r) {
     _trackConnection(r);
-    if (r.type == MutationType.childList) {
-      final target = r.target;
-      if (target is Element && target.localName == 'script') {
-        _runScript(target);
+    if (_observers.isEmpty || r.type == MutationType.property) {
+      if (r.type == MutationType.childList) {
+        final target = r.target;
+        if (target is Element && target.localName == 'script') _runScript(target);
+        _runInsertedScripts(r.addedNodes);
       }
-      _runInsertedScripts(r.addedNodes);
+      return;
     }
-    if (_observers.isEmpty || r.type == MutationType.property) return;
     for (final entry in _observers.entries) {
       final t = r.target;
       var matched = false;
@@ -442,6 +442,13 @@ class DomBindings {
       } on JavaScriptException catch (e) {
         onScriptError?.call(e);
       }
+    }
+    if (r.type == MutationType.childList) {
+      final target = r.target;
+      if (target is Element && target.localName == 'script') {
+        _runScript(target);
+      }
+      _runInsertedScripts(r.addedNodes);
     }
   }
 

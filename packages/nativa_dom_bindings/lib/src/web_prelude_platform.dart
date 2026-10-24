@@ -810,7 +810,7 @@ const docProps = {
   },
   hidden: { get() { return false; } },
   visibilityState: { get() { return 'visible'; } },
-  defaultView: { get() { return frameWindowByDoc.get(this) || globalThis; } },
+  defaultView: { get() { return frameWindowByDoc.get(this) || (this === document ? globalThis : null); } },
   scrollingElement: { get() { return document.documentElement; } },
   dir: { get() { return document.documentElement ? document.documentElement.dir : ''; }, set(v) { if (document.documentElement) document.documentElement.dir = v; } },
   designMode: { get() { return 'off'; }, set() {} },
@@ -938,6 +938,12 @@ class DOMParser {
     const t = String(type || 'text/html').toLowerCase();
     if (!['text/html', 'text/xml', 'application/xml', 'application/xhtml+xml', 'image/svg+xml'].includes(t)) {
       throw new TypeError(`The provided value '${type}' is not a valid enum value of type DOMParserSupportedType.`);
+    }
+    if (t !== 'text/html') {
+      const out = newDocument(t);
+      const root = out.createElementNS(t === 'image/svg+xml' ? SVG_NS : null, 'root');
+      out.appendChild(root);
+      return out;
     }
     // Parsed into a detached <html> element standing in for a document.
     const root = document.createElement('html');

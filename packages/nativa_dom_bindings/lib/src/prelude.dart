@@ -254,6 +254,8 @@ const prefixedEvents = {
   webkitanimationiteration: 'webkitAnimationIteration',
   webkittransitionend: 'webkitTransitionEnd',
 };
+const nodeOrder = new WeakMap();
+let nodeOrderSeq = 0;
 const handlerProps = ['click', 'input', 'change', 'submit', 'focus', 'blur', 'error', 'keydown', 'keyup', 'load', 'resize', 'scroll',
   'animationstart', 'animationend', 'animationiteration', 'transitionend', 'webkitanimationstart',
   'webkitanimationend', 'webkitanimationiteration', 'webkittransitionend'];
@@ -323,7 +325,7 @@ NodeList.prototype.entries = Array.prototype.entries;
 NodeList.prototype.forEach = Array.prototype.forEach;
 class StaticNodeList extends NodeList {
   constructor(items) { super(-1, 'static'); hidden(this, '__items', items); }
-  get length() { return this.__items.length; }
+  _list() { return this.__items; }
   item(i) { i = Number(i); return Number.isInteger(i) && i >= 0 && i < this.__items.length ? this.__items[i] : null; }
 }
 StaticNodeList.prototype[Symbol.iterator] = Array.prototype[Symbol.iterator];
@@ -495,8 +497,52 @@ class Node extends EventTarget {
     host('node.insertBefore', this[ID], idOf(child), ref === null || ref === undefined ? null : idOf(ref));
     return child;
   }
-  removeChild(child) { host('node.removeChild', this[ID], idOf(child)); return child; }
-  replaceChild(newChild, oldChild) { host('node.replaceChild', this[ID], idOf(newChild), idOf(oldChild)); return oldChild; }
+  removeChild(child) {
+    if (child && typeof child === 'object' &&
+        (child.nodeType === 9 || 'documentElement' in child)) {
+      throw new DOMException('node is not a child', 'NotFoundError');
+    }
+    if (child && typeof child === 'object' && child.ownerDocument === null) {
+      throw new DOMException('node is not a child', 'NotFoundError');
+    }
+    if (child && child.constructor && child.constructor.name === 'Document') {
+      throw new DOMException('node is not a child', 'NotFoundError');
+    }
+    if (child && child.nodeType === 9) {
+      throw new DOMException('node is not a child', 'NotFoundError');
+    }
+    if (!(child instanceof Node) &&
+        !(child && typeof child === 'object' && child[ID] !== undefined)) {
+      throw new TypeError('parameter is not a Node');
+    }
+    if (child.parentNode !== this) throw new DOMException('node is not a child', 'NotFoundError');
+    try {
+      host('node.removeChild', this[ID], idOf(child));
+    } catch (e) {
+      if (e && e.name === 'TypeError' && child && child[ID] !== undefined) {
+        throw new DOMException('node is not a child', 'NotFoundError');
+      }
+      throw e;
+    }
+    return child;
+  }
+  replaceChild(newChild, oldChild) {
+    const nodeLike = (n) => n instanceof Node ||
+      (n && typeof n === 'object' && n[ID] !== undefined);
+    if (!nodeLike(newChild) || !nodeLike(oldChild)) {
+      throw new TypeError('parameter is not a Node');
+    }
+    const t = this.nodeType;
+    if (t === 3 || t === 4 || t === 7 || t === 8 || t === 10) {
+      throw new DOMException('parent cannot have children', 'HierarchyRequestError');
+    }
+    if (newChild.contains && newChild.contains(this)) {
+      throw new DOMException('the node contains the parent', 'HierarchyRequestError');
+    }
+    if (oldChild.parentNode !== this) throw new DOMException('node is not a child', 'NotFoundError');
+    host('node.replaceChild', this[ID], idOf(newChild), idOf(oldChild));
+    return oldChild;
+  }
   remove() { host('node.remove', this[ID]); }
   contains(other) { return other === null ? false : host('node.contains', this[ID], idOf(other)); }
   cloneNode(deep = false) { return wrap(host('node.clone', this[ID], !!deep)); }
@@ -681,9 +727,12 @@ class DocumentType extends Node {
   get publicId() { return host('node.get', this[ID], 'publicId'); }
   get systemId() { return host('node.get', this[ID], 'systemId'); }
 }
-NP.moveBefore = function (node, reference) {
+const moveBeforeParent = function (node, reference) {
   if (arguments.length < 2) throw new TypeError('moveBefore requires two arguments');
   if (!(node instanceof Node)) throw new TypeError('parameter is not a Node');
+  if (reference !== null && reference !== undefined && !(reference instanceof Node)) {
+    throw new TypeError('reference is not a Node');
+  }
   if (node.ownerDocument && this.ownerDocument && node.ownerDocument !== this.ownerDocument) throw new DOMException('cross-document move', 'HierarchyRequestError');
   if (reference !== null && reference !== undefined && reference.parentNode !== this) throw new DOMException('reference is not a child', 'NotFoundError');
   if (node === reference) return node;
@@ -696,7 +745,15 @@ NP.compareDocumentPosition = function (other) {
   if (!(other instanceof Node)) throw new TypeError('parameter is not a Node');
   if (this === other) return 0;
   const rootOf = (n) => { let r = n; while (r.parentNode) r = r.parentNode; return r; };
-  if (rootOf(this) !== rootOf(other)) return 1 | 32;
+  if (rootOf(this) !== rootOf(other)) {
+    // Stable implementation-specific order for disconnected trees.
+    const order = (n) => {
+      let v = nodeOrder.get(n);
+      if (v === undefined) { v = ++nodeOrderSeq; nodeOrder.set(n, v); }
+      return v;
+    };
+    return 1 | 32 | (order(this) < order(other) ? 4 : 2);
+  }
   if (this.contains(other)) return 8 | 4;
   if (other.contains(this)) return 16 | 2;
   const path = (n) => { const p = []; for (let x = n; x; x = x.parentNode) p.unshift(x); return p; };
@@ -841,6 +898,20 @@ class ShadowRoot extends EventTarget {
   dispatchEvent(event) { return this.__hostEl.dispatchEvent(event); }
 }
 ShadowRoot.prototype[Symbol.toStringTag] = 'ShadowRoot';
+ShadowRoot.prototype.moveBefore = function (node, reference) {
+  if (arguments.length < 2) throw new TypeError('moveBefore requires two arguments');
+  if (!(node instanceof Node)) throw new TypeError('parameter is not a Node');
+  if (reference !== null && reference !== undefined && !(reference instanceof Node)) {
+    throw new TypeError('reference is not a Node');
+  }
+  if (reference !== null && reference !== undefined && reference.parentNode !== this.__hostEl) {
+    throw new DOMException('reference is not a child', 'NotFoundError');
+  }
+  movingState.value = true;
+  try { this.__hostEl.insertBefore(node, reference === undefined ? null : reference); }
+  finally { movingState.value = false; }
+  return node;
+};
 
 
 // ---- Element -----------------------------------------------------------------
@@ -1186,7 +1257,7 @@ class Document extends Node {
     if (this.contentType !== 'text/html') {
       Object.setPrototypeOf(el, Element.prototype);
       localNames.set(el, name);
-      const ns = this.contentType === 'application/xhtml+xml' ? HTML_NS : this.contentType === 'image/svg+xml' ? SVG_NS : null;
+      const ns = this.contentType === 'application/xhtml+xml' ? HTML_NS : null;
       namespaces.set(el, ns);
       host('el.setNamespace', el[ID], ns);
     }
@@ -1266,7 +1337,11 @@ class Document extends Node {
   }
   adoptNode(node) {
     if (!(node instanceof Node)) throw new TypeError('parameter is not a Node');
-    return wrap(host('doc.adoptNode', this[ID], idOf(node)));
+    const adopted = wrap(host('doc.adoptNode', this[ID], idOf(node)));
+    const ns = this.contentType === 'text/html' ? HTML_NS : null;
+    namespaces.set(adopted, ns);
+    host('el.setNamespace', adopted[ID], ns);
+    return adopted;
   }
   createEvent(type = '') {
     const name = String(type);
@@ -1435,6 +1510,9 @@ accessor(EP, 'contentWindow', function () {
 });
 
 const DP = Document.prototype;
+for (const proto of [EP, DP, DocumentFragment.prototype]) {
+  defineProperty(proto, 'moveBefore', { value: moveBeforeParent, configurable: true, writable: true });
+}
 queries(DP);
 accessor(DP, 'documentElement', function () { return wrap(host('doc.get', this[ID], 'documentElement')); });
 accessor(DP, 'head', function () { return wrap(host('doc.get', this[ID], 'head')); });

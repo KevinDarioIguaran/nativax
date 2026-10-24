@@ -264,6 +264,17 @@ void main() {
       expect(h.js('toggle'), [true, true, false, false]);
     });
 
+    test('iframe window exposes realm constructors', () {
+      h.js('''
+        const f = document.createElement('iframe');
+        document.body.appendChild(f);
+        const w = f.contentWindow;
+        globalThis.iframeInfo = [typeof w.Comment, typeof w.Text,
+          w.document === f.contentDocument, w.Comment.prototype === Comment.prototype];
+      ''');
+      expect(h.js('iframeInfo'), ['function', 'function', true, true]);
+    });
+
     test('Element unscopables are installed', () {
       expect(h.js('Object.keys(Element.prototype[Symbol.unscopables]).sort()'),
           ['after', 'append', 'before', 'prepend', 'remove', 'replaceWith']);
