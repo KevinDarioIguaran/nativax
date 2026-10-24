@@ -68,6 +68,18 @@ void main() {
       ]);
     });
 
+    test('relative url() values resolve against the stylesheet base', () {
+      final sheet = StyleSheet.parse(
+        '.flag { background-image: url(../flags/4x3/co.svg) }',
+        baseUrl: Uri.parse(
+            'http://127.0.0.1:8000/static/vendor/flag-icons/css/flags.css'),
+      );
+      final rule = sheet.rules.single as StyleRule;
+      final image = rule.declarations.single.value as UrlValue;
+      expect(image.url,
+          'http://127.0.0.1:8000/static/vendor/flag-icons/flags/4x3/co.svg');
+    });
+
     test('invalid declarations are dropped with warnings, others kept', () {
       final sheet = StyleSheet.parse(
           'p { color: nope; width: -5px; colr: red; padding: 4px; zork: left; --x: 1; width: calc(1px) }');
@@ -330,7 +342,6 @@ void main() {
         '<my-widget id="w"></my-widget>',
         'my-widget { display: inline } my-widget:defined { color: #ff0000 }',
       );
-      final el = s.$1.getElementById('w')!;
       expect(styleOf(s, '#w').display, Display.inline);
       expect(styleOf(s, '#w').color, CssColor.black);
       s.$1.definedCustomElements.add('my-widget');

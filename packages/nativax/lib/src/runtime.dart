@@ -223,8 +223,8 @@ class NativaXRuntime {
       }
     }
 
-    StyleSheet addSheet(String text, String origin) {
-      final sheet = StyleSheet.parse(text);
+    StyleSheet addSheet(String text, String origin, {Uri? base}) {
+      final sheet = StyleSheet.parse(text, baseUrl: base ?? documentBase);
       for (final warning in sheet.warnings) {
         config.onDiagnostic?.call('$origin: ${warning.message}');
       }
@@ -247,7 +247,7 @@ class NativaXRuntime {
             'stylesheet "$href" was not loaded (resource denied)',
           );
         } else {
-          final sheet = addSheet(css, href);
+          final sheet = addSheet(css, href, base: documentBase.resolve(href));
           linkedSheets.add(sheet);
           await loadFontFaces(sheet, documentBase.resolve(href));
         }
