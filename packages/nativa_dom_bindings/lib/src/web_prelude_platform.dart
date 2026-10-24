@@ -685,15 +685,26 @@ const deliverMO = (ids) => {
 register('__nx_mo', deliverMO);
 register('__nx_queue_mo', (ids) => queueMicrotask(() => deliverMO(ids)));
 
-// Layout observers poll element boxes on animation frames while active.
+// Layout observers poll element boxes while active. A browser delivers these
+// from its layout pipeline; NativaX has no such signal, so poll at 10 Hz
+// instead of every animation frame. The old rAF loop kept the UI thread busy
+// forever whenever any ResizeObserver existed (the Bible header creates one).
 const layoutObservers = new Set();
-let layoutPolling = false;
+let layoutPollTimer = null;
 const pollLayout = () => {
-  if (layoutObservers.size === 0) { layoutPolling = false; return; }
+  layoutPollTimer = null;
+  if (layoutObservers.size === 0) return;
   for (const o of [...layoutObservers]) { try { o._check(); } catch (e) { reportError(e); } }
-  requestAnimationFrame(pollLayout);
+  if (layoutObservers.size !== 0) startLayoutPolling();
 };
-const startLayoutPolling = () => { if (!layoutPolling) { layoutPolling = true; requestAnimationFrame(pollLayout); } };
+const startLayoutPolling = () => {
+  if (layoutPollTimer !== null || layoutObservers.size === 0) return;
+  layoutPollTimer = setTimeout(pollLayout, 100);
+};
+if (typeof globalThis.addEventListener === 'function') {
+  try { globalThis.addEventListener('scroll', startLayoutPolling, { passive: true }); } catch (_) {}
+  try { globalThis.addEventListener('resize', startLayoutPolling, { passive: true }); } catch (_) {}
+}
 class ResizeObserverEntry {}
 class ResizeObserver {
   constructor(cb) {

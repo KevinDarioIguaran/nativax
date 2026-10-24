@@ -162,6 +162,7 @@ class StyleEngine {
   final Set<String> _hasAffectedClasses = {};
   final Set<String> _hasAffectedIds = {};
   final Set<Element> _hasDirtyRoots = {};
+  bool _hasNeedsScan = false;
   bool _structuralUniversal = false;
   final Set<String> _structuralTags = {};
   final Set<String> _structuralClasses = {};
@@ -616,16 +617,10 @@ class StyleEngine {
         }
       }
     }
-    if (_hasAffectedClasses.isEmpty && _hasAffectedIds.isEmpty) return;
-    final root = document.documentElement;
-    if (root == null) return;
-    for (final n in root.descendants) {
-      if (n is! Element) continue;
-      final hit = _hasAffectedIds.contains(n.id) ||
-          n.classList.any(_hasAffectedClasses.contains);
-      if (!hit) continue;
-      _styles.remove(n);
-      _pseudoStyles.remove(n);
+    if (_hasAffectedClasses.isNotEmpty || _hasAffectedIds.isNotEmpty) {
+      // The scan is deferred to recompute(): startup inserts hundreds of
+      // options, and scanning the whole document for every mutation is O(n²).
+      _hasNeedsScan = true;
     }
   }
 
@@ -655,6 +650,20 @@ class StyleEngine {
   /// changed (including newly styled elements).
   Set<Element> recompute() {
     final changed = <Element>{};
+    if (_hasNeedsScan) {
+      _hasNeedsScan = false;
+      final root = document.documentElement;
+      if (root != null) {
+        for (final n in root.descendants) {
+          if (n is! Element) continue;
+          final hit = _hasAffectedIds.contains(n.id) ||
+              n.classList.any(_hasAffectedClasses.contains);
+          if (!hit) continue;
+          _styles.remove(n);
+          _pseudoStyles.remove(n);
+        }
+      }
+    }
     final hasDirtyRoots = Set<Element>.of(_hasDirtyRoots);
     _hasDirtyRoots.clear();
     final mayAffectDescendants = _dirtyMayAffectDescendants;
