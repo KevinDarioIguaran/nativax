@@ -534,7 +534,7 @@ accessor(EP, 'tabIndex', function () {
   return ['a', 'button', 'input', 'select', 'textarea', 'summary', 'iframe'].includes(this.localName) ? 0 : -1;
 }, function (v) { this.setAttribute('tabindex', String(Math.trunc(Number(v)) || 0)); });
 for (const [prop, attr] of [['accessKey', 'accesskey'], ['enterKeyHint', 'enterkeyhint'], ['inputMode', 'inputmode'],
-  ['autocapitalize', 'autocapitalize'], ['nonce', 'nonce'], ['popover', 'popover'], ['role', 'role'],
+  ['autocapitalize', 'autocapitalize'], ['nonce', 'nonce'], ['popover', 'popover'], ['role', 'role'], ['type', 'type'],
   ['autocomplete', 'autocomplete'], ['accept', 'accept'], ['pattern', 'pattern'], ['min', 'min'], ['max', 'max'],
   ['step', 'step'], ['formAction', 'formaction'], ['enctype', 'enctype'], ['download', 'download'],
   ['hreflang', 'hreflang'], ['ping', 'ping'], ['referrerPolicy', 'referrerpolicy'], ['crossOrigin', 'crossorigin'],
@@ -915,7 +915,8 @@ const elementInterfaces = {
   HTMLLegendElement: ['legend'], HTMLLinkElement: ['link'], HTMLMapElement: ['map'], HTMLMenuElement: ['menu'],
   HTMLMetaElement: ['meta'], HTMLMeterElement: ['meter'], HTMLModElement: ['ins', 'del'], HTMLOListElement: ['ol'],
   HTMLObjectElement: ['object'], HTMLOptGroupElement: ['optgroup'], HTMLOptionElement: ['option'],
-  HTMLOutputElement: ['output'], HTMLParagraphElement: ['p'], HTMLPictureElement: ['picture'], HTMLPreElement: ['pre'],
+  HTMLOutputElement: ['output'], HTMLParagraphElement: ['p'], HTMLParamElement: ['param'], HTMLPictureElement: ['picture'], HTMLPreElement: ['pre'],
+  HTMLMarqueeElement: ['marquee'], HTMLBaseFontElement: ['basefont'],
   HTMLProgressElement: ['progress'], HTMLQuoteElement: ['q', 'blockquote'], HTMLScriptElement: ['script'],
   HTMLSelectElement: ['select'], HTMLSlotElement: ['slot'], HTMLSourceElement: ['source'], HTMLSpanElement: ['span'],
   HTMLStyleElement: ['style'], HTMLTableCaptionElement: ['caption'], HTMLTableCellElement: ['td', 'th'],
