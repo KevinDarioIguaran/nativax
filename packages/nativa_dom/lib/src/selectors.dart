@@ -235,7 +235,9 @@ class PseudoClassSelector extends SimpleSelector {
         final m = RegExp(r'^h([1-6])$').firstMatch(e.localName);
         if (m == null) return false;
         if (arg == null || arg!.isEmpty) return true;
-        return int.tryParse(arg!) == int.tryParse(m.group(1)!);
+        final level = int.tryParse(m.group(1)!);
+        if (level == null) return false;
+        return arg!.split(',').any((part) => int.tryParse(part.trim()) == level);
       case 'link':
       case 'any-link':
         return (e.localName == 'a' || e.localName == 'area') &&
@@ -859,7 +861,7 @@ class _SelectorParser {
     _skipWs();
     final name = _ident().toLowerCase();
     _skipWs();
-    if (_done) _fail('unterminated attribute selector');
+    if (_done) return AttributeSelector(name, null, null);
     if (_ch == ']') {
       pos++;
       return AttributeSelector(name, null, null);
@@ -903,7 +905,8 @@ class _SelectorParser {
       pos++;
       _skipWs();
     }
-    if (_done || _ch != ']') _fail('expected "]"');
+    if (_done) return AttributeSelector(name, op, value, ignoreCase: ignoreCase);
+    if (_ch != ']') _fail('expected "]"');
     pos++;
     return AttributeSelector(name, op, value, ignoreCase: ignoreCase);
   }
@@ -930,7 +933,8 @@ class _SelectorParser {
     if (name == 'not' || name == 'is' || name == 'where') {
       if (name == 'not') {
         final inner = parseList(nested: true);
-        if (_done || _ch != ')') _fail('expected ")"');
+        if (_done) return PseudoClassSelector(name, inner: inner);
+        if (_ch != ')') _fail('expected ")"');
         pos++;
         return PseudoClassSelector(name, inner: inner);
       }
