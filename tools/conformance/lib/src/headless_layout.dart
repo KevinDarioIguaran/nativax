@@ -79,6 +79,9 @@ class HeadlessLayoutHost implements LayoutHost {
   @override
   (double, double) toViewport(double globalX, double globalY) => (globalX, globalY);
 
+  @override
+  bool get isScrolling => false;
+
   (double, double) _layout(Element element, double containingWidth, double x, double y) {
     final style = styleEngine.styleOf(element);
     if (style.display == Display.none) {

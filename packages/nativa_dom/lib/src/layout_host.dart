@@ -77,6 +77,11 @@ abstract interface class LayoutHost {
 
   /// Converts a global (screen) position to viewport coordinates.
   (double, double) toViewport(double globalX, double globalY);
+
+  /// Whether the document is currently being scrolled. Renderers use it to
+  /// defer hover hit-testing, which would otherwise restyle large subtrees on
+  /// every wheel/drag frame.
+  bool get isScrolling;
 }
 
 /// Implemented by a renderer to back `<canvas>` 2D contexts. Scripts record
