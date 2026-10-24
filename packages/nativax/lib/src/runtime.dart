@@ -147,13 +147,25 @@ class NativaXRuntime {
     final styleEngine = StyleEngine(document: document, media: env.media);
     final styleSheets = <dom.Element, StyleSheet>{};
     final linkedSheets = <StyleSheet>[];
+    final linkedBases = <StyleSheet, Uri>{};
     final loadedFonts = <String>{};
     final documentBase = Uri.parse(documentUrl ?? config.documentUrl);
 
-    Future<void> loadFontFaces(StyleSheet sheet, Uri base) async {
+    Future<void> loadFontFaces(
+      StyleSheet sheet,
+      Uri base, {
+      Set<String>? only,
+    }) async {
       final faceSources = <FontFaceRule, List<String>>{};
       final requests = <String>[];
       for (final face in sheet.fontFaces) {
+        final iconFamily =
+            face.family.toLowerCase().contains('font awesome') ||
+            face.family.toLowerCase().contains('fontawesome') ||
+            face.family.toLowerCase().contains('material icons');
+        if (!iconFamily && only != null && !only.contains(face.family)) {
+          continue;
+        }
         final urls = <String>[];
         for (final source in face.sources) {
           final resolved = base.resolve(source).toString();
@@ -201,17 +213,23 @@ class NativaXRuntime {
         final face = entry.key;
         if (usedUrl != null && usedUrl.toLowerCase().contains('.woff')) {
           config.onDiagnostic?.call(
-              'font "${face.family}" ($usedUrl): WOFF/WOFF2 is not supported '
-              'by Flutter FontLoader; provide TTF/OTF');
+            'font "${face.family}" ($usedUrl): WOFF/WOFF2 is not supported '
+            'by Flutter FontLoader; provide TTF/OTF',
+          );
           continue;
         }
         try {
           families
               .putIfAbsent(face.family, () => FontLoader(face.family))
-              .addFont(Future<ByteData>.value(
-                  ByteData.sublistView(Uint8List.fromList(bytes))));
+              .addFont(
+                Future<ByteData>.value(
+                  ByteData.sublistView(Uint8List.fromList(bytes)),
+                ),
+              );
         } catch (error) {
-          config.onDiagnostic?.call('font "${face.family}" ($usedUrl) failed: $error');
+          config.onDiagnostic?.call(
+            'font "${face.family}" ($usedUrl) failed: $error',
+          );
         }
       }
       for (final entry in families.entries) {
@@ -233,7 +251,6 @@ class NativaXRuntime {
 
     for (final style in document.querySelectorAll('style')) {
       styleSheets[style] = addSheet(style.textContent, '<style>');
-      await loadFontFaces(styleSheets[style]!, documentBase);
     }
     for (final link in document.querySelectorAll('link')) {
       final rel = (link.getAttribute('rel') ?? '').toLowerCase().split(' ');
@@ -247,15 +264,31 @@ class NativaXRuntime {
             'stylesheet "$href" was not loaded (resource denied)',
           );
         } else {
-          final sheet = addSheet(css, href, base: documentBase.resolve(href));
+          final base = documentBase.resolve(href);
+          final sheet = addSheet(css, href, base: base);
           linkedSheets.add(sheet);
-          await loadFontFaces(sheet, documentBase.resolve(href));
+          linkedBases[sheet] = base;
         }
       } catch (error) {
         config.onDiagnostic?.call('stylesheet "$href" failed: $error');
       }
     }
     styleEngine.authorSheets = [...styleSheets.values, ...linkedSheets];
+
+    final usedFontFamilies = <String>{};
+    for (final sheet in [...styleSheets.values, ...linkedSheets]) {
+      _collectFontFamilies(sheet.rules, usedFontFamilies);
+    }
+    for (final entry in styleSheets.entries) {
+      await loadFontFaces(entry.value, documentBase, only: usedFontFamilies);
+    }
+    for (final sheet in linkedSheets) {
+      await loadFontFaces(
+        sheet,
+        linkedBases[sheet] ?? documentBase,
+        only: usedFontFamilies,
+      );
+    }
 
     final engine =
         config.engineFactory?.call(config.engine) ??
@@ -451,5 +484,63 @@ class NativaXRuntime {
     bindings.dispose();
     engine.dispose();
     document.dispose();
+  }
+}
+
+void _collectFontFamilies(List<CssRule> rules, Set<String> out) {
+  for (final rule in rules) {
+    switch (rule) {
+      case StyleRule():
+        for (final declaration in rule.declarations) {
+          if (declaration.property == 'font-family' &&
+              declaration.value is FontFamilyValue) {
+            for (final family
+                in (declaration.value as FontFamilyValue).families) {
+              final name = family.trim().replaceAll(
+                RegExp(r'''^["']|["']$'''),
+                '',
+              );
+              if (name.isEmpty) continue;
+              final generic = const {
+                'serif',
+                'sans-serif',
+                'monospace',
+                'cursive',
+                'fantasy',
+                'system-ui',
+                'ui-serif',
+                'ui-sans-serif',
+                'ui-monospace',
+                'inherit',
+                'initial',
+                'unset',
+                'revert',
+                'revert-layer',
+              }.contains(name.toLowerCase());
+              if (!generic) out.add(name);
+            }
+          }
+        }
+      case MediaRule():
+        _collectFontFamilies(rule.rules, out);
+      case KeyframesRule():
+        for (final frame in rule.frames) {
+          for (final declaration in frame.declarations) {
+            if (declaration.property == 'font-family' &&
+                declaration.value is FontFamilyValue) {
+              for (final family
+                  in (declaration.value as FontFamilyValue).families) {
+                final name = family.trim().replaceAll(
+                  RegExp(r'''^["']|["']$'''),
+                  '',
+                );
+                if (name.isNotEmpty) out.add(name);
+              }
+            }
+          }
+        }
+      case FontFaceRule():
+        break;
+    }
   }
 }
