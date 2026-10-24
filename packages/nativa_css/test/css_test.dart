@@ -325,6 +325,19 @@ void main() {
       expect(styleOf(s, '#x').display, Display.flex);
     });
 
+    test(':defined tracks registered custom elements', () {
+      final s = styled(
+        '<my-widget id="w"></my-widget>',
+        'my-widget { display: inline } my-widget:defined { color: #ff0000 }',
+      );
+      final el = s.$1.getElementById('w')!;
+      expect(styleOf(s, '#w').display, Display.inline);
+      expect(styleOf(s, '#w').color, CssColor.black);
+      s.$1.definedCustomElements.add('my-widget');
+      s.$2.invalidateAll();
+      expect(styleOf(s, '#w').color, const CssColor(0xffff0000));
+    });
+
     test('unknown features are false; invalid queries do not break the list', () {
       final q = MediaQueryList.parse(CssTokenizer('(hover: hover), (min-width: 10px)').tokenize());
       expect(q.evaluate(desktop), isTrue);

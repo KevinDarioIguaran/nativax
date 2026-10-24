@@ -22,6 +22,10 @@ class Document extends Node {
   Document({this.limits = const DocumentLimits()}) : super(null);
 
   final DocumentLimits limits;
+
+  /// Autonomous custom-element names registered by `customElements.define`.
+  /// Selectors can match `:defined` without reaching into the JS registry.
+  final Set<String> definedCustomElements = <String>{};
   final List<MutationListener> _mutationListeners = [];
   int _connectedNodes = 1;
   Element? _activeElement;

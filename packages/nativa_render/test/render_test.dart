@@ -242,6 +242,19 @@ void main() {
     expect(input.value, 'abc');
     expect(inputs, 1);
   });
+  testWidgets('custom tags render and accept normal CSS', (tester) async {
+    final ctx = _document(
+      '<!doctype html><html><body><my-card id="card"><span>inside</span></my-card></body></html>',
+      css: 'my-card { display: block; padding: 4px; color: #00ff00 }',
+    );
+    await tester.pumpWidget(_app(ctx.document, ctx.engine));
+    await tester.pump();
+    expect(find.text('inside'), findsOneWidget);
+    final el = ctx.document.getElementById('card')!;
+    expect(ctx.engine.styleOf(el).display, Display.block);
+    expect(find.byKey(ObjectKey(el)), findsOneWidget);
+  });
+
   testWidgets('text mutation rebuilds only the affected subtree', (tester) async {
     final html = StringBuffer('<!doctype html><html><body>');
     for (var i = 0; i < 80; i++) {

@@ -501,6 +501,13 @@ class DomBindings {
   // --- host operations ------------------------------------------------------------
 
   Map<String, HostFunction> _ops() => {
+    'custom.define': (a) {
+      final name = '${a[0]}';
+      if (document.definedCustomElements.add(name)) {
+        styleEngine?.invalidateAll();
+      }
+      return null;
+    },
         'node.release': (a) {
           final id = (a[0] as num).toInt();
           final t = _targets[id];

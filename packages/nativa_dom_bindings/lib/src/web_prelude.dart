@@ -916,6 +916,7 @@ const customElements = {
     const def = { name, ctor, observed };
     customRegistry.set(name, def);
     customRegistryByCtor.set(ctor, def);
+    host('custom.define', name);
     ensureLifecycleObserver();
     for (const el of document.querySelectorAll(name)) upgradeElement(el, def);
     const waiting = whenDefined.get(name);
