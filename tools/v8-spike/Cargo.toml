@@ -8,3 +8,4 @@ crate-type = ["cdylib"]
 
 [dependencies]
 v8 = { version = "152.2.0", features = ["use_custom_libcxx"] }
+libc = "0.2"

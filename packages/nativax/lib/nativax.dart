@@ -26,7 +26,8 @@ export 'package:nativa_js/nativa_js.dart'
         JavaScriptEngineConfig,
         JavaScriptException,
         JavaScriptTimeoutException,
-        TimerLimits;
+        TimerLimits,
+        V8Engine;
 export 'package:nativa_dom/nativa_dom.dart' show Document, Element, Event;
 export 'package:nativa_render/nativa_render.dart'
     show
