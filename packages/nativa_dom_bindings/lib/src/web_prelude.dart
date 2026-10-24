@@ -65,23 +65,37 @@ ETP.dispatchEvent = function (ev) {
   if (isHostTarget(this)) return hostDispatch.call(this, ev);
   if (!(ev instanceof Event)) throw new TypeError('parameter is not an Event');
   if (ev.__local && ev.__local.dispatching) throw new DOMException('The event is already being dispatched.', 'InvalidStateError');
+  if (!ev.__initialized) throw new DOMException('The event is not initialized.', 'InvalidStateError');
+  if (ev.__stop) {
+    ev.__stop = false;
+    ev.__immediate = false;
+    hidden(ev, '__lastTarget', this);
+    return true;
+  }
+  ev.__dispatching = true;
+  hidden(ev, '__lastTarget', this);
   const state = { target: this, currentTarget: this, phase: 2, prevented: false, stopped: false, immediate: false, dispatching: true };
   defineProperty(ev, '__local', { value: state, configurable: true, writable: true });
   try {
     const m = localListeners.get(this);
     const list = m && m.get(ev.type);
     if (list) {
-      for (const l of list.slice()) {
-        if (l.removed) continue;
-        if (l.once) { l.removed = true; list.splice(list.indexOf(l), 1); }
-        try { invoke(l.cb, this, ev); } catch (e) { reportError(e); }
-        if (state.immediate) break;
-      }
+      withCurrentEvent(ev, () => {
+        for (const l of list.slice()) {
+          if (l.removed) continue;
+          if (l.once) { l.removed = true; list.splice(list.indexOf(l), 1); }
+          try { invoke(l.cb, this, ev); } catch (e) { reportError(e); }
+          if (state.immediate) break;
+        }
+      });
     }
   } finally {
     state.dispatching = false;
     state.currentTarget = null;
     state.phase = 0;
+    ev.__dispatching = false;
+    ev.__stop = false;
+    ev.__immediate = false;
   }
   return !state.prevented;
 };
@@ -89,9 +103,15 @@ ETP.dispatchEvent = function (ev) {
 // Event: init dictionaries, script-side dispatch state, legacy members.
 const EvP = Event.prototype;
 const evGet = (name, fn) => defineProperty(EvP, name, { get: fn, configurable: true, enumerable: true });
+const evGetSet = (name, get, set) => defineProperty(EvP, name, { get, set, configurable: true, enumerable: true });
+for (const [name, value] of Object.entries({
+  NONE: 0, CAPTURING_PHASE: 1, AT_TARGET: 2, BUBBLING_PHASE: 3,
+})) {
+  if (!(name in EvP)) defineProperty(EvP, name, { value, enumerable: true, configurable: true });
+}
 evGet('target', function () {
   if (this.__local) return this.__local.target;
-  return this.__id ? wrap(host('event.get', this.__id, 'target')) : null;
+  return this.__id ? wrap(host('event.get', this.__id, 'target')) : (this.__lastTarget || null);
 });
 evGet('currentTarget', function () {
   if (this.__local) return this.__local.currentTarget;
@@ -106,20 +126,30 @@ evGet('defaultPrevented', function () {
   if (this.__local) return this.__local.prevented;
   return this.__id ? host('event.get', this.__id, 'defaultPrevented') : !!this.__prevented;
 });
-evGet('returnValue', function () { return !this.defaultPrevented; });
+evGetSet('returnValue', function () { return !this.defaultPrevented; }, function (value) {
+  if (value === false) this.preventDefault();
+});
 evGet('composed', function () { return !!(this.__init && this.__init.composed); });
-evGet('cancelBubble', function () { return !!(this.__local && this.__local.stopped); });
+evGetSet('cancelBubble', function () {
+  return !!(this.__stop || (this.__local && this.__local.stopped));
+}, function (value) {
+  if (value) this.stopPropagation();
+});
 evGet('timeStamp', function () { return this.__desc ? this.__desc.timeStamp - perfOrigin : (this.__created || 0); });
 EvP.preventDefault = function () {
   if (!this.cancelable) return;
+  this.__prevented = true;
   if (this.__local) this.__local.prevented = true;
   else if (this.__id) host('event.call', this.__id, 'preventDefault');
 };
 EvP.stopPropagation = function () {
+  this.__stop = true;
   if (this.__local) this.__local.stopped = true;
   else if (this.__id) host('event.call', this.__id, 'stopPropagation');
 };
 EvP.stopImmediatePropagation = function () {
+  this.__stop = true;
+  this.__immediate = true;
   if (this.__local) { this.__local.stopped = true; this.__local.immediate = true; }
   else if (this.__id) host('event.call', this.__id, 'stopImmediatePropagation');
 };
@@ -130,9 +160,25 @@ EvP.composedPath = function () {
   return path;
 };
 EvP.initEvent = function (type, bubbles = false, cancelable = false) {
+  if (arguments.length === 0) throw new TypeError('initEvent requires a type');
+  if (this.__dispatching || (this.__local && this.__local.dispatching)) return;
+  if (this.__id) return;
   hidden(this, '__type', String(type));
   hidden(this, '__init', { bubbles: !!bubbles, cancelable: !!cancelable });
+  hidden(this, '__initialized', true);
+  this.__prevented = false;
+  this.__stop = false;
+  this.__immediate = false;
 };
+if (CustomEvent) {
+  CustomEvent.prototype.initCustomEvent = function (type, bubbles = false, cancelable = false, detail = null) {
+    if (arguments.length === 0) throw new TypeError('initCustomEvent requires a type');
+    if (this.__dispatching || (this.__local && this.__local.dispatching)) return;
+    if (this.__id) return;
+    this.initEvent(type, bubbles, cancelable);
+    defineProperty(this, 'detail', { value: detail, writable: false, configurable: true, enumerable: true });
+  };
+}
 Event.prototype[Symbol.toStringTag] = 'Event';
 
 // Subclasses declare their fields and defaults; values come from the init

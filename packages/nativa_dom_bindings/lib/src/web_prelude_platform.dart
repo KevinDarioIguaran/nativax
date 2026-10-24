@@ -1077,7 +1077,7 @@ for (const [name, getter] of Object.entries({
   origin: () => { try { return currentUrl().origin || 'null'; } catch (e) { return 'null'; } },
   name: () => '', closed: () => false, length: () => 0, opener: () => null, frameElement: () => null,
   parent: () => globalThis, top: () => globalThis, crossOriginIsolated: () => true,
-  status: () => '', event: () => undefined, isSecureContext: () => isSecureContext,
+  status: () => '', isSecureContext: () => isSecureContext,
 })) defineProperty(globalThis, name, { get: getter, enumerable: true, configurable: true });
 Object.defineProperty(globalThis, 'frames', {
   get() {
