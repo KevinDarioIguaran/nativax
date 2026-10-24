@@ -368,6 +368,7 @@ dependencies = [
 name = "nx_v8"
 version = "0.1.0"
 dependencies = [
+ "libc",
  "v8",
 ]
 

@@ -140,7 +140,9 @@ const utf8Encode = (s) => {
   }
   return new Uint8Array(out);
 };
+const nativeDecodeUtf8 = __nx.decodeUtf8;
 const utf8Decode = (bytes, fatal = false) => {
+  if (!fatal && nativeDecodeUtf8) return nativeDecodeUtf8(bytes);
   let s = '';
   for (let i = 0; i < bytes.length;) {
     const b = bytes[i];

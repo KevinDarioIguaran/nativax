@@ -11,7 +11,7 @@ import 'wasm_prelude.dart';
 /// Installed once per context. Captures the raw `__nx_host` C function,
 /// removes it from the global object and exposes the frozen `__nx.host`
 /// wrapper that turns host error envelopes into real script exceptions.
-const String _hostPrelude = r'''
+const String nativaxHostPrelude = r'''
 (() => {
   const raw = globalThis.__nx_host;
   const rawRegister = globalThis.__nx_register;
@@ -20,6 +20,8 @@ const String _hostPrelude = r'''
   const shareSab = globalThis.__nx_sab_share;
   const openSab = globalThis.__nx_sab_open;
   const gl = globalThis.__nx_gl_native || null;
+  const decodeUtf8 = globalThis.__nx_decode_utf8 || null;
+  delete globalThis.__nx_decode_utf8;
   delete globalThis.__nx_sab_share;
   delete globalThis.__nx_sab_open;
   delete globalThis.__nx_gl_native;
@@ -68,7 +70,7 @@ const String _hostPrelude = r'''
     } catch (_) {}
   });
   Object.defineProperty(globalThis, '__nx', {
-    value: Object.freeze({ host, register, takeBuffer, putBuffer, shareSab, openSab, gl }),
+    value: Object.freeze({ host, register, takeBuffer, putBuffer, shareSab, openSab, gl, decodeUtf8 }),
     enumerable: false, writable: false, configurable: true,
   });
 })();
@@ -105,7 +107,7 @@ final class QuickJsEngine implements JavaScriptEngine {
       );
       return null;
     };
-    evaluate(_hostPrelude, filename: '<nativax:host>');
+    evaluate(nativaxHostPrelude, filename: '<nativax:host>');
     evaluate(wasmPrelude, filename: '<nativax:wasm>');
   }
 

@@ -36,6 +36,7 @@ class NativaXRuntimeConfig {
     this.network = const DeniedNetwork(),
     this.services,
     this.threadedWorkers = true,
+    this.engineFactory,
   });
 
   /// Runs dedicated workers on their own isolates (threads), as browsers do.
@@ -67,6 +68,10 @@ class NativaXRuntimeConfig {
   final PlatformServices? services;
 
   final JavaScriptEngineConfig engine;
+
+  /// Optional backend factory. Defaults to QuickJS-ng; `V8Engine` can be
+  /// injected for the native V8 prototype.
+  final JavaScriptEngine Function(JavaScriptEngineConfig config)? engineFactory;
   final TimerLimits timers;
   final NativaXResourceLoader resources;
   final KeyValueStorage? storage;
@@ -102,7 +107,7 @@ class NativaXRuntime {
 
   final dom.Document document;
   final StyleEngine styleEngine;
-  final QuickJsEngine engine;
+  final JavaScriptEngine engine;
   final DomBindings bindings;
   final TimerHost timers;
   final NativaXRuntimeConfig config;
@@ -166,7 +171,9 @@ class NativaXRuntime {
     }
     styleEngine.authorSheets = [...styleSheets.values, ...linkedSheets];
 
-    final engine = QuickJsEngine(config.engine);
+    final engine =
+        config.engineFactory?.call(config.engine) ??
+        QuickJsEngine(config.engine);
     final services =
         platformServices ?? config.services ?? const PlatformServices();
     // Preludes that need the raw host bridge must be installed before the
