@@ -752,6 +752,17 @@ class DomBindings {
           _events[id] = e;
           return id;
         },
+        'error.report': (a) {
+          final name = a.isNotEmpty && a[0] != null ? '${a[0]}' : 'Error';
+          final message = a.length > 1 && a[1] != null ? '${a[1]}' : '';
+          final stack = a.length > 2 && a[2] != null ? '${a[2]}' : null;
+          onScriptError?.call(JavaScriptException(
+            name: name,
+            message: message,
+            stack: stack,
+          ));
+          return null;
+        },
         'ev.dispatch': (a) {
           final t = _target(a[0]);
           final id = (a[1] as num).toInt();

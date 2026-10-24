@@ -346,6 +346,17 @@ void main() {
       expect(h.errors.single, isA<JavaScriptException>().having((e) => e.message, 'message', 'boom'));
     });
 
+    test('listener exceptions reach window.onerror', () {
+      h.js('''
+        globalThis.reported = [];
+        window.onerror = (message) => { reported.push([typeof message, String(message)]); };
+        const b = document.getElementById('increment');
+        b.addEventListener('click', () => { throw new Error('boom'); });
+        b.click();
+      ''');
+      expect(h.js('reported'), [[ 'string', 'boom' ]]);
+    });
+
     test('input events carry trusted detail fields', () {
       h.js('globalThis.seen = null;'
           'document.body.addEventListener("keydown", (e) => { seen = [e.key, e.isTrusted]; });');

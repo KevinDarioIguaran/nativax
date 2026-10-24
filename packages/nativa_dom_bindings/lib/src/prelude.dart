@@ -190,6 +190,11 @@ register('__nx_dispatch', (msg) => {
   if (passive) ev.__passive = true;
   try {
     withCurrentEvent(ev, () => invoke(cb, self, ev));
+  } catch (e) {
+    try { reportError(e); } catch (_) {}
+    host('error.report', e && e.name ? String(e.name) : 'Error',
+      e && e.message ? String(e.message) : String(e),
+      e && e.stack ? String(e.stack) : null);
   } finally {
     if (passive) ev.__passive = false;
   }
@@ -267,7 +272,9 @@ for (const name of handlerProps) {
       if (typeof fn === 'function') {
         h[name] = fn;
         const wrapper = function (ev) {
-          const r = fn.call(this, ev);
+          const r = name === 'error' && ev instanceof ErrorEvent && this === globalThis
+            ? fn.call(this, ev.message, ev.filename, ev.lineno, ev.colno, ev.error)
+            : fn.call(this, ev);
           if (r === false) ev.preventDefault();
         };
         h.__wrappers[name] = wrapper;
