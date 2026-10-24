@@ -220,6 +220,7 @@ void main() {
       d.body!.appendChild(h);
       expect(h.matches(':heading(1)'), isTrue);
       expect(h.matches(':heading(2)'), isFalse);
+      expect(h.matches(':heading(0, 1, 2)'), isTrue);
       expect(h.matches(':heading'), isTrue);
     });
 
@@ -251,6 +252,11 @@ void main() {
       input.value = '\u05EA';
       input.setAttribute('dir', 'auto');
       expect(input.matches(':dir(rtl)'), isTrue);
+    });
+
+    test('attribute selectors tolerate a missing right bracket', () {
+      expect(d.querySelector('div[id="a"')!.id, 'a');
+      expect(d.querySelectorAll('p:not([class').length, 1);
     });
 
     test('specificity', () {
