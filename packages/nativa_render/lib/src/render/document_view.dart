@@ -52,6 +52,7 @@ class _NativaXDocumentViewState extends State<NativaXDocumentView> implements do
   final ScrollController _scroll = ScrollController();
   final Set<String> _reported = {};
   bool _scheduled = false;
+  bool _contentDirty = false;
   bool _disposed = false;
   bool _diagnosedBuild = false;
   TimingsCallback? _drawTimings;
@@ -166,11 +167,13 @@ class _NativaXDocumentViewState extends State<NativaXDocumentView> implements do
     if (element != null) {
       switch (record.type) {
         case dom.MutationType.childList:
+          _contentDirty = true;
           _widgetCache.invalidateSubtree(element);
           for (final n in record.removedNodes) {
             _widgetCache.remove(n);
           }
         case dom.MutationType.attributes:
+          _contentDirty = true;
           final name = (record.name ?? '').toLowerCase();
           if (name == 'class' || name == 'id' || name == 'style') {
             _widgetCache.invalidateSubtree(element);
@@ -178,8 +181,15 @@ class _NativaXDocumentViewState extends State<NativaXDocumentView> implements do
             _widgetCache.invalidatePath(element);
           }
         case dom.MutationType.property:
-          _widgetCache.invalidateSubtree(element);
+          // `:state` only affects computed styles. The flush below rebuilds
+          // when a hover/focus/active rule actually changes a style; a state
+          // update with no matching rule must not throw away the widget cache.
+          if (record.name != ':state') {
+            _contentDirty = true;
+            _widgetCache.invalidateSubtree(element);
+          }
         case dom.MutationType.characterData:
+          _contentDirty = true;
           _widgetCache.invalidatePath(element);
       }
     }
@@ -233,6 +243,8 @@ class _NativaXDocumentViewState extends State<NativaXDocumentView> implements do
     for (final e in changed) {
       _widgetCache.invalidateSubtree(e);
     }
+    final rebuild = changed.isNotEmpty || _contentDirty;
+    _contentDirty = false;
     NativaXRenderProfile.log(
       'FLUSH style=${watch.elapsedMilliseconds}ms changed=${changed.length} '
       'computes=${widget.styleEngine.computeCount} '
@@ -248,6 +260,7 @@ class _NativaXDocumentViewState extends State<NativaXDocumentView> implements do
           'computes=${widget.styleEngine.computeCount} '
           'roots=${widget.styleEngine.dirtyRootCount}');
     }
+    if (!rebuild) return;
     setState(() {});
   }
 
