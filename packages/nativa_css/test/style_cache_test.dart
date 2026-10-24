@@ -30,6 +30,34 @@ void main() {
     expect(engine.selectorEvaluations, lessThan(200));
   });
 
+  test('attributes not read by selectors do not fragment the cache', () {
+    final (doc, engine) = _doc(
+      '<!doctype html><html><body>'
+      '<p class="v" title="one" data-note="a">x</p>'
+      '<p class="v" title="two" data-note="b">y</p>'
+      '</body></html>',
+      '.v { color: #ff0000 }',
+    );
+    final ps = doc.querySelectorAll('p');
+    final a = engine.styleOf(ps[0]);
+    final b = engine.styleOf(ps[1]);
+    expect(identical(a, b), isTrue);
+    expect(engine.styleCacheHits, greaterThan(0));
+  });
+
+  test('attributes read by a selector keep styles distinct', () {
+    final (doc, engine) = _doc(
+      '<!doctype html><html><body>'
+      '<p class="v" title="one">x</p><p class="v" title="two">y</p>'
+      '</body></html>',
+      '.v { color: #ff0000 } [title=two] { color: #00ff00 }',
+    );
+    final ps = doc.querySelectorAll('p');
+    expect(engine.styleOf(ps[0]).color, const CssColor(0xffff0000));
+    expect(engine.styleOf(ps[1]).color, const CssColor(0xff00ff00));
+    expect(identical(engine.styleOf(ps[0]), engine.styleOf(ps[1])), isFalse);
+  });
+
   test('different classes or attributes do not share', () {
     final (doc, engine) = _doc(
       '<!doctype html><html><body>'
@@ -54,6 +82,45 @@ void main() {
     p.className = 'on';
     engine.recompute();
     expect(engine.styleOf(p).color, const CssColor(0xffff0000));
+  });
+
+  test('plain text updates keep cached descendant styles', () {
+    final (doc, engine) = _doc(
+      '<!doctype html><html><body><div id="d"><p><b>x<span>one</span></b></p></div></body></html>',
+      'p { color: #ff0000; padding: 2px } span { font-weight: 700 }',
+    );
+    engine.lazySubtrees = true;
+    doc.addMutationListener(engine.handleMutation);
+    final div = doc.getElementById('d')!;
+    final p = div.querySelector('p')!;
+    final b = p.querySelector('b')!;
+    final span = b.querySelector('span')!;
+    final beforeSpan = engine.styleOf(span);
+    final before = engine.computeCount;
+    (b.firstChild! as Text).data = 'two';
+    final changed = engine.recompute();
+    expect(changed, isEmpty);
+    expect(engine.computeCount - before, 1,
+        reason: 'only the text parent <b> is re-evaluated');
+    expect(identical(engine.styleOf(span), beforeSpan), isTrue,
+        reason: 'the descendant keeps its cached computed style');
+  });
+
+  test('attributes no selector reads do not invalidate styles', () {
+    final (doc, engine) = _doc(
+      '<!doctype html><html><body><p id="p" title="a">x</p></body></html>',
+      'p { color: #ff0000 }',
+    );
+    engine.lazySubtrees = true;
+    doc.addMutationListener(engine.handleMutation);
+    final p = doc.getElementById('p')!;
+    engine.styleOf(p);
+    final before = engine.computeCount;
+    p.setAttribute('title', 'b');
+    final changed = engine.recompute();
+    expect(changed, isEmpty);
+    expect(engine.computeCount - before, 0,
+        reason: 'title is not read by any selector');
   });
 
   test('formatting changes do not reuse an old computed style', () {
