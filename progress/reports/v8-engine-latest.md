@@ -123,6 +123,23 @@ Medido en la Biblia con V8:
 | `FIRST_VERSE` | 2,1–2,3 s | 1,99–2,22 s |
 | peor frame | 1,5–3,8 s | 824 ms al arrancar; 350–467 ms después |
 
+## Comparación final tras IndexedDB (2026-10-24)
+
+Misma copia y mismas hojas, 25 s de ejecución:
+
+| | V8 | QuickJS |
+|---|---:|---:|
+| CPU del hilo UI en reposo (muestra de 3 s) | **5,7 %** | 97,3 % |
+| RSS | 500–620 MB | 290–368 MB |
+| `FIRST_VERSE` | ~2,0–2,2 s | **~1,7 s** |
+| peor frame | 824 ms al arrancar; 350–467 ms después | **229 ms** |
+
+Con `low_memory_notification` cada 15 s, V8 bajó de ~600 MB a **497 MB** a los
+20 s (el heap útil era ~129–155 MB; el resto es Flutter/IDB nativo). QuickJS
+sigue consumiendo menos memoria, pero en esta carga se queda al 97 % de CPU y
+una corrida de 55 s terminó sin proceso. El backend V8 sigue siendo opt-in;
+QuickJS es el default.
+
 ## Hilos
 
 Ahora mismo **no están separados**: V8 corre en el isolate de UI de Dart, igual
