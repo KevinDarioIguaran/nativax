@@ -136,7 +136,7 @@ class HtmlParser {
       } else if (n is html5.Comment) {
         parent.appendChild(doc.createComment(n.data ?? ''));
       } else if (n is html5.Element) {
-        final e = doc.createElement(n.localName ?? '');
+        final e = Element(doc, n.localName ?? '', namespaceUri: n.namespaceUri);
         _copyHtml5Attributes(n, e);
         parent.appendChild(e);
         for (final c in n.nodes) {
@@ -182,7 +182,7 @@ Document _convertHtml5Document(
       throw HtmlLimitException('document exceeds ${limits.maxNodes} nodes');
     }
     if (n is html5.Element) {
-      final e = doc.createElement(n.localName ?? '');
+      final e = Element(doc, n.localName ?? '', namespaceUri: n.namespaceUri);
       _copyHtml5Attributes(n, e);
       parent.appendChild(e);
       for (final c in n.nodes) {
@@ -400,7 +400,8 @@ class _TreeBuilder {
         }
       } else {
         _countNode();
-        final el = Element(doc, name);
+        final el = Element(doc, name,
+            namespaceUri: _stack.any((e) => e.localName == 'svg') ? 'http://www.w3.org/2000/svg' : 'http://www.w3.org/1999/xhtml');
         for (final (k, v) in t.attributes) {
           try {
             el.setParsedAttribute(k, v);

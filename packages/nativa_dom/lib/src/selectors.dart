@@ -42,18 +42,37 @@ sealed class SimpleSelector {
 }
 
 class TypeSelector extends SimpleSelector {
-  const TypeSelector(this.name);
+  const TypeSelector(this.name, {this.namespace});
   final String name;
+  final String? namespace;
+  bool _ns(Element e) {
+    if (namespace == null || namespace == '*') return true;
+    final ns = namespace == 'html'
+        ? 'http://www.w3.org/1999/xhtml'
+        : namespace == 'svg'
+            ? 'http://www.w3.org/2000/svg'
+            : namespace;
+    return e.namespaceUri == ns;
+  }
   @override
-  bool matches(Element e, [Element? scope]) => e.localName == name;
+  bool matches(Element e, [Element? scope]) => e.localName == name && _ns(e);
   @override
   Specificity get specificity => const Specificity(0, 0, 1);
 }
 
 class UniversalSelector extends SimpleSelector {
-  const UniversalSelector();
+  const UniversalSelector({this.namespace});
+  final String? namespace;
   @override
-  bool matches(Element e, [Element? scope]) => true;
+  bool matches(Element e, [Element? scope]) {
+    if (namespace == null || namespace == '*') return true;
+    final ns = namespace == 'html'
+        ? 'http://www.w3.org/1999/xhtml'
+        : namespace == 'svg'
+            ? 'http://www.w3.org/2000/svg'
+            : namespace;
+    return e.namespaceUri == ns;
+  }
   @override
   Specificity get specificity => Specificity.zero;
 }
@@ -80,8 +99,10 @@ class ClassSelector extends SimpleSelector {
 }
 
 class AttributeSelector extends SimpleSelector {
-  const AttributeSelector(this.name, this.op, this.value, {this.ignoreCase = false});
+  const AttributeSelector(this.name, this.op, this.value,
+      {this.ignoreCase = false, this.namespace});
   final String name;
+  final String? namespace;
 
   /// null (presence), `=`, `~=`, `|=`, `^=`, `$=`, `*=`.
   final String? op;
@@ -802,7 +823,33 @@ class _SelectorParser {
 
   CompoundSelector _compound() {
     final parts = <SimpleSelector>[];
-    if (!_done && _ch == '*') {
+    String? namespace;
+    var namespaced = false;
+    if (!_done && _ch == '*' && pos + 1 < src.length && src[pos + 1] == '|') {
+      namespace = '*';
+      namespaced = true;
+      pos += 2;
+    } else if (!_done && (_isNameChar(_ch) || _ch == r'\')) {
+      final save = pos;
+      final prefix = _ident().toLowerCase();
+      if (!_done && _ch == '|' && pos + 1 < src.length && src[pos + 1] != '=') {
+        namespace = prefix;
+        namespaced = true;
+        pos++;
+      } else {
+        pos = save;
+      }
+    }
+    if (namespaced) {
+      if (!_done && _ch == '*') {
+        pos++;
+        parts.add(UniversalSelector(namespace: namespace));
+      } else if (!_done && (_isNameChar(_ch) || _ch == r'\')) {
+        parts.add(TypeSelector(_ident().toLowerCase(), namespace: namespace));
+      } else {
+        _fail('expected a name after namespace prefix');
+      }
+    } else if (!_done && _ch == '*') {
       pos++;
       parts.add(const UniversalSelector());
     } else if (!_done && (_isNameChar(_ch) || _ch == r'\')) {
@@ -859,12 +906,26 @@ class _SelectorParser {
 
   AttributeSelector _attribute() {
     _skipWs();
+    String? namespace;
+    if (!_done && _ch == '*' && pos + 1 < src.length && src[pos + 1] == '|') {
+      namespace = '*';
+      pos += 2;
+    } else {
+      final save = pos;
+      final prefix = _ident().toLowerCase();
+      if (!_done && _ch == '|' && pos + 1 < src.length && src[pos + 1] != '=') {
+        namespace = prefix;
+        pos++;
+      } else {
+        pos = save;
+      }
+    }
     final name = _ident().toLowerCase();
     _skipWs();
-    if (_done) return AttributeSelector(name, null, null);
+    if (_done) return AttributeSelector(name, null, null, namespace: namespace);
     if (_ch == ']') {
       pos++;
-      return AttributeSelector(name, null, null);
+      return AttributeSelector(name, null, null, namespace: namespace);
     }
     String op;
     if (_ch == '=') {
@@ -905,10 +966,10 @@ class _SelectorParser {
       pos++;
       _skipWs();
     }
-    if (_done) return AttributeSelector(name, op, value, ignoreCase: ignoreCase);
+    if (_done) return AttributeSelector(name, op, value, ignoreCase: ignoreCase, namespace: namespace);
     if (_ch != ']') _fail('expected "]"');
     pos++;
-    return AttributeSelector(name, op, value, ignoreCase: ignoreCase);
+    return AttributeSelector(name, op, value, ignoreCase: ignoreCase, namespace: namespace);
   }
 
   PseudoClassSelector _pseudo() {
