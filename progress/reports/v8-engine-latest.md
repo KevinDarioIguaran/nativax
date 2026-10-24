@@ -187,6 +187,15 @@ guarda ahora su URL base y resuelve los `url()` relativos al parsear. La app
 calcula `http://127.0.0.1:8000/static/vendor/flag-icons/flags/4x3/co.svg` para
 `#langFlag.fi-co`.
 
+### Banderas SVG
+
+Las banderas de flag-icons son SVG. Flutter no decodifica SVG en un
+`ImageProvider`, así que el selector de idioma quedaba vacío aunque la URL
+fuera correcta. Se añadió `NativaXSvgImageProvider`: la app entrega los bytes
+(archivo/HTTP) y el renderer rasteriza el SVG con el mismo pintor que usa para
+`<svg>` inline. También se corrigió el caché de estilos SVG para que `fill`,
+`stroke`, etc. no se compartan entre paths distintos.
+
 ### Límites actuales
 
 No es “todo CSS y todo HTML”. Siguen fuera o parciales: Shadow DOM y
