@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:ffi';
 import 'dart:io';
@@ -75,7 +76,7 @@ final class V8Engine implements JavaScriptEngine {
     );
     // V8's object graph for the Bible dictionary needs more room than the
     // QuickJS default; keep a floor for the prototype.
-    const floor = 1024 * 1024 * 1024;
+    const floor = 768 * 1024 * 1024;
     final heapLimit = config.memoryLimitBytes < floor
         ? floor
         : config.memoryLimitBytes;
@@ -90,6 +91,17 @@ final class V8Engine implements JavaScriptEngine {
       _putBufferCallback.nativeFunction,
     );
     evaluate(nativaxHostPrelude, filename: '<nativax:host>');
+    // V8 otherwise waits for the heap limit before a full GC; the Bible app's
+    // dictionary/book caches leave hundreds of MB of collectable garbage.
+    _gcTimer = Timer.periodic(const Duration(seconds: 15), (_) {
+      if (_disposed) return;
+      final used = _memory();
+      _gc();
+      if (Platform.environment['NATIVAX_TRACE_GC'] == '1') {
+        stderr.writeln('V8_GC before=${(used / 1048576).toStringAsFixed(1)}MB '
+            'after=${(_memory() / 1048576).toStringAsFixed(1)}MB');
+      }
+    });
   }
 
   final JavaScriptEngineConfig config;
@@ -117,6 +129,7 @@ final class V8Engine implements JavaScriptEngine {
   @override
   ModuleHost? moduleHost;
   bool _disposed = false;
+  Timer? _gcTimer;
 
   @override
   bool get isDisposed => _disposed;
@@ -278,6 +291,7 @@ final class V8Engine implements JavaScriptEngine {
   void dispose() {
     if (_disposed) return;
     _disposed = true;
+    _gcTimer?.cancel();
     _disposeNative();
     _callback.close();
     _takeBufferCallback.close();
