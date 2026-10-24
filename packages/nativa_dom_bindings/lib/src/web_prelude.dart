@@ -850,17 +850,27 @@ NP.compareDocumentPosition = function (other) {
   return siblings.indexOf(a[i]) < siblings.indexOf(b[i]) ? 4 : 2;
 };
 const XMLNS_NS = 'http://www.w3.org/2000/xmlns/';
-NP.lookupNamespaceURI = function (prefix) {
+const AttrP = Attr.prototype;
+AttrP.lookupNamespaceURI = function (prefix) {
   const p = prefix === null || prefix === undefined ? '' : String(prefix);
-  if (this.nodeType === 9) return this.documentElement ? this.documentElement.namespaceURI : null;
-  if (this.nodeType !== 1 && this.nodeType !== 3 && this.nodeType !== 7 && this.nodeType !== 8) return null;
-  let n = this.nodeType === 1 ? this : this.parentElement;
+  if (this.ownerElement) return this.ownerElement.lookupNamespaceURI(p);
+  if (p === 'xml' && this.namespaceURI === XML_NS) return XML_NS;
+  if (p === 'xmlns' && this.namespaceURI === XMLNS_NS) return XMLNS_NS;
+  return null;
+};
+AttrP.isDefaultNamespace = function (ns) {
+  return this.ownerElement ? this.ownerElement.isDefaultNamespace(ns) : false;
+};
+NP.lookupNamespaceURI = function (prefix) {
+  if (this.nodeType === 10 || this.nodeType === 11) return null;
+  if (this.nodeType === 9 && !this.documentElement) return null;
+  const p = prefix === null || prefix === undefined ? '' : String(prefix);
+  if (p === 'xml') return XML_NS;
+  if (p === 'xmlns') return XMLNS_NS;
+  let n = this.nodeType === 9 ? this.documentElement : (this.nodeType === 1 ? this : this.parentElement);
   for (; n; n = n.parentElement) {
-    if (p === 'xml') return XML_NS;
-    if (p === 'xmlns') return XMLNS_NS;
-    if (p === (n.prefix || '')) {
-      if (n.namespaceURI) return n.namespaceURI;
-    }
+    if (p !== '' && n.prefix === p && n.namespaceURI) return n.namespaceURI;
+    if (p === '' && !n.prefix && n.namespaceURI) return n.namespaceURI;
     for (const a of n.attributes) {
       if (p === '' && a.name === 'xmlns') return a.value || null;
       if (p !== '' && a.name === 'xmlns:' + p) return a.value || null;
@@ -870,16 +880,15 @@ NP.lookupNamespaceURI = function (prefix) {
 };
 NP.isDefaultNamespace = function (ns) {
   const want = ns === null || ns === undefined || ns === '' ? null : String(ns);
+  if (this.nodeType === 9) return want === 'http://www.w3.org/1999/xhtml';
   let n = this.nodeType === 1 ? this : this.parentElement;
-  let found = null;
   for (; n; n = n.parentElement) {
     for (const a of n.attributes) {
-      if (a.name === 'xmlns') { found = a.value || null; return found === want; }
+      if (a.name === 'xmlns') return (a.value || null) === want;
     }
-    if (n.namespaceURI) { found = n.namespaceURI; break; }
+    if (!n.prefix && n.namespaceURI) return n.namespaceURI === want;
   }
-  if (this.nodeType === 9) found = 'http://www.w3.org/1999/xhtml';
-  return found === want;
+  return want === null;
 };
 accessor(NP, 'baseURI', function () { return document.baseURI; });
 const NodeFilter = Object.freeze({
