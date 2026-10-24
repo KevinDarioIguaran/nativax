@@ -5,10 +5,10 @@ Runners y suites pinneadas en `tools/conformance` / `.conformance/suites`.
 | Suite | PASS | FAIL | SKIP | ERROR | Tasa sin SKIP |
 |---|---:|---:|---:|---:|---:|
 | `dom/events` | 52 | 21 | 103 | 0 | 71,23 % |
-| `css/selectors` | 126 | 54 | 348 | 0 | 70,00 % |
-| `dom/nodes` | 174 | 107 | 46 | 0 | 61,92 % |
+| `css/selectors` | 127 | 53 | 348 | 0 | 70,56 % |
+| `dom/nodes` | 184 | 97 | 46 | 0 | 65,48 % |
 | WPT URL | 665 | 231 | 0 | 0 | 74,22 % |
-| WPT tree construction | 944 | 930 | 99 | 0 | 50,37 % |
+| WPT tree construction | 1.334 | 537 | 99 | 3 | 71,18 % |
 
 Comandos:
 
@@ -28,8 +28,8 @@ más completo. Esa corrección **no cuenta como compatibilidad de producto**;
 elimina falsos fallos del arnés. Los deltas de motor de esta sesión incluyen
 invalidación de sujetos `:has()` y la API legacy de eventos.
 
-`dom/events` alcanza 71,23 % (52/73 no-SKIP) y `css/selectors` 70,00 %
-(126/180). No se redondea ni se cambia el denominador.
+`dom/events` 71,23 %, `css/selectors` 70,56 % y tree construction 71,18 %.
+`dom/nodes` queda en 65,48 % (184/281). No se redondea ni se cambia el denominador.
 
 ## Pendiente para 70 %
 
