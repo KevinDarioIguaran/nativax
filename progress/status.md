@@ -32,6 +32,15 @@ virtualización, 5 de caché de estilo y los fixtures de render.
   **~2,0–2,2 s**, peor frame **824 ms al arrancar / 350–467 ms después**.
 - Detalle: `progress/reports/v8-engine-latest.md`.
 
+## V8 vs QuickJS tras los fixes — 2026-10-24
+
+- V8 en reposo: **5,7 % CPU**, RSS **500–620 MB**, `FIRST_VERSE` 2,0–2,2 s,
+  peor frame 350–467 ms tras el arranque. GC cada 15 s con
+  `low_memory_notification` baja RSS a ~497 MB.
+- QuickJS: RSS **290–368 MB**, `FIRST_VERSE` **1,7 s**, peor frame **229 ms**,
+  pero **97 % CPU** en reposo bajo la misma carga. V8 sigue opt-in.
+- Detalle: `progress/reports/v8-engine-latest.md`.
+
 ## Cascada CSS — 2026-10-24
 
 - Reglas indexadas con flags `structural`/`sibling`; solo los candidatos que
