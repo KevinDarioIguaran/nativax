@@ -2597,6 +2597,8 @@ class _TextControlState extends State<_TextControl> {
           obscureText: !widget.multiline && element.inputType == 'password',
           maxLines: widget.multiline ? null : 1,
           minLines: widget.multiline ? rows : null,
+          textAlignVertical:
+              widget.multiline ? null : TextAlignVertical.center,
           maxLength: maxLength,
           maxLengthEnforcement: MaxLengthEnforcement.enforced,
           keyboardType: widget.multiline
