@@ -1,0 +1,25 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><style>
+body{font:16px sans-serif;padding:20px;background:#fff}
+form{display:grid;gap:10px;max-width:420px}
+input,button{padding:8px;font:inherit}
+#out{white-space:pre-wrap;background:#f3f4f6;padding:8px;margin-top:12px}
+</style></head><body>
+<h1>Form events</h1>
+<form id="f"><input id="name" placeholder="Name" required><input id="mail" type="email" placeholder="Email" required><button id="send">Send</button></form>
+<pre id="out">Waiting</pre>
+<script>
+const form = document.getElementById('f');
+const out = document.getElementById('out');
+form.addEventListener('input', (event) => {
+  out.textContent = `${event.target.id}: ${event.target.value}`;
+});
+form.addEventListener('submit', (event) => {
+  event.preventDefault();
+  out.textContent = 'Submitted ' + document.getElementById('name').value;
+});
+document.getElementById('mail').addEventListener('change', () => {
+  out.textContent = 'Email changed';
+});
+</script>
+</body></html>

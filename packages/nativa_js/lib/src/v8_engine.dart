@@ -74,7 +74,7 @@ final class V8Engine implements JavaScriptEngine {
       _putBuffer,
       exceptionalReturn: _zeroUint32,
     );
-    // V8's object graph for the Bible dictionary needs more room than the
+    // V8's object graph for large object graphs needs more room than the
     // QuickJS default; keep a floor for the prototype.
     const floor = 256 * 1024 * 1024;
     final heapLimit = config.memoryLimitBytes < floor
@@ -91,8 +91,8 @@ final class V8Engine implements JavaScriptEngine {
       _putBufferCallback.nativeFunction,
     );
     evaluate(nativaxHostPrelude, filename: '<nativax:host>');
-    // V8 otherwise waits for the heap limit before a full GC; the Bible app's
-    // dictionary/book caches leave hundreds of MB of collectable garbage.
+    // V8 otherwise waits for the heap limit before a full GC; large app caches
+    // leave hundreds of MB of collectable garbage.
     _gcTimer = Timer.periodic(const Duration(seconds: 15), (_) {
       if (_disposed) return;
       final used = _memory();

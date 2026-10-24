@@ -47,7 +47,8 @@ class NativaXDocumentView extends StatefulWidget {
   State<NativaXDocumentView> createState() => _NativaXDocumentViewState();
 }
 
-class _NativaXDocumentViewState extends State<NativaXDocumentView> implements dom.LayoutHost {
+class _NativaXDocumentViewState extends State<NativaXDocumentView>
+    implements dom.LayoutHost {
   final ValueNotifier<int> _revision = ValueNotifier(0);
   final ScrollController _scroll = ScrollController();
   final Set<String> _reported = {};
@@ -93,7 +94,8 @@ class _NativaXDocumentViewState extends State<NativaXDocumentView> implements do
     _previousSubmit = widget.document.onSubmit;
     _previousFocusRequest = widget.document.onFocusRequest;
     widget.document.onFocusRequest = _onFocusRequest;
-    if (widget.onNavigate != null) widget.document.onNavigate = widget.onNavigate;
+    if (widget.onNavigate != null)
+      widget.document.onNavigate = widget.onNavigate;
     if (widget.onSubmit != null) widget.document.onSubmit = widget.onSubmit;
   }
 
@@ -124,7 +126,8 @@ class _NativaXDocumentViewState extends State<NativaXDocumentView> implements do
     super.didUpdateWidget(oldWidget);
     if (!identical(oldWidget.document, widget.document)) {
       oldWidget.document.removeMutationListener(_onMutation);
-      if (identical(oldWidget.document.layoutHost, this)) oldWidget.document.layoutHost = null;
+      if (identical(oldWidget.document.layoutHost, this))
+        oldWidget.document.layoutHost = null;
       widget.document.addMutationListener(_onMutation);
       widget.document.layoutHost = this;
       widget.styleEngine.lazySubtrees = true;
@@ -143,8 +146,10 @@ class _NativaXDocumentViewState extends State<NativaXDocumentView> implements do
   void dispose() {
     _disposed = true;
     widget.document.removeMutationListener(_onMutation);
-    if (identical(widget.document.layoutHost, this)) widget.document.layoutHost = null;
-    if (identical(widget.document.canvasHost, _canvases)) widget.document.canvasHost = null;
+    if (identical(widget.document.layoutHost, this))
+      widget.document.layoutHost = null;
+    if (identical(widget.document.canvasHost, _canvases))
+      widget.document.canvasHost = null;
     _canvases.dispose();
     _keyboard.dispose();
     _widgetCache.clear();
@@ -203,9 +208,10 @@ class _NativaXDocumentViewState extends State<NativaXDocumentView> implements do
       final target = record.target;
       final element = target is dom.Element ? target : target.parentElement;
       NativaXDrawTrace.log(
-          'MUTATION ${record.type.name} '
-          '${element == null ? '?' : NativaXDrawTrace.describe(element)} '
-          'name=${record.name ?? ''}');
+        'MUTATION ${record.type.name} '
+        '${element == null ? '?' : NativaXDrawTrace.describe(element)} '
+        'name=${record.name ?? ''}',
+      );
     }
     if (_shouldDeferMutation(record)) {
       final target = record.target;
@@ -257,14 +263,16 @@ class _NativaXDocumentViewState extends State<NativaXDocumentView> implements do
       'subtreePasses=${widget.styleEngine.subtreePasses}',
     );
     NativaXDrawTrace.log(
-        'FLUSH_STYLE ms=${watch.elapsedMilliseconds} changed=${changed.length} '
-        'computes=${widget.styleEngine.computeCount} '
-        'subtreePasses=${widget.styleEngine.subtreePasses}');
+      'FLUSH_STYLE ms=${watch.elapsedMilliseconds} changed=${changed.length} '
+      'computes=${widget.styleEngine.computeCount} '
+      'subtreePasses=${widget.styleEngine.subtreePasses}',
+    );
     if (NativaXDrawTrace.enabled) {
       NativaXDrawTrace.log(
-          'FLUSH style=${watch.elapsedMilliseconds}ms changed=${changed.length} '
-          'computes=${widget.styleEngine.computeCount} '
-          'roots=${widget.styleEngine.dirtyRootCount}');
+        'FLUSH style=${watch.elapsedMilliseconds}ms changed=${changed.length} '
+        'computes=${widget.styleEngine.computeCount} '
+        'roots=${widget.styleEngine.dirtyRootCount}',
+      );
     }
     if (!rebuild) return;
     // Scrolling moves the page under scroll-driven JS handlers (reference
@@ -327,7 +335,10 @@ class _NativaXDocumentViewState extends State<NativaXDocumentView> implements do
     try {
       origin = box.localToGlobal(Offset.zero, ancestor: root);
       // getBoundingClientRect reports the transformed border box's bounds.
-      bounds = MatrixUtils.transformRect(box.getTransformTo(root), Offset.zero & box.size);
+      bounds = MatrixUtils.transformRect(
+        box.getTransformTo(root),
+        Offset.zero & box.size,
+      );
     } catch (_) {
       return null;
     }
@@ -357,8 +368,13 @@ class _NativaXDocumentViewState extends State<NativaXDocumentView> implements do
   dom.ElementBox? _inlineBox(dom.Element element, RenderBox root) {
     final range = inlineRanges[element];
     final paragraph = range?.paragraph;
-    if (range == null || paragraph == null || !paragraph.attached || !paragraph.hasSize) return null;
-    if (widget.styleEngine.styleOf(element).display == Display.none) return null;
+    if (range == null ||
+        paragraph == null ||
+        !paragraph.attached ||
+        !paragraph.hasSize)
+      return null;
+    if (widget.styleEngine.styleOf(element).display == Display.none)
+      return null;
     final Offset origin;
     try {
       origin = paragraph.localToGlobal(Offset.zero, ancestor: root);
@@ -376,8 +392,13 @@ class _NativaXDocumentViewState extends State<NativaXDocumentView> implements do
       }
     }
     if (rect == null) {
-      final caret = paragraph.getOffsetForCaret(TextPosition(offset: range.start), Rect.zero);
-      final height = paragraph.getFullHeightForCaret(TextPosition(offset: range.start));
+      final caret = paragraph.getOffsetForCaret(
+        TextPosition(offset: range.start),
+        Rect.zero,
+      );
+      final height = paragraph.getFullHeightForCaret(
+        TextPosition(offset: range.start),
+      );
       rect = Rect.fromLTWH(caret.dx, caret.dy, 0, height);
     }
     final r = rect.shift(origin);
@@ -428,14 +449,22 @@ class _NativaXDocumentViewState extends State<NativaXDocumentView> implements do
     final p = _scroll.position;
     final target = y.clamp(p.minScrollExtent, p.maxScrollExtent).toDouble();
     if (smooth) {
-      _scroll.animateTo(target, duration: const Duration(milliseconds: 300), curve: Curves.easeInOut);
+      _scroll.animateTo(
+        target,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeInOut,
+      );
     } else {
       _scroll.jumpTo(target);
     }
   }
 
   @override
-  void scrollIntoView(dom.Element element, {bool smooth = false, String block = 'start'}) {
+  void scrollIntoView(
+    dom.Element element, {
+    bool smooth = false,
+    String block = 'start',
+  }) {
     // Layout may be pending (the script just changed the DOM). A virtualized
     // target is materialized first, like Blink's display-lock activation for
     // scrollIntoView, and the real box is used on the next frame.
@@ -475,6 +504,20 @@ class _NativaXDocumentViewState extends State<NativaXDocumentView> implements do
   @override
   bool get isScrolling => _isScrolling;
 
+  @override
+  dom.Element? elementFromPoint(double x, double y) {
+    final root = _root;
+    if (root == null) return null;
+    return elementAtGlobal(context, root.localToGlobal(Offset(x, y)));
+  }
+
+  @override
+  List<dom.Element> elementsFromPoint(double x, double y) {
+    final root = _root;
+    if (root == null) return const [];
+    return elementsAtGlobal(context, root.localToGlobal(Offset(x, y)));
+  }
+
   void _onScroll() {
     _isScrolling = true;
     _scrollIdle?.cancel();
@@ -485,13 +528,16 @@ class _NativaXDocumentViewState extends State<NativaXDocumentView> implements do
         setState(() {});
       }
     });
-    if (_scrollEventScheduled || (_scroll.offset - _lastScroll).abs() < 0.5) return;
+    if (_scrollEventScheduled || (_scroll.offset - _lastScroll).abs() < 0.5)
+      return;
     _scrollEventScheduled = true;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _scrollEventScheduled = false;
       if (_disposed || !_scroll.hasClients) return;
       _lastScroll = _scroll.offset;
-      widget.document.dispatchEvent(dom.Event('scroll', bubbles: true)..isTrusted = true);
+      widget.document.dispatchEvent(
+        dom.Event('scroll', bubbles: true)..isTrusted = true,
+      );
     });
   }
 
@@ -502,7 +548,13 @@ class _NativaXDocumentViewState extends State<NativaXDocumentView> implements do
   Map<String, Object?> _dragDetail(Offset global) {
     final (x, y) = toViewport(global.dx, global.dy);
     final id = dragSessionOf[widget.document];
-    return {'__drag': ?id, 'clientX': x, 'clientY': y, 'pageX': x, 'pageY': y + scrollY};
+    return {
+      '__drag': ?id,
+      'clientX': x,
+      'clientY': y,
+      'pageX': x,
+      'pageY': y + scrollY,
+    };
   }
 
   /// One target for the whole document: finds the element under the pointer
@@ -514,26 +566,44 @@ class _NativaXDocumentViewState extends State<NativaXDocumentView> implements do
       final target = elementAtGlobal(context, d.offset);
       if (!identical(target, _dragOver)) {
         _dragOver?.dispatchEvent(
-          dom.Event('dragleave', bubbles: true, detail: _dragDetail(d.offset))..isTrusted = true,
+          dom.Event('dragleave', bubbles: true, detail: _dragDetail(d.offset))
+            ..isTrusted = true,
         );
         target?.dispatchEvent(
-          dom.Event('dragenter', bubbles: true, cancelable: true, detail: _dragDetail(d.offset))..isTrusted = true,
+          dom.Event(
+            'dragenter',
+            bubbles: true,
+            cancelable: true,
+            detail: _dragDetail(d.offset),
+          )..isTrusted = true,
         );
         _dragOver = target;
       }
       target?.dispatchEvent(
-        dom.Event('dragover', bubbles: true, cancelable: true, detail: _dragDetail(d.offset))..isTrusted = true,
+        dom.Event(
+          'dragover',
+          bubbles: true,
+          cancelable: true,
+          detail: _dragDetail(d.offset),
+        )..isTrusted = true,
       );
     },
     onLeave: (_) {
-      _dragOver?.dispatchEvent(dom.Event('dragleave', bubbles: true)..isTrusted = true);
+      _dragOver?.dispatchEvent(
+        dom.Event('dragleave', bubbles: true)..isTrusted = true,
+      );
       _dragOver = null;
     },
     onAcceptWithDetails: (d) {
       final target = elementAtGlobal(context, d.offset) ?? _dragOver;
       _dragOver = null;
       target?.dispatchEvent(
-        dom.Event('drop', bubbles: true, cancelable: true, detail: _dragDetail(d.offset))..isTrusted = true,
+        dom.Event(
+          'drop',
+          bubbles: true,
+          cancelable: true,
+          detail: _dragDetail(d.offset),
+        )..isTrusted = true,
       );
     },
     builder: (context, candidates, rejected) => child,
@@ -563,7 +633,9 @@ class _NativaXDocumentViewState extends State<NativaXDocumentView> implements do
         'altKey': keys.isAltPressed,
         'metaKey': keys.isMetaPressed,
         'repeat': event is KeyRepeatEvent,
-        'keyCode': event.logicalKey.keyId < 0x110000 ? event.logicalKey.keyId : 0,
+        'keyCode': event.logicalKey.keyId < 0x110000
+            ? event.logicalKey.keyId
+            : 0,
       },
     )..isTrusted = true;
     final notCanceled = target.dispatchEvent(ev);
@@ -617,12 +689,13 @@ class _NativaXDocumentViewState extends State<NativaXDocumentView> implements do
       final computes = widget.styleEngine.computeCount;
       final styleUs = widget.styleEngine.metricsOwnUs;
       NativaXDrawTrace.log(
-          'FRAME total=${t.totalSpan.inMilliseconds}ms '
-          'build=${t.buildDuration.inMilliseconds}ms '
-          'raster=${t.rasterDuration.inMilliseconds}ms '
-          'builds=${builds - _lastBuildCount} '
-          'computes=${computes - _lastComputeCount} '
-          'styleMs=${((styleUs - _lastStyleUs) / 1000).toStringAsFixed(1)}');
+        'FRAME total=${t.totalSpan.inMilliseconds}ms '
+        'build=${t.buildDuration.inMilliseconds}ms '
+        'raster=${t.rasterDuration.inMilliseconds}ms '
+        'builds=${builds - _lastBuildCount} '
+        'computes=${computes - _lastComputeCount} '
+        'styleMs=${((styleUs - _lastStyleUs) / 1000).toStringAsFixed(1)}',
+      );
       NativaXDrawTrace.flushSlowest();
       _lastBuildCount = builds;
       _lastComputeCount = computes;
@@ -634,9 +707,10 @@ class _NativaXDocumentViewState extends State<NativaXDocumentView> implements do
   Widget build(BuildContext context) {
     final buildWatch = Stopwatch()..start();
     NativaXDrawTrace.log(
-        'BUILD_START nodes=${widget.document.querySelectorAll('*').length} '
-        'cache=${_widgetCache.length} hits=${_widgetCache.hits} '
-        'misses=${_widgetCache.misses}');
+      'BUILD_START nodes=${widget.document.querySelectorAll('*').length} '
+      'cache=${_widgetCache.length} hits=${_widgetCache.hits} '
+      'misses=${_widgetCache.misses}',
+    );
     final mediaQuery = MediaQuery.maybeOf(context);
     final direction = Directionality.maybeOf(context) ?? TextDirection.ltr;
 
@@ -644,11 +718,19 @@ class _NativaXDocumentViewState extends State<NativaXDocumentView> implements do
     // (Material adds tracking and a 1.43 line height) must not leak into the
     // page, where `normal` means the font's own metrics.
     return DefaultTextStyle(
-      style: const TextStyle(inherit: false, color: Color(0xff000000), fontSize: 16),
+      style: const TextStyle(
+        inherit: false,
+        color: Color(0xff000000),
+        fontSize: 16,
+      ),
       child: LayoutBuilder(
         builder: (context, constraints) {
-          final width = constraints.maxWidth.isFinite ? constraints.maxWidth : mediaQuery?.size.width ?? 800;
-          final height = constraints.maxHeight.isFinite ? constraints.maxHeight : mediaQuery?.size.height ?? 600;
+          final width = constraints.maxWidth.isFinite
+              ? constraints.maxWidth
+              : mediaQuery?.size.width ?? 800;
+          final height = constraints.maxHeight.isFinite
+              ? constraints.maxHeight
+              : mediaQuery?.size.height ?? 600;
           if (_lastBuildWidth != width || _lastBuildHeight != height) {
             _lastBuildWidth = width;
             _lastBuildHeight = height;
@@ -726,11 +808,12 @@ class _NativaXDocumentViewState extends State<NativaXDocumentView> implements do
           final scroll = _dropTarget(scroll0);
           final constructMs = buildWatch.elapsedMilliseconds;
           NativaXDrawTrace.log(
-              'BUILD_END construct=${constructMs}ms '
-              'nodes=${document.querySelectorAll('*').length} '
-              'cache=${_widgetCache.length} hits=${_widgetCache.hits} '
-              'misses=${_widgetCache.misses} layers=${layers.length} '
-              'viewport=${width.toStringAsFixed(1)}x${height.toStringAsFixed(1)}');
+            'BUILD_END construct=${constructMs}ms '
+            'nodes=${document.querySelectorAll('*').length} '
+            'cache=${_widgetCache.length} hits=${_widgetCache.hits} '
+            'misses=${_widgetCache.misses} layers=${layers.length} '
+            'viewport=${width.toStringAsFixed(1)}x${height.toStringAsFixed(1)}',
+          );
           WidgetsBinding.instance.addPostFrameCallback((_) {
             if (!_diagnosedBuild) {
               _diagnosedBuild = true;

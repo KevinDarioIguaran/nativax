@@ -82,6 +82,12 @@ class HeadlessLayoutHost implements LayoutHost {
   @override
   bool get isScrolling => false;
 
+  @override
+  Element? elementFromPoint(double x, double y) => null;
+
+  @override
+  List<Element> elementsFromPoint(double x, double y) => const [];
+
   (double, double) _layout(Element element, double containingWidth, double x, double y) {
     final style = styleEngine.styleOf(element);
     if (style.display == Display.none) {

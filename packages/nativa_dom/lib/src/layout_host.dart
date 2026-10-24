@@ -19,8 +19,8 @@ class ElementBox {
     this.scrollLeft = 0,
     double? offsetWidth,
     double? offsetHeight,
-  })  : offsetWidth = offsetWidth ?? width,
-        offsetHeight = offsetHeight ?? height;
+  }) : offsetWidth = offsetWidth ?? width,
+       offsetHeight = offsetHeight ?? height;
 
   /// Bounds of the (possibly transformed) border box relative to the
   /// viewport, as `getBoundingClientRect` reports them.
@@ -44,21 +44,21 @@ class ElementBox {
   final double offsetHeight;
 
   Map<String, Object?> toJson() => {
-        'offsetWidth': offsetWidth,
-        'offsetHeight': offsetHeight,
-        'x': x,
-        'y': y,
-        'width': width,
-        'height': height,
-        'offsetX': offsetX,
-        'offsetY': offsetY,
-        'clientWidth': clientWidth,
-        'clientHeight': clientHeight,
-        'scrollWidth': scrollWidth,
-        'scrollHeight': scrollHeight,
-        'scrollTop': scrollTop,
-        'scrollLeft': scrollLeft,
-      };
+    'offsetWidth': offsetWidth,
+    'offsetHeight': offsetHeight,
+    'x': x,
+    'y': y,
+    'width': width,
+    'height': height,
+    'offsetX': offsetX,
+    'offsetY': offsetY,
+    'clientWidth': clientWidth,
+    'clientHeight': clientHeight,
+    'scrollWidth': scrollWidth,
+    'scrollHeight': scrollHeight,
+    'scrollTop': scrollTop,
+    'scrollLeft': scrollLeft,
+  };
 }
 
 /// Implemented by a renderer so scripts can query layout and scroll.
@@ -66,7 +66,11 @@ abstract interface class LayoutHost {
   /// The element's box, or null when it is not rendered.
   ElementBox? boxOf(Element element);
 
-  void scrollIntoView(Element element, {bool smooth = false, String block = 'start'});
+  void scrollIntoView(
+    Element element, {
+    bool smooth = false,
+    String block = 'start',
+  });
 
   double get scrollX;
   double get scrollY;
@@ -77,6 +81,12 @@ abstract interface class LayoutHost {
 
   /// Converts a global (screen) position to viewport coordinates.
   (double, double) toViewport(double globalX, double globalY);
+
+  /// Innermost rendered element at viewport coordinates.
+  Element? elementFromPoint(double x, double y);
+
+  /// Rendered elements under viewport coordinates, innermost first.
+  List<Element> elementsFromPoint(double x, double y);
 
   /// Whether the document is currently being scrolled. Renderers use it to
   /// defer hover hit-testing, which would otherwise restyle large subtrees on

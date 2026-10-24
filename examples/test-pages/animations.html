@@ -1,0 +1,18 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><style>
+body{font:16px sans-serif;padding:20px;background:#111;color:#eee}
+.box{width:80px;height:80px;background:#e11;border-radius:12px;animation:spin 1.2s linear infinite}
+@keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+.fade{opacity:.5;transition:opacity .3s ease}
+</style></head><body>
+<h1>Animations</h1><div class="box"></div>
+<p class="fade" id="text">CSS animation and classes</p>
+<button id="toggle">Pulse</button>
+<script>
+document.getElementById('toggle').onclick = () => {
+  const t = document.getElementById('text');
+  t.classList.toggle('fade');
+  t.textContent = t.classList.contains('fade') ? 'Faded' : 'Visible';
+};
+</script>
+</body></html>

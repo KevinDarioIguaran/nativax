@@ -98,10 +98,14 @@ class _ElementAnchor extends SingleChildRenderObjectWidget {
   final dom.Element element;
 
   @override
-  _RenderElementAnchor createRenderObject(BuildContext context) => _RenderElementAnchor(element);
+  _RenderElementAnchor createRenderObject(BuildContext context) =>
+      _RenderElementAnchor(element);
 
   @override
-  void updateRenderObject(BuildContext context, _RenderElementAnchor renderObject) {
+  void updateRenderObject(
+    BuildContext context,
+    _RenderElementAnchor renderObject,
+  ) {
     renderObject.element = element;
   }
 }
@@ -112,7 +116,8 @@ class _RenderElementAnchor extends RenderProxyBox with CssElementBoundary {
 
   set element(dom.Element e) {
     if (identical(e, _element)) return;
-    if (identical(elementRenderBoxes[_element], this)) elementRenderBoxes[_element] = null;
+    if (identical(elementRenderBoxes[_element], this))
+      elementRenderBoxes[_element] = null;
     _element = e;
     if (attached) elementRenderBoxes[e] = this;
   }
@@ -130,10 +135,14 @@ class _RenderElementAnchor extends RenderProxyBox with CssElementBoundary {
     if (NativaXDrawTrace.enabled) {
       final us = watch!.elapsedMicroseconds;
       final ms = us / 1000.0;
-      final label = 'LAYOUT ${NativaXDrawTrace.describe(_element)} '
+      final label =
+          'LAYOUT ${NativaXDrawTrace.describe(_element)} '
           'size=${size.width.toStringAsFixed(1)}x${size.height.toStringAsFixed(1)}';
       NativaXDrawTrace.log('$label ms=${ms.toStringAsFixed(2)}');
-      NativaXDrawTrace.markSlow('LAYOUT ${NativaXDrawTrace.describe(_element)}', us ~/ 1000);
+      NativaXDrawTrace.markSlow(
+        'LAYOUT ${NativaXDrawTrace.describe(_element)}',
+        us ~/ 1000,
+      );
       if (us >= 20000) NativaXDrawTrace.log('SLOW_$label');
     }
   }
@@ -141,7 +150,8 @@ class _RenderElementAnchor extends RenderProxyBox with CssElementBoundary {
   @override
   void paint(PaintingContext context, Offset offset) {
     final watch = NativaXDrawTrace.enabled ? (Stopwatch()..start()) : null;
-    final label = 'PAINT ${NativaXDrawTrace.describe(_element)} '
+    final label =
+        'PAINT ${NativaXDrawTrace.describe(_element)} '
         'offset=${offset.dx.toStringAsFixed(1)},${offset.dy.toStringAsFixed(1)} '
         'size=${size.width.toStringAsFixed(1)}x${size.height.toStringAsFixed(1)}';
     if (NativaXDrawTrace.enabled) {
@@ -152,7 +162,10 @@ class _RenderElementAnchor extends RenderProxyBox with CssElementBoundary {
       final us = watch!.elapsedMicroseconds;
       final ms = us / 1000.0;
       NativaXDrawTrace.log('$label ms=${ms.toStringAsFixed(2)}');
-      NativaXDrawTrace.markSlow('PAINT ${NativaXDrawTrace.describe(_element)}', us ~/ 1000);
+      NativaXDrawTrace.markSlow(
+        'PAINT ${NativaXDrawTrace.describe(_element)}',
+        us ~/ 1000,
+      );
       if (us >= 20000) {
         NativaXDrawTrace.log('SLOW_$label');
       }
@@ -161,7 +174,8 @@ class _RenderElementAnchor extends RenderProxyBox with CssElementBoundary {
 
   @override
   void detach() {
-    if (identical(elementRenderBoxes[_element], this)) elementRenderBoxes[_element] = null;
+    if (identical(elementRenderBoxes[_element], this))
+      elementRenderBoxes[_element] = null;
     super.detach();
   }
 }
@@ -195,16 +209,27 @@ class InlineRange {
 
 final Expando<InlineRange> inlineRanges = Expando('nativax.inlineRange');
 
-/// The innermost rendered element at [global] (for drag and drop targets).
-dom.Element? elementAtGlobal(BuildContext context, Offset global) {
+/// The rendered elements at [global], innermost first.
+List<dom.Element> elementsAtGlobal(BuildContext context, Offset global) {
   final result = HitTestResult();
-  WidgetsBinding.instance.hitTestInView(result, global, View.of(context).viewId);
+  WidgetsBinding.instance.hitTestInView(
+    result,
+    global,
+    View.of(context).viewId,
+  );
+  final out = <dom.Element>[];
   for (final entry in result.path) {
     final target = entry.target;
-    if (target is _RenderElementAnchor) return target._element;
+    if (target is _RenderElementAnchor && !out.contains(target._element)) {
+      out.add(target._element);
+    }
   }
-  return null;
+  return out;
 }
+
+/// The innermost rendered element at [global] (for drag and drop targets).
+dom.Element? elementAtGlobal(BuildContext context, Offset global) =>
+    elementsAtGlobal(context, global).firstOrNull;
 
 /// Ids of drag-and-drop sessions (shared `dataTransfer` objects in script).
 int _nextDragId = 1;
@@ -245,40 +270,59 @@ class NativeXLayerView extends StatelessWidget {
     if (!modal) return builder._absoluteWidget(element);
     final style = styleEngine.styleOf(element);
     final backdrop = styleEngine.pseudoStyleOf(element, 'backdrop');
-    final box = builder._interact(element, style,
-        builder.paintEffects(element, style, _ElementAnchor(element: element, child: builder.buildBox(element, style))));
+    final box = builder._interact(
+      element,
+      style,
+      builder.paintEffects(
+        element,
+        style,
+        _ElementAnchor(
+          element: element,
+          child: builder.buildBox(element, style),
+        ),
+      ),
+    );
     return Positioned.fill(
       key: ObjectKey(element),
-      child: Stack(children: [
-        Positioned.fill(
-          child: GestureDetector(
-            behavior: HitTestBehavior.opaque,
-            onTap: () {},
-            child: ColoredBox(
-              color: backdrop == null ? const Color(0x1a000000) : toColor(backdrop.backgroundColor),
-            ),
-          ),
-        ),
-        Center(
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: SingleChildScrollView(
-              child: CssFlexLayout(
-                direction: Axis.vertical,
-                alignItems: 'center',
-                children: [
-                  CssItem(
-                    margin: const [ResolvedLength.zero, ResolvedLength.zero, ResolvedLength.zero, ResolvedLength.zero],
-                    autoWidth: false,
-                    autoHeight: true,
-                    child: box,
-                  ),
-                ],
+      child: Stack(
+        children: [
+          Positioned.fill(
+            child: GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: () {},
+              child: ColoredBox(
+                color: backdrop == null
+                    ? const Color(0x1a000000)
+                    : toColor(backdrop.backgroundColor),
               ),
             ),
           ),
-        ),
-      ]),
+          Center(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: SingleChildScrollView(
+                child: CssFlexLayout(
+                  direction: Axis.vertical,
+                  alignItems: 'center',
+                  children: [
+                    CssItem(
+                      margin: const [
+                        ResolvedLength.zero,
+                        ResolvedLength.zero,
+                        ResolvedLength.zero,
+                        ResolvedLength.zero,
+                      ],
+                      autoWidth: false,
+                      autoHeight: true,
+                      child: box,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -305,7 +349,18 @@ class _Builder {
     ResolvedLength.zero,
   ];
 
-  static const _replaced = {'img', 'input', 'textarea', 'select', 'br', 'video', 'audio', 'canvas', 'iframe', 'svg'};
+  static const _replaced = {
+    'img',
+    'input',
+    'textarea',
+    'select',
+    'br',
+    'video',
+    'audio',
+    'canvas',
+    'iframe',
+    'svg',
+  };
 
   /// `::before`/`::after` of [element] when they generate a box.
   _Pseudo? _pseudo(dom.Element element, String kind) {
@@ -331,7 +386,8 @@ class _Builder {
       if (c is dom.Element && nativaxNeverRenderedTags.contains(c.localName)) {
         continue;
       }
-      if (c is dom.Element && styleEngine.styleOf(c).display == Display.contents) {
+      if (c is dom.Element &&
+          styleEngine.styleOf(c).display == Display.contents) {
         out.addAll(children(c));
       } else {
         out.add(c);
@@ -343,17 +399,16 @@ class _Builder {
   }
 
   ComputedStyle? styleOfChild(Object c) => switch (c) {
-        dom.Element() => styleEngine.styleOf(c),
-        _Pseudo() => c.style,
-        _ => null,
-      };
+    dom.Element() => styleEngine.styleOf(c),
+    _Pseudo() => c.style,
+    _ => null,
+  };
 
   bool _skipped(Object c) {
     // Tags that never generate a box are skipped without asking the style
     // engine. Scripts/styles in particular are numerous in real pages and
     // would otherwise pay full selector matching for no visual result.
-    if (c is dom.Element &&
-        nativaxNeverRenderedTags.contains(c.localName)) {
+    if (c is dom.Element && nativaxNeverRenderedTags.contains(c.localName)) {
       return true;
     }
     final s = styleOfChild(c);
@@ -363,23 +418,33 @@ class _Builder {
 
   bool _isAbsolute(Object c) => styleOfChild(c)?.position == 'absolute';
 
-  bool _isInline(Object c) => c is dom.Text || (styleOfChild(c)?.isInlineLevel ?? false);
+  bool _isInline(Object c) =>
+      c is dom.Text || (styleOfChild(c)?.isInlineLevel ?? false);
 
-  Widget buildItem(dom.Element element,
-      {required bool parentFlex, bool repaintBoundary = false}) {
+  Widget buildItem(
+    dom.Element element, {
+    required bool parentFlex,
+    bool repaintBoundary = false,
+  }) {
     final cached = cache?.get(element);
     if (cached != null) return cached;
     NativeXBuildStats.elementBuilds++;
     final buildWatch = NativaXDrawTrace.enabled ? (Stopwatch()..start()) : null;
     final Widget result;
     if (!LayoutProfile.enabled) {
-      result =
-          _buildItem(element, parentFlex: parentFlex, repaintBoundary: repaintBoundary);
+      result = _buildItem(
+        element,
+        parentFlex: parentFlex,
+        repaintBoundary: repaintBoundary,
+      );
     } else {
       LayoutProfile.begin('widget.buildItem');
       try {
-        result = _buildItem(element,
-            parentFlex: parentFlex, repaintBoundary: repaintBoundary);
+        result = _buildItem(
+          element,
+          parentFlex: parentFlex,
+          repaintBoundary: repaintBoundary,
+        );
       } finally {
         LayoutProfile.end();
       }
@@ -394,8 +459,11 @@ class _Builder {
     return result;
   }
 
-  Widget _buildItem(dom.Element element,
-      {required bool parentFlex, bool repaintBoundary = false}) {
+  Widget _buildItem(
+    dom.Element element, {
+    required bool parentFlex,
+    bool repaintBoundary = false,
+  }) {
     final style = styleEngine.styleOf(element);
     // The animated box rebuilds with interpolated styles during CSS
     // transitions and animations; idle, it just builds the box.
@@ -406,24 +474,54 @@ class _Builder {
       builder: (s) {
         var box = buildBox(element, s);
         if (s.display == Display.listItem) box = _withMarker(element, s, box);
-        return paintEffects(element, s, _ElementAnchor(element: element, child: box));
+        return paintEffects(
+          element,
+          s,
+          _ElementAnchor(element: element, child: box),
+        );
       },
     );
     var item = _interact(element, style, box);
     // Sticky boxes are outermost so hit testing follows the shifted box.
-    if (style.position == 'sticky' && (style.top != null || style.bottom != null)) {
-      item = CssSticky(top: _px(style.top), bottom: _px(style.bottom), child: item);
+    if (style.position == 'sticky' &&
+        (style.top != null || style.bottom != null)) {
+      item = CssSticky(
+        top: _px(style.top),
+        bottom: _px(style.bottom),
+        child: item,
+      );
     }
     if (repaintBoundary) item = RepaintBoundary(child: item);
-    return itemFor(style, item,
-        key: ObjectKey(element), parentFlex: parentFlex, replaced: _replacedElements.contains(element.localName));
+    return itemFor(
+      style,
+      item,
+      key: ObjectKey(element),
+      parentFlex: parentFlex,
+      replaced: _replacedElements.contains(element.localName),
+    );
   }
 
-  static const _replacedElements = {'img', 'svg', 'video', 'canvas', 'iframe', 'embed', 'object', 'audio'};
+  static const _replacedElements = {
+    'img',
+    'svg',
+    'video',
+    'canvas',
+    'iframe',
+    'embed',
+    'object',
+    'audio',
+  };
 
   /// Wraps [box] in the CSS item parent data for flow, flex and grid parents.
-  Widget itemFor(ComputedStyle style, Widget box, {Key? key, required bool parentFlex, bool replaced = false}) {
-    final autoWidth = style.width == null && (parentFlex || !style.isInlineLevel);
+  Widget itemFor(
+    ComputedStyle style,
+    Widget box, {
+    Key? key,
+    required bool parentFlex,
+    bool replaced = false,
+  }) {
+    final autoWidth =
+        style.width == null && (parentFlex || !style.isInlineLevel);
     return CssItem(
       key: key,
       margin: [
@@ -444,7 +542,9 @@ class _Builder {
       gridColumnStart: style.gridColumnStart,
       gridColumnEnd: style.gridColumnEnd,
       order: style.order,
-      zIndex: style.position == 'relative' || style.position == 'sticky' ? style.zIndex : null,
+      zIndex: style.position == 'relative' || style.position == 'sticky'
+          ? style.zIndex
+          : null,
       replaced: replaced,
       child: box,
     );
@@ -463,31 +563,56 @@ class _Builder {
     if (backdrop != null) {
       final blur = filterBlur(backdrop);
       if (blur > 0) {
-        box = ClipRect(child: BackdropFilter(filter: ui.ImageFilter.blur(sigmaX: blur, sigmaY: blur), child: box));
+        box = ClipRect(
+          child: BackdropFilter(
+            filter: ui.ImageFilter.blur(sigmaX: blur, sigmaY: blur),
+            child: box,
+          ),
+        );
       }
     }
     final filter = style.filter;
     if (filter != null) {
       final matrix = filterColorMatrix(filter);
-      if (matrix != null) box = ColorFiltered(colorFilter: ColorFilter.matrix(matrix), child: box);
+      if (matrix != null)
+        box = ColorFiltered(
+          colorFilter: ColorFilter.matrix(matrix),
+          child: box,
+        );
       final blur = filterBlur(filter);
-      if (blur > 0) box = ImageFiltered(imageFilter: ui.ImageFilter.blur(sigmaX: blur, sigmaY: blur), child: box);
+      if (blur > 0)
+        box = ImageFiltered(
+          imageFilter: ui.ImageFilter.blur(sigmaX: blur, sigmaY: blur),
+          child: box,
+        );
       for (final f in filter.functions.where((x) => x.name == 'drop-shadow')) {
         final sh = f.shadow!;
         box = DecoratedBox(
-          decoration: BoxDecoration(boxShadow: [
-            BoxShadow(color: toColor(sh.color.color ?? style.color), offset: Offset(sh.x.value, sh.y.value), blurRadius: sh.blur.value),
-          ]),
+          decoration: BoxDecoration(
+            boxShadow: [
+              BoxShadow(
+                color: toColor(sh.color.color ?? style.color),
+                offset: Offset(sh.x.value, sh.y.value),
+                blurRadius: sh.blur.value,
+              ),
+            ],
+          ),
           child: box,
         );
       }
     }
     final transform = style.transform;
-    if (transform != null) box = CssTransform(transform: transform, origin: style.transformOrigin, child: box);
+    if (transform != null)
+      box = CssTransform(
+        transform: transform,
+        origin: style.transformOrigin,
+        child: box,
+      );
     if (style.opacity < 1) box = Opacity(opacity: style.opacity, child: box);
     if (style.visibility == 'hidden' || style.visibility == 'collapse') {
       final parent = element?.parentElement;
-      final parentHidden = parent != null && styleEngine.styleOf(parent).visibility != 'visible';
+      final parentHidden =
+          parent != null && styleEngine.styleOf(parent).visibility != 'visible';
       if (!parentHidden) {
         box = Visibility(
           visible: false,
@@ -507,25 +632,35 @@ class _Builder {
     final style = p.style;
     Widget content = p.text.isEmpty
         ? const SizedBox.shrink()
-        : Text(applyTextTransform(p.text, style.textTransform),
-            style: textStyleFor(style), textAlign: textAlignFor(style));
+        : Text(
+            applyTextTransform(p.text, style.textTransform),
+            style: textStyleFor(style),
+            textAlign: textAlignFor(style),
+          );
     return paintEffects(
-        null,
-        style,
-        CssBox(spec: boxSpecFor(style, report: onDiagnostic), child: content));
+      null,
+      style,
+      CssBox(
+        spec: boxSpecFor(style, report: onDiagnostic),
+        child: content,
+      ),
+    );
   }
 
   /// Controls drawn by the platform ignore author backgrounds and borders
   /// (as browsers do while `appearance` is `auto`).
   static bool _nativeAppearance(dom.Element e) =>
-      e.localName == 'input' && const {'checkbox', 'radio', 'range'}.contains(e.inputType);
+      e.localName == 'input' &&
+      const {'checkbox', 'radio', 'range'}.contains(e.inputType);
 
   Widget buildBox(dom.Element element, ComputedStyle style) {
     final image = _backgroundImage(element, style);
     var content = buildContent(element, style);
     if (_isScrollable(style)) content = _scrollContainer(style, content);
     // Buttons centre their contents vertically when taller than them.
-    if (element.localName == 'button' && !style.isFlexContainer && !style.isGridContainer) {
+    if (element.localName == 'button' &&
+        !style.isFlexContainer &&
+        !style.isGridContainer) {
       content = CenterVertically(child: content);
     }
     var spec = boxSpecFor(style, backgroundImage: image, report: onDiagnostic);
@@ -544,10 +679,16 @@ class _Builder {
       );
     }
     final legend = element.localName == 'fieldset' ? _legendOf(element) : null;
-    final Widget box = legend != null ? _fieldset(element, style, spec, legend, content) : CssBox(spec: spec, child: content);
+    final Widget box = legend != null
+        ? _fieldset(element, style, spec, legend, content)
+        : CssBox(spec: spec, child: content);
     final perspective = style.perspective;
     if (perspective == null) return box;
-    return CssPerspective(distance: perspective, origin: style.perspectiveOrigin, child: box);
+    return CssPerspective(
+      distance: perspective,
+      origin: style.perspectiveOrigin,
+      child: box,
+    );
   }
 
   dom.Element? _legendOf(dom.Element fieldset) {
@@ -561,7 +702,13 @@ class _Builder {
 
   /// A fieldset whose first `<legend>` sits on the top border, which is
   /// interrupted behind it.
-  Widget _fieldset(dom.Element element, ComputedStyle style, CssBoxSpec spec, dom.Element legend, Widget content) {
+  Widget _fieldset(
+    dom.Element element,
+    ComputedStyle style,
+    CssBoxSpec spec,
+    dom.Element legend,
+    Widget content,
+  ) {
     final top = spec.border[0];
     final color = spec.borderColors[0];
     final radius = spec.radii[0].isPercent ? 0.0 : spec.radii[0].value;
@@ -576,7 +723,12 @@ class _Builder {
       padding: spec.padding,
       border: [0, spec.border[1], spec.border[2], spec.border[3]],
       borderColors: spec.borderColors,
-      radii: [ResolvedLength.zero, ResolvedLength.zero, spec.radii[2], spec.radii[3]],
+      radii: [
+        ResolvedLength.zero,
+        ResolvedLength.zero,
+        spec.radii[2],
+        spec.radii[3],
+      ],
       borderBox: spec.borderBox,
       clip: spec.clip,
       background: spec.background,
@@ -584,8 +736,15 @@ class _Builder {
       shadows: spec.shadows,
     );
     final legendStyle = styleEngine.styleOf(legend);
-    final legendBox = _interact(legend, legendStyle,
-        paintEffects(legend, legendStyle, _ElementAnchor(element: legend, child: buildBox(legend, legendStyle))));
+    final legendBox = _interact(
+      legend,
+      legendStyle,
+      paintEffects(
+        legend,
+        legendStyle,
+        _ElementAnchor(element: legend, child: buildBox(legend, legendStyle)),
+      ),
+    );
     final legendPad = spec.padding[3].isPercent ? 8.0 : spec.padding[3].value;
     final column = Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -603,7 +762,10 @@ class _Builder {
         CssBox(spec: lower, child: content),
       ],
     );
-    if (spec.width == null && spec.maxWidth == null && spec.minWidth.value == 0 && !spec.minWidth.isPercent) {
+    if (spec.width == null &&
+        spec.maxWidth == null &&
+        spec.minWidth.value == 0 &&
+        !spec.minWidth.isPercent) {
       return column;
     }
     // Content-box lengths grow by the horizontal padding and borders.
@@ -612,7 +774,9 @@ class _Builder {
       if (!p.isPercent) extra += p.value;
     }
     ResolvedLength? outer(ResolvedLength? l) =>
-        l == null || l.isPercent || spec.borderBox ? l : ResolvedLength.px(l.value + extra);
+        l == null || l.isPercent || spec.borderBox
+        ? l
+        : ResolvedLength.px(l.value + extra);
     return CssBox(
       spec: CssBoxSpec(
         width: outer(spec.width),
@@ -647,7 +811,12 @@ class _Builder {
         final cols = int.tryParse(element.getAttribute('cols') ?? '') ?? 20;
         return PreferredWidth(
           width: cols * style.fontSize * 0.6,
-          child: _TextControl(element: element, style: style, multiline: true, builder: this),
+          child: _TextControl(
+            element: element,
+            style: style,
+            multiline: true,
+            builder: this,
+          ),
         );
       case 'select':
         return _select(element, style);
@@ -655,7 +824,11 @@ class _Builder {
         return SvgView(element: element, styleEngine: styleEngine);
       case 'canvas':
         final host = element.ownerDocument.canvasHost;
-        return CanvasView(element: element, registry: host is CanvasRegistry ? host : null, style: style);
+        return CanvasView(
+          element: element,
+          registry: host is CanvasRegistry ? host : null,
+          style: style,
+        );
       case 'video':
       case 'audio':
       case 'iframe':
@@ -667,7 +840,10 @@ class _Builder {
   }
 
   Widget _normalContent(dom.Element element, ComputedStyle style) {
-    final all = [for (final c in children(element)) if (!_skipped(c)) c];
+    final all = [
+      for (final c in children(element))
+        if (!_skipped(c)) c,
+    ];
     final absolute = all.where(_isAbsolute).toList();
     final normal = all.where((c) => !_isAbsolute(c)).toList();
 
@@ -678,7 +854,9 @@ class _Builder {
       content = CssGridLayout(
         columns: style.gridTemplateColumns,
         rows: style.gridTemplateRows,
-        autoColumns: [for (final e in style.gridAutoColumns.entries) ...e.tracks],
+        autoColumns: [
+          for (final e in style.gridAutoColumns.entries) ...e.tracks,
+        ],
         autoRows: [for (final e in style.gridAutoRows.entries) ...e.tracks],
         areas: style.gridTemplateAreas,
         autoFlow: style.gridAutoFlow,
@@ -692,7 +870,9 @@ class _Builder {
       );
     } else if (style.isFlexContainer) {
       content = CssFlexLayout(
-        direction: _isRow(style.flexDirection) ? Axis.horizontal : Axis.vertical,
+        direction: _isRow(style.flexDirection)
+            ? Axis.horizontal
+            : Axis.vertical,
         reverse: style.flexDirection.endsWith('reverse'),
         wrap: style.flexWrap,
         justifyContent: _justify(style.justifyContent),
@@ -705,7 +885,8 @@ class _Builder {
       final collapse = !_establishesBfc(element, style);
       content = CssBlockFlow(
         collapseTop: collapse && _noEdge(style, 'top'),
-        collapseBottom: collapse &&
+        collapseBottom:
+            collapse &&
             _noEdge(style, 'bottom') &&
             style.height == null &&
             !style.minHeight.isPercent &&
@@ -754,7 +935,8 @@ class _Builder {
     // Overlays, modal layers and fixed HUDs keep their real boxes; estimating
     // them (or a child of them) breaks hit testing and geometry queries.
     if (style.position == 'fixed' || style.position == 'absolute') return null;
-    final optOut = element.getAttribute('data-nativa-virtual') ??
+    final optOut =
+        element.getAttribute('data-nativa-virtual') ??
         element.getAttribute('data-nv-virtual');
     if (optOut == 'off' || optOut == 'false') return null;
     final inline = element.getAttribute('style') ?? '';
@@ -762,13 +944,21 @@ class _Builder {
         inline.contains('content-visibility:visible')) {
       return null;
     }
-    if (_pseudo(element, 'before') != null || _pseudo(element, 'after') != null) {
+    if (_pseudo(element, 'before') != null ||
+        _pseudo(element, 'after') != null) {
       return null;
     }
     final slots = <dom.Element>[];
     for (final child in element.children) {
-      if (const {'script', 'style', 'template', 'noscript', 'head', 'link', 'meta'}
-          .contains(child.localName)) {
+      if (const {
+        'script',
+        'style',
+        'template',
+        'noscript',
+        'head',
+        'link',
+        'meta',
+      }.contains(child.localName)) {
         continue;
       }
       final s = child.getAttribute('style');
@@ -808,7 +998,9 @@ class _Builder {
           owner[row[c]] = (r, c);
         }
       }
-      NativaXRenderProfile.log('VIRT_CREATE grid <${element.localName} id=${element.id} class=${element.className}> slots=$rows');
+      NativaXRenderProfile.log(
+        'VIRT_CREATE grid <${element.localName} id=${element.id} class=${element.className}> slots=$rows',
+      );
       return CssVirtualBlock(
         key: ValueKey('virtual-grid-${identityHashCode(element)}'),
         container: element,
@@ -829,7 +1021,9 @@ class _Builder {
             key: ValueKey('virtual-grid-row-${identityHashCode(element)}-$i'),
             columns: style.gridTemplateColumns,
             rows: style.gridTemplateRows,
-            autoColumns: [for (final e in style.gridAutoColumns.entries) ...e.tracks],
+            autoColumns: [
+              for (final e in style.gridAutoColumns.entries) ...e.tracks,
+            ],
             autoRows: [for (final e in style.gridAutoRows.entries) ...e.tracks],
             areas: style.gridTemplateAreas,
             autoFlow: style.gridAutoFlow,
@@ -853,11 +1047,17 @@ class _Builder {
     if (style.isFlexContainer) {
       if (_isRow(style.flexDirection) ||
           style.flexWrap != 'nowrap' ||
-          !const {'normal', 'flex-start', 'start', 'stretch'}
-              .contains(style.justifyContent)) {
+          !const {
+            'normal',
+            'flex-start',
+            'start',
+            'stretch',
+          }.contains(style.justifyContent)) {
         return null;
       }
-      NativaXRenderProfile.log('VIRT_CREATE flex <${element.localName} id=${element.id} class=${element.className}> slots=${slots.length}');
+      NativaXRenderProfile.log(
+        'VIRT_CREATE flex <${element.localName} id=${element.id} class=${element.className}> slots=${slots.length}',
+      );
       return CssVirtualBlock(
         key: ValueKey('virtual-flex-${identityHashCode(element)}'),
         container: element,
@@ -886,7 +1086,9 @@ class _Builder {
     }
 
     final collapse = !_establishesBfc(element, style);
-    NativaXRenderProfile.log('VIRT_CREATE block <${element.localName} id=${element.id} class=${element.className}> slots=${slots.length}');
+    NativaXRenderProfile.log(
+      'VIRT_CREATE block <${element.localName} id=${element.id} class=${element.className}> slots=${slots.length}',
+    );
     return CssVirtualBlock(
       key: ValueKey('virtual-block-${identityHashCode(element)}'),
       container: element,
@@ -903,7 +1105,8 @@ class _Builder {
           buildItem(slots[i], parentFlex: false, repaintBoundary: true),
       layoutBuilder: (context, children) => CssBlockFlow(
         collapseTop: collapse && _noEdge(style, 'top'),
-        collapseBottom: collapse &&
+        collapseBottom:
+            collapse &&
             _noEdge(style, 'bottom') &&
             style.height == null &&
             !style.minHeight.isPercent &&
@@ -918,7 +1121,8 @@ class _Builder {
   /// siblings of flex rows. This is only used to choose the grid's column
   /// count before layout; the real layout still constrains every row.
   double _availableWidth(dom.Element element) {
-    var width = NativaXViewportScope.maybeOf(context)?.viewportWidth ??
+    var width =
+        NativaXViewportScope.maybeOf(context)?.viewportWidth ??
         MediaQuery.maybeSizeOf(context)?.width ??
         800;
     for (dom.Element? e = element; e != null; e = e.parentElement) {
@@ -960,8 +1164,12 @@ class _Builder {
     final e = elements.first;
     final text = e.textContent.trim();
     final tag = e.localName;
-    final charsPerLine = tag == 'h1' || tag == 'h2' || tag == 'h3' ? 48.0 : 78.0;
-    final lines = text.isEmpty ? 1 : (text.length / charsPerLine).ceil().clamp(1, 40);
+    final charsPerLine = tag == 'h1' || tag == 'h2' || tag == 'h3'
+        ? 48.0
+        : 78.0;
+    final lines = text.isEmpty
+        ? 1
+        : (text.length / charsPerLine).ceil().clamp(1, 40);
     final lineHeight = switch (tag) {
       'h1' => 44.0,
       'h2' => 32.0,
@@ -985,12 +1193,21 @@ class _Builder {
     if (parent == null || parent.parentElement == null) return true;
     final ps = styleEngine.styleOf(parent);
     if (ps.isFlexContainer || ps.isGridContainer) return true;
-    if (style.display != Display.block && style.display != Display.listItem) return true;
-    if (style.overflowX != 'visible' || style.overflowY != 'visible') return true;
+    if (style.display != Display.block && style.display != Display.listItem)
+      return true;
+    if (style.overflowX != 'visible' || style.overflowY != 'visible')
+      return true;
     final position = style.position;
     if (position == 'absolute' || position == 'fixed') return true;
-    return const {'fieldset', 'legend', 'button', 'td', 'th', 'caption', 'dialog'}
-        .contains(element.localName);
+    return const {
+      'fieldset',
+      'legend',
+      'button',
+      'td',
+      'th',
+      'caption',
+      'dialog',
+    }.contains(element.localName);
   }
 
   static bool _noEdge(ComputedStyle style, String side) {
@@ -1005,13 +1222,19 @@ class _Builder {
         if (w is CssItem) w.order else 0,
     ];
     if (orders.every((o) => o == 0)) return items;
-    final indexed = [for (var i = 0; i < items.length; i++) (i, orders[i], items[i])];
+    final indexed = [
+      for (var i = 0; i < items.length; i++) (i, orders[i], items[i]),
+    ];
     indexed.sort((a, b) => a.$2 != b.$2 ? a.$2 - b.$2 : a.$1 - b.$1);
     return [for (final e in indexed) e.$3];
   }
 
-  Widget _pseudoItem(_Pseudo p, {required bool parentFlex}) =>
-      itemFor(p.style, buildPseudoBox(p), key: ValueKey('${identityHashCode(p.element)}::${p.kind}'), parentFlex: parentFlex);
+  Widget _pseudoItem(_Pseudo p, {required bool parentFlex}) => itemFor(
+    p.style,
+    buildPseudoBox(p),
+    key: ValueKey('${identityHashCode(p.element)}::${p.kind}'),
+    parentFlex: parentFlex,
+  );
 
   bool _onlyWhitespace(List<Object> nodes, ComputedStyle style) {
     if (style.whiteSpace == 'pre' || style.whiteSpace == 'pre-wrap') {
@@ -1020,7 +1243,11 @@ class _Builder {
     return nodes.every((node) => node is dom.Text && node.data.trim().isEmpty);
   }
 
-  List<Widget> _flowChildren(dom.Element element, List<Object> nodes, ComputedStyle style) {
+  List<Widget> _flowChildren(
+    dom.Element element,
+    List<Object> nodes,
+    ComputedStyle style,
+  ) {
     final out = <Widget>[];
     var inline = <Object>[];
     void flush() {
@@ -1028,17 +1255,19 @@ class _Builder {
         inline = <Object>[];
         return;
       }
-      out.add(CssItem(
-        margin: _zeroMargins,
-        autoWidth: true,
-        autoHeight: true,
-        child: _InlineText(
-          parent: element,
-          style: style,
-          builder: this,
-          nodes: inline,
+      out.add(
+        CssItem(
+          margin: _zeroMargins,
+          autoWidth: true,
+          autoHeight: true,
+          child: _InlineText(
+            parent: element,
+            style: style,
+            builder: this,
+            nodes: inline,
+          ),
         ),
-      ));
+      );
       inline = <Object>[];
     }
 
@@ -1059,7 +1288,11 @@ class _Builder {
 
   /// Children of a flex or grid container: every element is an item; runs
   /// of text become anonymous items.
-  List<Widget> _itemChildren(dom.Element element, List<Object> nodes, ComputedStyle style) {
+  List<Widget> _itemChildren(
+    dom.Element element,
+    List<Object> nodes,
+    ComputedStyle style,
+  ) {
     final out = <Widget>[];
     var inline = <Object>[];
     void flush() {
@@ -1067,17 +1300,19 @@ class _Builder {
         inline = <Object>[];
         return;
       }
-      out.add(CssItem(
-        margin: _zeroMargins,
-        autoWidth: false,
-        autoHeight: true,
-        child: _InlineText(
-          parent: element,
-          style: style,
-          builder: this,
-          nodes: inline,
+      out.add(
+        CssItem(
+          margin: _zeroMargins,
+          autoWidth: false,
+          autoHeight: true,
+          child: _InlineText(
+            parent: element,
+            style: style,
+            builder: this,
+            nodes: inline,
+          ),
         ),
-      ));
+      );
       inline = <Object>[];
     }
 
@@ -1108,7 +1343,8 @@ class _Builder {
     // Block content keeps the container's width (text wraps, blocks fill
     // the line) and only intrinsically wide content scrolls sideways, as in
     // browsers; an unbounded horizontal viewport would shrink-wrap blocks.
-    final wideContent = style.isFlexContainer ||
+    final wideContent =
+        style.isFlexContainer ||
         style.isGridContainer ||
         style.whiteSpace == 'pre' ||
         style.whiteSpace == 'nowrap';
@@ -1145,14 +1381,9 @@ class _Builder {
     );
   }
 
-  Widget _positioned(
-    dom.Element parent,
-    Widget normal,
-    List<Object> absolute,
-  ) {
+  Widget _positioned(dom.Element parent, Widget normal, List<Object> absolute) {
     final entries = [
-      for (final child in absolute)
-        (child, styleOfChild(child)!.zIndex ?? 0),
+      for (final child in absolute) (child, styleOfChild(child)!.zIndex ?? 0),
     ]..sort((a, b) => a.$2.compareTo(b.$2));
     // The Stack is the parent's content box, but offsets are relative to its
     // padding box (CSS 2.1 §10.1).
@@ -1162,7 +1393,12 @@ class _Builder {
       return p.isPercent ? 0 : p.value;
     }
 
-    final padding = EdgeInsets.fromLTRB(pad('left'), pad('top'), pad('right'), pad('bottom'));
+    final padding = EdgeInsets.fromLTRB(
+      pad('left'),
+      pad('top'),
+      pad('right'),
+      pad('bottom'),
+    );
     return Stack(
       clipBehavior: Clip.none,
       children: [
@@ -1175,7 +1411,10 @@ class _Builder {
     );
   }
 
-  Widget _absoluteWidget(Object node, [EdgeInsets containerPadding = EdgeInsets.zero]) {
+  Widget _absoluteWidget(
+    Object node, [
+    EdgeInsets containerPadding = EdgeInsets.zero,
+  ]) {
     final style = styleOfChild(node)!;
     final element = node is _Pseudo ? node.element : node as dom.Element;
     final left = _px(style.left);
@@ -1187,8 +1426,15 @@ class _Builder {
 
     var box = node is _Pseudo
         ? buildPseudoBox(node)
-        : _interact(element, style,
-            paintEffects(element, style, _ElementAnchor(element: element, child: buildBox(element, style))));
+        : _interact(
+            element,
+            style,
+            paintEffects(
+              element,
+              style,
+              _ElementAnchor(element: element, child: buildBox(element, style)),
+            ),
+          );
     final margins = EdgeInsets.only(
       top: _px(style.marginOf('top')) ?? 0,
       right: _px(style.marginOf('right')) ?? 0,
@@ -1201,7 +1447,8 @@ class _Builder {
     // receive the Stack's tight constraints. A plain Positioned with auto
     // width/height gives it loose constraints and a percentage can resolve
     // against the viewport, overflowing by a scrollbar's width.
-    final fixedFull = style.position == 'fixed' &&
+    final fixedFull =
+        style.position == 'fixed' &&
         (style.width == null || style.width!.isPercent) &&
         (style.height == null || style.height!.isPercent) &&
         (left == null || left == 0) &&
@@ -1220,11 +1467,17 @@ class _Builder {
     // With an explicit size, an over-constrained right/bottom is ignored.
     final pad = containerPadding;
     return Positioned(
-      key: node is _Pseudo ? ValueKey('${identityHashCode(element)}::${node.kind}') : ObjectKey(element),
+      key: node is _Pseudo
+          ? ValueKey('${identityHashCode(element)}::${node.kind}')
+          : ObjectKey(element),
       left: left == null ? null : left - pad.left,
-      right: right == null || (hasWidth && left != null) ? null : right - pad.right,
+      right: right == null || (hasWidth && left != null)
+          ? null
+          : right - pad.right,
       top: top == null ? null : top - pad.top,
-      bottom: bottom == null || (hasHeight && top != null) ? null : bottom - pad.bottom,
+      bottom: bottom == null || (hasHeight && top != null)
+          ? null
+          : bottom - pad.bottom,
       child: box,
     );
   }
@@ -1257,7 +1510,8 @@ class _Builder {
     if (type != 'decimal') return '•';
 
     final parent = element.parentElement;
-    final siblings = parent?.children.where((c) => c.localName == 'li').toList() ?? const [];
+    final siblings =
+        parent?.children.where((c) => c.localName == 'li').toList() ?? const [];
     final index = siblings.indexWhere((c) => identical(c, element));
     var number = (index < 0 ? 0 : index) + 1;
     final start = int.tryParse(parent?.getAttribute('start') ?? '');
@@ -1276,25 +1530,36 @@ class _Builder {
         : label.querySelector('input, select, textarea, button');
     if (target == null) return;
     target.click(trusted: true);
-    final isTextInput = target.localName == 'input' &&
-        !const {'checkbox', 'radio', 'submit', 'button', 'reset', 'image'}
-            .contains(target.inputType);
+    final isTextInput =
+        target.localName == 'input' &&
+        !const {
+          'checkbox',
+          'radio',
+          'submit',
+          'button',
+          'reset',
+          'image',
+        }.contains(target.inputType);
     if (isTextInput || target.localName == 'textarea') {
       target.ownerDocument.requestFocus(target);
     }
   }
 
   Widget _interact(dom.Element element, ComputedStyle style, Widget child) {
-    final isControl = element.localName == 'input' ||
+    final isControl =
+        element.localName == 'input' ||
         element.localName == 'textarea' ||
         element.localName == 'select';
-    final isLink = element.localName == 'a' && element.getAttribute('href') != null;
-    final isButton = element.localName == 'button' ||
+    final isLink =
+        element.localName == 'a' && element.getAttribute('href') != null;
+    final isButton =
+        element.localName == 'button' ||
         (element.localName == 'input' &&
             const {'submit', 'button', 'reset'}.contains(element.inputType));
     final isLabel = element.localName == 'label';
     final isSummary = element.localName == 'summary';
-    final clickable = !isControl &&
+    final clickable =
+        !isControl &&
         (isLink ||
             isButton ||
             isLabel ||
@@ -1310,16 +1575,24 @@ class _Builder {
             _activateLabel(element);
             return;
           }
-          element.click(trusted: true, detail: _pointerDetail(element, d.globalPosition, d.localPosition));
+          element.click(
+            trusted: true,
+            detail: _pointerDetail(element, d.globalPosition, d.localPosition),
+          );
         },
         child: result,
       );
     }
     if (element.hasEventListeners('contextmenu')) {
       void fire(Offset global) {
-        element.dispatchEvent(dom.Event('contextmenu',
-            bubbles: true, cancelable: true, detail: {..._pointerDetail(element, global, null), 'button': 2})
-          ..isTrusted = true);
+        element.dispatchEvent(
+          dom.Event(
+            'contextmenu',
+            bubbles: true,
+            cancelable: true,
+            detail: {..._pointerDetail(element, global, null), 'button': 2},
+          )..isTrusted = true,
+        );
       }
 
       result = GestureDetector(
@@ -1327,8 +1600,18 @@ class _Builder {
         onSecondaryTapUp: (d) => fire(d.globalPosition),
         onLongPressStart: (d) => fire(d.globalPosition),
         onDoubleTapDown: element.hasEventListeners('dblclick')
-            ? (d) => element.dispatchEvent(dom.Event('dblclick', bubbles: true, cancelable: true,
-                detail: _pointerDetail(element, d.globalPosition, d.localPosition))..isTrusted = true)
+            ? (d) => element.dispatchEvent(
+                dom.Event(
+                  'dblclick',
+                  bubbles: true,
+                  cancelable: true,
+                  detail: _pointerDetail(
+                    element,
+                    d.globalPosition,
+                    d.localPosition,
+                  ),
+                )..isTrusted = true,
+              )
             : null,
         child: result,
       );
@@ -1340,7 +1623,8 @@ class _Builder {
         onPointerDown: (_) {
           final current = doc.pressedElement;
           // The innermost element receives the event first.
-          if (current == null || !element.contains(current)) doc.pressedElement = element;
+          if (current == null || !element.contains(current))
+            doc.pressedElement = element;
         },
         onPointerUp: (_) => doc.pressedElement = null,
         onPointerCancel: (_) => doc.pressedElement = null,
@@ -1348,28 +1632,46 @@ class _Builder {
       );
     }
     final draggableAttr = element.getAttribute('draggable');
-    final draggable = draggableAttr == 'true' ||
-        (draggableAttr == null && (element.localName == 'img' || (isLink && element.hasEventListeners('dragstart'))));
+    final draggable =
+        draggableAttr == 'true' ||
+        (draggableAttr == null &&
+            (element.localName == 'img' ||
+                (isLink && element.hasEventListeners('dragstart'))));
     if (draggable) {
       final feedback = Opacity(
         opacity: 0.7,
         child: Material(
           type: MaterialType.transparency,
-          child: ConstrainedBox(constraints: const BoxConstraints(maxWidth: 480), child: child),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 480),
+            child: child,
+          ),
         ),
       );
       void started() {
         final id = _nextDragId++;
         dragSessionOf[element.ownerDocument] = id;
-        element.dispatchEvent(dom.Event('dragstart', bubbles: true, cancelable: true, detail: {'__drag': id})..isTrusted = true);
+        element.dispatchEvent(
+          dom.Event(
+            'dragstart',
+            bubbles: true,
+            cancelable: true,
+            detail: {'__drag': id},
+          )..isTrusted = true,
+        );
       }
 
       void ended() {
         final id = dragSessionOf[element.ownerDocument];
-        element.dispatchEvent(dom.Event('dragend', bubbles: true, detail: {'__drag': ?id})..isTrusted = true);
+        element.dispatchEvent(
+          dom.Event('dragend', bubbles: true, detail: {'__drag': ?id})
+            ..isTrusted = true,
+        );
       }
 
-      final touch = defaultTargetPlatform == TargetPlatform.android || defaultTargetPlatform == TargetPlatform.iOS;
+      final touch =
+          defaultTargetPlatform == TargetPlatform.android ||
+          defaultTargetPlatform == TargetPlatform.iOS;
       result = touch
           ? LongPressDraggable<dom.Element>(
               data: element,
@@ -1405,14 +1707,17 @@ class _Builder {
                 // Keep a deeper hovered descendant; otherwise this element
                 // becomes the hovered one.
                 final current = doc.hoverElement;
-                if (current == null || !element.contains(current)) doc.hoverElement = element;
+                if (current == null || !element.contains(current))
+                  doc.hoverElement = element;
               }
             : null,
         onExit: styleEngine.usesHover
             ? (_) {
                 if (doc.layoutHost?.isScrolling ?? false) return;
                 final current = doc.hoverElement;
-                if (current != null && (identical(current, element) || element.contains(current))) {
+                if (current != null &&
+                    (identical(current, element) ||
+                        element.contains(current))) {
                   doc.hoverElement = element.parentElement;
                 }
               }
@@ -1423,7 +1728,9 @@ class _Builder {
 
     final aria = element.getAttribute('aria-label');
     final heading = RegExp(r'^h[1-6]$').hasMatch(element.localName);
-    final label = aria ?? (element.localName == 'img' ? element.getAttribute('alt') : null);
+    final label =
+        aria ??
+        (element.localName == 'img' ? element.getAttribute('alt') : null);
     if (label != null || heading || isLink || isButton) {
       result = Semantics(
         container: false,
@@ -1439,9 +1746,14 @@ class _Builder {
 
   /// `clientX/Y` (viewport), `pageX/Y`, `offsetX/Y` and `screenX/Y` for
   /// pointer events.
-  static Map<String, Object?> _pointerDetail(dom.Element element, Offset global, Offset? local) {
+  static Map<String, Object?> _pointerDetail(
+    dom.Element element,
+    Offset global,
+    Offset? local,
+  ) {
     final host = element.ownerDocument.layoutHost;
-    final (cx, cy) = host?.toViewport(global.dx, global.dy) ?? (global.dx, global.dy);
+    final (cx, cy) =
+        host?.toViewport(global.dx, global.dy) ?? (global.dx, global.dy);
     final box = host?.boxOf(element);
     return {
       'clientX': cx,
@@ -1460,23 +1772,23 @@ class _Builder {
   }
 
   static MouseCursor _cursor(String cursor, bool clickable) => switch (cursor) {
-        'pointer' => SystemMouseCursors.click,
-        'text' => SystemMouseCursors.text,
-        'move' => SystemMouseCursors.move,
-        'not-allowed' => SystemMouseCursors.forbidden,
-        'wait' => SystemMouseCursors.wait,
-        'help' => SystemMouseCursors.help,
-        'crosshair' => SystemMouseCursors.precise,
-        'grab' => SystemMouseCursors.grab,
-        'grabbing' => SystemMouseCursors.grabbing,
-        'default' => SystemMouseCursors.basic,
-        'progress' => SystemMouseCursors.progress,
-        'zoom-in' => SystemMouseCursors.zoomIn,
-        'zoom-out' => SystemMouseCursors.zoomOut,
-        'copy' => SystemMouseCursors.copy,
-        'none' => SystemMouseCursors.none,
-        _ => clickable ? SystemMouseCursors.click : MouseCursor.defer,
-      };
+    'pointer' => SystemMouseCursors.click,
+    'text' => SystemMouseCursors.text,
+    'move' => SystemMouseCursors.move,
+    'not-allowed' => SystemMouseCursors.forbidden,
+    'wait' => SystemMouseCursors.wait,
+    'help' => SystemMouseCursors.help,
+    'crosshair' => SystemMouseCursors.precise,
+    'grab' => SystemMouseCursors.grab,
+    'grabbing' => SystemMouseCursors.grabbing,
+    'default' => SystemMouseCursors.basic,
+    'progress' => SystemMouseCursors.progress,
+    'zoom-in' => SystemMouseCursors.zoomIn,
+    'zoom-out' => SystemMouseCursors.zoomOut,
+    'copy' => SystemMouseCursors.copy,
+    'none' => SystemMouseCursors.none,
+    _ => clickable ? SystemMouseCursors.click : MouseCursor.defer,
+  };
 
   /// Media and embedded content NativaX does not render: a sized box with
   /// the element's fallback text, so layout keeps its space.
@@ -1496,21 +1808,32 @@ class _Builder {
       'svg' => '',
       _ => element.localName,
     };
-    final textStyle = textStyleFor(style).copyWith(color: toColor(style.color).withValues(alpha: 0.6));
+    final textStyle = textStyleFor(
+      style,
+    ).copyWith(color: toColor(style.color).withValues(alpha: 0.6));
     final aspect = (w != null && h != null && h > 0) ? w / h : dw / dh;
     if (element.localName == 'audio') {
       // Audio controls keep their UA height; only the width shrinks.
-      final bar = SizedBox(height: style.height == null ? (h ?? dh) : null, child: Center(child: Text(label, style: textStyle)));
-      return style.width != null ? bar : PreferredWidth(width: w ?? dw, child: bar);
+      final bar = SizedBox(
+        height: style.height == null ? (h ?? dh) : null,
+        child: Center(child: Text(label, style: textStyle)),
+      );
+      return style.width != null
+          ? bar
+          : PreferredWidth(width: w ?? dw, child: bar);
     }
     Widget box = AspectRatio(
       aspectRatio: aspect,
-      child: label.isEmpty ? const SizedBox.shrink() : Center(child: Text(label, style: textStyle)),
+      child: label.isEmpty
+          ? const SizedBox.shrink()
+          : Center(child: Text(label, style: textStyle)),
     );
     if (style.height != null) box = SizedBox.expand(child: box);
     // The intrinsic width is the width attribute (or the UA default); the
     // parent's constraints (max-width: 100%) shrink it.
-    return style.width != null ? box : PreferredWidth(width: w ?? dw, child: box);
+    return style.width != null
+        ? box
+        : PreferredWidth(width: w ?? dw, child: box);
   }
 
   Widget _image(dom.Element element, ComputedStyle style) {
@@ -1545,14 +1868,17 @@ class _Builder {
     final w = double.tryParse(element.getAttribute('width') ?? '');
     final h = double.tryParse(element.getAttribute('height') ?? '');
     if (w != null && h != null && w > 0 && h > 0) {
-      if (style.height == null) image = AspectRatio(aspectRatio: w / h, child: image);
+      if (style.height == null)
+        image = AspectRatio(aspectRatio: w / h, child: image);
       if (style.width == null) image = PreferredWidth(width: w, child: image);
     }
     return Semantics(image: true, label: alt, child: image);
   }
 
   Widget _input(dom.Element element, ComputedStyle style) {
-    final accent = style.accentColor == null ? null : toColor(style.accentColor!);
+    final accent = style.accentColor == null
+        ? null
+        : toColor(style.accentColor!);
     switch (element.inputType) {
       case 'hidden':
         return const SizedBox.shrink();
@@ -1561,7 +1887,9 @@ class _Builder {
           type: MaterialType.transparency,
           child: Checkbox(
             value: element.checked,
-            onChanged: element.disabled ? null : (_) => element.click(trusted: true),
+            onChanged: element.disabled
+                ? null
+                : (_) => element.click(trusted: true),
             activeColor: accent,
             materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
             visualDensity: VisualDensity.compact,
@@ -1581,7 +1909,10 @@ class _Builder {
           ),
         );
       case 'range':
-        return PreferredWidth(width: 129, child: _RangeControl(element: element, style: style, accent: accent));
+        return PreferredWidth(
+          width: 129,
+          child: _RangeControl(element: element, style: style, accent: accent),
+        );
       case 'color':
         return _ColorControl(element: element, style: style);
       case 'file':
@@ -1598,22 +1929,35 @@ class _Builder {
       case 'image':
         final label = element.hasAttribute('value')
             ? element.value
-            : (element.inputType == 'reset' ? 'Reset' : (element.inputType == 'button' ? '' : 'Submit'));
-        return Text(label, style: textStyleFor(style), textAlign: TextAlign.center);
+            : (element.inputType == 'reset'
+                  ? 'Reset'
+                  : (element.inputType == 'button' ? '' : 'Submit'));
+        return Text(
+          label,
+          style: textStyleFor(style),
+          textAlign: TextAlign.center,
+        );
       default:
         // Text fields are as wide as `size` average characters (20 by
         // default), like browsers.
         final size = int.tryParse(element.getAttribute('size') ?? '') ?? 20;
         return PreferredWidth(
           width: size * style.fontSize * 0.55,
-          child: _TextControl(element: element, style: style, multiline: false, builder: this),
+          child: _TextControl(
+            element: element,
+            style: style,
+            multiline: false,
+            builder: this,
+          ),
         );
     }
   }
 
   /// Placeholder text style (`::placeholder` or the UA default).
   TextStyle placeholderStyle(dom.Element element, ComputedStyle style) {
-    final ps = styleEngine.hasPseudoRules('placeholder') ? styleEngine.pseudoStyleOf(element, 'placeholder') : null;
+    final ps = styleEngine.hasPseudoRules('placeholder')
+        ? styleEngine.pseudoStyleOf(element, 'placeholder')
+        : null;
     if (ps != null) return textStyleFor(ps);
     final base = textStyleFor(style);
     return base.copyWith(color: base.color?.withValues(alpha: 0.55));
@@ -1646,9 +1990,15 @@ class _Builder {
     // which it centres 8px inside the padding box (ignoring author padding).
     final shift = (padRight.isPercent ? 0.0 : padRight.value);
     Widget label(String t) => Padding(
-          padding: const EdgeInsets.only(left: 4),
-          child: Text(t, style: text, maxLines: 1, softWrap: false, overflow: TextOverflow.clip),
-        );
+      padding: const EdgeInsets.only(left: 4),
+      child: Text(
+        t,
+        style: text,
+        maxLines: 1,
+        softWrap: false,
+        overflow: TextOverflow.clip,
+      ),
+    );
     return Material(
       type: MaterialType.transparency,
       child: DropdownButton<String>(
@@ -1656,12 +2006,22 @@ class _Builder {
         isExpanded: true,
         isDense: true,
         underline: const SizedBox.shrink(),
-        icon: ControlGlyph(kind: ControlGlyphKind.chevron, color: color, shift: shift),
+        icon: ControlGlyph(
+          kind: ControlGlyphKind.chevron,
+          color: color,
+          shift: shift,
+        ),
         iconSize: 16,
-        dropdownColor: style.backgroundColor.alpha == 255 ? toColor(style.backgroundColor) : null,
+        dropdownColor: style.backgroundColor.alpha == 255
+            ? toColor(style.backgroundColor)
+            : null,
         style: text,
         selectedItemBuilder: (context) => [
-          for (final option in options) Align(alignment: Alignment.centerLeft, child: label(option.textContent.trim())),
+          for (final option in options)
+            Align(
+              alignment: Alignment.centerLeft,
+              child: label(option.textContent.trim()),
+            ),
         ],
         items: [
           for (final option in options)
@@ -1676,8 +2036,12 @@ class _Builder {
                 if (value == null) return;
                 element.value = value;
                 element.userInteracted = true;
-                element.dispatchEvent(dom.Event('input', bubbles: true)..isTrusted = true);
-                element.dispatchEvent(dom.Event('change', bubbles: true)..isTrusted = true);
+                element.dispatchEvent(
+                  dom.Event('input', bubbles: true)..isTrusted = true,
+                );
+                element.dispatchEvent(
+                  dom.Event('change', bubbles: true)..isTrusted = true,
+                );
               },
       ),
     );
@@ -1700,24 +2064,24 @@ class _Builder {
       direction == 'row' || direction == 'row-reverse';
 
   static String _justify(String value) => switch (value) {
-        'start' || 'left' => 'flex-start',
-        'end' || 'right' => 'flex-end',
-        _ => value,
-      };
+    'start' || 'left' => 'flex-start',
+    'end' || 'right' => 'flex-end',
+    _ => value,
+  };
 
   static String _align(String value) => switch (value) {
-        'start' || 'self-start' => 'flex-start',
-        'end' || 'self-end' => 'flex-end',
-        _ => value,
-      };
+    'start' || 'self-start' => 'flex-start',
+    'end' || 'self-end' => 'flex-end',
+    _ => value,
+  };
 
   static BoxFit _fit(String value) => switch (value) {
-        'contain' => BoxFit.contain,
-        'cover' => BoxFit.cover,
-        'none' => BoxFit.none,
-        'scale-down' => BoxFit.scaleDown,
-        _ => BoxFit.fill,
-      };
+    'contain' => BoxFit.contain,
+    'cover' => BoxFit.cover,
+    'none' => BoxFit.none,
+    'scale-down' => BoxFit.scaleDown,
+    _ => BoxFit.fill,
+  };
 }
 
 class _InlineText extends StatefulWidget {
@@ -1780,8 +2144,11 @@ class _InlineTextState extends State<_InlineText> {
       });
     }
 
-    final ellipsis = widget.style.textOverflow == 'ellipsis' && widget.style.overflowX != 'visible';
-    final noWrap = widget.style.whiteSpace == 'pre' || widget.style.whiteSpace == 'nowrap';
+    final ellipsis =
+        widget.style.textOverflow == 'ellipsis' &&
+        widget.style.overflowX != 'visible';
+    final noWrap =
+        widget.style.whiteSpace == 'pre' || widget.style.whiteSpace == 'nowrap';
     final text = Text.rich(
       TextSpan(children: spans),
       style: textStyleFor(widget.style),
@@ -1790,7 +2157,9 @@ class _InlineTextState extends State<_InlineText> {
       maxLines: ellipsis && noWrap ? 1 : null,
       overflow: ellipsis ? TextOverflow.ellipsis : TextOverflow.clip,
     );
-    return LayoutProfile.enabled ? LayoutTimed(kind: 'text', child: text) : text;
+    return LayoutProfile.enabled
+        ? LayoutTimed(kind: 'text', child: text)
+        : text;
   }
 
   void _visit(
@@ -1802,21 +2171,33 @@ class _InlineTextState extends State<_InlineText> {
   ) {
     if (node is _Pseudo) {
       final ps = node.style;
-      if (ps.display == Display.inlineBlock || ps.display == Display.inlineFlex || ps.display == Display.inlineGrid) {
-        _add(spans, WidgetSpan(
-          alignment: PlaceholderAlignment.middle,
-          child: widget.builder.buildPseudoBox(node),
-        ));
+      if (ps.display == Display.inlineBlock ||
+          ps.display == Display.inlineFlex ||
+          ps.display == Display.inlineGrid) {
+        _add(
+          spans,
+          WidgetSpan(
+            alignment: PlaceholderAlignment.middle,
+            child: widget.builder.buildPseudoBox(node),
+          ),
+        );
         whitespace.afterSpace = false;
         return;
       }
-      final (text, afterSpace) = processWhiteSpace(node.text, ps.whiteSpace, afterSpace: whitespace.afterSpace);
+      final (text, afterSpace) = processWhiteSpace(
+        node.text,
+        ps.whiteSpace,
+        afterSpace: whitespace.afterSpace,
+      );
       whitespace.afterSpace = afterSpace;
       if (text.isEmpty) return;
-      _add(spans, TextSpan(
-        text: applyTextTransform(text, ps.textTransform),
-        style: textStyleFor(ps, inlineBackground: true),
-      ));
+      _add(
+        spans,
+        TextSpan(
+          text: applyTextTransform(text, ps.textTransform),
+          style: textStyleFor(ps, inlineBackground: true),
+        ),
+      );
       return;
     }
     if (node is dom.Text) {
@@ -1829,10 +2210,16 @@ class _InlineTextState extends State<_InlineText> {
       if (text.isEmpty) return;
       // The block container paints its own background; only inline
       // ancestors contribute a text background.
-      _add(spans, TextSpan(
-        text: applyTextTransform(text, style.textTransform),
-        style: textStyleFor(style, inlineBackground: !identical(style, widget.style)),
-      ));
+      _add(
+        spans,
+        TextSpan(
+          text: applyTextTransform(text, style.textTransform),
+          style: textStyleFor(
+            style,
+            inlineBackground: !identical(style, widget.style),
+          ),
+        ),
+      );
       return;
     }
     if (node is! dom.Element) return;
@@ -1854,14 +2241,20 @@ class _InlineTextState extends State<_InlineText> {
         whitespace.afterSpace = false;
         return;
       case 'img':
-        _add(spans, WidgetSpan(
-          alignment: PlaceholderAlignment.middle,
-          child: widget.builder._interact(
-            node,
-            childStyle,
-            _ElementAnchor(element: node, child: widget.builder.buildBox(node, childStyle)),
+        _add(
+          spans,
+          WidgetSpan(
+            alignment: PlaceholderAlignment.middle,
+            child: widget.builder._interact(
+              node,
+              childStyle,
+              _ElementAnchor(
+                element: node,
+                child: widget.builder.buildBox(node, childStyle),
+              ),
+            ),
           ),
-        ));
+        );
         return;
       case 'input':
       case 'textarea':
@@ -1871,14 +2264,20 @@ class _InlineTextState extends State<_InlineText> {
       case 'canvas':
       case 'iframe':
       case 'svg':
-        _add(spans, WidgetSpan(
-          alignment: PlaceholderAlignment.middle,
-          child: widget.builder._interact(
-            node,
-            childStyle,
-            _ElementAnchor(element: node, child: widget.builder.buildBox(node, childStyle)),
+        _add(
+          spans,
+          WidgetSpan(
+            alignment: PlaceholderAlignment.middle,
+            child: widget.builder._interact(
+              node,
+              childStyle,
+              _ElementAnchor(
+                element: node,
+                child: widget.builder.buildBox(node, childStyle),
+              ),
+            ),
           ),
-        ));
+        );
         return;
     }
 
@@ -1888,15 +2287,24 @@ class _InlineTextState extends State<_InlineText> {
         node.localName == 'button' ||
         node.localName == 'label' ||
         _hasBoxDecoration(childStyle)) {
-      _add(spans, WidgetSpan(
-        alignment: PlaceholderAlignment.middle,
-        child: widget.builder._interact(
-          node,
-          childStyle,
-          widget.builder.paintEffects(
-              node, childStyle, _ElementAnchor(element: node, child: widget.builder.buildBox(node, childStyle))),
+      _add(
+        spans,
+        WidgetSpan(
+          alignment: PlaceholderAlignment.middle,
+          child: widget.builder._interact(
+            node,
+            childStyle,
+            widget.builder.paintEffects(
+              node,
+              childStyle,
+              _ElementAnchor(
+                element: node,
+                child: widget.builder.buildBox(node, childStyle),
+              ),
+            ),
+          ),
         ),
-      ));
+      );
       whitespace.afterSpace = false;
       return;
     }
@@ -1921,11 +2329,13 @@ class _InlineTextState extends State<_InlineText> {
             : () => node.click(trusted: true);
       recognizers.add(recognizer);
     }
-    spans.add(TextSpan(
-      style: textStyleFor(childStyle, inlineBackground: true),
-      recognizer: recognizer,
-      children: children,
-    ));
+    spans.add(
+      TextSpan(
+        style: textStyleFor(childStyle, inlineBackground: true),
+        recognizer: recognizer,
+        children: children,
+      ),
+    );
   }
 
   /// Removes one final `\n` from the last text run, recursing into nested
@@ -1972,7 +2382,9 @@ class _InlineTextState extends State<_InlineText> {
       final p = s.paddingOf(side);
       if (p.value > 0 || p.calc != null) return true;
     }
-    return s.boxShadows.isNotEmpty || s.backgroundGradient != null || s.transform != null;
+    return s.boxShadows.isNotEmpty ||
+        s.backgroundGradient != null ||
+        s.transform != null;
   }
 
   static bool _isClickable(dom.Element element) =>
@@ -1987,7 +2399,11 @@ class _Whitespace {
 }
 
 class _RadioPainter extends CustomPainter {
-  _RadioPainter({required this.checked, required this.color, required this.disabled});
+  _RadioPainter({
+    required this.checked,
+    required this.color,
+    required this.disabled,
+  });
   final bool checked;
   final Color color;
   final bool disabled;
@@ -1999,13 +2415,21 @@ class _RadioPainter extends CustomPainter {
     final ring = Paint()
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1.5
-      ..color = disabled ? const Color(0x61000000) : (checked ? color : const Color(0xff767676));
+      ..color = disabled
+          ? const Color(0x61000000)
+          : (checked ? color : const Color(0xff767676));
     canvas.drawCircle(center, r, ring);
-    if (checked) canvas.drawCircle(center, r * 0.55, Paint()..color = disabled ? const Color(0x61000000) : color);
+    if (checked)
+      canvas.drawCircle(
+        center,
+        r * 0.55,
+        Paint()..color = disabled ? const Color(0x61000000) : color,
+      );
   }
 
   @override
-  bool shouldRepaint(_RadioPainter old) => old.checked != checked || old.color != color || old.disabled != disabled;
+  bool shouldRepaint(_RadioPainter old) =>
+      old.checked != checked || old.color != color || old.disabled != disabled;
 }
 
 /// A generated `::before`/`::after` box.
@@ -2121,7 +2545,10 @@ class _TextControlState extends State<_TextControl> {
             ? TextInputType.multiline
             : switch (element.inputType) {
                 'email' => TextInputType.emailAddress,
-                'number' => const TextInputType.numberWithOptions(decimal: true, signed: true),
+                'number' => const TextInputType.numberWithOptions(
+                  decimal: true,
+                  signed: true,
+                ),
                 'tel' => TextInputType.phone,
                 'url' => TextInputType.url,
                 _ => TextInputType.text,
@@ -2131,7 +2558,13 @@ class _TextControlState extends State<_TextControl> {
           hintStyle: widget.builder.placeholderStyle(element, widget.style),
           border: InputBorder.none,
         ).copyWith(counterText: ''),
-        buildCounter: (context, {required currentLength, required isFocused, required maxLength}) => null,
+        buildCounter:
+            (
+              context, {
+              required currentLength,
+              required isFocused,
+              required maxLength,
+            }) => null,
         onChanged: (value) => _userInput(element, value),
         onSubmitted: (_) {
           _committed = element.value;
@@ -2141,7 +2574,9 @@ class _TextControlState extends State<_TextControl> {
           if (!widget.multiline) {
             final form = element.closest('form');
             if (form != null) {
-              final submitter = form.querySelector('button:not([type=button]):not([type=reset]), input[type=submit]');
+              final submitter = form.querySelector(
+                'button:not([type=button]):not([type=reset]), input[type=submit]',
+              );
               if (submitter != null) {
                 submitter.click(trusted: true);
               } else {
@@ -2156,7 +2591,11 @@ class _TextControlState extends State<_TextControl> {
 }
 
 class _RangeControl extends StatelessWidget {
-  const _RangeControl({required this.element, required this.style, this.accent});
+  const _RangeControl({
+    required this.element,
+    required this.style,
+    this.accent,
+  });
   final dom.Element element;
   final ComputedStyle style;
   final Color? accent;
@@ -2167,9 +2606,15 @@ class _RangeControl extends StatelessWidget {
     var max = double.tryParse(element.getAttribute('max') ?? '') ?? 100;
     if (max <= min) max = min + 1;
     final stepAttr = element.getAttribute('step');
-    final step = stepAttr == 'any' ? null : (double.tryParse(stepAttr ?? '') ?? 1);
-    final value = (double.tryParse(element.value) ?? (min + max) / 2).clamp(min, max);
-    String fmt(double v) => v == v.roundToDouble() ? v.toInt().toString() : v.toString();
+    final step = stepAttr == 'any'
+        ? null
+        : (double.tryParse(stepAttr ?? '') ?? 1);
+    final value = (double.tryParse(element.value) ?? (min + max) / 2).clamp(
+      min,
+      max,
+    );
+    String fmt(double v) =>
+        v == v.roundToDouble() ? v.toInt().toString() : v.toString();
     return SizedBox(
       height: 24,
       child: Material(
@@ -2184,10 +2629,16 @@ class _RangeControl extends StatelessWidget {
             value: value.toDouble(),
             min: min,
             max: max,
-            divisions: step == null || step <= 0 ? null : ((max - min) / step).round().clamp(1, 10000),
+            divisions: step == null || step <= 0
+                ? null
+                : ((max - min) / step).round().clamp(1, 10000),
             activeColor: accent,
-            onChanged: element.disabled ? null : (v) => _userInput(element, fmt(v)),
-            onChangeEnd: element.disabled ? null : (v) => _fire(element, 'change'),
+            onChanged: element.disabled
+                ? null
+                : (v) => _userInput(element, fmt(v)),
+            onChangeEnd: element.disabled
+                ? null
+                : (v) => _fire(element, 'change'),
           ),
         ),
       ),
@@ -2208,8 +2659,24 @@ class _ColorControl extends StatelessWidget {
   }
 
   static const _palette = [
-    0x000000, 0x5a6683, 0xffffff, 0xb3261e, 0xff9a92, 0xe65100, 0xf5c75a, 0x8a5a00, 0x0b7d45,
-    0x5be3a0, 0x00838f, 0x3366ff, 0x3b5bff, 0x7c93ff, 0x2237c9, 0x8a4dff, 0xc2185b, 0x795548,
+    0x000000,
+    0x5a6683,
+    0xffffff,
+    0xb3261e,
+    0xff9a92,
+    0xe65100,
+    0xf5c75a,
+    0x8a5a00,
+    0x0b7d45,
+    0x5be3a0,
+    0x00838f,
+    0x3366ff,
+    0x3b5bff,
+    0x7c93ff,
+    0x2237c9,
+    0x8a4dff,
+    0xc2185b,
+    0x795548,
   ];
 
   @override
@@ -2225,27 +2692,37 @@ class _ColorControl extends StatelessWidget {
                   children: [
                     Padding(
                       padding: const EdgeInsets.all(12),
-                      child: Wrap(spacing: 8, runSpacing: 8, children: [
-                        for (final c in _palette)
-                          GestureDetector(
-                            onTap: () => Navigator.of(context).pop(c),
-                            child: Container(
-                              width: 32,
-                              height: 32,
-                              decoration: BoxDecoration(
-                                color: Color(0xff000000 | c),
-                                borderRadius: BorderRadius.circular(6),
-                                border: Border.all(color: const Color(0x33000000)),
+                      child: Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: [
+                          for (final c in _palette)
+                            GestureDetector(
+                              onTap: () => Navigator.of(context).pop(c),
+                              child: Container(
+                                width: 32,
+                                height: 32,
+                                decoration: BoxDecoration(
+                                  color: Color(0xff000000 | c),
+                                  borderRadius: BorderRadius.circular(6),
+                                  border: Border.all(
+                                    color: const Color(0x33000000),
+                                  ),
+                                ),
                               ),
                             ),
-                          ),
-                      ]),
+                        ],
+                      ),
                     ),
                   ],
                 ),
               );
               if (picked == null) return;
-              _userInput(element, '#${picked.toRadixString(16).padLeft(6, '0')}', commit: true);
+              _userInput(
+                element,
+                '#${picked.toRadixString(16).padLeft(6, '0')}',
+                commit: true,
+              );
             },
       child: Container(height: 24, color: color),
     );
@@ -2271,29 +2748,44 @@ class _FileControl extends StatelessWidget {
             border: Border.all(color: const Color(0xff767676)),
             borderRadius: BorderRadius.circular(3),
           ),
-          child: Text(multiple ? 'Choose Files' : 'Choose File',
-              style: text.copyWith(color: const Color(0xff000000), fontWeight: FontWeight.w400)),
+          child: Text(
+            multiple ? 'Choose Files' : 'Choose File',
+            style: text.copyWith(
+              color: const Color(0xff000000),
+              fontWeight: FontWeight.w400,
+            ),
+          ),
         ),
         const SizedBox(width: 6),
-        Flexible(child: Text(multiple ? 'No files chosen' : 'No file chosen', style: text, overflow: TextOverflow.ellipsis)),
+        Flexible(
+          child: Text(
+            multiple ? 'No files chosen' : 'No file chosen',
+            style: text,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
       ],
     );
   }
 }
 
 class _DateControl extends StatelessWidget {
-  const _DateControl({required this.element, required this.style, required this.builder});
+  const _DateControl({
+    required this.element,
+    required this.style,
+    required this.builder,
+  });
   final dom.Element element;
   final ComputedStyle style;
   final _Builder builder;
 
   String get _hint => switch (element.inputType) {
-        'date' => 'mm/dd/yyyy',
-        'time' => '--:-- --',
-        'datetime-local' => 'mm/dd/yyyy, --:-- --',
-        'month' => '-------- ----',
-        _ => 'Week --, ----',
-      };
+    'date' => 'mm/dd/yyyy',
+    'time' => '--:-- --',
+    'datetime-local' => 'mm/dd/yyyy, --:-- --',
+    'month' => '-------- ----',
+    _ => 'Week --, ----',
+  };
 
   String _display(String v) {
     if (v.isEmpty) return '';
@@ -2307,15 +2799,30 @@ class _DateControl extends StatelessWidget {
     }
 
     if (type == 'time') return time(v);
-    final date = DateTime.tryParse(type == 'month' ? '$v-01' : v.split('T').first);
+    final date = DateTime.tryParse(
+      type == 'month' ? '$v-01' : v.split('T').first,
+    );
     if (type == 'month') {
-      const names = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September',
-        'October', 'November', 'December'];
+      const names = [
+        'January',
+        'February',
+        'March',
+        'April',
+        'May',
+        'June',
+        'July',
+        'August',
+        'September',
+        'October',
+        'November',
+        'December',
+      ];
       return date == null ? v : '${names[date.month - 1]} ${date.year}';
     }
     if (date == null) return v;
     final d = '${two(date.month)}/${two(date.day)}/${date.year}';
-    if (type == 'datetime-local' && v.contains('T')) return '$d, ${time(v.split('T').last)}';
+    if (type == 'datetime-local' && v.contains('T'))
+      return '$d, ${time(v.split('T').last)}';
     return d;
   }
 
@@ -2325,8 +2832,12 @@ class _DateControl extends StatelessWidget {
     final now = DateTime.now();
     final current = DateTime.tryParse(element.value.split('T').first) ?? now;
     if (type == 'time') {
-      final t = await showTimePicker(context: context, initialTime: TimeOfDay.fromDateTime(now));
-      if (t != null) _userInput(element, '${two(t.hour)}:${two(t.minute)}', commit: true);
+      final t = await showTimePicker(
+        context: context,
+        initialTime: TimeOfDay.fromDateTime(now),
+      );
+      if (t != null)
+        _userInput(element, '${two(t.hour)}:${two(t.minute)}', commit: true);
       return;
     }
     final d = await showDatePicker(
@@ -2334,19 +2845,35 @@ class _DateControl extends StatelessWidget {
       initialDate: current,
       firstDate: DateTime(1900),
       lastDate: DateTime(2200),
-      initialDatePickerMode: type == 'month' ? DatePickerMode.year : DatePickerMode.day,
+      initialDatePickerMode: type == 'month'
+          ? DatePickerMode.year
+          : DatePickerMode.day,
     );
     if (d == null || !context.mounted) return;
-    final date = '${d.year.toString().padLeft(4, '0')}-${two(d.month)}-${two(d.day)}';
+    final date =
+        '${d.year.toString().padLeft(4, '0')}-${two(d.month)}-${two(d.day)}';
     switch (type) {
       case 'month':
         _userInput(element, date.substring(0, 7), commit: true);
       case 'week':
-        final week = ((d.difference(DateTime(d.year)).inDays + DateTime(d.year).weekday - 1) ~/ 7) + 1;
+        final week =
+            ((d.difference(DateTime(d.year)).inDays +
+                    DateTime(d.year).weekday -
+                    1) ~/
+                7) +
+            1;
         _userInput(element, '${d.year}-W${two(week)}', commit: true);
       case 'datetime-local':
-        final t = await showTimePicker(context: context, initialTime: TimeOfDay.fromDateTime(now));
-        if (t != null) _userInput(element, '${date}T${two(t.hour)}:${two(t.minute)}', commit: true);
+        final t = await showTimePicker(
+          context: context,
+          initialTime: TimeOfDay.fromDateTime(now),
+        );
+        if (t != null)
+          _userInput(
+            element,
+            '${date}T${two(t.hour)}:${two(t.minute)}',
+            commit: true,
+          );
       default:
         _userInput(element, date, commit: true);
     }
@@ -2358,20 +2885,38 @@ class _DateControl extends StatelessWidget {
     final value = _display(element.value);
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
-      onTap: element.disabled || element.hasAttribute('readonly') ? null : () => _pick(context),
-      child: Row(children: [
-        Expanded(child: Text(value.isEmpty ? _hint : value, style: text, maxLines: 1, overflow: TextOverflow.clip)),
-        ControlGlyph(
-          kind: element.inputType == 'time' ? ControlGlyphKind.clock : ControlGlyphKind.calendar,
-          color: text.color ?? const Color(0xff000000),
-        ),
-      ]),
+      onTap: element.disabled || element.hasAttribute('readonly')
+          ? null
+          : () => _pick(context),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              value.isEmpty ? _hint : value,
+              style: text,
+              maxLines: 1,
+              overflow: TextOverflow.clip,
+            ),
+          ),
+          ControlGlyph(
+            kind: element.inputType == 'time'
+                ? ControlGlyphKind.clock
+                : ControlGlyphKind.calendar,
+            color: text.color ?? const Color(0xff000000),
+          ),
+        ],
+      ),
     );
   }
 }
 
 class _ListBox extends StatelessWidget {
-  const _ListBox({required this.element, required this.style, required this.rows, required this.optionStyle});
+  const _ListBox({
+    required this.element,
+    required this.style,
+    required this.rows,
+    required this.optionStyle,
+  });
   final dom.Element element;
   final ComputedStyle style;
   final int rows;
@@ -2413,42 +2958,52 @@ class _ListBox extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             for (final o in options)
-              Builder(builder: (context) {
-                final os = optionStyle(o);
-                final text = textStyleFor(os, normalLineHeight: true);
-                double px(String side) {
-                  final p = os.paddingOf(side);
-                  return p.isPercent ? 0 : p.value;
-                }
+              Builder(
+                builder: (context) {
+                  final os = optionStyle(o);
+                  final text = textStyleFor(os, normalLineHeight: true);
+                  double px(String side) {
+                    final p = os.paddingOf(side);
+                    return p.isPercent ? 0 : p.value;
+                  }
 
-                return GestureDetector(
-                  behavior: HitTestBehavior.opaque,
-                  onTap: element.disabled || o.disabled
-                      ? null
-                      : () {
-                          if (multiple) {
-                            o.optionSelected = !o.optionSelected;
-                          } else {
-                            element.value = o.optionValue;
-                          }
-                          element.userInteracted = true;
-                          _fire(element, 'input');
-                          _fire(element, 'change');
-                        },
-                  child: Container(
-                    height: rowHeight(o, text),
-                    padding: EdgeInsets.fromLTRB(px('left'), px('top'), px('right'), px('bottom')),
-                    alignment: Alignment.centerLeft,
-                    color: o.optionSelected ? const Color(0xffcedbff) : null,
-                    child: Text(o.textContent.trim(), style: text, maxLines: 1, softWrap: false),
-                  ),
-                );
-              }),
+                  return GestureDetector(
+                    behavior: HitTestBehavior.opaque,
+                    onTap: element.disabled || o.disabled
+                        ? null
+                        : () {
+                            if (multiple) {
+                              o.optionSelected = !o.optionSelected;
+                            } else {
+                              element.value = o.optionValue;
+                            }
+                            element.userInteracted = true;
+                            _fire(element, 'input');
+                            _fire(element, 'change');
+                          },
+                    child: Container(
+                      height: rowHeight(o, text),
+                      padding: EdgeInsets.fromLTRB(
+                        px('left'),
+                        px('top'),
+                        px('right'),
+                        px('bottom'),
+                      ),
+                      alignment: Alignment.centerLeft,
+                      color: o.optionSelected ? const Color(0xffcedbff) : null,
+                      child: Text(
+                        o.textContent.trim(),
+                        style: text,
+                        maxLines: 1,
+                        softWrap: false,
+                      ),
+                    ),
+                  );
+                },
+              ),
           ],
         ),
       ),
     );
   }
 }
-
-

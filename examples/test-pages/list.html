@@ -1,0 +1,29 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><style>
+body{font:16px sans-serif;margin:0;padding:16px;background:#fafafa}
+.row{padding:8px 12px;border-bottom:1px solid #ddd;background:white}
+.row:nth-child(odd){background:#f3f4f6}
+button{margin:4px;padding:6px 10px}
+</style></head><body>
+<h1>Long list</h1>
+<button id="top">Top</button><button id="color">Toggle rows</button>
+<div id="list"></div>
+<script>
+const list = document.getElementById('list');
+for (let i = 0; i < 500; i++) {
+  const row = document.createElement('div');
+  row.className = 'row';
+  row.textContent = 'Row ' + i;
+  list.appendChild(row);
+}
+document.getElementById('top').onclick = () => window.scrollTo(0, 0);
+document.getElementById('color').onclick = () => list.classList.toggle('alt');
+let clicks = 0;
+list.addEventListener('click', (event) => {
+  const row = event.target.closest('.row');
+  if (!row) return;
+  clicks++;
+  row.textContent = `Row clicked ${clicks}`;
+});
+</script>
+</body></html>
