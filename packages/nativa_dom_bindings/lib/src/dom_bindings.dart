@@ -505,6 +505,8 @@ class DomBindings {
       final name = '${a[0]}';
       if (document.definedCustomElements.add(name)) {
         styleEngine?.invalidateAll();
+        final root = document.documentElement;
+        if (root != null) document.notifyStateChanged(root);
       }
       return null;
     },
