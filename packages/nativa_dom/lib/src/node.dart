@@ -161,6 +161,7 @@ abstract class Node extends EventTarget {
     if (reference != null && !identical(reference._parent, this)) {
       throw DomException('NotFoundError', 'reference node is not a child of this node');
     }
+    _checkDocumentOrder(child, reference);
     _checkInsertable(child, reference);
     if (child is DocumentFragment) {
       final moved = List<Node>.of(child._children);
@@ -239,7 +240,35 @@ abstract class Node extends EventTarget {
       throw DomException('NotFoundError', 'node is not a child of this node');
     }
     if (identical(newChild, oldChild)) return oldChild;
-    _checkInsertable(newChild, oldChild);
+    _checkDocumentOrder(newChild, oldChild);
+    _checkInsertable(newChild, oldChild, replacing: oldChild);
+    if (newChild is DocumentFragment) {
+      final moved = List<Node>.of(newChild.rawChildren);
+      newChild._children.clear();
+      final index = _children.indexOf(oldChild);
+      oldChild._parent = null;
+      ownerDocument.onDetached(this, oldChild);
+      _children.removeAt(index);
+      for (final n in moved) {
+        n._parent = null;
+      }
+      _children.insertAll(index, moved);
+      for (final n in moved) {
+        n._parent = this;
+        n._adopt(ownerDocument);
+        ownerDocument.onAttached(this, n);
+      }
+      ownerDocument.notify(MutationRecord.childList(
+        this,
+        added: moved,
+        removed: [oldChild],
+        previousSibling: index > 0 ? _children[index - 1] : null,
+        nextSibling: index + moved.length < _children.length
+            ? _children[index + moved.length]
+            : null,
+      ));
+      return oldChild;
+    }
     newChild._parent?.removeChild(newChild);
     final index = _children.indexOf(oldChild);
     final prev = index > 0 ? _children[index - 1] : null;
@@ -263,7 +292,14 @@ abstract class Node extends EventTarget {
   }
 
   void replaceChildren(Iterable<Node> nodes) {
-    final incoming = List<Node>.of(nodes);
+    final incoming = <Node>[];
+    for (final n in nodes) {
+      if (n is DocumentFragment) {
+        incoming.addAll(n.rawChildren);
+      } else {
+        incoming.add(n);
+      }
+    }
     final old = List<Node>.of(_children);
     for (final n in old) {
       n._parent = null;
@@ -289,7 +325,27 @@ abstract class Node extends EventTarget {
 
   void remove() => _parent?.removeChild(this);
 
-  void _checkInsertable(Node child, Node? reference) {
+  void _checkDocumentOrder(Node child, Node? reference) {
+    if (this is! Document) return;
+    final refIndex = reference == null ? _children.length : _children.indexOf(reference);
+    final elementIndex = _children.indexWhere((n) => n is Element);
+    final doctypeIndex = _children.indexWhere((n) => n is DocumentType);
+    final incomingElement = child is Element ||
+        (child is DocumentFragment && child.children.isNotEmpty);
+    final incomingDoctype = child is DocumentType ||
+        (child is DocumentFragment &&
+            child.rawChildren.whereType<DocumentType>().isNotEmpty);
+    if (incomingElement && doctypeIndex >= 0 && refIndex <= doctypeIndex) {
+      throw DomException('HierarchyRequestError',
+          'a document element must follow the doctype');
+    }
+    if (incomingDoctype && elementIndex >= 0 && refIndex > elementIndex) {
+      throw DomException('HierarchyRequestError',
+          'a doctype must precede the document element');
+    }
+  }
+
+  void _checkInsertable(Node child, Node? reference, {Node? replacing}) {
     if (child is Document) {
       throw DomException('HierarchyRequestError', 'cannot insert a document');
     }
@@ -325,10 +381,12 @@ abstract class Node extends EventTarget {
       } else if (child is DocumentType) {
         incomingDoctypes = 1;
       }
-      final elements = children.where((c) => !identical(c, child)).length;
+      final elements = children
+          .where((c) => !identical(c, child) && !identical(c, replacing))
+          .length;
       final doctypes = rawChildren
           .whereType<DocumentType>()
-          .where((d) => !identical(d, child))
+          .where((d) => !identical(d, child) && !identical(d, replacing))
           .length;
       if (elements + incomingElements > 1) {
         throw DomException(
@@ -338,7 +396,8 @@ abstract class Node extends EventTarget {
         throw DomException(
             'HierarchyRequestError', 'a document can only have one doctype');
       }
-      if (child is DocumentType && children.isNotEmpty) {
+      if (child is DocumentType && replacing == null &&
+          children.isNotEmpty) {
         throw DomException(
             'HierarchyRequestError', 'a doctype must precede the document element');
       }
