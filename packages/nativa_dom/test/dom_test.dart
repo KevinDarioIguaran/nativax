@@ -212,6 +212,17 @@ void main() {
       expect(p.matches(':lang(en)'), isFalse);
     });
 
+    test('forgiving :is()/:where() and :heading()', () {
+      expect(d.querySelectorAll(':is()'), isEmpty);
+      expect(d.querySelectorAll(':is(:total-nonsense)'), isEmpty);
+      expect(d.querySelectorAll(':is(div, :total-nonsense)'), hasLength(1));
+      final h = d.createElement('h1');
+      d.body!.appendChild(h);
+      expect(h.matches(':heading(1)'), isTrue);
+      expect(h.matches(':heading(2)'), isFalse);
+      expect(h.matches(':heading'), isTrue);
+    });
+
     test('specificity', () {
       Specificity s(String sel) => SelectorList.parse(sel).selectors.single.specificity;
       expect(s('*'), Specificity.zero);
