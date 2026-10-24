@@ -285,7 +285,12 @@ class PseudoClassSelector extends SimpleSelector {
       case 'first':
         return false;
       case 'defined':
-        return true;
+        // Built-in elements are always defined. An autonomous custom element
+        // is only defined after customElements.define(), including when it is
+        // still an unknown element on the page (upgrade may happen later).
+        final name = e.localName;
+        return !name.contains('-') ||
+            e.ownerDocument.definedCustomElements.contains(name);
       case 'open':
         return (e.localName == 'details' || e.localName == 'dialog') &&
             e.hasAttribute('open');

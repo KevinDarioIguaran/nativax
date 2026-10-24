@@ -568,7 +568,11 @@ class StyleEngine {
   /// fresh style when the element enters the viewport.
   void invalidateDeferred(Element element) => _forget(element);
 
-  void invalidateAll() => _allDirty = true;
+  void invalidateAll() {
+    _allDirty = true;
+    _matchedDirty = true;
+    _computedDirty = true;
+  }
 
   void _markDirty(Element e) {
     // Skip if an ancestor is already dirty.

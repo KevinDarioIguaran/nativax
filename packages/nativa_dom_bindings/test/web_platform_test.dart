@@ -274,6 +274,17 @@ void main() {
     expect(out, ['one', 'two']);
   });
 
+  test('custom elements become :defined only after define()', () async {
+    h = WebHarness('<my-el id="x"></my-el>');
+    final out = await h.async('''
+      const before = document.querySelector("my-el:defined") !== null;
+      customElements.define("my-el", class extends HTMLElement {});
+      const after = document.querySelector("my-el:defined") !== null;
+      out = [before, after];
+    ''');
+    expect(out, [false, true]);
+  });
+
   test('custom elements upgrade and lifecycle callbacks', () async {
     h = WebHarness('<x-greet name="Ana"></x-greet>');
     final out = await h.async('''
