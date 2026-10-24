@@ -19,6 +19,19 @@ virtualización, 5 de caché de estilo y los fixtures de render.
   hilos V8 de GC ~13 %, JS de la app 50–150 ms.
 - Detalle: `progress/reports/v8-engine-latest.md`.
 
+## IndexedDB / CPU — 2026-10-24
+
+- El polyfill clonaba el object store completo en cada transacción
+  `readwrite` (O(n²)); la app de la Biblia cachea el libro entero. Timers IDB
+  de **200–330 ms** cada uno.
+- Snapshot de deshacer perezoso + cola de tareas con presupuesto de 4 ms;
+  test de abort añadido. DOM: sin regex por `getAttribute`/`className` y
+  `ClassList` cacheado. Whitespace con fast-path.
+- Biblia V8: hilo UI **~98 → 28–51 %**, V8 GC **~35 → ~1,5 %**, RSS
+  **788 → ~615 MB**, timers IDB **200–330 → 0–22 ms**, `FIRST_VERSE`
+  **~2,0–2,2 s**, peor frame **824 ms al arrancar / 350–467 ms después**.
+- Detalle: `progress/reports/v8-engine-latest.md`.
+
 ## Cascada CSS — 2026-10-24
 
 - Reglas indexadas con flags `structural`/`sibling`; solo los candidatos que
