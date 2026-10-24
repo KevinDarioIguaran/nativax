@@ -286,19 +286,31 @@ final class QuickJsEngine implements JavaScriptEngine {
   }
 
   int _drain() {
-    return _withOut((out, outLen) {
-      final n = b.nx_run_jobs(_rt, config.maxJobsPerDrain, out, outLen);
-      if (n < 0) throw _decodeError(_readOut(out, outLen));
-      if (n >= config.maxJobsPerDrain && b.nx_has_pending_jobs(_rt) != 0) {
-        throw JavaScriptException(
-          name: 'MicrotaskLimitError',
-          message:
-              'more than ${config.maxJobsPerDrain} microtasks in one '
-              'drain; remaining jobs stay queued',
-        );
+    final watch = Stopwatch()..start();
+    try {
+      return _withOut((out, outLen) {
+        var total = 0;
+        // Browsers drain microtasks fully before returning to the event loop.
+        // That is hostile to a UI isolate when a page queues thousands of
+        // promise jobs at startup (the Bible app froze for ~6.4 s). Run one
+        // job at a time and yield every 4 ms; the remaining jobs stay queued
+        // for the next engine entry.
+        while (b.nx_has_pending_jobs(_rt) != 0 &&
+            watch.elapsedMicroseconds < 4000 &&
+            total < config.maxJobsPerDrain) {
+          final n = b.nx_run_jobs(_rt, 1, out, outLen);
+          if (n < 0) throw _decodeError(_readOut(out, outLen));
+          if (n == 0) break;
+          total += n;
+        }
+        return total;
+      });
+    } finally {
+      watch.stop();
+      if (_traceJs && watch.elapsedMilliseconds >= 20) {
+        stderr.writeln('QJS_DRAIN ${watch.elapsedMilliseconds}ms');
       }
-      return n;
-    });
+    }
   }
 
   Object? _invoke(
