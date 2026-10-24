@@ -245,6 +245,40 @@ void main() {
       expect(h.js('ret'), true);
     });
 
+    test('window.event is replaceable and restored around dispatch', () {
+      h.js('''
+        window.event = 'foo';
+        globalThis.seen = [];
+        const target = document.getElementById('increment');
+        const click = new Event('click');
+        target.addEventListener('click', () => { seen.push(window.event === click); });
+        target.dispatchEvent(click);
+        seen.push(window.event);
+      ''');
+      expect(h.js('seen'), [true, 'foo']);
+    });
+
+    test('event constants, legacy flags and null init dictionaries', () {
+      h.js('''
+        globalThis.out = [];
+        const e = new Event("x", { cancelable: true });
+        out.push(e.NONE, Event.prototype.BUBBLING_PHASE, e.returnValue);
+        out.push(e.cancelBubble);
+        e.cancelBubble = true;
+        out.push(e.cancelBubble);
+        e.returnValue = false;
+        out.push(e.defaultPrevented, e.returnValue);
+        const c = new CustomEvent("y");
+        c.initCustomEvent("z", true, true, { a: 1 });
+        out.push(c.type, c.bubbles, c.cancelable, c.detail.a);
+        const n = new Event("n", null);
+        out.push(n.bubbles, n.cancelable);
+      ''');
+      expect(h.js('out'), [
+        0, 3, true, false, true, true, false, 'z', true, true, 1, false, false,
+      ]);
+    });
+
     test('onclick handler property and return false', () {
       h.js('globalThis.c = 0; const b = document.getElementById("increment");'
           'b.onclick = () => { c++; return false; };');

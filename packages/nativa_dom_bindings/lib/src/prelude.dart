@@ -106,14 +106,27 @@ const listenerId = (cb) => {
   return id;
 };
 const captureOf = (o) => (typeof o === 'boolean' ? o : !!(o && o.capture));
+let currentEvent;
+const withCurrentEvent = (ev, fn) => {
+  const previous = currentEvent;
+  currentEvent = ev;
+  try { return fn(); } finally { currentEvent = previous; }
+};
+defineProperty(globalThis, 'event', {
+  get() { return currentEvent; },
+  set(value) { currentEvent = value; },
+  configurable: true,
+});
 
 // ---- events ----------------------------------------------------------------
 const events = new Map();            // event id -> Event object
 class Event {
   constructor(type, init = {}) {
     if (arguments.length === 0) throw new TypeError('Event requires a type');
+    init = init || {};
     hidden(this, '__type', String(type));
     hidden(this, '__init', { bubbles: !!init.bubbles, cancelable: !!init.cancelable });
+    defineProperty(this, '__initialized', { value: true, writable: true, configurable: true });
   }
   get type() { return this.__desc ? this.__desc.type : this.__type; }
   get bubbles() { return this.__desc ? this.__desc.bubbles : this.__init.bubbles; }
@@ -128,9 +141,18 @@ class Event {
   stopPropagation() { if (this.__id) host('event.call', this.__id, 'stopPropagation'); }
   stopImmediatePropagation() { if (this.__id) host('event.call', this.__id, 'stopImmediatePropagation'); }
 }
-Event.NONE = 0; Event.CAPTURING_PHASE = 1; Event.AT_TARGET = 2; Event.BUBBLING_PHASE = 3;
+for (const [name, value] of Object.entries({
+  NONE: 0, CAPTURING_PHASE: 1, AT_TARGET: 2, BUBBLING_PHASE: 3,
+})) {
+  Event[name] = value;
+  defineProperty(Event.prototype, name, { value, enumerable: true, configurable: true });
+}
 class CustomEvent extends Event {
-  constructor(type, init = {}) { super(type, init); hidden(this, 'detail', init.detail === undefined ? null : init.detail); }
+  constructor(type, init = {}) {
+    init = init || {};
+    super(type, init);
+    hidden(this, 'detail', init.detail === undefined ? null : init.detail);
+  }
 }
 // Trusted events created by the host get their detail fields as properties
 // (key, code, value, checked, ...).
@@ -160,7 +182,7 @@ register('__nx_dispatch', (msg) => {
   const ev = eventFor(msg.event);
   const self = wrap(msg.currentTarget);
   // Inline handler properties (el.onclick) are stored as listeners too.
-  invoke(cb, self, ev);
+  withCurrentEvent(ev, () => invoke(cb, self, ev));
 });
 register('__nx_eventDone', (id) => { events.delete(id); });
 register('__nx_releaseListener', (id) => {
@@ -184,12 +206,24 @@ class EventTarget {
   dispatchEvent(ev) {
     if (!(ev instanceof Event)) throw new TypeError('parameter is not an Event');
     if (ev.__id) throw new Error('event is already being dispatched');
+    if (!ev.__initialized) throw new DOMException('The event is not initialized.', 'InvalidStateError');
+    if (ev.__stop) {
+      ev.__stop = false;
+      ev.__immediate = false;
+      hidden(ev, '__lastTarget', this);
+      return true;
+    }
+    ev.__dispatching = true;
+    hidden(ev, '__lastTarget', this);
     const id = host('event.create', ev.type, ev.bubbles, ev.cancelable);
     hidden(ev, '__id', id);
     events.set(id, ev);
     try {
-      return host('ev.dispatch', idOf(this, 'EventTarget'), id);
+      return withCurrentEvent(ev, () => host('ev.dispatch', idOf(this, 'EventTarget'), id));
     } finally {
+      ev.__dispatching = false;
+      ev.__stop = false;
+      ev.__immediate = false;
       events.delete(id);
       delete ev.__id;
     }
@@ -1204,7 +1238,19 @@ class Document extends Node {
     if (!(node instanceof Node)) throw new TypeError('parameter is not a Node');
     return wrap(host('doc.adoptNode', this[ID], idOf(node)));
   }
-  createEvent() { return new Event(''); }
+  createEvent(type = '') {
+    const name = String(type);
+    const C = name === 'CustomEvent' ? CustomEvent
+      : name === 'UIEvent' ? UIEvent
+      : name === 'MouseEvent' ? MouseEvent
+      : name === 'KeyboardEvent' ? KeyboardEvent
+      : name === 'FocusEvent' ? FocusEvent
+      : name === 'WheelEvent' ? WheelEvent
+      : Event;
+    const ev = new C('');
+    defineProperty(ev, '__initialized', { value: false, writable: true, configurable: true });
+    return ev;
+  }
   get URL() { return docMeta.get(this)?.url || 'about:blank'; }
   get documentURI() { return this.URL; }
   get compatMode() { return 'CSS1Compat'; }
