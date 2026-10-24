@@ -51,6 +51,27 @@ void main() {
     );
   });
 
+  test(
+    'a later state change does not clear a pending structural invalidation',
+    () {
+      final (doc, engine) = _doc(
+        '<!doctype html><html><body><div id="a"><p>x</p></div></body></html>',
+        'p { color: #000000 } .open p { color: #ff0000 }',
+      );
+      engine.lazySubtrees = true;
+      doc.addMutationListener(engine.handleMutation);
+      final div = doc.getElementById('a')!;
+      final p = div.querySelector('p')!;
+      expect(engine.styleOf(p).color, CssColor.black);
+      div.className = 'open';
+      // A state notification after the class change must not erase the pending
+      // "descendants may change" flag.
+      doc.notifyStateChanged(div);
+      engine.recompute();
+      expect(engine.styleOf(p).color, const CssColor(0xffff0000));
+    },
+  );
+
   test('state changes on an unrelated ancestor keep descendants cached', () {
     final (doc, engine) = _doc(
       '<!doctype html><html><body><div id="a"><p><b>x</b></p></div></body></html>',
