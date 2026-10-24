@@ -8,7 +8,7 @@ const String webIndexedDb = r'''
 // ============================================================================
 const idbDatabases = new Map(); // name -> { version, stores: Map<name, store> }
 // IndexedDB tasks are macrotasks in browsers. A single coalesced queue avoids
-// one engine timer per request (the Bible app creates thousands while caching
+// one engine timer per request (large apps create thousands while caching
 // a book) while the 4 ms budget still yields to the UI.
 const idbQueue = [];
 let idbScheduled = false;

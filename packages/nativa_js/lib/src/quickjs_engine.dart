@@ -292,7 +292,7 @@ final class QuickJsEngine implements JavaScriptEngine {
         var total = 0;
         // Browsers drain microtasks fully before returning to the event loop.
         // That is hostile to a UI isolate when a page queues thousands of
-        // promise jobs at startup (the Bible app froze for ~6.4 s). Run one
+        // promise jobs at startup (a large app froze for ~6.4 s). Run one
         // job at a time and yield every 4 ms; the remaining jobs stay queued
         // for the next engine entry.
         final sliceUs = config.microtaskSlice.inMicroseconds;

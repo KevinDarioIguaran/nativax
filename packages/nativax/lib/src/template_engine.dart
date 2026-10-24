@@ -1,6 +1,6 @@
 /// A small Jinja2-like template engine for NativaX.
 ///
-/// Supports the subset used by the Torah+ templates: variables, attribute/
+/// Supports the subset used by application templates: variables, attribute/
 /// index access, filters, `{% if %}`, `{% for %}`, `{% set %}`, `{% include %}`,
 /// `{% macro %}`/`{% call %}`, `{% trans %}` and `{% raw %}`. Templates are
 /// loaded through a caller-provided [loader] so they can come from assets,

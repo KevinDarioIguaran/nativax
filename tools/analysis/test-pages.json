@@ -1,0 +1,91 @@
+{
+  "files": {
+    "html": 3
+  },
+  "tags": {
+    "html": 3,
+    "head": 3,
+    "meta": 3,
+    "style": 3,
+    "body": 3,
+    "h1": 3,
+    "button": 4,
+    "div": 2,
+    "script": 3,
+    "form": 1,
+    "input": 2,
+    "pre": 1,
+    "p": 1
+  },
+  "attrs": {
+    "charset": 3,
+    "id": 10,
+    "placeholder": 2,
+    "required": 2,
+    "type": 1,
+    "class": 2
+  },
+  "css_props": {
+    "font": 4,
+    "margin": 2,
+    "padding": 7,
+    "background": 7,
+    "border-bottom": 1,
+    "row": 1,
+    "display": 1,
+    "gap": 1,
+    "max-width": 1,
+    "white-space": 1,
+    "margin-top": 1,
+    "color": 1,
+    "width": 1,
+    "height": 1,
+    "border-radius": 1,
+    "animation": 1,
+    "transform": 2,
+    "opacity": 1,
+    "transition": 1
+  },
+  "selectors": {
+    "body": 3,
+    ".row": 1,
+    ".row:nth-child(odd)": 1,
+    "button": 2,
+    "form": 1,
+    "input": 1,
+    "#out": 1,
+    ".box": 1,
+    "from": 1,
+    "to": 1,
+    ".fade": 1
+  },
+  "pseudos": {},
+  "at_rules": {
+    "keyframes": 1
+  },
+  "apis": {
+    "document.getElementById": 9,
+    "document.createElement": 1,
+    "window.scrollTo": 1
+  },
+  "calls": {
+    "getElementById": 9,
+    "for": 1,
+    "createElement": 1,
+    "appendChild": 1,
+    "scrollTo": 1,
+    "toggle": 2,
+    "addEventListener": 4,
+    "closest": 1,
+    "if": 1,
+    "preventDefault": 1,
+    "contains": 1
+  },
+  "mutations": {
+    "className": 1,
+    "textContent": 6,
+    "appendChild": 1,
+    "classList": 3,
+    "value": 1
+  }
+}
