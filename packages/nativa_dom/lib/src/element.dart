@@ -15,6 +15,8 @@ const Set<String> voidElements = {
 };
 
 final RegExp _invalidNameChars = RegExp(r'''[\s"'>/=<\x00]''');
+final RegExp _asciiUpperRe = RegExp('[A-Z]');
+final RegExp _asciiLowerRe = RegExp('[a-z]');
 
 /// Throws `InvalidCharacterError` for names the parser could never produce.
 void validateName(String name) {
@@ -23,10 +25,25 @@ void validateName(String name) {
   }
 }
 
-String _asciiLower(String s) =>
-    s.replaceAllMapped(RegExp('[A-Z]'), (m) => m[0]!.toLowerCase());
-String _asciiUpper(String s) =>
-    s.replaceAllMapped(RegExp('[a-z]'), (m) => m[0]!.toUpperCase());
+String _asciiLower(String s) {
+  for (var i = 0; i < s.length; i++) {
+    final c = s.codeUnitAt(i);
+    if (c >= 0x41 && c <= 0x5a) {
+      return s.replaceAllMapped(_asciiUpperRe, (m) => m[0]!.toLowerCase());
+    }
+  }
+  return s;
+}
+
+String _asciiUpper(String s) {
+  for (var i = 0; i < s.length; i++) {
+    final c = s.codeUnitAt(i);
+    if (c >= 0x61 && c <= 0x7a) {
+      return s.replaceAllMapped(_asciiLowerRe, (m) => m[0]!.toUpperCase());
+    }
+  }
+  return s;
+}
 
 class Element extends Node {
   Element(Document doc, String localName)
@@ -84,6 +101,15 @@ class Element extends Node {
 
   String? _keyFor(String name) {
     final lower = _asciiLower(name);
+    final direct = _attributes.containsKey(name) ? name : null;
+    if (direct != null) return direct;
+    if (name == lower) {
+      for (final key in _attributes.keys) {
+        if (key == lower) return key;
+        if (_nameOf(key) == lower) return key;
+      }
+      return null;
+    }
     for (final key in _attributes.keys) {
       if (_asciiLower(_nameOf(key)) == lower) return key;
     }
@@ -825,12 +851,36 @@ class ClassList extends IterableBase<String> {
   ClassList._(this._element);
   final Element _element;
 
+  static final RegExp _whitespace = RegExp(r'[\t\n\f\r ]');
+  List<String>? _tokenCache;
+  String? _tokenSource;
+
   List<String> get _tokens {
+    final source = _element.className;
+    if (identical(source, _tokenSource)) return _tokenCache!;
+    final out = <String>[];
     final seen = <String>{};
-    return _element.className
-        .split(RegExp(r'[\t\n\f\r ]+'))
-        .where((t) => t.isNotEmpty && seen.add(t))
-        .toList();
+    var start = -1;
+    for (var i = 0; i < source.length; i++) {
+      final c = source.codeUnitAt(i);
+      final space = c == 0x20 || c == 0x09 || c == 0x0a || c == 0x0c || c == 0x0d;
+      if (space) {
+        if (start >= 0) {
+          final token = source.substring(start, i);
+          if (seen.add(token)) out.add(token);
+          start = -1;
+        }
+      } else if (start < 0) {
+        start = i;
+      }
+    }
+    if (start >= 0) {
+      final token = source.substring(start);
+      if (seen.add(token)) out.add(token);
+    }
+    _tokenSource = source;
+    _tokenCache = out;
+    return out;
   }
 
   @override
@@ -843,7 +893,7 @@ class ClassList extends IterableBase<String> {
     if (token.isEmpty) {
       throw DomException('SyntaxError', 'empty class token');
     }
-    if (token.contains(RegExp(r'[\t\n\f\r ]'))) {
+    if (token.contains(_whitespace)) {
       throw DomException('InvalidCharacterError', 'class token has spaces');
     }
   }
