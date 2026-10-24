@@ -179,6 +179,14 @@ El siguiente cuello sigue siendo **layout**, no build.
 - Añadido test de render de `<my-card>` con CSS normal. Al definir un custom
   element se fuerza un pase de estilos para que `:defined` no quede obsoleto.
 
+### Selector de idioma / banderas
+
+`url(../flags/4x3/co.svg)` se resolvía contra el documento y no contra la hoja
+`flag-icons`, así que el selector de idioma quedaba sin bandera. `StyleSheet`
+guarda ahora su URL base y resuelve los `url()` relativos al parsear. La app
+calcula `http://127.0.0.1:8000/static/vendor/flag-icons/flags/4x3/co.svg` para
+`#langFlag.fi-co`.
+
 ### Límites actuales
 
 No es “todo CSS y todo HTML”. Siguen fuera o parciales: Shadow DOM y
