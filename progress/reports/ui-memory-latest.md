@@ -25,14 +25,17 @@ no un parche.
 
 Objetivo realista para esta app:
 
-- QuickJS: ≤ 350–400 MB (menos memoria, más CPU).
+- Meta acordada: **250 MB** con QuickJS y cachés acotadas.
+- QuickJS medido sin esas optimizaciones: ~344 MB; V8: ~543 MB.
 - V8: ≤ 550–600 MB (más CPU/JS, menos RSS).
 - 100 MB: bloqueado por el baseline de Flutter + DOM/CSS + engine.
 
 ## Cambios de esta iteración
 
-- `@font-face`: sólo se cargan familias usadas por el CSS de la página; antes
-  se cargaban todas las fuentes del catálogo (`/fonts.css`, 72 fuentes).
+- `@font-face`: se intentó cargar sólo familias usadas por el CSS, pero el
+  filtro dejó sin glifos a Font Awesome. Se revirtió en el árbol de trabajo:
+  por ahora se cargan todas las fuentes declaradas. Un cargador perezoso
+  seguro (iconos siempre incluidos) sigue pendiente.
 - `ResizeObserver`/`IntersectionObserver`: polling a 10 Hz, no un
   `requestAnimationFrame` infinito.
 - `:has()`: invalidación diferida y dirigida en modo lazy; no recorre todo el
