@@ -1,8 +1,12 @@
+import 'dart:convert';
 import 'dart:math' as math;
+import 'dart:typed_data';
+import 'dart:ui' as ui;
 
 import 'package:flutter/widgets.dart';
 import 'package:nativa_css/nativa_css.dart';
 import 'package:nativa_dom/nativa_dom.dart' as dom;
+import 'package:nativa_html/nativa_html.dart';
 
 import '../layout/preferred_width.dart';
 import '../style_mapping.dart';
@@ -181,6 +185,42 @@ class _Shape {
   final Matrix4 transform;
   final bool filled;
   final double strokeWidth;
+}
+
+/// Rasterizes an SVG document (for example an external flag icon) into a
+/// Flutter image. The DOM is parsed locally; the caller owns loading bytes.
+Future<ui.Image> rasterizeSvgBytes(
+  Uint8List bytes, {
+  int width = 64,
+  int height = 64,
+}) async {
+  final document = dom.Document();
+  final context = document.createElement('div');
+  document.appendChild(context);
+  final parsed = HtmlParser().parseFragment(utf8.decode(bytes, allowMalformed: true), context).value;
+  dom.Element? svg;
+  for (final n in parsed.descendants) {
+    if (n is dom.Element && n.localName == 'svg') {
+      svg = n;
+      break;
+    }
+  }
+  final root = svg ?? document.createElement('svg');
+  final engine = StyleEngine(
+    document: document,
+    media: MediaContext(width: width.toDouble(), height: height.toDouble()),
+  );
+  final vb = svgViewBox(root);
+  final painter = _SvgPainter(root, engine, vb, engine.styleOf(root));
+  final recorder = ui.PictureRecorder();
+  final canvas = ui.Canvas(recorder);
+  painter.paint(canvas, ui.Size(width.toDouble(), height.toDouble()));
+  final picture = recorder.endRecording();
+  try {
+    return await picture.toImage(width, height);
+  } finally {
+    picture.dispose();
+  }
 }
 
 /// Renders an inline `<svg>` subtree.

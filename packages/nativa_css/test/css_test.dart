@@ -408,6 +408,18 @@ void main() {
     });
   });
 
+  test('SVG presentation attributes keep per-element styles', () {
+    final doc = HtmlParser()
+        .parseDocument(
+            '<!doctype html><svg><path fill="#ffe800"/><path fill="#00148e"/></svg>')
+        .value;
+    final engine = StyleEngine(
+        document: doc, media: const MediaContext(width: 640, height: 480));
+    final paths = doc.querySelectorAll('path');
+    expect(engine.styleOf(paths[0]).fillColor, const CssColor(0xffffe800));
+    expect(engine.styleOf(paths[1]).fillColor, const CssColor(0xff00148e));
+  });
+
   test('custom properties are inherited and substituted', () {
     final doc = Document();
     final root = doc.createElement('html');
