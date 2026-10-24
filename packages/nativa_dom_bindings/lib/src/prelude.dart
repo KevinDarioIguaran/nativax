@@ -336,25 +336,13 @@ for (const m of ['map', 'filter', 'slice', 'indexOf', 'reduce', 'some', 'every',
 }
 const staticNodeList = (descs) => {
   const items = descs.map(wrap);
-  return new Proxy(new StaticNodeList(items), {
-    get(t, p, r) {
-      if (typeof p === 'string' && /^\d+$/.test(p)) return t.item(Number(p)) ?? undefined;
-      return Reflect.get(t, p, r);
-    },
-    has(t, p) {
-      if (typeof p === 'string' && /^\d+$/.test(p)) return Number(p) < t.length;
-      return Reflect.has(t, p);
-    },
-    ownKeys(t) { const keys = []; for (let i = 0; i < t.length; i++) keys.push(String(i)); return keys; },
-    getOwnPropertyDescriptor(t, p) {
-      if (typeof p === 'string' && /^\d+$/.test(p)) {
-        const i = Number(p);
-        if (i >= t.length) return undefined;
-        return { value: t.item(i), enumerable: true, configurable: true, writable: false };
-      }
-      return Reflect.getOwnPropertyDescriptor(t, p);
-    },
-  });
+  const list = new StaticNodeList(items);
+  for (let i = 0; i < items.length; i++) {
+    defineProperty(list, String(i), {
+      value: items[i], enumerable: true, configurable: true, writable: false,
+    });
+  }
+  return list;
 };
 class HTMLCollection {
   constructor(id, kind) { hidden(this, '__id', id); hidden(this, '__kind', kind); }
@@ -448,6 +436,7 @@ const collectionNames = (collection) => {
   }
   return names;
 };
+
 const htmlCollectionFor = (collection) => new Proxy(collection, {
   get(t, p, r) {
     if (typeof p === 'string') {
@@ -741,7 +730,7 @@ Node.prototype.normalize = function () {
         next.remove();
         next = after;
       }
-    } else if (child.nodeType === 1 || child.nodeType === 11) {
+    } else if (child.nodeType === 1 || child.nodeType === 9 || child.nodeType === 11) {
       child.normalize();
     }
     child = child.nextSibling;
@@ -1197,7 +1186,9 @@ class Document extends Node {
     if (this.contentType !== 'text/html') {
       Object.setPrototypeOf(el, Element.prototype);
       localNames.set(el, name);
-      namespaces.set(el, this.contentType === 'application/xhtml+xml' ? HTML_NS : this.contentType === 'image/svg+xml' ? SVG_NS : null);
+      const ns = this.contentType === 'application/xhtml+xml' ? HTML_NS : this.contentType === 'image/svg+xml' ? SVG_NS : null;
+      namespaces.set(el, ns);
+      host('el.setNamespace', el[ID], ns);
     }
     return el;
   }
@@ -1208,6 +1199,7 @@ class Document extends Node {
     const el = this.createElement(local);
     const namespace = ns === null || ns === undefined || ns === '' ? null : String(ns);
     namespaces.set(el, namespace);
+    host('el.setNamespace', el[ID], namespace);
     prefixes.set(el, prefix);
     localNames.set(el, local);
     if (namespace === HTML_NS) {
@@ -1415,11 +1407,15 @@ const frameWindowFor = (frame) => {
   let win = frameWindows.get(frame);
   if (!win) {
     const doc = frameDocumentFor(frame);
+    const textCtor = function (data = '') { return doc.createTextNode(domString(data)); };
+    textCtor.prototype = Text.prototype;
+    const commentCtor = function (data = '') { return doc.createComment(domString(data)); };
+    commentCtor.prototype = Comment.prototype;
     win = {
       document: doc, parent: globalThis, top: globalThis, frameElement: frame,
       window: null, self: null, closed: false,
-      Document, XMLDocument, HTMLDocument, DOMImplementation, Node, Element, Text,
-      Comment, ProcessingInstruction, DocumentFragment, Attr, DOMException, customElements,
+      Document, XMLDocument, HTMLDocument, DOMImplementation, Node, Element, Text: textCtor,
+      Comment: commentCtor, ProcessingInstruction, DocumentFragment, Attr, DOMException, customElements,
       postMessage(message, targetOrigin) { globalThis.dispatchMessage && globalThis.dispatchMessage(message, targetOrigin); },
       addEventListener: (t, f) => frame.addEventListener(t, f),
       removeEventListener: (t, f) => frame.removeEventListener(t, f),
