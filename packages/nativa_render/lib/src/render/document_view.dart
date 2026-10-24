@@ -53,6 +53,10 @@ class _NativaXDocumentViewState extends State<NativaXDocumentView> implements do
   final Set<String> _reported = {};
   bool _scheduled = false;
   bool _contentDirty = false;
+  List<dom.Element>? _fixedCache;
+  Timer? _scrollIdle;
+  bool _isScrolling = false;
+  bool _pendingRebuild = false;
   bool _disposed = false;
   bool _diagnosedBuild = false;
   TimingsCallback? _drawTimings;
@@ -156,12 +160,14 @@ class _NativaXDocumentViewState extends State<NativaXDocumentView> implements do
     if (_drawTimings != null) {
       SchedulerBinding.instance.removeTimingsCallback(_drawTimings!);
     }
+    _scrollIdle?.cancel();
     _revision.dispose();
     _scroll.dispose();
     super.dispose();
   }
 
   void _onMutation(dom.MutationRecord record) {
+    _fixedCache = null;
     final target = record.target;
     final element = target is dom.Element ? target : target.parentElement;
     if (element != null) {
@@ -261,6 +267,14 @@ class _NativaXDocumentViewState extends State<NativaXDocumentView> implements do
           'roots=${widget.styleEngine.dirtyRootCount}');
     }
     if (!rebuild) return;
+    // Scrolling moves the page under scroll-driven JS handlers (reference
+    // labels, hover classes). Their content mutations only need one rebuild
+    // after the scroll settles; rebuilding on every frame was the dominant
+    // scroll cost. Style/layout changes still apply immediately.
+    if (_isScrolling && changed.isEmpty) {
+      _pendingRebuild = true;
+      return;
+    }
     setState(() {});
   }
 
@@ -458,7 +472,19 @@ class _NativaXDocumentViewState extends State<NativaXDocumentView> implements do
     return m[2] == 'px' ? n : n * widget.styleEngine.styleOf(root).fontSize;
   }
 
+  @override
+  bool get isScrolling => _isScrolling;
+
   void _onScroll() {
+    _isScrolling = true;
+    _scrollIdle?.cancel();
+    _scrollIdle = Timer(const Duration(milliseconds: 120), () {
+      _isScrolling = false;
+      if (_pendingRebuild && mounted) {
+        _pendingRebuild = false;
+        setState(() {});
+      }
+    });
     if (_scrollEventScheduled || (_scroll.offset - _lastScroll).abs() < 0.5) return;
     _scrollEventScheduled = true;
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -637,6 +663,7 @@ class _NativaXDocumentViewState extends State<NativaXDocumentView> implements do
           );
           if (widget.styleEngine.media != media) {
             widget.styleEngine.media = media;
+            _fixedCache = null;
             widget.styleEngine.recompute();
           }
 
@@ -752,8 +779,10 @@ class _NativaXDocumentViewState extends State<NativaXDocumentView> implements do
   /// virtualized list must opt out with `data-nativa-virtual="off"` (a fixed
   /// descendant of a virtually scrolled list is not meaningful anyway).
   List<dom.Element> _fixedElements(dom.Element? body) {
+    final cached = _fixedCache;
+    if (cached != null) return cached;
     final out = <dom.Element>[];
-    if (body == null) return out;
+    if (body == null) return _fixedCache = out;
     final modal = widget.document.modalElements.toSet();
     var visited = 0;
     void walk(dom.Element e) {
@@ -774,7 +803,7 @@ class _NativaXDocumentViewState extends State<NativaXDocumentView> implements do
     }
 
     walk(body);
-    return out;
+    return _fixedCache = out;
   }
 
   Color _canvasColor(dom.Element? body, dom.Element? root) {
