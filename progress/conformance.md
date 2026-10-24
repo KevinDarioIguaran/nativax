@@ -9,10 +9,10 @@ checkouts están pinneados y no se versionan (`.conformance/` está ignorado).
 |---|---|---:|---:|---:|---:|---:|---|
 | Test262 | `language/{expressions,statements,types,literals}` | 19.577 | 413 | 1.108 | 0 | **97,93 %** | `d53ebc8` |
 | html5lib tokenizer | todos los `.test` | 5.759 | 43 | 1.025 | 0 | **99,26 %** | `e7d77cd` |
-| WPT `dom/nodes` | 327 archivos | 175 | 106 | 46 | 0 | **62,28 %** | `e7d77cd` |
-| WPT `css/selectors` | 528 archivos | 106 | 74 | 348 | 0 | **58,89 %** | `e7d77cd` |
+| WPT `dom/nodes` | 327 archivos | 174 | 107 | 46 | 0 | **61,92 %** | `e7d77cd` |
+| WPT `css/selectors` | 528 archivos | 126 | 54 | 348 | 0 | **70,00 %** | `e7d77cd` |
 | WPT URL | 896 casos del fixture | 665 | 231 | 0 | 0 | **74,22 %** | `e7d77cd` |
-| WPT `dom/events` | 176 archivos | 51 | 22 | 103 | 0 | **69,86 %** | `e7d77cd` |
+| WPT `dom/events` | 176 archivos | 52 | 21 | 103 | 0 | **71,23 %** | `e7d77cd` |
 | WPT tree construction | 1.973 casos `.dat` | 944 | 930 | 99 | 0 | **50,37 %** | `e7d77cd` |
 
 La tasa excluye `SKIP`. Un `SKIP` **no** cuenta como compatibilidad.
@@ -30,8 +30,8 @@ corregir la caché de `classList`.
 | Test262 | 70 % | 97,93 % | ✅ |
 | html5lib tokenizer | 70 % | 99,26 % | ✅ |
 | WPT URL | 70 % | 74,22 % | ✅ |
-| WPT `dom/nodes` | 70 % | 62,28 % | ❌ |
-| WPT `css/selectors` | 70 % | 58,89 % | ❌ |
+| WPT `dom/nodes` | 70 % | 61,92 % | ❌ |
+| WPT `css/selectors` | 70 % | 70,00 % | ✅ |
 | WPT tree construction | 70 % | 50,37 % | ❌ |
 
 Para DOM/CSS/parser, el 70 % exige CSSOM, `DOMParser`, Shadow DOM,
@@ -64,12 +64,12 @@ dart run bin/run_wpt.dart --dirs dom/nodes --limit 2000
 
 | Suite | PASS | FAIL | SKIP | Tasa (sin SKIP) |
 |---|---:|---:|---:|---:|
-| `dom/events` | 51 | 22 | 103 | **69,86 %** |
-| `css/selectors` | 106 | 74 | 348 | **58,89 %** |
-| `dom/nodes` | 175 | 106 | 46 | **62,28 %** |
+| `dom/events` | 52 | 21 | 103 | **71,23 %** |
+| `css/selectors` | 126 | 54 | 348 | **70,00 %** |
+| `dom/nodes` | 174 | 107 | 46 | **61,92 %** |
 
-`dom/events` queda a un archivo de 70 % (52/73). No se redondea ni se
-reclasifica. Los cambios reales de esta corrida son `Event` legacy
+`dom/events` alcanza 52/73 (71,23 %) y `css/selectors` 126/180 (70,00 %).
+No se redondea ni se reclasifica. Los cambios reales de esta corrida son `Event` legacy
 (`cancelBubble`, `returnValue`, constantes, `initEvent`/`initUIEvent`/
 `initMouseEvent`/`initKeyboardEvent`), `createEvent` sin inicializar,
 `window.event` reemplazable, `passive` por defecto, captura booleana,
@@ -83,10 +83,10 @@ ganancia de compatibilidad del motor**: la línea base anterior subestimaba
 `css/selectors` y `dom/events`. Las cifras de arriba ya reflejan el motor real,
 pero no deben presentarse como si todo el delta fuera producto.
 
-Quedan fuera de 70 %: `:dir`, `:focus-visible`, Shadow DOM, `:has()` relativo
-complejo, quirks mode, selectores namespaced, iframes/realm y `scrollend`.
-El parser HTML sigue en 50,37 %: adoption agency, foster parenting,
-`template`, foreign content y estados de script.
+Quedan fuera de 70 % `dom/nodes` (61,92 %) y tree construction (50,37 %).
+En selectores aún fallan `:focus-visible`, Shadow DOM, quirks mode,
+namespaced y partes de `:dir`; en el parser HTML adoption agency, foster
+parenting, `template`, foreign content y estados de script.
 
 ## Brechas principales
 
