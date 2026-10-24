@@ -8,6 +8,8 @@ import 'node.dart';
 import 'selectors.dart';
 import 'serializer.dart';
 
+const htmlNamespace = 'http://www.w3.org/1999/xhtml';
+
 /// Elements that never have children or an end tag.
 const Set<String> voidElements = {
   'area', 'base', 'br', 'col', 'embed', 'hr', 'img', 'input', 'link', 'meta',
@@ -46,12 +48,15 @@ String _asciiUpper(String s) {
 }
 
 class Element extends Node {
-  Element(Document doc, String localName)
+  Element(Document doc, String localName, {this.namespaceUri = htmlNamespace})
     : localName = _asciiLower(localName),
       super(doc);
 
   /// Lower-case tag name (`div`).
   final String localName;
+
+  /// Element namespace. HTML elements use [htmlNamespace]; XML/SVG may be null.
+  String? namespaceUri;
 
   final LinkedHashMap<String, String> _attributes = LinkedHashMap();
   final Map<String, String?> _attributeNamespaces = {};
@@ -65,8 +70,9 @@ class Element extends Node {
   @override
   NodeType get nodeType => NodeType.element;
 
-  /// Upper-case tag name (`DIV`), as in HTML documents.
-  String get tagName => _asciiUpper(localName);
+  /// Upper-case tag name (`DIV`) in HTML, local name in XML.
+  String get tagName =>
+      namespaceUri == htmlNamespace ? _asciiUpper(localName) : localName;
 
   @override
   String get nodeName => tagName;
