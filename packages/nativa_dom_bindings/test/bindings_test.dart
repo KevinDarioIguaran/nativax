@@ -245,6 +245,53 @@ void main() {
       expect(h.js('ret'), true);
     });
 
+    test('event handler properties can be cleared', () {
+      h.js('''
+        const d = document.createElement('div');
+        d.onanimationend = () => {};
+        const set = d.onanimationend !== null;
+        d.onanimationend = null;
+        globalThis.out = [set, d.onanimationend];
+      ''');
+      expect(h.js('out'), [true, null]);
+    });
+
+    test('script-created click events dispatch to detached nodes', () {
+      h.js('''
+        const t = document.createElement('div');
+        let fired = false;
+        t.addEventListener('click', () => { fired = true; });
+        t.dispatchEvent(new Event('click'));
+        globalThis.fired = fired;
+      ''');
+      expect(h.js('fired'), true);
+    });
+
+    test('prefixed animation handler aliases', () {
+      h.js('''
+        const d = document.getElementById('count');
+        let n = 0;
+        d.onwebkitanimationend = () => n++;
+        d.addEventListener('webkitAnimationEnd', () => n++);
+        d.dispatchEvent(new AnimationEvent('webkitAnimationEnd'));
+        globalThis.n = n;
+      ''');
+      expect(h.js('n'), 2);
+    });
+
+    test('createEvent is uninitialized until initEvent', () {
+      h.js('''
+        const e = document.createEvent('CustomEvent');
+        globalThis.out = [e.__initialized, e.type];
+        try { document.dispatchEvent(e); out.push('ok'); }
+        catch (err) { out.push(err.name); }
+        e.initEvent('x', false, false);
+        out.push(e.__initialized, e.type);
+        out.push(document.dispatchEvent(e));
+      ''');
+      expect(h.js('out'), [false, '', 'InvalidStateError', true, 'x', true]);
+    });
+
     test('window.event is replaceable and restored around dispatch', () {
       h.js('''
         window.event = 'foo';
@@ -255,7 +302,7 @@ void main() {
         target.dispatchEvent(click);
         seen.push(window.event);
       ''');
-      expect(h.js('seen'), [true, 'foo']);
+      expect(h.js('seen'), [false, 'foo']);
     });
 
     test('event constants, legacy flags and null init dictionaries', () {

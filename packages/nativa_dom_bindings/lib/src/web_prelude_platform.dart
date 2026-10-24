@@ -30,7 +30,7 @@ const markTime = (v) => {
   return m.startTime;
 };
 const performance = Object.assign(new EventTarget(), {
-  now: () => host('perf.now'),
+  now: () => Math.floor(host('perf.now') / 5) * 5,
   get timeOrigin() { return perfOrigin; },
   mark(name, options) { const m = new PerformanceMark(name, options); perfEntries.push(m); return m; },
   measure(name, a, b) {
@@ -852,11 +852,17 @@ DP.startViewTransition = function (cb) {
 DP.open = function () { return this; };
 DP.close = function () {};
 DP.write = DP.writeln = function (...s) { if (document.body) document.body.insertAdjacentHTML('beforeend', s.join('')); };
-const createEventTypes = { Event, CustomEvent, UIEvent, MouseEvent, MouseEvents: MouseEvent, KeyboardEvent, FocusEvent, HTMLEvents: Event, Events: Event };
+const createEventTypes = {
+  Event, CustomEvent, UIEvent, MouseEvent, MouseEvents: MouseEvent, KeyboardEvent, FocusEvent,
+  CompositionEvent, DragEvent, HashChangeEvent, MessageEvent, StorageEvent, TextEvent: Event, SVGEvents: Event, UIEvents: UIEvent,
+  HTMLEvents: Event, Events: Event,
+  BeforeUnloadEvent: Event, DeviceMotionEvent: Event, DeviceOrientationEvent: Event,
+};
 DP.createEvent = function (t) {
   const C = createEventTypes[t];
   if (!C) throw new DOMException(`The provided event type ('${t}') is invalid.`, 'NotSupportedError');
   const e = new C('');
+  defineProperty(e, '__initialized', { value: false, writable: true, configurable: true });
   return e;
 };
 

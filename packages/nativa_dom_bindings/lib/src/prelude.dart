@@ -105,16 +105,19 @@ const listenerId = (cb) => {
   listeners.set(id, cb);
   return id;
 };
-const captureOf = (o) => (typeof o === 'boolean' ? o : !!(o && o.capture));
+const captureOf = (o) => (o && typeof o === 'object') ? !!o.capture : !!o;
 let currentEvent;
+let eventReplaced = false;
+const passiveListeners = new Set();
 const withCurrentEvent = (ev, fn) => {
+  if (eventReplaced) return fn();
   const previous = currentEvent;
   currentEvent = ev;
   try { return fn(); } finally { currentEvent = previous; }
 };
 defineProperty(globalThis, 'event', {
   get() { return currentEvent; },
-  set(value) { currentEvent = value; },
+  set(value) { currentEvent = value; eventReplaced = true; },
   configurable: true,
 });
 
@@ -127,6 +130,7 @@ class Event {
     hidden(this, '__type', String(type));
     hidden(this, '__init', { bubbles: !!init.bubbles, cancelable: !!init.cancelable });
     defineProperty(this, '__initialized', { value: true, writable: true, configurable: true });
+    hidden(this, '__created', globalThis.performance && performance.now ? performance.now() : Date.now());
   }
   get type() { return this.__desc ? this.__desc.type : this.__type; }
   get bubbles() { return this.__desc ? this.__desc.bubbles : this.__init.bubbles; }
@@ -182,7 +186,13 @@ register('__nx_dispatch', (msg) => {
   const ev = eventFor(msg.event);
   const self = wrap(msg.currentTarget);
   // Inline handler properties (el.onclick) are stored as listeners too.
-  withCurrentEvent(ev, () => invoke(cb, self, ev));
+  const passive = passiveListeners.has(msg.listener);
+  if (passive) ev.__passive = true;
+  try {
+    withCurrentEvent(ev, () => invoke(cb, self, ev));
+  } finally {
+    if (passive) ev.__passive = false;
+  }
 });
 register('__nx_eventDone', (id) => { events.delete(id); });
 register('__nx_releaseListener', (id) => {
@@ -193,19 +203,21 @@ register('__nx_releaseListener', (id) => {
 
 class EventTarget {
   addEventListener(type, cb, options) {
+    const capture = captureOf(options);
     if (cb === null || cb === undefined) return;
     if (typeof cb !== 'function' && typeof cb !== 'object') throw new TypeError('listener must be a function');
     const once = !!(options && typeof options === 'object' && options.once);
-    host('ev.add', idOf(this, 'EventTarget'), String(type), listenerId(cb), captureOf(options), once);
+    host('ev.add', idOf(this, 'EventTarget'), String(type), listenerId(cb), capture, once);
   }
   removeEventListener(type, cb, options) {
+    const capture = captureOf(options);
     const id = cb ? listenerIds.get(cb) : undefined;
     if (id === undefined) return;
-    host('ev.remove', idOf(this, 'EventTarget'), String(type), id, captureOf(options));
+    host('ev.remove', idOf(this, 'EventTarget'), String(type), id, capture);
   }
   dispatchEvent(ev) {
     if (!(ev instanceof Event)) throw new TypeError('parameter is not an Event');
-    if (ev.__id) throw new Error('event is already being dispatched');
+    if (ev.__id) throw new DOMException('The event is already being dispatched.', 'InvalidStateError');
     if (!ev.__initialized) throw new DOMException('The event is not initialized.', 'InvalidStateError');
     if (ev.__stop) {
       ev.__stop = false;
@@ -231,7 +243,15 @@ class EventTarget {
 }
 
 // on<event> handler properties.
-const handlerProps = ['click', 'input', 'change', 'submit', 'focus', 'blur', 'keydown', 'keyup', 'load', 'resize'];
+const prefixedEvents = {
+  webkitanimationstart: 'webkitAnimationStart',
+  webkitanimationend: 'webkitAnimationEnd',
+  webkitanimationiteration: 'webkitAnimationIteration',
+  webkittransitionend: 'webkitTransitionEnd',
+};
+const handlerProps = ['click', 'input', 'change', 'submit', 'focus', 'blur', 'error', 'keydown', 'keyup', 'load', 'resize', 'scroll',
+  'animationstart', 'animationend', 'animationiteration', 'transitionend', 'webkitanimationstart',
+  'webkitanimationend', 'webkitanimationiteration', 'webkittransitionend'];
 const handlers = new WeakMap();
 for (const name of handlerProps) {
   defineProperty(EventTarget.prototype, 'on' + name, {
@@ -239,7 +259,10 @@ for (const name of handlerProps) {
     set(fn) {
       let h = handlers.get(this);
       if (!h) { h = {}; handlers.set(this, h); }
-      if (h[name]) this.removeEventListener(name, h.__wrappers[name]);
+      if (h[name]) {
+        this.removeEventListener(name, h.__wrappers[name]);
+        if (prefixedEvents[name]) this.removeEventListener(prefixedEvents[name], h.__wrappers[name]);
+      }
       h.__wrappers = h.__wrappers || {};
       if (typeof fn === 'function') {
         h[name] = fn;
@@ -249,6 +272,7 @@ for (const name of handlerProps) {
         };
         h.__wrappers[name] = wrapper;
         this.addEventListener(name, wrapper);
+        if (prefixedEvents[name]) this.addEventListener(prefixedEvents[name], wrapper);
       } else {
         h[name] = null;
       }
