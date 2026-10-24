@@ -9,10 +9,10 @@ checkouts están pinneados y no se versionan (`.conformance/` está ignorado).
 |---|---|---:|---:|---:|---:|---:|---|
 | Test262 | `language/{expressions,statements,types,literals}` | 19.577 | 413 | 1.108 | 0 | **97,93 %** | `d53ebc8` |
 | html5lib tokenizer | todos los `.test` | 5.759 | 43 | 1.025 | 0 | **99,26 %** | `e7d77cd` |
-| WPT `dom/nodes` | 327 archivos | 168 | 115 | 44 | 0 | **59,36 %** | `e7d77cd` |
-| WPT `css/selectors` | 528 archivos | 84 | 97 | 347 | 0 | **46,41 %** | `e7d77cd` |
+| WPT `dom/nodes` | 327 archivos | 175 | 106 | 46 | 0 | **62,28 %** | `e7d77cd` |
+| WPT `css/selectors` | 528 archivos | 106 | 74 | 348 | 0 | **58,89 %** | `e7d77cd` |
 | WPT URL | 896 casos del fixture | 665 | 231 | 0 | 0 | **74,22 %** | `e7d77cd` |
-| WPT `dom/events` | 176 archivos | 19 | 55 | 102 | 0 | **25,68 %** | `e7d77cd` |
+| WPT `dom/events` | 176 archivos | 51 | 22 | 103 | 0 | **69,86 %** | `e7d77cd` |
 | WPT tree construction | 1.973 casos `.dat` | 944 | 930 | 99 | 0 | **50,37 %** | `e7d77cd` |
 
 La tasa excluye `SKIP`. Un `SKIP` **no** cuenta como compatibilidad.
@@ -30,8 +30,8 @@ corregir la caché de `classList`.
 | Test262 | 70 % | 97,93 % | ✅ |
 | html5lib tokenizer | 70 % | 99,26 % | ✅ |
 | WPT URL | 70 % | 74,22 % | ✅ |
-| WPT `dom/nodes` | 70 % | 59,36 % | ❌ |
-| WPT `css/selectors` | 70 % | 46,41 % | ❌ |
+| WPT `dom/nodes` | 70 % | 62,28 % | ❌ |
+| WPT `css/selectors` | 70 % | 58,89 % | ❌ |
 | WPT tree construction | 70 % | 50,37 % | ❌ |
 
 Para DOM/CSS/parser, el 70 % exige CSSOM, `DOMParser`, Shadow DOM,
@@ -50,6 +50,43 @@ formato/foster parenting/template/foreign content. No se maquilla con SKIP.
 Los JSONL completos quedan en `.conformance/results/` (ignorado por git). Los
 informes legibles versionados son solo `progress/reports/<suite>-latest.md`;
 las corridas con timestamp también quedan en `.conformance/results/`.
+
+## Corrida de eventos y selectores (2026-10-24)
+
+Comandos:
+
+```bash
+cd tools/conformance
+dart run bin/run_wpt.dart --dirs dom/events --limit 2000
+dart run bin/run_wpt.dart --dirs css/selectors --limit 2000
+dart run bin/run_wpt.dart --dirs dom/nodes --limit 2000
+```
+
+| Suite | PASS | FAIL | SKIP | Tasa (sin SKIP) |
+|---|---:|---:|---:|---:|
+| `dom/events` | 51 | 22 | 103 | **69,86 %** |
+| `css/selectors` | 106 | 74 | 348 | **58,89 %** |
+| `dom/nodes` | 175 | 106 | 46 | **62,28 %** |
+
+`dom/events` queda a un archivo de 70 % (52/73). No se redondea ni se
+reclasifica. Los cambios reales de esta corrida son `Event` legacy
+(`cancelBubble`, `returnValue`, constantes, `initEvent`/`initUIEvent`/
+`initMouseEvent`/`initKeyboardEvent`), `createEvent` sin inicializar,
+`window.event` reemplazable, `passive` por defecto, captura booleana,
+`offsetX`/`offsetY`, handlers de `body`/`frameset`, aliases prefijados y
+`HTMLFrameSetElement`.
+
+El runner WPT también se corrigió para llamar a `StyleEngine.handleMutation`
+en vez de sólo `invalidate()` y para completar `testharness` (`step_func`,
+`promise_test` con `t`, asserts). **Eso es infraestructura de medición, no una
+ganancia de compatibilidad del motor**: la línea base anterior subestimaba
+`css/selectors` y `dom/events`. Las cifras de arriba ya reflejan el motor real,
+pero no deben presentarse como si todo el delta fuera producto.
+
+Quedan fuera de 70 %: `:dir`, `:focus-visible`, Shadow DOM, `:has()` relativo
+complejo, quirks mode, selectores namespaced, iframes/realm y `scrollend`.
+El parser HTML sigue en 50,37 %: adoption agency, foster parenting,
+`template`, foreign content y estados de script.
 
 ## Brechas principales
 
