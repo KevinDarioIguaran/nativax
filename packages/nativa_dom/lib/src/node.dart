@@ -120,6 +120,15 @@ abstract class Node extends EventTarget {
 
   /// Replaces all children with a single text node (none when empty).
   set textContent(String value) {
+    // Scroll handlers commonly refresh labels with the same string on every
+    // frame (`el.textContent = currentRef`). Replacing the text node would
+    // emit a childList mutation and make the renderer rebuild/layout the
+    // whole path for no visual change.
+    if (value.isEmpty && _children.isEmpty) return;
+    if (_children.length == 1) {
+      final only = _children.first;
+      if (only is Text && only.data == value) return;
+    }
     final old = List<Node>.of(_children);
     final incoming = <Node>[
       if (value.isNotEmpty) ownerDocument.createTextNode(value),
