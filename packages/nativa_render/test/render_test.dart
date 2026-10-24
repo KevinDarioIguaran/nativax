@@ -242,6 +242,44 @@ void main() {
     expect(input.value, 'abc');
     expect(inputs, 1);
   });
+  testWidgets('responsive hidden class mounts and unmounts on resize', (tester) async {
+    final ctx = _document(
+      '<!doctype html><html><body><div id="side" class="hide-sm">side</div></body></html>',
+      css: '@media (max-width: 767px) { .hide-sm { display: none } }',
+    );
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    await tester.binding.setSurfaceSize(const Size(900, 600));
+    await tester.pumpWidget(_app(ctx.document, ctx.engine));
+    await tester.pump();
+    final el = ctx.document.getElementById('side')!;
+    expect(find.byKey(ObjectKey(el)), findsOneWidget);
+    await tester.binding.setSurfaceSize(const Size(500, 600));
+    await tester.pumpWidget(_app(ctx.document, ctx.engine));
+    await tester.pump();
+    expect(find.byKey(ObjectKey(el)), findsNothing);
+    await tester.binding.setSurfaceSize(const Size(900, 600));
+    await tester.pumpWidget(_app(ctx.document, ctx.engine));
+    await tester.pump();
+    expect(find.byKey(ObjectKey(el)), findsOneWidget);
+  });
+
+  testWidgets('media queries react to viewport resize', (tester) async {
+    final ctx = _document(
+      '<!doctype html><html><body><div id="r">x</div></body></html>',
+      css: '#r { display:block } @media (min-width: 768px) { #r { display:flex } }',
+    );
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    await tester.binding.setSurfaceSize(const Size(500, 600));
+    await tester.pumpWidget(_app(ctx.document, ctx.engine));
+    await tester.pump();
+    final el = ctx.document.getElementById('r')!;
+    expect(ctx.engine.styleOf(el).display, Display.block);
+    await tester.binding.setSurfaceSize(const Size(900, 600));
+    await tester.pumpWidget(_app(ctx.document, ctx.engine));
+    await tester.pump();
+    expect(ctx.engine.styleOf(el).display, Display.flex);
+  });
+
   testWidgets('custom tags render and accept normal CSS', (tester) async {
     final ctx = _document(
       '<!doctype html><html><body><my-card id="card"><span>inside</span></my-card></body></html>',
