@@ -15,6 +15,7 @@ class JavaScriptEngineConfig {
     this.maxStackBytes = 256 * 1024,
     this.executionBudget = const Duration(seconds: 1),
     this.maxJobsPerDrain = 10000,
+    this.microtaskSlice = Duration.zero,
   });
 
   /// Heap ceiling enforced by QuickJS' allocator. 0 disables the limit.
@@ -35,6 +36,11 @@ class JavaScriptEngineConfig {
   /// Upper bound on promise jobs executed per drain, as a guard against
   /// self-rescheduling microtask loops.
   final int maxJobsPerDrain;
+
+  /// Optional wall-clock slice for one microtask drain. When non-zero, the
+  /// engine yields back to the host after this much work and leaves remaining
+  /// promise jobs queued. Zero preserves browser-like full drains.
+  final Duration microtaskSlice;
 }
 
 /// Engine-neutral contract. NativaX ships one implementation

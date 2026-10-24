@@ -295,13 +295,24 @@ final class QuickJsEngine implements JavaScriptEngine {
         // promise jobs at startup (the Bible app froze for ~6.4 s). Run one
         // job at a time and yield every 4 ms; the remaining jobs stay queued
         // for the next engine entry.
+        final sliceUs = config.microtaskSlice.inMicroseconds;
         while (b.nx_has_pending_jobs(_rt) != 0 &&
-            watch.elapsedMicroseconds < 4000 &&
+            (sliceUs <= 0 || watch.elapsedMicroseconds < sliceUs) &&
             total < config.maxJobsPerDrain) {
           final n = b.nx_run_jobs(_rt, 1, out, outLen);
           if (n < 0) throw _decodeError(_readOut(out, outLen));
           if (n == 0) break;
           total += n;
+        }
+        if (sliceUs <= 0 &&
+            total >= config.maxJobsPerDrain &&
+            b.nx_has_pending_jobs(_rt) != 0) {
+          throw JavaScriptException(
+            name: 'MicrotaskLimitError',
+            message:
+                'more than ${config.maxJobsPerDrain} microtasks in one '
+                'drain; remaining jobs stay queued',
+          );
         }
         return total;
       });
