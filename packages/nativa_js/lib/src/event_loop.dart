@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'exceptions.dart';
 import 'javascript_engine.dart';
@@ -7,11 +8,13 @@ const String _timerPrelude = r'''
 (() => {
   const host = __nx.host;
   const callbacks = new Map();
+  const trace = globalThis.__nx_timer_trace === true;
   const schedule = (repeat) => (fn, delay, ...args) => {
     if (typeof fn !== 'function') {
       throw new TypeError('NativaX timers only accept functions');
     }
-    const id = host('timer.schedule', Number(delay) || 0, repeat);
+    const id = host('timer.schedule', Number(delay) || 0, repeat,
+      trace ? ((new Error()).stack || '') : '');
     callbacks.set(id, { fn, args, repeat });
     return id;
   };
@@ -68,6 +71,10 @@ class TimerHost {
   }) {
     _engine.registerHostFunction('timer.schedule', _schedule);
     _engine.registerHostFunction('timer.cancel', _cancel);
+    if (Platform.environment['NATIVAX_TRACE_TIMERS'] == '1') {
+      _engine.evaluate('globalThis.__nx_timer_trace = true;',
+          filename: '<nativax:timers-trace>');
+    }
     _engine.evaluate(_timerPrelude, filename: '<nativax:timers>');
   }
 
@@ -81,6 +88,8 @@ class TimerHost {
   final void Function()? afterTask;
 
   final Map<int, Timer> _timers = {};
+  final Map<int, String> _timerLabels = {};
+  int _fireCount = 0;
   int _nextId = 1;
   bool _disposed = false;
 
@@ -92,7 +101,9 @@ class TimerHost {
     }
     final delay = (args[0] as num).toInt().clamp(0, 0x7fffffff);
     final repeat = args[1] == true;
+    final label = args.length > 2 && args[2] is String ? args[2] as String : '';
     final id = _nextId++;
+    if (label.isNotEmpty) _timerLabels[id] = label;
     if (repeat) {
       final period = Duration(
         milliseconds: delay < limits.minIntervalMs ? limits.minIntervalMs : delay,
@@ -114,6 +125,9 @@ class TimerHost {
 
   void _fire(int id, {required bool repeat}) {
     if (_disposed || _engine.isDisposed) return;
+    final watch = Platform.environment['NATIVAX_TRACE_TIMERS'] == '1'
+        ? (Stopwatch()..start())
+        : null;
     try {
       _engine.callGlobal('__nx_fireTimer', id);
     } on JavaScriptException catch (e) {
@@ -124,6 +138,17 @@ class TimerHost {
       }
     }
     afterTask?.call();
+    if (watch != null) {
+      _fireCount++;
+      watch.stop();
+      if (watch.elapsedMilliseconds >= 20 || _fireCount % 200 == 0) {
+        final label = (_timerLabels[id] ?? '').split('\n').take(3).join(' | ');
+        stderr.writeln('TIMER id=$id repeat=$repeat '
+            '${watch.elapsedMilliseconds}ms fires=$_fireCount active=${_timers.length} '
+            '$label');
+      }
+      if (!repeat) _timerLabels.remove(id);
+    }
   }
 
   /// Cancels all timers. Call before disposing the engine.
@@ -133,5 +158,6 @@ class TimerHost {
       t.cancel();
     }
     _timers.clear();
+    _timerLabels.clear();
   }
 }

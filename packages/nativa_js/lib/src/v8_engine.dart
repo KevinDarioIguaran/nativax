@@ -109,6 +109,11 @@ final class V8Engine implements JavaScriptEngine {
   late final NativeCallable<_PutBufferNative> _putBufferCallback;
   late final Pointer<Void> _runtime;
   final Map<String, HostFunction> _hostFunctions = {};
+  final bool _traceHost =
+      Platform.environment['NATIVAX_TRACE_HOST'] == '1';
+  final Map<String, int> _hostCounts = {};
+  final Map<String, int> _hostMicros = {};
+  int _hostTotal = 0;
   @override
   ModuleHost? moduleHost;
   bool _disposed = false;
@@ -124,10 +129,12 @@ final class V8Engine implements JavaScriptEngine {
 
   Pointer<Utf8> _onHost(Pointer<Utf8> requestPtr) {
     final raw = requestPtr.toDartString();
+    final watch = _traceHost ? (Stopwatch()..start()) : null;
     String response;
+    String? hostName;
     try {
       final request = jsonDecode(raw) as List;
-      final name = '${request[0]}';
+      final name = hostName = '${request[0]}';
       final args = (request.length > 1 && request[1] is List)
           ? (request[1] as List).cast<Object?>()
           : <Object?>[];
@@ -145,6 +152,22 @@ final class V8Engine implements JavaScriptEngine {
       response = jsonEncode({
         'error': {'type': 'Error', 'message': 'host failure: $e'},
       });
+    }
+    if (hostName != null && _traceHost) {
+      watch!.stop();
+      final us = watch.elapsedMicroseconds;
+      _hostTotal++;
+      _hostCounts[hostName] = (_hostCounts[hostName] ?? 0) + 1;
+      _hostMicros[hostName] = (_hostMicros[hostName] ?? 0) + us;
+      if (_hostTotal % 1000 == 0 || us >= 20000) {
+        final names = _hostCounts.keys.toList()
+          ..sort((a, b) => (_hostMicros[b] ?? 0).compareTo(_hostMicros[a] ?? 0));
+        final top = names.take(8).map((n) =>
+            '$n calls=${_hostCounts[n]} '
+            'ms=${((_hostMicros[n] ?? 0) / 1000).toStringAsFixed(0)}');
+        stderr.writeln('HOST total=$_hostTotal last=$hostName ${us}us | '
+            '${top.join(' | ')}');
+      }
     }
     return response.toNativeUtf8();
   }
