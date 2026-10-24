@@ -162,10 +162,14 @@ El siguiente cuello sigue siendo **layout**, no build.
 
 - `@font-face`: el parser guarda familia, peso, estilo y URLs; `NativaXRuntime`
   resuelve cada `src` contra la hoja, carga bytes con `NativaXResourceLoader` y
-  registra la familia con `FontLoader`. La app de la Biblia ya no avisa
-  `unsupported at-rule @font-face`; Font Awesome carga sus tres familias.
-  Las fuentes se cargan en paralelo y por familia: `FIRST_VERSE` bajó de
-  ~2,76 s a ~2,23 s en la misma corrida.
+  registra la familia con `FontLoader`.
+- Flutter `FontLoader` sólo acepta SFNT (TTF/OTF). Se prefieren esas fuentes y,
+  si el CSS sólo publica WOFF2, se prueban hermanos `.ttf`/`.otf`; WOFF2 puro
+  se reporta como no soportado en vez de cargar bytes que producen tofu.
+- Font Awesome y las fuentes Inter de la copia de validación ya cargan; no hay
+  avisos `unsupported at-rule @font-face` ni iconos tofu.
+  Las fuentes se cargan en paralelo y por familia: `FIRST_VERSE` ~2,2–2,7 s
+  según la corrida.
 - Tailwind: probado con clases escapadas (`w-\[100px\]`, `md\:flex`) y
   `@media` responsive. `@layer`, `:where`, `var()` y valores arbitrarios ya
   estaban cubiertos por la cascada.
@@ -182,6 +186,25 @@ constructable stylesheets, `unicode-range`/`font-display` completos, muchas
 propiedades `-webkit-*`, container queries, todos los elementos HTML y el
 modelo de compositing/slivers de un navegador. Cada pieza debe entrar con test
 y medida; no se declara compatibilidad por parsear una regla.
+
+## Conformidad medida (2026-10-24)
+
+Suites fijadas en `tools/conformance/bin/fetch_suites.dart`:
+
+| Suite | PASS | FAIL | SKIP | ERROR | Tasa |
+|---|---:|---:|---:|---:|---:|
+| Test262 seleccionado | 19.577 | 413 | 1.108 | 0 | 97,93 % |
+| html5lib tokenizer | 5.759 | 43 | 1.025 | 0 | 99,26 % |
+| WPT `dom/nodes` | 168 | 115 | 44 | 0 | 59,36 % |
+| WPT `dom/events` | 19 | 55 | 102 | 0 | 25,68 % |
+| WPT `css/selectors` | 84 | 97 | 347 | 0 | 46,41 % |
+| WPT URL | 665 | 231 | 0 | 0 | 74,22 % |
+| WPT tree construction | 944 | 930 | 99 | 0 | 50,37 % |
+
+Comandos: los cinco runners y `run_wpt --dirs dom/nodes|dom/events|css/selectors
+--limit 2000`. La base `c428bbc` daba 82 PASS en selectores; esta corrida da 84.
+`dom/nodes` vuelve a 168 tras restaurar la semántica de `classList`.
+El árbol HTML y URL mejoran; `dom/events` sigue siendo el hueco grande.
 
 ## Hilos
 
