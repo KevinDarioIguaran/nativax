@@ -1,13 +1,31 @@
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:nativax/nativax.dart';
 import 'package:nativa_css/nativa_css.dart' show CssColor;
 
+class _FontLoader extends NativaXResourceLoader {
+  final List<String> bytes = [];
+  final Map<String, String> files;
+
+  _FontLoader({this.files = const {}});
+
+  @override
+  Future<String?> load(String url) async => files[url];
+
+  @override
+  Future<Uint8List?> loadBytes(String url) async {
+    bytes.add(url);
+    return Uint8List.fromList([0, 1, 0, 0]);
+  }
+}
+
 Finder _richTextContaining(String value) => find.byWidgetPredicate(
-      (widget) =>
-          widget is Text &&
-          (widget.textSpan?.toPlainText().contains(value) ?? false),
-    );
+  (widget) =>
+      widget is Text &&
+      (widget.textSpan?.toPlainText().contains(value) ?? false),
+);
 
 void main() {
   test('runtime parses CSS and executes inline scripts in order', () async {
@@ -31,14 +49,57 @@ void main() {
     runtime.dispose();
   });
 
+  test('loads icon fonts and only referenced families', () async {
+    final loader = _FontLoader();
+    final runtime = await NativaXRuntime.create(
+      source: '''
+<!doctype html><html><head><style>
+@font-face { font-family: 'Font Awesome 6 Free'; src: url('/fa.ttf'); }
+@font-face { font-family: Unused; src: url('/unused.ttf'); }
+body { font-family: Inter, sans-serif; }
+</style></head><body><p>x</p></body></html>
+''',
+      config: NativaXRuntimeConfig(resources: loader),
+    );
+    expect(loader.bytes.any((u) => u.endsWith('/fa.ttf')), isTrue);
+    expect(loader.bytes.any((u) => u.endsWith('/unused.ttf')), isFalse);
+    runtime.dispose();
+  });
+
+  test('resolves linked font URLs against the stylesheet', () async {
+    final loader = _FontLoader(
+      files: {
+        '/static/css/app.css':
+            "@font-face { font-family: Used; src: url('../fonts/used.ttf'); }"
+            'body { font-family: Used; }',
+      },
+    );
+    final runtime = await NativaXRuntime.create(
+      source: '''
+<!doctype html><html><head>
+<link rel="stylesheet" href="/static/css/app.css">
+</head><body><p>x</p></body></html>
+''',
+      documentUrl: 'http://test/',
+      config: NativaXRuntimeConfig(resources: loader),
+    );
+    expect(
+      loader.bytes.any((u) => u.endsWith('/static/fonts/used.ttf')),
+      isTrue,
+    );
+    runtime.dispose();
+  });
+
   testWidgets('NativaXView loads and renders a document', (tester) async {
-    await tester.pumpWidget(const MaterialApp(
-      home: Scaffold(
-        body: NativaXView(
-          source: '<!doctype html><html><body><p>Hello</p></body></html>',
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: Scaffold(
+          body: NativaXView(
+            source: '<!doctype html><html><body><p>Hello</p></body></html>',
+          ),
         ),
       ),
-    ));
+    );
     await tester.pump();
     await tester.pump();
     expect(find.text('Hello'), findsOneWidget);
@@ -46,12 +107,14 @@ void main() {
     await tester.pumpWidget(const SizedBox.shrink());
   });
 
-  testWidgets('counter: JS state updates through the public view',
-      (tester) async {
-    await tester.pumpWidget(const MaterialApp(
-      home: Scaffold(
-        body: NativaXView(
-          source: '''
+  testWidgets('counter: JS state updates through the public view', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: Scaffold(
+          body: NativaXView(
+            source: '''
 <!doctype html>
 <html>
   <style>button { padding: 4px 8px }</style>
@@ -68,9 +131,10 @@ void main() {
   </body>
 </html>
 ''',
+          ),
         ),
       ),
-    ));
+    );
     await tester.pumpAndSettle();
     expect(_richTextContaining('0'), findsOneWidget);
 
