@@ -352,4 +352,20 @@ void main() {
         reason: 'scripts/styles must be skipped before styleOf');
   });
 
+  testWidgets('a 31-child block is virtualized', (tester) async {
+    final b = StringBuffer('<!doctype html><html><body><div id="box">');
+    for (var i = 0; i < 31; i++) {
+      b.write('<div id="v$i" style="height:100px">Row $i</div>');
+    }
+    b.write('</div></body></html>');
+    final ctx = _document(b.toString());
+    NativeXBuildStats.reset();
+    await tester.pumpWidget(_app(ctx.document, ctx.engine));
+    await _pumpFrames(tester);
+    expect(NativeXBuildStats.virtualBlocks, greaterThan(0));
+    expect(find.text('Row 0'), findsOneWidget);
+    expect(find.text('Row 30'), findsNothing,
+        reason: 'offscreen rows stay unmaterialized');
+  });
+
 }

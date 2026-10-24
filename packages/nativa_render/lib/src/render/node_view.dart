@@ -775,7 +775,7 @@ class _Builder {
     for (final node in element.childNodes) {
       if (node is dom.Text && node.data.trim().isNotEmpty) return null;
     }
-    if (slots.length < 40) return null;
+    if (slots.length < 24) return null;
 
     if (style.isGridContainer) {
       final width = _availableWidth(element);
