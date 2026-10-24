@@ -223,6 +223,36 @@ void main() {
       expect(h.matches(':heading'), isTrue);
     });
 
+    test('lang uses extended filtering and rejects long subtags', () {
+      final root = d.documentElement!;
+      root.setAttribute('lang', 'fr');
+      final a = d.createElement('div')..setAttribute('lang', 'fr-x-standard');
+      final b = d.createElement('div')..setAttribute('lang', 'fr-ninechars');
+      d.body!.appendChild(a);
+      d.body!.appendChild(b);
+      expect(a.matches(':lang(fr)'), isTrue);
+      expect(b.matches(':lang(fr)'), isFalse);
+      expect(a.matches(':lang(fr-x)'), isTrue);
+      expect(a.matches(':lang(fr-standard)'), isFalse);
+    });
+
+    test(':dir() follows explicit and auto directionality', () {
+      final rtl = d.createElement('div')..setAttribute('dir', 'rtl');
+      final child = d.createElement('span');
+      rtl.appendChild(child);
+      d.body!.appendChild(rtl);
+      expect(rtl.matches(':dir(rtl)'), isTrue);
+      expect(child.matches(':dir(rtl)'), isTrue);
+      final auto = d.createElement('bdi')..textContent = '\u05EA';
+      d.body!.appendChild(auto);
+      expect(auto.matches(':dir(rtl)'), isTrue);
+      final input = d.createElement('input')..setAttribute('type', 'tel');
+      expect(input.matches(':dir(ltr)'), isTrue);
+      input.value = '\u05EA';
+      input.setAttribute('dir', 'auto');
+      expect(input.matches(':dir(rtl)'), isTrue);
+    });
+
     test('specificity', () {
       Specificity s(String sel) => SelectorList.parse(sel).selectors.single.specificity;
       expect(s('*'), Specificity.zero);

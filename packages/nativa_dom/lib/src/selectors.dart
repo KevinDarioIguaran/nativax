@@ -213,24 +213,7 @@ class PseudoClassSelector extends SimpleSelector {
         return inner!.matches(e, scope);
       case 'has':
         for (final (combinator, selector) in hasParts!) {
-          switch (combinator) {
-            case Combinator.child:
-              if (e.children.any((c) => selector.matches(c, scope))) return true;
-            case Combinator.nextSibling:
-              final s = e.nextElementSibling;
-              if (s != null && selector.matches(s, scope)) return true;
-            case Combinator.subsequentSibling:
-              for (var s = e.nextElementSibling;
-                  s != null;
-                  s = s.nextElementSibling) {
-                if (selector.matches(s, scope)) return true;
-              }
-            case Combinator.descendant:
-            case null:
-              for (final d in e.descendants) {
-                if (d is Element && selector.matches(d, scope)) return true;
-              }
-          }
+          if (selector.matchesRelative(e, combinator, scope)) return true;
         }
         return false;
       case 'focus-visible':
@@ -244,9 +227,7 @@ class PseudoClassSelector extends SimpleSelector {
         for (Element? n = e; n != null; n = n.parentElement) {
           final lang = n.getAttribute('lang');
           if (lang != null) {
-            final wanted = (arg ?? '').toLowerCase();
-            final actual = lang.toLowerCase();
-            return actual == wanted || actual.startsWith('${wanted}-');
+            return _langMatches(lang, arg ?? '');
           }
         }
         return false;
@@ -381,11 +362,76 @@ class PseudoClassSelector extends SimpleSelector {
         false;
   }
 
+  /// RFC 4647 extended filtering; singleton subtags stop skipping and
+  /// subtags longer than 8 characters are not valid language subtags.
+  static bool _langMatches(String tag, String range) {
+    final actual = tag.toLowerCase().split('-');
+    final wanted = range.toLowerCase().split('-');
+    var i = 0, j = 0;
+    while (i < actual.length && j < wanted.length) {
+      if (actual[i] == wanted[j]) {
+        i++;
+        j++;
+        continue;
+      }
+      if (actual[i].length == 1) return false;
+      i++;
+    }
+    if (j != wanted.length) return false;
+    for (; i < actual.length; i++) {
+      if (actual[i].length > 8) return false;
+    }
+    return true;
+  }
+
   String _direction(Element e) {
-    for (Element? n = e; n != null; n = n.parentElement) {
+    String? strong(Element root) {
+      for (final n in root.descendants) {
+        if (n is! Text) continue;
+        final parent = n.parentElement;
+        final dir = parent?.getAttribute('dir')?.toLowerCase();
+        if (parent != null && (dir == 'ltr' || dir == 'rtl')) continue;
+        for (final rune in n.data.runes) {
+          final rtl = (rune >= 0x0590 && rune <= 0x08FF) ||
+              (rune >= 0xFB1D && rune <= 0xFDFD) ||
+              (rune >= 0xFE70 && rune <= 0xFEFC);
+          final ltr = (rune >= 0x41 && rune <= 0x5A) ||
+              (rune >= 0x61 && rune <= 0x7A) ||
+              (rune >= 0x00C0 && rune <= 0x02AF);
+          if (rtl || ltr) return rtl ? 'rtl' : 'ltr';
+        }
+      }
+      return null;
+    }
+    final own = e.getAttribute('dir')?.toLowerCase();
+    if (own == 'rtl' || own == 'ltr') return own!;
+    if (own == 'auto' || own == null || own.isEmpty ||
+        (own != 'ltr' && own != 'rtl')) {
+      final auto = own == 'auto' || own == null || own.isEmpty ||
+          (own != 'ltr' && own != 'rtl') || e.localName == 'bdi' ||
+          (e.localName == 'input' && e.inputType == 'tel');
+      if (auto) {
+        if (e.localName == 'input') {
+          final value = e.value;
+          for (final rune in value.runes) {
+            if (rune >= 0x0590 && rune <= 0x08FF) return 'rtl';
+            if ((rune >= 0x41 && rune <= 0x5A) || (rune >= 0x61 && rune <= 0x7A)) {
+              return 'ltr';
+            }
+          }
+        }
+        final found = strong(e);
+        if (found != null) return found;
+      }
+    }
+    // `type=tel` has a special LTR directionality in HTML rendering.
+    if (e.localName == 'input' && e.inputType == 'tel' && own != 'rtl') {
+      return 'ltr';
+    }
+    for (Element? n = e.parentElement; n != null; n = n.parentElement) {
       final dir = n.getAttribute('dir')?.toLowerCase();
-      if (dir == 'rtl') return 'rtl';
-      if (dir == 'ltr') return 'ltr';
+      if (dir == 'rtl' || dir == 'ltr') return dir!;
+      if (dir == 'auto') return _direction(n);
     }
     return 'ltr';
   }
@@ -453,6 +499,68 @@ class ComplexSelector {
 
   /// Whether the subject compound matches [e], ignoring any pseudo-element.
   bool matchesOriginating(Element e, [Element? scope]) => _matchFrom(e, 0, scope);
+
+  /// Matches a relative selector used by `:has()`. [scope] is the element
+  /// carrying `:has()` and [leading] anchors the leftmost compound to it.
+  bool matchesRelative(Element scope, Combinator? leading, [Element? queryScope]) {
+    Iterable<Element> candidates() sync* {
+      for (final d in scope.descendants) {
+        if (d is Element) yield d;
+      }
+      if (leading == Combinator.nextSibling || leading == Combinator.subsequentSibling) {
+        for (var s = scope.nextElementSibling; s != null; s = s.nextElementSibling) {
+          yield s;
+          for (final d in s.descendants) {
+            if (d is Element) yield d;
+          }
+        }
+      }
+    }
+
+    for (final candidate in candidates()) {
+      if (_matchRelativeFrom(candidate, 0, scope, leading, queryScope)) return true;
+    }
+    return false;
+  }
+
+  bool _matchRelativeFrom(Element e, int index, Element scope,
+      Combinator? leading, Element? queryScope) {
+    if (!compounds[index].matches(e, queryScope)) return false;
+    if (index == compounds.length - 1) {
+      switch (leading) {
+        case Combinator.child:
+          return identical(e.parentElement, scope);
+        case Combinator.nextSibling:
+          return identical(e.previousElementSibling, scope);
+        case Combinator.subsequentSibling:
+          for (var s = e.previousElementSibling; s != null; s = s.previousElementSibling) {
+            if (identical(s, scope)) return true;
+          }
+          return false;
+        case Combinator.descendant:
+        case null:
+          return !identical(e, scope) && scope.contains(e);
+      }
+    }
+    switch (combinators[index]) {
+      case Combinator.child:
+        final p = e.parentElement;
+        return p != null && _matchRelativeFrom(p, index + 1, scope, leading, queryScope);
+      case Combinator.descendant:
+        for (var p = e.parentElement; p != null; p = p.parentElement) {
+          if (_matchRelativeFrom(p, index + 1, scope, leading, queryScope)) return true;
+        }
+        return false;
+      case Combinator.nextSibling:
+        final s = e.previousElementSibling;
+        return s != null && _matchRelativeFrom(s, index + 1, scope, leading, queryScope);
+      case Combinator.subsequentSibling:
+        for (var s = e.previousElementSibling; s != null; s = s.previousElementSibling) {
+          if (_matchRelativeFrom(s, index + 1, scope, leading, queryScope)) return true;
+        }
+        return false;
+    }
+  }
 
   bool _matchFrom(Element e, int index, [Element? scope]) {
     if (!compounds[index].matches(e, scope)) return false;
