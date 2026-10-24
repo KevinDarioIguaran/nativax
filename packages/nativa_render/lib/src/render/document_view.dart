@@ -238,6 +238,10 @@ class _NativaXDocumentViewState extends State<NativaXDocumentView> implements do
       'computes=${widget.styleEngine.computeCount} '
       'subtreePasses=${widget.styleEngine.subtreePasses}',
     );
+    NativaXDrawTrace.log(
+        'FLUSH_STYLE ms=${watch.elapsedMilliseconds} changed=${changed.length} '
+        'computes=${widget.styleEngine.computeCount} '
+        'subtreePasses=${widget.styleEngine.subtreePasses}');
     if (NativaXDrawTrace.enabled) {
       NativaXDrawTrace.log(
           'FLUSH style=${watch.elapsedMilliseconds}ms changed=${changed.length} '
@@ -580,6 +584,7 @@ class _NativaXDocumentViewState extends State<NativaXDocumentView> implements do
           'builds=${builds - _lastBuildCount} '
           'computes=${computes - _lastComputeCount} '
           'styleMs=${((styleUs - _lastStyleUs) / 1000).toStringAsFixed(1)}');
+      NativaXDrawTrace.flushSlowest();
       _lastBuildCount = builds;
       _lastComputeCount = computes;
       _lastStyleUs = styleUs;
@@ -589,6 +594,10 @@ class _NativaXDocumentViewState extends State<NativaXDocumentView> implements do
   @override
   Widget build(BuildContext context) {
     final buildWatch = Stopwatch()..start();
+    NativaXDrawTrace.log(
+        'BUILD_START nodes=${widget.document.querySelectorAll('*').length} '
+        'cache=${_widgetCache.length} hits=${_widgetCache.hits} '
+        'misses=${_widgetCache.misses}');
     final mediaQuery = MediaQuery.maybeOf(context);
     final direction = Directionality.maybeOf(context) ?? TextDirection.ltr;
 
@@ -676,6 +685,12 @@ class _NativaXDocumentViewState extends State<NativaXDocumentView> implements do
           );
           final scroll = _dropTarget(scroll0);
           final constructMs = buildWatch.elapsedMilliseconds;
+          NativaXDrawTrace.log(
+              'BUILD_END construct=${constructMs}ms '
+              'nodes=${document.querySelectorAll('*').length} '
+              'cache=${_widgetCache.length} hits=${_widgetCache.hits} '
+              'misses=${_widgetCache.misses} layers=${layers.length} '
+              'viewport=${width.toStringAsFixed(1)}x${height.toStringAsFixed(1)}');
           WidgetsBinding.instance.addPostFrameCallback((_) {
             if (!_diagnosedBuild) {
               _diagnosedBuild = true;

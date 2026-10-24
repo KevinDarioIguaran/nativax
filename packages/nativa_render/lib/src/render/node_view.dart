@@ -128,33 +128,33 @@ class _RenderElementAnchor extends RenderProxyBox with CssElementBoundary {
     final watch = NativaXDrawTrace.enabled ? (Stopwatch()..start()) : null;
     super.performLayout();
     if (NativaXDrawTrace.enabled) {
-      final elapsed = watch!.elapsedMilliseconds;
-      if (elapsed >= 20) {
-        NativaXDrawTrace.log(
-            'SLOW_LAYOUT ${elapsed}ms ${NativaXDrawTrace.describe(_element)} '
-            'size=${size.width.toStringAsFixed(1)}x${size.height.toStringAsFixed(1)}');
-      }
-      NativaXDrawTrace.log(
-          'LAYOUT ${NativaXDrawTrace.describe(_element)} '
-          'size=${size.width.toStringAsFixed(1)}x${size.height.toStringAsFixed(1)}');
+      final us = watch!.elapsedMicroseconds;
+      final ms = us / 1000.0;
+      final label = 'LAYOUT ${NativaXDrawTrace.describe(_element)} '
+          'size=${size.width.toStringAsFixed(1)}x${size.height.toStringAsFixed(1)}';
+      NativaXDrawTrace.log('$label ms=${ms.toStringAsFixed(2)}');
+      NativaXDrawTrace.markSlow('LAYOUT ${NativaXDrawTrace.describe(_element)}', us ~/ 1000);
+      if (us >= 20000) NativaXDrawTrace.log('SLOW_$label');
     }
   }
 
   @override
   void paint(PaintingContext context, Offset offset) {
     final watch = NativaXDrawTrace.enabled ? (Stopwatch()..start()) : null;
+    final label = 'PAINT ${NativaXDrawTrace.describe(_element)} '
+        'offset=${offset.dx.toStringAsFixed(1)},${offset.dy.toStringAsFixed(1)} '
+        'size=${size.width.toStringAsFixed(1)}x${size.height.toStringAsFixed(1)}';
     if (NativaXDrawTrace.enabled) {
-      NativaXDrawTrace.log(
-          'PAINT ${NativaXDrawTrace.describe(_element)} '
-          'offset=${offset.dx.toStringAsFixed(1)},${offset.dy.toStringAsFixed(1)} '
-          'size=${size.width.toStringAsFixed(1)}x${size.height.toStringAsFixed(1)}');
+      NativaXDrawTrace.log('$label');
     }
     super.paint(context, offset);
     if (NativaXDrawTrace.enabled) {
-      final elapsed = watch!.elapsedMilliseconds;
-      if (elapsed >= 20) {
-        NativaXDrawTrace.log(
-            'SLOW_PAINT ${elapsed}ms ${NativaXDrawTrace.describe(_element)}');
+      final us = watch!.elapsedMicroseconds;
+      final ms = us / 1000.0;
+      NativaXDrawTrace.log('$label ms=${ms.toStringAsFixed(2)}');
+      NativaXDrawTrace.markSlow('PAINT ${NativaXDrawTrace.describe(_element)}', us ~/ 1000);
+      if (us >= 20000) {
+        NativaXDrawTrace.log('SLOW_$label');
       }
     }
   }
@@ -369,6 +369,7 @@ class _Builder {
     final cached = cache?.get(element);
     if (cached != null) return cached;
     NativeXBuildStats.elementBuilds++;
+    final buildWatch = NativaXDrawTrace.enabled ? (Stopwatch()..start()) : null;
     final Widget result;
     if (!LayoutProfile.enabled) {
       result = _buildItem(element, parentFlex: parentFlex);
@@ -380,12 +381,17 @@ class _Builder {
         LayoutProfile.end();
       }
     }
+    if (NativaXDrawTrace.enabled) {
+      final us = buildWatch!.elapsedMicroseconds;
+      final label = 'BUILD ${NativaXDrawTrace.describe(element)}';
+      NativaXDrawTrace.log('$label ms=${(us / 1000).toStringAsFixed(2)}');
+      NativaXDrawTrace.markSlow(label, us ~/ 1000);
+    }
     cache?.put(element, result);
     return result;
   }
 
   Widget _buildItem(dom.Element element, {required bool parentFlex}) {
-    NativaXDrawTrace.log('BUILD ${NativaXDrawTrace.describe(element)}');
     final style = styleEngine.styleOf(element);
     // The animated box rebuilds with interpolated styles during CSS
     // transitions and animations; idle, it just builds the box.

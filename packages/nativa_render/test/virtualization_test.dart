@@ -352,6 +352,21 @@ void main() {
         reason: 'scripts/styles must be skipped before styleOf');
   });
 
+  testWidgets('scrolling inside the materialized window does not rebuild it', (tester) async {
+    tester.view.physicalSize = const Size(800, 600);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    final ctx = _document(_rows(200));
+    await tester.pumpWidget(_app(ctx.document, ctx.engine));
+    await _pumpFrames(tester);
+    final scroll = _rootScrollable(tester);
+    NativeXBuildStats.reset();
+    scroll.position.jumpTo(20);
+    await _pumpFrames(tester);
+    expect(NativeXBuildStats.elementBuilds, lessThanOrEqualTo(1),
+        reason: 'same slots must reuse the cached widget subtree');
+  });
+
   testWidgets('a 31-child block is virtualized', (tester) async {
     final b = StringBuffer('<!doctype html><html><body><div id="box">');
     for (var i = 0; i < 31; i++) {

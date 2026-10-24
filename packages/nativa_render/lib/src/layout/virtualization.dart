@@ -1,3 +1,4 @@
+import 'dart:io' as io;
 import 'dart:math' as math;
 
 import 'package:flutter/scheduler.dart';
@@ -38,8 +39,17 @@ class NativeXBuildStats {
 class NativaXRenderProfile {
   NativaXRenderProfile._();
 
-  static const bool enabled =
-      bool.fromEnvironment('NATIVAX_RENDER_PROFILE', defaultValue: false);
+  static bool enabled = _fromEnvironment();
+
+  static bool _fromEnvironment() {
+    try {
+      return io.Platform.environment['NATIVAX_RENDER_PROFILE'] == '1' ||
+          io.Platform.environment['NATIVAX_TRACE_DRAW'] == '1';
+    } catch (_) {
+      return const bool.fromEnvironment('NATIVAX_RENDER_PROFILE',
+          defaultValue: false);
+    }
+  }
 
   static void log(String message) {
     if (enabled) {
@@ -271,8 +281,6 @@ class CssVirtualBlockState extends State<CssVirtualBlock> {
   int _end = -1;
   double _defaultHeight = 80;
   double _viewportHeight = 600;
-  double _lastViewportTop = double.nan;
-  double _lastBlockTop = double.nan;
   ScrollController? _controller;
   bool _scheduled = false;
   bool _updating = false;
@@ -488,9 +496,12 @@ class CssVirtualBlockState extends State<CssVirtualBlock> {
     }
 
     final rangeChanged = range.$1 != _start || range.$2 != _end;
-    final moved = (_lastBlockTop.isNaN || (blockTop - _lastBlockTop).abs() > 0.5 ||
-        _lastViewportTop.isNaN || (viewportTop - _lastViewportTop).abs() > 0.5);
-    if (!changed && !rangeChanged && !moved) return;
+    if (!changed && !rangeChanged) {
+      // Scrolling within the same materialized window only changes the
+      // scroll position, not this block's child list. Rebuilding here makes
+      // every scroll frame rebuild and relayout the virtual subtree.
+      return;
+    }
     NativaXRenderProfile.log(
       'VIRTUAL ${widget.debugName} count=${widget.count} '
       'range=${range.$1}..${range.$2} start=$localStart '
@@ -503,11 +514,7 @@ class CssVirtualBlockState extends State<CssVirtualBlock> {
           .clamp(position.minScrollExtent, position.maxScrollExtent)
           .toDouble();
       controller!.jumpTo(target);
-      _lastViewportTop = viewportTop - (target - position.pixels);
-    } else {
-      _lastViewportTop = viewportTop;
     }
-    _lastBlockTop = blockTop - (aboveDelta.abs() > 0.01 ? aboveDelta : 0);
     if (rangeChanged) _evictOutside(range.$1, range.$2);
     setState(() {
       _start = range.$1;

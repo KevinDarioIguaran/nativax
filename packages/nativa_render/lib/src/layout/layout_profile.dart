@@ -1,3 +1,5 @@
+import 'dart:io' as io;
+
 /// Opt-in layout profiler for the renderer.
 ///
 /// Enable at compile time with `--dart-define=NATIVAX_RENDER_PROFILE=true`.
@@ -6,8 +8,17 @@
 class LayoutProfile {
   LayoutProfile._();
 
-  static bool enabled =
-      const bool.fromEnvironment('NATIVAX_RENDER_PROFILE', defaultValue: false);
+  static bool enabled = _fromEnvironment();
+
+  static bool _fromEnvironment() {
+    try {
+      return io.Platform.environment['NATIVAX_RENDER_PROFILE'] == '1' ||
+          io.Platform.environment['NATIVAX_TRACE_DRAW'] == '1';
+    } catch (_) {
+      return const bool.fromEnvironment('NATIVAX_RENDER_PROFILE',
+          defaultValue: false);
+    }
+  }
 
   static final Map<String, _Bucket> _buckets = {};
   static final List<_Entry> _stack = [];

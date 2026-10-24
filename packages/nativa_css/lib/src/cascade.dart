@@ -159,6 +159,9 @@ class StyleEngine {
   List<bool> _mediaState = const [];
   bool _usesSiblingCombinators = false;
   bool _usesHas = false;
+  final Set<String> _hasAffectedClasses = {};
+  final Set<String> _hasAffectedIds = {};
+  final Set<Element> _hasDirtyRoots = {};
   bool _structuralUniversal = false;
   final Set<String> _structuralTags = {};
   final Set<String> _structuralClasses = {};
@@ -502,14 +505,17 @@ class StyleEngine {
   void handleMutation(MutationRecord record) {
     final target = record.target;
     if (_usesHas && target is Element) {
-      // A structural/state mutation can change a :has() subject that is an
-      // ancestor or sibling of the target. Invalidate the whole connected
-      // tree; :has() is relatively rare and correctness wins here.
-      Element root = target;
-      while (root.parentElement != null) {
-        root = root.parentElement!;
+      if (lazySubtrees) {
+        _markHasMutation(target);
+      } else {
+        // Conformance/lazy-disabled mode: keep the conservative full-tree
+        // invalidation. The renderer uses lazySubtrees and the targeted path.
+        Element root = target;
+        while (root.parentElement != null) {
+          root = root.parentElement!;
+        }
+        _markDirty(root);
       }
-      _markDirty(root);
     }
     switch (record.type) {
       case MutationType.childList:
@@ -589,6 +595,40 @@ class StyleEngine {
     _computedDirty = true;
   }
 
+  /// Targeted :has() invalidation for the lazy renderer. A mutation can
+  /// change a subject that is an ancestor or a preceding sibling; mark those
+  /// roots, and drop cached styles for descendants whose class/id appears in a
+  /// :has() rule. Unlike the old whole-tree fallback, this does not discard
+  /// every computed style in the document.
+  void _markHasMutation(Element target) {
+    for (Element? e = target; e != null; e = e.parentElement) {
+      _markDirty(e);
+      _hasDirtyRoots.add(e);
+      final parent = e.parentElement;
+      if (parent != null) {
+        _markDirty(parent);
+        _hasDirtyRoots.add(parent);
+        for (var s = e.previousElementSibling;
+            s != null;
+            s = s.previousElementSibling) {
+          _markDirty(s);
+          _hasDirtyRoots.add(s);
+        }
+      }
+    }
+    if (_hasAffectedClasses.isEmpty && _hasAffectedIds.isEmpty) return;
+    final root = document.documentElement;
+    if (root == null) return;
+    for (final n in root.descendants) {
+      if (n is! Element) continue;
+      final hit = _hasAffectedIds.contains(n.id) ||
+          n.classList.any(_hasAffectedClasses.contains);
+      if (!hit) continue;
+      _styles.remove(n);
+      _pseudoStyles.remove(n);
+    }
+  }
+
   void _markDirty(Element e) {
     // Skip if an ancestor is already dirty.
     for (Element? p = e; p != null; p = p.parentElement) {
@@ -615,6 +655,8 @@ class StyleEngine {
   /// changed (including newly styled elements).
   Set<Element> recompute() {
     final changed = <Element>{};
+    final hasDirtyRoots = Set<Element>.of(_hasDirtyRoots);
+    _hasDirtyRoots.clear();
     final mayAffectDescendants = _dirtyMayAffectDescendants;
     _dirtyMayAffectDescendants = false;
     if (_allDirty) {
@@ -652,7 +694,8 @@ class StyleEngine {
         // selector matching below this root or when the root's inherited
         // values changed. A plain text update with no structural selectors
         // keeps the whole subtree cached.
-        if (mayAffectDescendants || styleChanged) {
+        if (mayAffectDescendants ||
+            (styleChanged && !hasDirtyRoots.contains(r))) {
           _forgetDescendantStyles(r);
         }
       } else {
@@ -798,6 +841,9 @@ class StyleEngine {
     _attributeUniversal.clear();
     _usesSiblingCombinators = false;
     _usesHas = false;
+    _hasAffectedClasses.clear();
+    _hasAffectedIds.clear();
+    _hasDirtyRoots.clear();
     _structuralUniversal = false;
     _structuralTags.clear();
     _structuralClasses.clear();
@@ -869,7 +915,15 @@ class StyleEngine {
           selectorText.contains(':has(') ||
           selectorText.contains('+') ||
           selectorText.contains('~');
-      if (rule.selectorText.contains(':has(')) _usesHas = true;
+      if (rule.selectorText.contains(':has(')) {
+        _usesHas = true;
+        for (final m in RegExp(r'\.([-\w]+)').allMatches(rule.selectorText)) {
+          _hasAffectedClasses.add(m.group(1)!);
+        }
+        for (final m in RegExp(r'#([-\w]+)').allMatches(rule.selectorText)) {
+          _hasAffectedIds.add(m.group(1)!);
+        }
+      }
       if (rule.selectorText.contains(':hover')) _usesHover = true;
       if (rule.selectorText.contains(':active')) _usesActive = true;
       for (final d in rule.declarations) {
