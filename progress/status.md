@@ -1,8 +1,23 @@
 # Estado actual
 
-Última actualización: 2026-10-24 (layout + CSS, estabilización).
+Última actualización: 2026-10-24 (V8 + CSS, diagnóstico de UI).
 Tests: **346** en total (`./tools/test_all.sh`, exit 0), incluidos 12 de
 virtualización, 5 de caché de estilo y los fixtures de render.
+
+## V8 integrado (rama `feat/v8-engine`) — 2026-10-24
+
+- `V8Engine` real detrás de `JavaScriptEngine` (isolate persistente, host
+  functions, buffers binarios y UTF-8 nativo). Se activa con
+  `engineFactory: V8Engine.new`; QuickJS sigue por defecto.
+- Biblia: `FIRST_VERSE` **5.411 → 3.306–4.100 ms**. RSS sube a 600–780 MB por
+  el grafo del diccionario de 16 MB; con heap de 512 MB V8 aborta.
+- Decodificar 16 MB con `TextDecoder` en JS costaba ~1,6 s; ahora lo hace V8
+  nativo (`simdutf`).
+- **No separa hilos todavía**: V8 corre en el isolate de UI. Los frames de
+  **1,8–3,0 s** son `build` de Flutter (cascada 2–4,5 ms/elemento y layout de
+  ~3.627 nodos al reconstruir `#verses`), no JS. Medido: hilo UI 97–100 %,
+  hilos V8 de GC ~13 %, JS de la app 50–150 ms.
+- Detalle: `progress/reports/v8-engine-latest.md`.
 
 ## V8 FFI spike — 2026-10-24
 
