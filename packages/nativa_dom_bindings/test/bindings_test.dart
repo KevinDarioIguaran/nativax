@@ -255,6 +255,15 @@ void main() {
       h.js('document.body.removeChild(document.querySelector("script"));');
     });
 
+    test('toggleAttribute lowercases names', () {
+      h.js('''
+        const e = document.createElement('div');
+        globalThis.toggle = [e.toggleAttribute('ALIGN'), e.hasAttribute('align'),
+          e.toggleAttribute('ALIGN'), e.hasAttribute('align')];
+      ''');
+      expect(h.js('toggle'), [true, true, false, false]);
+    });
+
     test('Element unscopables are installed', () {
       expect(h.js('Object.keys(Element.prototype[Symbol.unscopables]).sort()'),
           ['after', 'append', 'before', 'prepend', 'remove', 'replaceWith']);
