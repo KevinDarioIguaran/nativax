@@ -26,8 +26,9 @@ virtualización, 5 de caché de estilo y los fixtures de render.
   valor del padre y las custom properties.
 - Benchmark con las 6 hojas reales de la Biblia y 5.924 nodos: estilo
   **9.417 → 1.362 ms (6,9×)**, candidatos **39,3 → 6,8**, hits **94 → 4.982**.
-- App real (V8): style **343 → 206 µs/elemento**, selectores **17 → 9,7**,
-  `FIRST_VERSE` **3.081 ms**, sin frames > 500 ms en 20 s. RSS ~795 MB.
+- App real (V8): style **343 → 239 µs/elemento**, selectores **17 → 9,8**,
+  `FIRST_VERSE` **3.081–3.777 ms**. El pico de estilo baja de 3,8 s a 1,4 s;
+  queda un frame de layout de 1,33 s. RSS ~795 MB.
 - Detalle: `progress/reports/v8-engine-latest.md`.
 
 ## V8 FFI spike — 2026-10-24
