@@ -35,10 +35,16 @@ const optionsOf = (o) => (o && typeof o === 'object' ? o : {});
 // Window methods also work unbound (`addEventListener(...)` at top level).
 ETP.addEventListener = function (type, cb, options) {
   if (this === undefined || this === null) return ETP.addEventListener.call(globalThis, type, cb, options);
-  if (cb === null || cb === undefined) return;
   const o = optionsOf(options);
+  captureOf(options);
+  if (cb === null || cb === undefined) return;
   if (o.signal && o.signal.aborted) return;
   if (o.signal) o.signal.addEventListener('abort', () => this.removeEventListener(type, cb, options), { once: true });
+  const passiveRoot = this === globalThis || this === document ||
+    this.localName === 'html' || this.localName === 'body';
+  const passiveDefault = (type === 'touchstart' || type === 'touchmove' || type === 'wheel' || type === 'mousewheel') &&
+    passiveRoot && o.passive !== false;
+  if (passiveDefault || o.passive === true) passiveListeners.add(listenerId(cb));
   if (isHostTarget(this)) return hostAdd.call(this, type, cb, options);
   if (typeof cb !== 'function' && typeof cb !== 'object') throw new TypeError('listener must be a function');
   let m = localListeners.get(this);
@@ -52,6 +58,7 @@ ETP.addEventListener = function (type, cb, options) {
 };
 ETP.removeEventListener = function (type, cb, options) {
   if (this === undefined || this === null) return ETP.removeEventListener.call(globalThis, type, cb, options);
+  captureOf(options);
   if (isHostTarget(this)) return hostRemove.call(this, type, cb, options);
   const m = localListeners.get(this);
   const list = m && m.get(String(type));
@@ -137,7 +144,7 @@ evGetSet('cancelBubble', function () {
 });
 evGet('timeStamp', function () { return this.__desc ? this.__desc.timeStamp - perfOrigin : (this.__created || 0); });
 EvP.preventDefault = function () {
-  if (!this.cancelable) return;
+  if (this.__passive || !this.cancelable) return;
   this.__prevented = true;
   if (this.__local) this.__local.prevented = true;
   else if (this.__id) host('event.call', this.__id, 'preventDefault');
@@ -154,6 +161,7 @@ EvP.stopImmediatePropagation = function () {
   else if (this.__id) host('event.call', this.__id, 'stopImmediatePropagation');
 };
 EvP.composedPath = function () {
+  if (!this.__dispatching && !(this.__local && this.__local.dispatching)) return [];
   const path = [];
   for (let n = this.target; n; n = n.parentNode) path.push(n);
   if (path.length && path[path.length - 1] === document) path.push(globalThis);
@@ -208,14 +216,47 @@ const defineEventClass = (name, Base, fields) => {
   C.prototype[Symbol.toStringTag] = name;
   return C;
 };
-const UIEvent = defineEventClass('UIEvent', Event, { view: null, detail: 0, which: 0 });
+const UIEventBase = defineEventClass('UIEvent', Event, { view: null, detail: 0, which: 0 });
+class UIEvent extends UIEventBase {
+  constructor(type, init = {}) {
+    init = init || {};
+    if (init.view !== undefined && init.view !== null && !(init.view instanceof Window)) {
+      throw new TypeError('view must be a Window');
+    }
+    super(type, init);
+  }
+}
+UIEvent.prototype[Symbol.toStringTag] = 'UIEvent';
+const initFields = (ev, values) => {
+  const f = ev.__fields ? Object.assign({}, ev.__fields) : {};
+  Object.assign(f, values);
+  hidden(ev, '__fields', f);
+};
+UIEvent.prototype.initUIEvent = function (type, bubbles = false, cancelable = false, view = null, detail = 0) {
+  if (arguments.length === 0) throw new TypeError('initUIEvent requires a type');
+  if (this.__dispatching || (this.__local && this.__local.dispatching)) return;
+  this.initEvent(type, bubbles, cancelable);
+  initFields(this, { view, detail });
+};
+
 const mouseFields = {
   screenX: 0, screenY: 0, clientX: 0, clientY: 0, pageX() { return this.clientX + (globalThis.scrollX || 0); },
-  pageY() { return this.clientY + (globalThis.scrollY || 0); }, offsetX: 0, offsetY: 0, x() { return this.clientX; },
+  pageY() { return this.clientY + (globalThis.scrollY || 0); },
+  offsetX() { const t = this.target; const r = t && t.getBoundingClientRect ? t.getBoundingClientRect() : null; let left = r && r.left ? r.left : (t && t.offsetLeft) || 0; if (!left && t && t.parentElement) left = parseFloat(getComputedStyle(t.parentElement).marginLeft || '0') || 0; return this.clientX - left; },
+  offsetY() { const t = this.target; const r = t && t.getBoundingClientRect ? t.getBoundingClientRect() : null; const top = r && r.top ? r.top : (t && t.offsetTop) || 0; return this.clientY - top; },
+  x() { return this.clientX; },
   y() { return this.clientY; }, movementX: 0, movementY: 0, ctrlKey: false, shiftKey: false, altKey: false,
   metaKey: false, button: 0, buttons: 0, relatedTarget: null,
 };
 const MouseEvent = defineEventClass('MouseEvent', UIEvent, mouseFields);
+MouseEvent.prototype.initMouseEvent = function (type, bubbles = false, cancelable = false, view = null, detail = 0,
+  screenX = 0, screenY = 0, clientX = 0, clientY = 0, ctrlKey = false, altKey = false,
+  shiftKey = false, metaKey = false, button = 0, relatedTarget = null) {
+  if (arguments.length === 0) throw new TypeError('initMouseEvent requires a type');
+  if (this.__dispatching || (this.__local && this.__local.dispatching)) return;
+  this.initEvent(type, bubbles, cancelable);
+  initFields(this, { view, detail, screenX, screenY, clientX, clientY, ctrlKey, altKey, shiftKey, metaKey, button, relatedTarget });
+};
 MouseEvent.prototype.getModifierState = function (k) {
   return ({ Control: this.ctrlKey, Shift: this.shiftKey, Alt: this.altKey, Meta: this.metaKey })[k] || false;
 };
@@ -230,6 +271,13 @@ const KeyboardEvent = defineEventClass('KeyboardEvent', UIEvent, {
   repeat: false, isComposing: false, charCode: 0, keyCode: 0,
 });
 KeyboardEvent.prototype.getModifierState = MouseEvent.prototype.getModifierState;
+KeyboardEvent.prototype.initKeyboardEvent = function (type, bubbles = false, cancelable = false, view = null,
+  key = '', location = 0, ctrlKey = false, altKey = false, shiftKey = false, metaKey = false) {
+  if (arguments.length === 0) throw new TypeError('initKeyboardEvent requires a type');
+  if (this.__dispatching || (this.__local && this.__local.dispatching)) return;
+  this.initEvent(type, bubbles, cancelable);
+  initFields(this, { view, key, location, ctrlKey, altKey, shiftKey, metaKey });
+};
 const FocusEvent = defineEventClass('FocusEvent', UIEvent, { relatedTarget: null });
 const InputEvent = defineEventClass('InputEvent', UIEvent, { data: null, inputType: '', isComposing: false, dataTransfer: null });
 const CompositionEvent = defineEventClass('CompositionEvent', UIEvent, { data: '' });
@@ -318,7 +366,10 @@ for (const name of allHandlerNames) {
       let h = handlers.get(this);
       if (!h) { h = {}; handlers.set(this, h); }
       h.__wrappers = h.__wrappers || {};
-      if (h[name]) this.removeEventListener(name, h.__wrappers[name]);
+      if (h[name]) {
+        this.removeEventListener(name, h.__wrappers[name]);
+        if (prefixedEvents[name]) this.removeEventListener(prefixedEvents[name], h.__wrappers[name]);
+      }
       if (typeof fn === 'function') {
         h[name] = fn;
         const wrapper = function (ev) {
@@ -329,6 +380,7 @@ for (const name of allHandlerNames) {
         };
         h.__wrappers[name] = wrapper;
         this.addEventListener(name, wrapper);
+        if (prefixedEvents[name]) this.addEventListener(prefixedEvents[name], wrapper);
       } else {
         h[name] = null;
       }
@@ -855,7 +907,8 @@ const elementInterfaces = {
   HTMLAnchorElement: ['a'], HTMLAreaElement: ['area'], HTMLAudioElement: ['audio'], HTMLBRElement: ['br'],
   HTMLBaseElement: ['base'], HTMLBodyElement: ['body'], HTMLButtonElement: ['button'], HTMLCanvasElement: ['canvas'],
   HTMLDListElement: ['dl'], HTMLDataElement: ['data'], HTMLDataListElement: ['datalist'], HTMLDetailsElement: ['details'],
-  HTMLDialogElement: ['dialog'], HTMLDivElement: ['div'], HTMLEmbedElement: ['embed'], HTMLFieldSetElement: ['fieldset'],
+  HTMLDialogElement: ['dialog'], HTMLDirectoryElement: ['dir'], HTMLDivElement: ['div'], HTMLEmbedElement: ['embed'], HTMLFieldSetElement: ['fieldset'],
+  HTMLFrameElement: ['frame'], HTMLFrameSetElement: ['frameset'], HTMLFontElement: ['font'],
   HTMLFormElement: ['form'], HTMLHRElement: ['hr'], HTMLHeadElement: ['head'],
   HTMLHeadingElement: ['h1', 'h2', 'h3', 'h4', 'h5', 'h6'], HTMLHtmlElement: ['html'], HTMLIFrameElement: ['iframe'],
   HTMLImageElement: ['img'], HTMLInputElement: ['input'], HTMLLIElement: ['li'], HTMLLabelElement: ['label'],
@@ -887,6 +940,24 @@ for (const [name, tags] of Object.entries(elementInterfaces)) {
   const C = class HTMLVideoElement extends HTMLMediaElement {};
   interfaceClasses.HTMLVideoElement = C;
   elementProtos.video = C.prototype;
+}
+// Body/Frameset event handlers forward to Window (HTML spec).
+for (const proto of [interfaceClasses.HTMLBodyElement && interfaceClasses.HTMLBodyElement.prototype,
+  interfaceClasses.HTMLFrameSetElement && interfaceClasses.HTMLFrameSetElement.prototype]) {
+  if (!proto) continue;
+  for (const name of handlerProps) {
+    if (name.startsWith('webkit')) continue;
+    const prop = 'on' + name;
+    defineProperty(proto, prop, {
+      get() { return globalThis[prop] || null; },
+      set(fn) { globalThis[prop] = typeof fn === 'function' ? fn : null; },
+      configurable: true, enumerable: true,
+    });
+  }
+}
+for (const name of ['HTMLBodyElement', 'HTMLFrameSetElement']) {
+  const C = interfaceClasses[name];
+  if (C && !globalThis[name]) hidden(globalThis, name, C);
 }
 for (const t of ['abbr', 'address', 'article', 'aside', 'b', 'bdi', 'bdo', 'cite', 'code', 'dd', 'dfn', 'dt', 'em',
   'figcaption', 'figure', 'footer', 'header', 'hgroup', 'i', 'kbd', 'main', 'mark', 'nav', 'noscript', 'rp', 'rt',
