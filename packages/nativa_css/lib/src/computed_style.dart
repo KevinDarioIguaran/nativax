@@ -1,7 +1,18 @@
 import 'properties.dart';
 import 'values.dart';
 
-enum Display { block, inline, inlineBlock, flex, inlineFlex, grid, inlineGrid, none, listItem, contents }
+enum Display {
+  block,
+  inline,
+  inlineBlock,
+  flex,
+  inlineFlex,
+  grid,
+  inlineGrid,
+  none,
+  listItem,
+  contents,
+}
 
 /// A length after computation: absolute px, a percentage to be resolved by
 /// layout against the containing block, or `auto` (represented as null by
@@ -38,11 +49,15 @@ class ResolvedLength {
 
   @override
   bool operator ==(Object o) =>
-      o is ResolvedLength && o.value == value && o.isPercent == isPercent && '${o.calc}' == '$calc';
+      o is ResolvedLength &&
+      o.value == value &&
+      o.isPercent == isPercent &&
+      '${o.calc}' == '$calc';
   @override
   int get hashCode => Object.hash(value, isPercent, '$calc');
   @override
-  String toString() => calc != null ? 'calc$calc' : (isPercent ? '$value%' : '${value}px');
+  String toString() =>
+      calc != null ? 'calc$calc' : (isPercent ? '$value%' : '${value}px');
 }
 
 /// The computed values of every supported longhand for one element.
@@ -59,7 +74,8 @@ class ComputedStyle {
   /// Cascaded custom properties (`--name`), inherited like normal properties.
   final Map<String, String> customProperties;
 
-  CssValue operator [](String property) => values[property] ?? longhands[property]!.initial;
+  CssValue operator [](String property) =>
+      values[property] ?? longhands[property]!.initial;
 
   String _kw(String p) => (this[p] as Keyword).name;
 
@@ -79,25 +95,27 @@ class ComputedStyle {
   }
 
   Display get display => switch (_kw('display')) {
-        'block' => Display.block,
-        'inline-block' => Display.inlineBlock,
-        'flex' => Display.flex,
-        'inline-flex' => Display.inlineFlex,
-        'none' => Display.none,
-        'list-item' => Display.listItem,
-        'grid' => Display.grid,
-        'inline-grid' => Display.inlineGrid,
-        'contents' => Display.contents,
-        _ => Display.inline,
-      };
+    'block' => Display.block,
+    'inline-block' => Display.inlineBlock,
+    'flex' => Display.flex,
+    'inline-flex' => Display.inlineFlex,
+    'none' => Display.none,
+    'list-item' => Display.listItem,
+    'grid' => Display.grid,
+    'inline-grid' => Display.inlineGrid,
+    'contents' => Display.contents,
+    _ => Display.inline,
+  };
 
   bool get isInlineLevel =>
       display == Display.inline ||
       display == Display.inlineBlock ||
       display == Display.inlineFlex ||
       display == Display.inlineGrid;
-  bool get isFlexContainer => display == Display.flex || display == Display.inlineFlex;
-  bool get isGridContainer => display == Display.grid || display == Display.inlineGrid;
+  bool get isFlexContainer =>
+      display == Display.flex || display == Display.inlineFlex;
+  bool get isGridContainer =>
+      display == Display.grid || display == Display.inlineGrid;
 
   String get position => _kw('position');
   ResolvedLength? get top => _len('top');
@@ -119,7 +137,8 @@ class ComputedStyle {
 
   /// Margins; null means `auto`.
   ResolvedLength? marginOf(String side) => _len('margin-$side');
-  ResolvedLength paddingOf(String side) => _len('padding-$side') ?? ResolvedLength.zero;
+  ResolvedLength paddingOf(String side) =>
+      _len('padding-$side') ?? ResolvedLength.zero;
 
   String borderStyleOf(String side) => _kw('border-$side-style');
 
@@ -132,7 +151,8 @@ class ComputedStyle {
   CssColor borderColorOf(String side) =>
       (this['border-$side-color'] as ColorValue).color ?? color;
 
-  ResolvedLength radiusOf(String corner) => _len('border-$corner-radius') ?? ResolvedLength.zero;
+  ResolvedLength radiusOf(String corner) =>
+      _len('border-$corner-radius') ?? ResolvedLength.zero;
 
   CssColor get backgroundColor =>
       (this['background-color'] as ColorValue).color ?? color;
@@ -145,7 +165,8 @@ class ComputedStyle {
   double get opacity => (this['opacity'] as NumberValue).value;
   String get visibility => _kw('visibility');
 
-  List<String> get fontFamily => (this['font-family'] as FontFamilyValue).families;
+  List<String> get fontFamily =>
+      (this['font-family'] as FontFamilyValue).families;
   double get fontSize => _px('font-size');
   int get fontWeight {
     final v = this['font-weight'];
@@ -249,7 +270,9 @@ class ComputedStyle {
   /// A `<position>`-like pair (`transform-origin`, `perspective-origin`);
   /// defaults to the centre. Keywords, percentages and px.
   (ResolvedLength, ResolvedLength) _origin(String p) {
-    final parts = _raw(p).split(RegExp(r'\s+')).where((x) => x.isNotEmpty).toList();
+    final parts = _raw(
+      p,
+    ).split(RegExp(r'\s+')).where((x) => x.isNotEmpty).toList();
     ResolvedLength? one(String t, {required bool horizontal}) {
       switch (t) {
         case 'left' || 'top':
@@ -274,7 +297,11 @@ class ComputedStyle {
     if (parts.length == 1 && (parts[0] == 'top' || parts[0] == 'bottom')) {
       return (x, one(parts[0], horizontal: false)!);
     }
-    if (parts.length >= 2 && (parts[0] == 'top' || parts[0] == 'bottom' || parts[1] == 'left' || parts[1] == 'right')) {
+    if (parts.length >= 2 &&
+        (parts[0] == 'top' ||
+            parts[0] == 'bottom' ||
+            parts[1] == 'left' ||
+            parts[1] == 'right')) {
       parts.insert(0, parts.removeAt(1));
     }
     x = one(parts[0], horizontal: true) ?? x;
@@ -290,8 +317,10 @@ class ComputedStyle {
     return l == null || l <= 0 ? null : l;
   }
 
-  (ResolvedLength, ResolvedLength) get perspectiveOrigin => _origin('perspective-origin');
-  (ResolvedLength, ResolvedLength) get transformOrigin => _origin('transform-origin');
+  (ResolvedLength, ResolvedLength) get perspectiveOrigin =>
+      _origin('perspective-origin');
+  (ResolvedLength, ResolvedLength) get transformOrigin =>
+      _origin('transform-origin');
 
   TransformValue? get transform {
     final v = this['transform'];
@@ -335,13 +364,22 @@ class ComputedStyle {
   List<CssTransition> get transitions {
     final props = _list<String>('transition-property');
     final durations = _list<double>('transition-duration');
-    if (props.isEmpty || props.every((p) => p == 'none') || durations.every((d) => d <= 0)) return const [];
+    if (props.isEmpty ||
+        props.every((p) => p == 'none') ||
+        durations.every((d) => d <= 0))
+      return const [];
     T at<T>(List<T> l, int i, T d) => l.isEmpty ? d : l[i % l.length];
     final delays = _list<double>('transition-delay');
     final easings = _list<CssEasing>('transition-timing-function');
     return [
       for (var i = 0; i < props.length; i++)
-        if (props[i] != 'none') CssTransition(props[i], at(durations, i, 0.0), at(easings, i, CssEasing.ease), at(delays, i, 0.0)),
+        if (props[i] != 'none')
+          CssTransition(
+            props[i],
+            at(durations, i, 0.0),
+            at(easings, i, CssEasing.ease),
+            at(delays, i, 0.0),
+          ),
     ];
   }
 
@@ -390,7 +428,8 @@ class ComputedStyle {
     return s == 'none' || s == 'hidden' ? 0 : _px('outline-width');
   }
 
-  CssColor get outlineColor => (this['outline-color'] as ColorValue).color ?? color;
+  CssColor get outlineColor =>
+      (this['outline-color'] as ColorValue).color ?? color;
   double get outlineOffset => _px('outline-offset');
 
   GridTracksValue? get gridTemplateColumns {
@@ -403,7 +442,8 @@ class ComputedStyle {
     return v is GridTracksValue ? v : null;
   }
 
-  GridTracksValue get gridAutoColumns => this['grid-auto-columns'] as GridTracksValue;
+  GridTracksValue get gridAutoColumns =>
+      this['grid-auto-columns'] as GridTracksValue;
   GridTracksValue get gridAutoRows => this['grid-auto-rows'] as GridTracksValue;
 
   GridAreasValue? get gridTemplateAreas {
@@ -415,10 +455,12 @@ class ComputedStyle {
 
   /// Author `content-visibility` value (`visible`, `auto`, `hidden`), or an
   /// empty string when the declaration is absent.
-  String get contentVisibility => this['content-visibility'].toString().trim().toLowerCase();
+  String get contentVisibility =>
+      this['content-visibility'].toString().trim().toLowerCase();
   GridLineValue get gridRowStart => this['grid-row-start'] as GridLineValue;
   GridLineValue get gridRowEnd => this['grid-row-end'] as GridLineValue;
-  GridLineValue get gridColumnStart => this['grid-column-start'] as GridLineValue;
+  GridLineValue get gridColumnStart =>
+      this['grid-column-start'] as GridLineValue;
   GridLineValue get gridColumnEnd => this['grid-column-end'] as GridLineValue;
   String get objectFit => _kw('object-fit');
   String get cursor => _kw('cursor');
@@ -430,9 +472,20 @@ class ComputedStyle {
     for (final e in values.entries) {
       if (other.values[e.key] != e.value) return false;
     }
+    if (other.customProperties.length != customProperties.length) return false;
+    for (final e in customProperties.entries) {
+      if (other.customProperties[e.key] != e.value) return false;
+    }
     return true;
   }
 
   @override
-  int get hashCode => Object.hashAllUnordered(values.entries.map((e) => Object.hash(e.key, e.value)));
+  int get hashCode => Object.hash(
+    Object.hashAllUnordered(
+      values.entries.map((e) => Object.hash(e.key, e.value)),
+    ),
+    Object.hashAllUnordered(
+      customProperties.entries.map((e) => Object.hash(e.key, e.value)),
+    ),
+  );
 }

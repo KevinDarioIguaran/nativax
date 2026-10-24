@@ -10,14 +10,35 @@ import 'values.dart';
 
 /// Cascade layers in ascending precedence (CSS Cascade 4 §6.1, without
 /// user styles, animations or transitions).
-enum _Layer { uaNormal, authorNormal, inlineNormal, authorImportant, inlineImportant, uaImportant }
+enum _Layer {
+  uaNormal,
+  authorNormal,
+  inlineNormal,
+  authorImportant,
+  inlineImportant,
+  uaImportant,
+}
 
 class _IndexedRule {
-  _IndexedRule(this.selector, this.declarations, this.order, this.isUserAgent);
+  _IndexedRule(
+    this.selector,
+    this.declarations,
+    this.order,
+    this.isUserAgent, {
+    required this.structural,
+    required this.sibling,
+  });
   final ComplexSelector selector;
   final List<Declaration> declarations;
   final int order;
   final bool isUserAgent;
+
+  /// Selector depends on position/structure (`:first-*`, `:nth-*`, `:empty`,
+  /// `:has`, ...).
+  final bool structural;
+
+  /// Selector uses `+` or `~`.
+  final bool sibling;
 }
 
 class _Match {
@@ -97,8 +118,8 @@ class StyleEngine {
     required this.document,
     required MediaContext media,
     StyleSheet? userAgent,
-  })  : _media = media,
-        _ua = userAgent ?? _defaultUa {
+  }) : _media = media,
+       _ua = userAgent ?? _defaultUa {
     _rebuildIndex();
   }
 
@@ -149,6 +170,10 @@ class StyleEngine {
   final Set<String> _attributeUniversal = {};
   bool _usesHover = false;
   bool _usesActive = false;
+  bool _statefulAncestorUniversal = false;
+  final Set<String> _statefulAncestorTags = {};
+  final Set<String> _statefulAncestorClasses = {};
+  final Set<String> _statefulAncestorIds = {};
 
   /// Whether any rule depends on `:hover` / `:active`; renderers only track
   /// pointer state when needed.
@@ -166,6 +191,7 @@ class StyleEngine {
     }
     return _hoverByTag[element.localName]?.isNotEmpty ?? false;
   }
+
   bool get usesActive => _usesActive;
 
   final Map<String, List<Declaration>> _inlineCache = {};
@@ -189,7 +215,6 @@ class StyleEngine {
   int candidateRules = 0;
   final List<_StyleSample> _styleSamples = [];
   final List<_StyleSample> _styleStack = [];
-
 
   /// Matched declarations and computed styles shared by elements with the
   /// same signature (tag/id/classes/attributes) and the same parent style.
@@ -226,22 +251,53 @@ class StyleEngine {
 
   int get dirtyRootCount => _dirtyRoots.length;
 
-  bool get _hasStructuralSelectors =>
-      _structuralUniversal ||
-      _structuralTags.isNotEmpty ||
-      _structuralClasses.isNotEmpty ||
-      _structuralIds.isNotEmpty ||
-      _structuralAncestorTags.isNotEmpty ||
-      _structuralAncestorClasses.isNotEmpty ||
-      _structuralAncestorIds.isNotEmpty ||
-      _usesSiblingCombinators;
-
   String get ruleIndexInfo {
-    final tags = _byTag.entries.toList()..sort((a, b) => b.value.length.compareTo(a.value.length));
-    final classes = _byClass.entries.toList()..sort((a, b) => b.value.length.compareTo(a.value.length));
+    final tags = _byTag.entries.toList()
+      ..sort((a, b) => b.value.length.compareTo(a.value.length));
+    final classes = _byClass.entries.toList()
+      ..sort((a, b) => b.value.length.compareTo(a.value.length));
     return 'universal=${_universal.length} '
         'tagTop=${tags.take(6).map((e) => '${e.key}:${e.value.length}').join(',')} '
         'classTop=${classes.take(6).map((e) => '${e.key}:${e.value.length}').join(',')}';
+  }
+
+  bool _hasStatefulPseudo(List<SimpleSelector> parts) {
+    for (final part in parts) {
+      if (part is PseudoClassSelector) {
+        if (PseudoClassSelector.stateful.contains(part.name)) return true;
+        void scan(SelectorList? list) {
+          if (list == null) return;
+          for (final s in list.selectors) {
+            for (final c in s.compounds) {
+              if (_hasStatefulPseudo(c.parts)) return;
+            }
+          }
+        }
+
+        scan(part.inner);
+        scan(part.of);
+        final has = part.hasParts;
+        if (has != null) {
+          for (final (_, s) in has) {
+            for (final c in s.compounds) {
+              if (_hasStatefulPseudo(c.parts)) return true;
+            }
+          }
+        }
+      }
+    }
+    return false;
+  }
+
+  bool _needsStatefulAncestorKey(Element e) {
+    if (_statefulAncestorUniversal) return true;
+    if (_statefulAncestorTags.contains(e.localName)) return true;
+    final id = e.getAttribute('id');
+    if (id != null && _statefulAncestorIds.contains(id)) return true;
+    for (final c in e.classList) {
+      if (_statefulAncestorClasses.contains(c)) return true;
+    }
+    return false;
   }
 
   bool _needsStructuralKey(Element e) {
@@ -272,9 +328,23 @@ class StyleEngine {
   /// aria-*, data-* used only by scripts, ...) must not fragment the style
   /// cache for otherwise identical elements.
   static const Set<String> _signatureAttributes = {
-    'style', 'href', 'disabled', 'checked', 'selected', 'type', 'open',
-    'hidden', 'contenteditable', 'multiple', 'required', 'readonly',
-    'placeholder', 'value', 'lang', 'dir', 'popover',
+    'style',
+    'href',
+    'disabled',
+    'checked',
+    'selected',
+    'type',
+    'open',
+    'hidden',
+    'contenteditable',
+    'multiple',
+    'required',
+    'readonly',
+    'placeholder',
+    'value',
+    'lang',
+    'dir',
+    'popover',
   };
 
   bool _signatureAttribute(Element e, String name) {
@@ -283,8 +353,13 @@ class StyleEngine {
     return _attributeTags[name]?.contains(e.localName) ?? false;
   }
 
-  String _elementSignature(Element e,
-      {String? pseudo, ComputedStyle? parent, bool structural = false}) {
+  String _elementSignature(
+    Element e, {
+    String? pseudo,
+    ComputedStyle? parent,
+    bool structural = false,
+    bool sibling = false,
+  }) {
     final b = StringBuffer()
       ..write(e.localName)
       ..write('\u0000')
@@ -308,7 +383,7 @@ class StyleEngine {
       ..write('\u0000')
       ..write(pseudo ?? '')
       ..write('\u0000')
-      ..write(parent == null ? 0 : identityHashCode(parent));
+      ..write(parent == null ? 0 : parent.hashCode);
     final doc = e.ownerDocument;
     b
       ..write('\u0000')
@@ -324,15 +399,32 @@ class StyleEngine {
       final siblings = parentEl?.children.toList() ?? const <Element>[];
       final index = siblings.indexWhere((c) => identical(c, e));
       final childCount = siblings.length;
+      var indexOfType = 0;
+      var countOfType = 0;
+      for (final s in siblings) {
+        if (s.localName == e.localName) {
+          if (identical(s, e)) indexOfType = countOfType;
+          countOfType++;
+        }
+      }
       b
         ..write('\u0000s')
-        ..write(identityHashCode(parentEl))
-        ..write(':')
         ..write(index)
         ..write(':')
         ..write(childCount)
         ..write(':')
+        ..write(indexOfType)
+        ..write(':')
+        ..write(countOfType)
+        ..write(':')
         ..write(e.childNodes.isEmpty ? 1 : 0);
+      // Sibling combinators depend on the identity/content of neighbours;
+      // keep the parent in the key only when such selectors exist.
+      if (sibling) {
+        b
+          ..write('\u0000p')
+          ..write(identityHashCode(parentEl));
+      }
     }
     return b.toString();
   }
@@ -349,10 +441,12 @@ class StyleEngine {
 
   set media(MediaContext value) {
     if (value == _media) return;
-    final sizeChanged = value.width != _media.width || value.height != _media.height;
+    final sizeChanged =
+        value.width != _media.width || value.height != _media.height;
     _media = value;
     final state = _evaluateMedia();
-    if (!_listEquals(state, _mediaState) || (sizeChanged && _usesViewportUnits)) {
+    if (!_listEquals(state, _mediaState) ||
+        (sizeChanged && _usesViewportUnits)) {
       _rebuildIndex();
       _allDirty = true;
     }
@@ -388,13 +482,16 @@ class StyleEngine {
     final any = buckets
         .candidates(element)
         .any((r) => r.selector.matchesPseudo(element, pseudo));
-    final style = any ? _compute(element, pseudo: pseudo, origin: origin) : null;
+    final style = any
+        ? _compute(element, pseudo: pseudo, origin: origin)
+        : null;
     cache[pseudo] = style;
     return style;
   }
 
   /// Whether any rule styles [pseudo]; lets renderers skip lookups.
-  bool hasPseudoRules(String pseudo) => _pseudoBuckets[pseudo]?.isEmpty == false;
+  bool hasPseudoRules(String pseudo) =>
+      _pseudoBuckets[pseudo]?.isEmpty == false;
 
   /// Marks styles affected by [record] dirty.
   void handleMutation(MutationRecord record) {
@@ -403,6 +500,7 @@ class StyleEngine {
       case MutationType.childList:
         // Structure (and therefore sibling/positional selectors) changed.
         _matchedDirty = true;
+        _computedDirty = true;
         _dirtyMayAffectDescendants = true;
         if (target is Element) {
           _markDirty(target);
@@ -426,6 +524,7 @@ class StyleEngine {
         // class/id/style and attributes used by selectors can change any
         // selector that descends from this element.
         _matchedDirty = true;
+        _computedDirty = true;
         _dirtyMayAffectDescendants = true;
         if (record.name == 'style') {
           _markDirty(target);
@@ -437,8 +536,8 @@ class StyleEngine {
       case MutationType.property:
         // DOM state (:checked, :disabled, :empty via value changes, ...).
         _matchedDirty = true;
-        _dirtyMayAffectDescendants = _hasStructuralSelectors;
         if (target is! Element) return;
+        _dirtyMayAffectDescendants = _needsStatefulAncestorKey(target);
         _markDirty(target);
       case MutationType.characterData:
         // Text data only affects structural selectors (`:empty`, `:has`, and
@@ -446,7 +545,10 @@ class StyleEngine {
         // rules must not force a full subtree recompute.
         final parent = target.parentElement;
         final structural = parent != null && _needsStructuralKey(parent);
-        if (structural) _matchedDirty = true;
+        if (structural) {
+          _matchedDirty = true;
+          _computedDirty = true;
+        }
         _dirtyMayAffectDescendants = structural;
         if (parent != null) {
           _markDirty(parent);
@@ -574,13 +676,15 @@ class StyleEngine {
   /// [element]'s style with [extra] declarations applied on top of its
   /// cascade (keyframes are computed this way, so `em`, `var()` and
   /// `currentcolor` resolve in the element's context). Not cached.
-  ComputedStyle styleWithDeclarations(Element element, List<Declaration> extra) {
+  ComputedStyle styleWithDeclarations(
+    Element element,
+    List<Declaration> extra,
+  ) {
     styleOf(element);
     return _compute(element, extra: extra);
   }
 
-  int get metricsOwnUs =>
-      _styleSamples.fold<int>(0, (a, s) => a + s.ownUs);
+  int get metricsOwnUs => _styleSamples.fold<int>(0, (a, s) => a + s.ownUs);
 
   String metricsSummary() {
     if (!metricsEnabled || _styleSamples.isEmpty) return 'style metrics: off';
@@ -588,17 +692,20 @@ class StyleEngine {
     final top = List<_StyleSample>.of(_styleSamples)
       ..sort((a, b) => b.ownUs.compareTo(a.ownUs));
     final b = StringBuffer(
-        'STYLE_METRICS samples=${_styleSamples.length} '
-        'ownMs=${(own / 1000).toStringAsFixed(1)} '
-        'avgUs=${(own / _styleSamples.length).toStringAsFixed(0)} '
-        'selectorsPer=${(selectorEvaluations / _styleSamples.length).toStringAsFixed(1)} '
-        'candidatesPer=${(candidateRules / _styleSamples.length).toStringAsFixed(1)} '
-        'hits=$styleCacheHits');
+      'STYLE_METRICS samples=${_styleSamples.length} '
+      'ownMs=${(own / 1000).toStringAsFixed(1)} '
+      'avgUs=${(own / _styleSamples.length).toStringAsFixed(0)} '
+      'selectorsPer=${(selectorEvaluations / _styleSamples.length).toStringAsFixed(1)} '
+      'candidatesPer=${(candidateRules / _styleSamples.length).toStringAsFixed(1)} '
+      'hits=$styleCacheHits',
+    );
     for (final s in top.take(10)) {
-      b.write(' | ${s.element.localName}'
-          '${s.element.id.isEmpty ? '' : '#${s.element.id}'} '
-          'own=${s.ownUs}us sel=${s.selectors} cand=${s.candidates}'
-          '${s.cacheHit ? ' hit' : ''}');
+      b.write(
+        ' | ${s.element.localName}'
+        '${s.element.id.isEmpty ? '' : '#${s.element.id}'} '
+        'own=${s.ownUs}us sel=${s.selectors} cand=${s.candidates}'
+        '${s.cacheHit ? ' hit' : ''}',
+      );
     }
     return b.toString();
   }
@@ -611,10 +718,12 @@ class StyleEngine {
       'samples': _styleSamples.length,
       'ownMs': own / 1000,
       'avgOwnUs': _styleSamples.isEmpty ? 0 : own / _styleSamples.length,
-      'selectorsPerElement':
-          _styleSamples.isEmpty ? 0 : selectorEvaluations / _styleSamples.length,
-      'candidatesPerElement':
-          _styleSamples.isEmpty ? 0 : candidateRules / _styleSamples.length,
+      'selectorsPerElement': _styleSamples.isEmpty
+          ? 0
+          : selectorEvaluations / _styleSamples.length,
+      'candidatesPerElement': _styleSamples.isEmpty
+          ? 0
+          : candidateRules / _styleSamples.length,
       'cacheHits': styleCacheHits,
       'top': [
         for (final s in top.take(12))
@@ -625,7 +734,7 @@ class StyleEngine {
             'selectors': s.selectors,
             'candidates': s.candidates,
             'cacheHit': s.cacheHit,
-          }
+          },
       ],
     };
   }
@@ -662,6 +771,10 @@ class StyleEngine {
     _keyframes.clear();
     _usesHover = false;
     _usesActive = false;
+    _statefulAncestorUniversal = false;
+    _statefulAncestorTags.clear();
+    _statefulAncestorClasses.clear();
+    _statefulAncestorIds.clear();
     _attributeTags.clear();
     _attributeUniversal.clear();
     _usesSiblingCombinators = false;
@@ -677,30 +790,58 @@ class StyleEngine {
 
     void add(StyleRule rule, bool ua) {
       final selectorText = rule.selectorText;
-      final direct = <String>{};
-      for (final sel in rule.selectors.selectors) {
-        for (final compound in sel.compounds) {
-          final tag = compound.parts.whereType<TypeSelector>().firstOrNull?.name;
-          for (final part in compound.parts) {
-            if (part is! AttributeSelector) continue;
+      final collected = <String>{};
+      void collectCompound(CompoundSelector compound, String? inheritedTag) {
+        final tag =
+            compound.parts.whereType<TypeSelector>().firstOrNull?.name ??
+            inheritedTag;
+        for (final part in compound.parts) {
+          if (part is AttributeSelector) {
             final name = part.name.toLowerCase();
-            direct.add(name);
+            collected.add(name);
             if (tag == null) {
               _attributeUniversal.add(name);
             } else {
               _attributeTags.putIfAbsent(name, () => <String>{}).add(tag);
             }
+          } else if (part is PseudoClassSelector) {
+            void collectList(SelectorList? list) {
+              if (list == null) return;
+              for (final s in list.selectors) {
+                for (final c in s.compounds) {
+                  collectCompound(c, tag);
+                }
+              }
+            }
+
+            collectList(part.inner);
+            collectList(part.of);
+            final has = part.hasParts;
+            if (has != null) {
+              for (final (_, s) in has) {
+                for (final c in s.compounds) {
+                  collectCompound(c, tag);
+                }
+              }
+            }
           }
         }
       }
-      // Attributes inside :not()/:is()/:has() are collected conservatively:
-      // if the attribute is not a direct part of any compound, assume it can
-      // apply to any tag.
-      for (final match in RegExp(r'\[\s*(?:[-\w*]+\|)?([-\w:]+)').allMatches(selectorText)) {
-        final name = match.group(1)!.toLowerCase();
-        if (!direct.contains(name)) _attributeUniversal.add(name);
+
+      for (final sel in rule.selectors.selectors) {
+        for (final compound in sel.compounds) {
+          collectCompound(compound, null);
+        }
       }
-      final structuralRule = selectorText.contains(':first-') ||
+      // Anything the AST walk could not associate with a tag is universal.
+      for (final match in RegExp(
+        r'(?<!\\)\[\s*(?:[-\w*]+\|)?([-\w:]+)',
+      ).allMatches(selectorText)) {
+        final name = match.group(1)!.toLowerCase();
+        if (!collected.contains(name)) _attributeUniversal.add(name);
+      }
+      final structuralRule =
+          selectorText.contains(':first-') ||
           selectorText.contains(':last-') ||
           selectorText.contains(':only-') ||
           selectorText.contains(':nth-') ||
@@ -712,7 +853,8 @@ class StyleEngine {
       if (rule.selectorText.contains(':active')) _usesActive = true;
       for (final d in rule.declarations) {
         final v = d.value;
-        if (v is Length && (v.unit == LengthUnit.vw || v.unit == LengthUnit.vh)) {
+        if (v is Length &&
+            (v.unit == LengthUnit.vw || v.unit == LengthUnit.vh)) {
           _usesViewportUnits = true;
         } else if (v is RawValue || v is RelativeValue) {
           final text = v.toString().toLowerCase();
@@ -722,8 +864,10 @@ class StyleEngine {
         }
       }
       for (final sel in rule.selectors.selectors) {
-        if (sel.combinators.any((c) =>
-            c == Combinator.nextSibling || c == Combinator.subsequentSibling)) {
+        if (sel.combinators.any(
+          (c) =>
+              c == Combinator.nextSibling || c == Combinator.subsequentSibling,
+        )) {
           _usesSiblingCombinators = true;
         }
         if (structuralRule) {
@@ -758,15 +902,45 @@ class StyleEngine {
             if (!foundAncestor) _structuralUniversal = true;
           }
         }
-        final ir = _IndexedRule(sel, rule.declarations, order++, ua);
+        for (var ci = 1; ci < sel.compounds.length; ci++) {
+          final compound = sel.compounds[ci];
+          if (!_hasStatefulPseudo(compound.parts)) continue;
+          final tag = compound.parts.whereType<TypeSelector>().firstOrNull;
+          final id = compound.parts.whereType<IdSelector>().firstOrNull;
+          final cls = compound.parts.whereType<ClassSelector>().firstOrNull;
+          if (id != null) {
+            _statefulAncestorIds.add(id.id);
+          } else if (cls != null) {
+            _statefulAncestorClasses.add(cls.name);
+          } else if (tag != null) {
+            _statefulAncestorTags.add(tag.name);
+          } else {
+            _statefulAncestorUniversal = true;
+          }
+        }
+        final ir = _IndexedRule(
+          sel,
+          rule.declarations,
+          order++,
+          ua,
+          structural: structuralRule,
+          sibling: sel.combinators.any(
+            (c) =>
+                c == Combinator.nextSibling ||
+                c == Combinator.subsequentSibling,
+          ),
+        );
         if (selectorText.contains(':hover')) {
           for (final compound in sel.compounds) {
             if (!compound.parts.any(
-                (p) => p is PseudoClassSelector && p.name == 'hover')) {
+              (p) => p is PseudoClassSelector && p.name == 'hover',
+            )) {
               continue;
             }
             final hId = compound.parts.whereType<IdSelector>().firstOrNull;
-            final hClass = compound.parts.whereType<ClassSelector>().firstOrNull;
+            final hClass = compound.parts
+                .whereType<ClassSelector>()
+                .firstOrNull;
             final hTag = compound.parts.whereType<TypeSelector>().firstOrNull;
             if (hId != null) {
               _hoverById.putIfAbsent(hId.id, () => []).add(ir);
@@ -835,7 +1009,37 @@ class StyleEngine {
   /// Matched declarations for [e], in ascending cascade precedence.
   List<Declaration> cascadedDeclarations(Element e, {String? pseudo}) {
     _ensureStyleCaches();
-    final cacheKey = _elementSignature(e, pseudo: pseudo, structural: _needsStructuralKey(e));
+    final candidates = <_IndexedRule>[];
+    void collect(Iterable<_IndexedRule>? rules) {
+      if (rules == null) return;
+      candidates.addAll(rules);
+    }
+
+    if (pseudo != null) {
+      final pseudoBuckets = _pseudoBuckets[pseudo];
+      if (pseudoBuckets != null) collect(pseudoBuckets.candidates(e));
+    } else {
+      collect(_universal);
+      collect(_byTag[e.localName]);
+      final id = e.getAttribute('id');
+      if (id != null && id.isNotEmpty) collect(_byId[id]);
+      final seenClasses = <String>{};
+      for (final c in e.classList) {
+        if (seenClasses.add(c)) collect(_byClass[c]);
+      }
+    }
+    var structural = false;
+    var sibling = false;
+    for (final r in candidates) {
+      structural |= r.structural;
+      sibling |= r.sibling;
+    }
+    final cacheKey = _elementSignature(
+      e,
+      pseudo: pseudo,
+      structural: structural,
+      sibling: sibling,
+    );
     final cached = useStyleCaches ? _matchedCache[cacheKey] : null;
     if (cached != null) {
       matchedCacheHits++;
@@ -843,32 +1047,19 @@ class StyleEngine {
     }
     matchedCacheMisses++;
     final matches = <_Match>[];
-    void consider(Iterable<_IndexedRule>? rules) {
-      if (rules == null) return;
-      for (final r in rules) {
-        candidateRules++;
-        selectorEvaluations++;
-        if (pseudo == null ? !r.selector.matches(e) : !r.selector.matchesPseudo(e, pseudo)) continue;
-        for (final d in r.declarations) {
-          final layer = r.isUserAgent
-              ? (d.important ? _Layer.uaImportant : _Layer.uaNormal)
-              : (d.important ? _Layer.authorImportant : _Layer.authorNormal);
-          matches.add(_Match(layer, r.selector.specificity, r.order, d));
-        }
+    for (final r in candidates) {
+      candidateRules++;
+      selectorEvaluations++;
+      if (pseudo == null
+          ? !r.selector.matches(e)
+          : !r.selector.matchesPseudo(e, pseudo)) {
+        continue;
       }
-    }
-
-    if (pseudo != null) {
-      final pseudoBuckets = _pseudoBuckets[pseudo];
-      if (pseudoBuckets != null) consider(pseudoBuckets.candidates(e));
-    } else {
-      consider(_universal);
-      consider(_byTag[e.localName]);
-      final id = e.getAttribute('id');
-      if (id != null && id.isNotEmpty) consider(_byId[id]);
-      final seenClasses = <String>{};
-      for (final c in e.classList) {
-        if (seenClasses.add(c)) consider(_byClass[c]);
+      for (final d in r.declarations) {
+        final layer = r.isUserAgent
+            ? (d.important ? _Layer.uaImportant : _Layer.uaNormal)
+            : (d.important ? _Layer.authorImportant : _Layer.authorNormal);
+        matches.add(_Match(layer, r.selector.specificity, r.order, d));
       }
     }
     // SVG presentation attributes count as author rules with specificity 0
@@ -880,19 +1071,30 @@ class StyleEngine {
         if (v == null || v.trim().isEmpty) continue;
         final expanded = expandDeclaration(name, CssTokenizer(v).tokenize());
         if (expanded == null) continue;
-        expanded.forEach((p, value) => matches.add(_Match(_Layer.authorNormal, Specificity.zero, i++, Declaration(p, value))));
+        expanded.forEach(
+          (p, value) => matches.add(
+            _Match(
+              _Layer.authorNormal,
+              Specificity.zero,
+              i++,
+              Declaration(p, value),
+            ),
+          ),
+        );
       }
     }
     final inline = pseudo == null ? e.getAttribute('style') : null;
     if (inline != null && inline.trim().isNotEmpty) {
       var i = 0;
       for (final d in _inlineDeclarations(inline)) {
-        matches.add(_Match(
-          d.important ? _Layer.inlineImportant : _Layer.inlineNormal,
-          Specificity.zero,
-          i++,
-          d,
-        ));
+        matches.add(
+          _Match(
+            d.important ? _Layer.inlineImportant : _Layer.inlineNormal,
+            Specificity.zero,
+            i++,
+            d,
+          ),
+        );
       }
     }
     matches.sort((a, b) {
@@ -912,7 +1114,12 @@ class StyleEngine {
 
   // --- computation -------------------------------------------------------------
 
-  ComputedStyle _compute(Element e, {String? pseudo, ComputedStyle? origin, List<Declaration>? extra}) {
+  ComputedStyle _compute(
+    Element e, {
+    String? pseudo,
+    ComputedStyle? origin,
+    List<Declaration>? extra,
+  }) {
     if (!metricsEnabled) {
       return _computeInner(e, pseudo: pseudo, origin: origin, extra: extra);
     }
@@ -946,9 +1153,17 @@ class StyleEngine {
     return expanded;
   }
 
-  ComputedStyle _computeInner(Element e, {String? pseudo, ComputedStyle? origin, List<Declaration>? extra}) {
+  ComputedStyle _computeInner(
+    Element e, {
+    String? pseudo,
+    ComputedStyle? origin,
+    List<Declaration>? extra,
+  }) {
     _ensureStyleCaches();
-    const profile = bool.fromEnvironment('NATIVAX_RENDER_PROFILE', defaultValue: false);
+    const profile = bool.fromEnvironment(
+      'NATIVAX_RENDER_PROFILE',
+      defaultValue: false,
+    );
     final watch = profile ? (Stopwatch()..start()) : null;
     var _lastUs = 0;
     int lap() {
@@ -957,6 +1172,7 @@ class StyleEngine {
       _lastUs = now;
       return d;
     }
+
     computeCount++;
     computesByTag[e.localName] = (computesByTag[e.localName] ?? 0) + 1;
     // A pseudo-element inherits from its originating element.
@@ -972,7 +1188,12 @@ class StyleEngine {
     final parentUs = profile ? lap() : 0;
     String? styleCacheKey;
     if (extra == null) {
-      styleCacheKey = _elementSignature(e, pseudo: pseudo, parent: parent, structural: _needsStructuralKey(e));
+      styleCacheKey = _elementSignature(
+        e,
+        pseudo: pseudo,
+        parent: parent,
+        structural: _needsStructuralKey(e),
+      );
       final shared = useStyleCaches ? _computedCache[styleCacheKey] : null;
       if (shared != null) {
         styleCacheHits++;
@@ -980,7 +1201,9 @@ class StyleEngine {
       }
     }
     final root = document.documentElement;
-    final rootStyle = (root == null || (pseudo == null && identical(root, e))) ? null : _styles[root];
+    final rootStyle = (root == null || (pseudo == null && identical(root, e)))
+        ? null
+        : _styles[root];
 
     final cascaded = cascadedDeclarations(e, pseudo: pseudo);
     if (extra != null) cascaded.addAll(extra);
@@ -1019,7 +1242,8 @@ class StyleEngine {
       final spec = longhands[p]!;
       var v = specified[p];
       if (v is GlobalKeyword) {
-        final inherit = v.name == 'inherit' || (v.name == 'unset' && spec.inherited);
+        final inherit =
+            v.name == 'inherit' || (v.name == 'unset' && spec.inherited);
         if (inherit && parent != null) return parent[p];
         return spec.initial;
       }
@@ -1041,7 +1265,8 @@ class StyleEngine {
         LengthUnit.px => fs.value,
         LengthUnit.percent => parentFont * fs.value / 100,
         LengthUnit.em => parentFont * fs.value,
-        LengthUnit.rem => (pseudo == null && identical(root, e) ? 16 : rootFont) * fs.value,
+        LengthUnit.rem =>
+          (pseudo == null && identical(root, e) ? 16 : rootFont) * fs.value,
         LengthUnit.vw => _media.width * fs.value / 100,
         LengthUnit.vh => _media.height * fs.value / 100,
       };
@@ -1055,12 +1280,12 @@ class StyleEngine {
     out['color'] = ColorValue(color);
 
     Length absLength(Length v) => switch (v.unit) {
-          LengthUnit.px || LengthUnit.percent => v,
-          LengthUnit.em => Length.px(v.value * fontSize),
-          LengthUnit.rem => Length.px(v.value * remBase),
-          LengthUnit.vw => Length.px(_media.width * v.value / 100),
-          LengthUnit.vh => Length.px(_media.height * v.value / 100),
-        };
+      LengthUnit.px || LengthUnit.percent => v,
+      LengthUnit.em => Length.px(v.value * fontSize),
+      LengthUnit.rem => Length.px(v.value * remBase),
+      LengthUnit.vw => Length.px(_media.width * v.value / 100),
+      LengthUnit.vh => Length.px(_media.height * v.value / 100),
+    };
 
     CssValue absolutize(CssValue v) {
       if (v is Length) return absLength(v);
@@ -1073,11 +1298,15 @@ class StyleEngine {
       var v = specifiedOf(p);
       if (p == 'line-height' && v is Length && v.unit == LengthUnit.percent) {
         v = Length.px(fontSize * v.value / 100);
-      } else if (p == 'font-weight' && v is Keyword && (v.name == 'bolder' || v.name == 'lighter')) {
+      } else if (p == 'font-weight' &&
+          v is Keyword &&
+          (v.name == 'bolder' || v.name == 'lighter')) {
         final pw = parent?.fontWeight ?? 400;
-        v = NumberValue(v.name == 'bolder'
-            ? (pw < 400 ? 400 : (pw < 600 ? 700 : 900)).toDouble()
-            : (pw < 600 ? 100 : (pw < 800 ? 400 : 700)).toDouble());
+        v = NumberValue(
+          v.name == 'bolder'
+              ? (pw < 400 ? 400 : (pw < 600 ? 700 : 900)).toDouble()
+              : (pw < 600 ? 100 : (pw < 800 ? 400 : 700)).toDouble(),
+        );
       } else {
         v = absolutize(v);
       }
@@ -1100,7 +1329,8 @@ class StyleEngine {
     // Blockification: flex and grid items, absolutely positioned boxes and
     // the root.
     final display = (out['display'] as Keyword?)?.name ?? 'inline';
-    final parentIsFlex = parent != null && (parent.isFlexContainer || parent.isGridContainer);
+    final parentIsFlex =
+        parent != null && (parent.isFlexContainer || parent.isGridContainer);
     final position = (out['position'] as Keyword?)?.name;
     final absolute = position == 'absolute' || position == 'fixed';
     if (parentIsFlex || absolute || parentEl == null) {
@@ -1120,28 +1350,64 @@ class StyleEngine {
     if (watch != null && watch.elapsedMilliseconds >= 2) {
       final restUs = lap();
       // ignore: avoid_print
-      print('STYLE_SECTIONS <${e.localName}${e.id.isEmpty ? '' : '#${e.id}'}> '
-          'total=${watch.elapsedMilliseconds}ms parent=${parentUs ~/ 1000}ms '
-          'cascade=$cascadeUs custom=$customUs specified=$specifiedUs '
-          'longhands=$longhandUs rest=$restUs');
+      print(
+        'STYLE_SECTIONS <${e.localName}${e.id.isEmpty ? '' : '#${e.id}'}> '
+        'total=${watch.elapsedMilliseconds}ms parent=${parentUs ~/ 1000}ms '
+        'cascade=$cascadeUs custom=$customUs specified=$specifiedUs '
+        'longhands=$longhandUs rest=$restUs',
+      );
     }
     return result;
   }
 }
 
 const _snappedWidths = [
-  'border-top-width', 'border-right-width', 'border-bottom-width', 'border-left-width', 'outline-width',
+  'border-top-width',
+  'border-right-width',
+  'border-bottom-width',
+  'border-left-width',
+  'outline-width',
 ];
 
 const _svgElements = {
-  'svg', 'g', 'rect', 'circle', 'ellipse', 'line', 'polyline', 'polygon', 'path', 'text', 'tspan', 'use',
-  'symbol', 'defs', 'marker', 'image', 'foreignobject',
+  'svg',
+  'g',
+  'rect',
+  'circle',
+  'ellipse',
+  'line',
+  'polyline',
+  'polygon',
+  'path',
+  'text',
+  'tspan',
+  'use',
+  'symbol',
+  'defs',
+  'marker',
+  'image',
+  'foreignobject',
 };
 
 const _presentationAttributes = [
-  'fill', 'stroke', 'stroke-width', 'fill-opacity', 'stroke-opacity', 'stroke-linecap', 'stroke-linejoin',
-  'fill-rule', 'opacity', 'font-size', 'font-family', 'font-weight', 'text-anchor', 'dominant-baseline',
-  'visibility', 'display', 'color', 'stroke-dasharray',
+  'fill',
+  'stroke',
+  'stroke-width',
+  'fill-opacity',
+  'stroke-opacity',
+  'stroke-linecap',
+  'stroke-linejoin',
+  'fill-rule',
+  'opacity',
+  'font-size',
+  'font-family',
+  'font-weight',
+  'text-anchor',
+  'dominant-baseline',
+  'visibility',
+  'display',
+  'color',
+  'stroke-dasharray',
 ];
 
 /// Substitutes `var(--name[, fallback])` and common safe-area `env()` values.
@@ -1154,7 +1420,11 @@ String? _substituteVariables(String text, Map<String, String> custom) {
   for (var pass = 0; pass < 32; pass++) {
     final lower = out.toLowerCase();
     var start = -1;
-    for (var i = lower.indexOf('var('); i >= 0; i = lower.indexOf('var(', i + 1)) {
+    for (
+      var i = lower.indexOf('var(');
+      i >= 0;
+      i = lower.indexOf('var(', i + 1)
+    ) {
       if (i == 0 || !_isIdentChar(lower.codeUnitAt(i - 1))) {
         start = i;
         break;
