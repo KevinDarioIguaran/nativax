@@ -144,20 +144,52 @@ class NativaXRuntime {
     final documentBase = Uri.parse(documentUrl ?? config.documentUrl);
 
     Future<void> loadFontFaces(StyleSheet sheet, Uri base) async {
+      final faceSources = <FontFaceRule, List<String>>{};
+      final requests = <String>[];
       for (final face in sheet.fontFaces) {
+        final urls = <String>[];
         for (final source in face.sources) {
           final resolved = base.resolve(source).toString();
-          final key = '${face.family}\u0000${face.weight}\u0000${face.style}\u0000$resolved';
-          if (!loadedFonts.add(key)) continue;
-          try {
-            final bytes = await config.resources.loadBytes(resolved);
-            if (bytes == null) continue;
-            final loader = FontLoader(face.family)
-              ..addFont(Future<ByteData>.value(ByteData.sublistView(Uint8List.fromList(bytes))));
-            await loader.load();
-          } catch (error) {
-            config.onDiagnostic?.call('font "${face.family}" ($resolved) failed: $error');
+          if (loadedFonts.add(resolved)) requests.add(resolved);
+          urls.add(resolved);
+        }
+        if (urls.isNotEmpty) faceSources[face] = urls;
+      }
+      final loaded = <String, Uint8List?>{};
+      final data = await Future.wait([
+        for (final url in requests) config.resources.loadBytes(url),
+      ]);
+      for (var i = 0; i < requests.length; i++) {
+        loaded[requests[i]] = data[i];
+      }
+      final families = <String, FontLoader>{};
+      for (final entry in faceSources.entries) {
+        Uint8List? bytes;
+        String? usedUrl;
+        for (final url in entry.value) {
+          final candidate = loaded[url];
+          if (candidate != null && candidate.isNotEmpty) {
+            bytes = candidate;
+            usedUrl = url;
+            break;
           }
+        }
+        if (bytes == null) continue;
+        final face = entry.key;
+        try {
+          families
+              .putIfAbsent(face.family, () => FontLoader(face.family))
+              .addFont(Future<ByteData>.value(
+                  ByteData.sublistView(Uint8List.fromList(bytes))));
+        } catch (error) {
+          config.onDiagnostic?.call('font "${face.family}" ($usedUrl) failed: $error');
+        }
+      }
+      for (final entry in families.entries) {
+        try {
+          await entry.value.load();
+        } catch (error) {
+          config.onDiagnostic?.call('font "${entry.key}" failed: $error');
         }
       }
     }
