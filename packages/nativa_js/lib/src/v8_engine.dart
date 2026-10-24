@@ -76,7 +76,7 @@ final class V8Engine implements JavaScriptEngine {
     );
     // V8's object graph for the Bible dictionary needs more room than the
     // QuickJS default; keep a floor for the prototype.
-    const floor = 768 * 1024 * 1024;
+    const floor = 256 * 1024 * 1024;
     final heapLimit = config.memoryLimitBytes < floor
         ? floor
         : config.memoryLimitBytes;
