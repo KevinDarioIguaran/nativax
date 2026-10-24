@@ -348,9 +348,7 @@ pub extern "C" fn nv8_gc() {
     let state_ptr = STATE.with(|s| s.get());
     if !state_ptr.is_null() {
         let state = unsafe { &mut *state_ptr };
-        state
-            .isolate
-            .request_garbage_collection_for_testing(v8::GarbageCollectionType::Full);
+        state.isolate.low_memory_notification();
     }
 }
 
