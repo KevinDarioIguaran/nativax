@@ -83,10 +83,12 @@ Benchmark reproducible con las hojas reales de la app y un DOM de 5.924 nodos
 
 Biblia real, V8, 20 s:
 
-- style medio **343 → 206 µs/elemento**
-- selectores/elemento **17 → 9,7**
-- `FIRST_VERSE` **3.081 ms**
-- ningún frame > 500 ms (antes: 1,5–3,8 s)
+- style medio **343 → 239 µs/elemento**
+- selectores/elemento **17 → 9,8**
+- `FIRST_VERSE` **3.081–3.777 ms**
+- el pico de estilo baja de **3,8 s a 1,4 s**; queda un frame de layout de
+  **1,33 s** (build, no estilo) y frames de ~1,1 s que en su mayoría son
+  espera de compositor (build 58–170 ms)
 - RSS ~795 MB (V8)
 
 ## Hilos
