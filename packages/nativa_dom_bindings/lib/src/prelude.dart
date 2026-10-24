@@ -498,6 +498,10 @@ class Node extends EventTarget {
     return child;
   }
   insertBefore(child, ref) {
+    if (arguments.length < 2) throw new TypeError('insertBefore requires two arguments');
+    if (ref !== null && ref !== undefined && !(ref instanceof Node)) {
+      throw new TypeError('reference is not a Node');
+    }
     if (child && child.nodeType === 1 && child.hasAttribute('nonce') && !movingState.value) child.setAttribute('nonce', '');
     host('node.insertBefore', this[ID], idOf(child), ref === null || ref === undefined ? null : idOf(ref));
     return child;
@@ -512,11 +516,8 @@ class Node extends EventTarget {
   prepend(...nodes) {
     const args = nodeArgs(nodes);
     for (const n of args) if (n.contains(this)) throw new DOMException('The new child contains the parent.', 'HierarchyRequestError');
-    const marker = document.createComment('');
-    this.insertBefore(marker, this.firstChild);
     const frag = fragmentOf(args);
-    this.insertBefore(frag, marker);
-    this.removeChild(marker);
+    if (frag.childNodes.length) this.insertBefore(frag, this.firstChild);
   }
   replaceChildren(...nodes) {
     const args = nodeArgs(nodes);
@@ -1069,7 +1070,13 @@ class Element extends Node {
   }
   removeAttribute(n) { host('attr.remove', this[ID], String(n)); forgetAttr(this, n); }
   hasAttribute(n) { return host('attr.get', this[ID], String(n)) !== null; }
-  toggleAttribute(n, force) { return host('attr.toggle', this[ID], String(n), force === undefined ? null : !!force); }
+  toggleAttribute(n, force) {
+    const name = String(n).toLowerCase();
+    if (name.length === 0 || /[\u0000\s<>\/=]/.test(name)) {
+      throw new DOMException('invalid attribute name', 'InvalidCharacterError');
+    }
+    return host('attr.toggle', this[ID], name, force === undefined ? null : !!force);
+  }
   getAttributeNames() { return Object.keys(this.attributesObject()); }
   hasAttributes() { return this.getAttributeNames().length > 0; }
   getAttributeNS(ns, name) { return this.getAttribute(localNameOf(name)); }
@@ -1300,7 +1307,10 @@ class Document extends Node {
 class XMLDocument extends Document {}
 class HTMLDocument extends Document {}
 class DOMImplementation {
-  constructor(doc) { hidden(this, '__doc', doc || null); }
+  constructor(doc) {
+    if (!(doc instanceof Document)) throw new TypeError('Illegal constructor');
+    hidden(this, '__doc', doc);
+  }
   hasFeature() { return true; }
   createDocumentType(name, publicId = '', systemId = '') {
     const d = this.__doc || document;

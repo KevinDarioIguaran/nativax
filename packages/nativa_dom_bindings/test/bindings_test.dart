@@ -245,6 +245,21 @@ void main() {
       expect(h.js('ret'), true);
     });
 
+    test('inline scripts run when inserted into the document', () {
+      h.js('''
+        const s = document.createElement('script');
+        s.textContent = 'globalThis.dynamicRan = (globalThis.dynamicRan || 0) + 1';
+        document.body.appendChild(s);
+      ''');
+      expect(h.js('dynamicRan'), 1);
+      h.js('document.body.removeChild(document.querySelector("script"));');
+    });
+
+    test('Element unscopables are installed', () {
+      expect(h.js('Object.keys(Element.prototype[Symbol.unscopables]).sort()'),
+          ['after', 'append', 'before', 'prepend', 'remove', 'replaceWith']);
+    });
+
     test('CharacterData mutation methods are available', () {
       h.js('''
         const t = document.createTextNode('a');

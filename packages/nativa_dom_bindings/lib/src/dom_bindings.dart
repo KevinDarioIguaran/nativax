@@ -336,8 +336,66 @@ class DomBindings {
     }
   }
 
+  bool _runningScripts = false;
+  bool _suppressDynamicScripts = false;
+  final Set<Element> _startedScripts = {};
+
+  void _runScript(Element script) {
+    if (_suppressDynamicScripts ||
+        _startedScripts.contains(script) ||
+        !script.isConnected) {
+      return;
+    }
+    final type = (script.getAttribute('type') ?? '').trim().toLowerCase();
+    if (type.isNotEmpty &&
+        !const {'text/javascript', 'application/javascript', 'module'}
+            .contains(type)) {
+      return;
+    }
+    final text = script.textContent;
+    if (text.trim().isEmpty) return;
+    _startedScripts.add(script);
+    try {
+      engine.evaluate(text, filename: '<dynamic-script>');
+    } on JavaScriptException catch (e) {
+      onScriptError?.call(e);
+    }
+  }
+
+  /// Executes inline scripts after their insertion has completed, in document
+  /// order. This mirrors the synchronous script preparation step for dynamic
+  /// DOM insertion without running scripts that were removed before the turn.
+  void _runInsertedScripts(List<Node> added) {
+    if (_runningScripts || engine.isDisposed) return;
+    _runningScripts = true;
+    try {
+      void visit(Node node) {
+        if (node is Element && node.localName == 'script') {
+          _runScript(node);
+          return;
+        }
+        for (final child in node.childNodes) {
+          visit(child);
+        }
+      }
+
+      for (final node in added) {
+        visit(node);
+      }
+    } finally {
+      _runningScripts = false;
+    }
+  }
+
   void _observe(MutationRecord r) {
     _trackConnection(r);
+    if (r.type == MutationType.childList) {
+      final target = r.target;
+      if (target is Element && target.localName == 'script') {
+        _runScript(target);
+      }
+      _runInsertedScripts(r.addedNodes);
+    }
     if (_observers.isEmpty || r.type == MutationType.property) return;
     for (final entry in _observers.entries) {
       final t = r.target;
@@ -534,10 +592,21 @@ class DomBindings {
           final name = _str(a[1]);
           return _dom(() => _nodeGet(n, name));
         },
+        'el.setNamespace': (a) {
+          final e = _element(a[0]);
+          e.namespaceUri = a.length > 1 && a[1] != null ? '${a[1]}' : null;
+          return null;
+        },
         'node.set': (a) {
           final n = _node(a[0]);
           final name = _str(a[1]);
-          return _dom(() => _nodeSet(n, name, a[2]));
+          final suppress = name == 'innerHTML' || name == 'outerHTML';
+          if (suppress) _suppressDynamicScripts = true;
+          try {
+            return _dom(() => _nodeSet(n, name, a[2]));
+          } finally {
+            if (suppress) _suppressDynamicScripts = false;
+          }
         },
         'node.insertBefore': (a) => _dom(() {
               final parent = _node(a[0]);
