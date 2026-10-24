@@ -158,6 +158,28 @@ Medido en la Biblia (V8, 20 s):
 
 El siguiente cuello sigue siendo **layout**, no build.
 
+## Compatibilidad CSS/HTML (2026-10-24)
+
+- `@font-face`: el parser guarda familia, peso, estilo y URLs; `NativaXRuntime`
+  resuelve cada `src` contra la hoja, carga bytes con `NativaXResourceLoader` y
+  registra la familia con `FontLoader`. La app de la Biblia ya no avisa
+  `unsupported at-rule @font-face`; Font Awesome carga sus tres familias.
+- Tailwind: probado con clases escapadas (`w-\[100px\]`, `md\:flex`) y
+  `@media` responsive. `@layer`, `:where`, `var()` y valores arbitrarios ya
+  estaban cubiertos por la cascada.
+- Etiquetas personalizadas: el parser/HTML las conserva, el CSS las estiliza
+  como cualquier elemento y `customElements.define` actualiza `:defined`.
+  Antes de definir, `my-el:defined` es falso; después, verdadero.
+- Añadido test de render de `<my-card>` con CSS normal.
+
+### Límites actuales
+
+No es “todo CSS y todo HTML”. Siguen fuera o parciales: Shadow DOM y
+constructable stylesheets, `unicode-range`/`font-display` completos, muchas
+propiedades `-webkit-*`, container queries, todos los elementos HTML y el
+modelo de compositing/slivers de un navegador. Cada pieza debe entrar con test
+y medida; no se declara compatibilidad por parsear una regla.
+
 ## Hilos
 
 Ahora mismo **no están separados**: V8 corre en el isolate de UI de Dart, igual
