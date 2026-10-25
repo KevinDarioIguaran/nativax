@@ -1435,8 +1435,11 @@ class _Builder {
         return normal;
       },
     );
+    final clip = ps.overflowX == 'hidden' || ps.overflowX == 'clip' || ps.overflowY == 'hidden' || ps.overflowY == 'clip'
+        ? Clip.hardEdge
+        : Clip.none;
     return Stack(
-      clipBehavior: Clip.none,
+      clipBehavior: clip,
       children: [
         for (final entry in entries)
           if (entry.$2 < 0) _absoluteWidget(entry.$1, padding, containerWidth, containerHeight),

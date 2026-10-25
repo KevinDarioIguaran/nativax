@@ -776,8 +776,11 @@ class _NativaXDocumentViewState extends State<NativaXDocumentView>
                   ),
                 );
 
+          final fixed = _fixedElements(body).toList()
+            ..sort((a, b) => (widget.styleEngine.styleOf(a).zIndex ?? 0)
+                .compareTo(widget.styleEngine.styleOf(b).zIndex ?? 0));
           final layers = <Widget>[
-            for (final e in _fixedElements(body))
+            for (final e in fixed)
               NativeXLayerView(
                 element: e,
                 styleEngine: widget.styleEngine,
