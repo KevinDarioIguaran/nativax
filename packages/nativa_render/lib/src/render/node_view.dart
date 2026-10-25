@@ -1499,13 +1499,34 @@ class _Builder {
               _ElementAnchor(element: element, child: buildBox(element, style)),
             ),
           );
+    final marginTop = _px(style.marginOf('top')) ?? 0;
+    final marginRight = _px(style.marginOf('right')) ?? 0;
+    final marginBottom = _px(style.marginOf('bottom')) ?? 0;
+    final marginLeft = _px(style.marginOf('left')) ?? 0;
+    // Padding cannot be negative; a negative margin moves the box instead,
+    // by shifting the offset on its side.
     final margins = EdgeInsets.only(
-      top: _px(style.marginOf('top')) ?? 0,
-      right: _px(style.marginOf('right')) ?? 0,
-      bottom: _px(style.marginOf('bottom')) ?? 0,
-      left: _px(style.marginOf('left')) ?? 0,
+      top: math.max(0, marginTop),
+      right: math.max(0, marginRight),
+      bottom: math.max(0, marginBottom),
+      left: math.max(0, marginLeft),
     );
     if (margins != EdgeInsets.zero) box = Padding(padding: margins, child: box);
+    final shiftTop = math.min(0.0, marginTop);
+    final shiftRight = math.min(0.0, marginRight);
+    final shiftBottom = math.min(0.0, marginBottom);
+    final shiftLeft = math.min(0.0, marginLeft);
+    if ((left == null && right == null && shiftLeft != 0) ||
+        (top == null && bottom == null && shiftTop != 0)) {
+      // Static position: no offset to adjust.
+      box = Transform.translate(
+        offset: Offset(
+          left == null && right == null ? shiftLeft : 0,
+          top == null && bottom == null ? shiftTop : 0,
+        ),
+        child: box,
+      );
+    }
 
     // A fixed full-viewport layer (`inset: 0` / `width/height: 100%`) must
     // receive the Stack's tight constraints. A plain Positioned with auto
@@ -1534,14 +1555,14 @@ class _Builder {
       key: node is _Pseudo
           ? ValueKey('${identityHashCode(element)}::${node.kind}')
           : ObjectKey(element),
-      left: left == null ? null : left - pad.left,
+      left: left == null ? null : left - pad.left + shiftLeft,
       right: right == null || (hasWidth && left != null)
           ? null
-          : right - pad.right,
-      top: top == null ? null : top - pad.top,
+          : right - pad.right + shiftRight,
+      top: top == null ? null : top - pad.top + shiftTop,
       bottom: bottom == null || (hasHeight && top != null)
           ? null
-          : bottom - pad.bottom,
+          : bottom - pad.bottom + shiftBottom,
       child: box,
     );
   }
