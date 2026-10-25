@@ -7,13 +7,17 @@ import 'layout/css_box.dart';
 
 Color toColor(CssColor c) => Color(c.argb);
 
-const _serifFallback = ['Noto Serif', 'Times New Roman', 'Georgia', 'DejaVu Serif', 'Liberation Serif'];
+// Chrome's generic defaults: serif is Times New Roman and sans-serif is
+// Arial (Liberation Serif/Sans through fontconfig on Linux).
+const _serifFallback = ['Times New Roman', 'Liberation Serif', 'Noto Serif', 'Georgia', 'DejaVu Serif'];
+const _sansFallback = ['Arial', 'Helvetica', 'Liberation Sans'];
 const _monoFallback = [
   'Roboto Mono', 'Noto Sans Mono', 'Menlo', 'Consolas', 'Courier New', 'DejaVu Sans Mono', 'Liberation Mono', //
 ];
 
 /// Maps a CSS font-family list to Flutter's family + fallback. Generic
-/// `sans-serif`/`system-ui` use the platform default font. Custom families
+/// `sans-serif` prefers the Arial-metric faces browsers use, then the platform
+/// default; `system-ui` uses the platform default font. Custom families
 /// must be bundled by the app (pubspec `fonts:`).
 /// Families appended to every text style's fallback list, after the page's
 /// own families. Hosts set it when they bundle fonts (for example an emoji
@@ -30,8 +34,9 @@ String? nativaxDefaultFontFamily;
   for (final f in families) {
     final lower = f.toLowerCase();
     final List<String> expanded = switch (lower) {
-      'sans-serif' || 'system-ui' || '-apple-system' || 'ui-sans-serif' => const [],
-      'serif' || 'ui-serif' => _serifFallback,
+      'sans-serif' || 'ui-sans-serif' => _sansFallback,
+      'system-ui' || '-apple-system' => const [],
+      'serif' || 'ui-serif' || 'times new roman' => _serifFallback,
       'monospace' || 'ui-monospace' => ['monospace', ..._monoFallback],
       _ => [f],
     };
@@ -50,6 +55,13 @@ String? nativaxDefaultFontFamily;
       } else {
         fallback.add(e);
       }
+    }
+    if (identical(expanded, _sansFallback)) {
+      // Like system-ui, a generic sans-serif ends the list.
+      if (nativaxDefaultFontFamily != null) {
+        fallback.add(nativaxDefaultFontFamily!);
+      }
+      break;
     }
   }
   fallback.addAll(nativaxFontFallback);

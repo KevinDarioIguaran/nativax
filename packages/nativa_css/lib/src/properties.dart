@@ -887,7 +887,8 @@ final Map<String, PropertySpec> longhands = {
     PropertySpec(
       'font-family',
       _fontFamily,
-      const FontFamilyValue(['sans-serif']),
+      // Chrome's default standard font.
+      const FontFamilyValue(['Times New Roman']),
       inherited: true,
     ),
     PropertySpec('font-size', _fontSize, const Length.px(16), inherited: true),

@@ -201,6 +201,13 @@ void main() {
       expect(styleOf(s, 'head').display, Display.none);
     });
 
+    test('initial font-family is the browser default serif face', () {
+      // Chrome's default standard font is Times New Roman; pages without a
+      // font-family render in it, not in a sans-serif face.
+      final s = styled('<p>t</p>', '');
+      expect(styleOf(s, 'p').fontFamily, ['Times New Roman']);
+    });
+
     test('inheritance of inherited properties only', () {
       final s = styled('<div><p><span>x</span></p></div>',
           'div { color: #123456; padding: 5px; font-family: Inter; text-align: center }');
