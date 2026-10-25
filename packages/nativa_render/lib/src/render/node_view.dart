@@ -895,6 +895,7 @@ class _Builder {
         wrap: style.flexWrap,
         justifyContent: _justify(style.justifyContent),
         alignItems: _align(style.alignItems),
+        alignContent: style.alignContent,
         rowGap: style.rowGap,
         columnGap: style.columnGap,
         children: _ordered(_itemChildren(element, normal, style), normal),

@@ -10,8 +10,8 @@ import 'layout_profile.dart';
 /// A flex container implementing the CSS Flexible Box Layout algorithm
 /// (§9) for the supported subset: flex-basis/grow/shrink with min-size
 /// freezing, `flex-wrap`, `gap`, `justify-content`, `align-items`,
-/// `align-self` and auto margins on the main axis. Not implemented:
-/// `align-content` (lines are packed at the start), baseline alignment
+/// `align-self`, `align-content` for wrapping containers and auto margins
+/// on the main axis. Not implemented: baseline alignment
 /// (treated as `flex-start`), `order`, and max-size clamping of items.
 class CssFlexLayout extends MultiChildRenderObjectWidget {
   const CssFlexLayout({
@@ -21,6 +21,7 @@ class CssFlexLayout extends MultiChildRenderObjectWidget {
     this.wrap = 'nowrap',
     this.justifyContent = 'normal',
     this.alignItems = 'normal',
+    this.alignContent = 'normal',
     this.rowGap = ResolvedLength.zero,
     this.columnGap = ResolvedLength.zero,
     this.textDirection = TextDirection.ltr,
@@ -32,6 +33,7 @@ class CssFlexLayout extends MultiChildRenderObjectWidget {
   final String wrap;
   final String justifyContent;
   final String alignItems;
+  final String alignContent;
   final ResolvedLength rowGap;
   final ResolvedLength columnGap;
   final TextDirection textDirection;
@@ -43,6 +45,7 @@ class CssFlexLayout extends MultiChildRenderObjectWidget {
     ..wrap = wrap
     ..justifyContent = justifyContent
     ..alignItems = alignItems
+    ..alignContent = alignContent
     ..rowGap = rowGap
     ..columnGap = columnGap;
 
@@ -54,6 +57,7 @@ class CssFlexLayout extends MultiChildRenderObjectWidget {
       ..wrap = wrap
       ..justifyContent = justifyContent
       ..alignItems = alignItems
+      ..alignContent = alignContent
       ..rowGap = rowGap
       ..columnGap = columnGap;
   }
@@ -98,6 +102,7 @@ class RenderCssFlex extends RenderBox
   String _wrap = 'nowrap';
   String _justify = 'normal';
   String _alignItems = 'normal';
+  String _alignContent = 'normal';
   ResolvedLength _rowGap = ResolvedLength.zero;
   ResolvedLength _columnGap = ResolvedLength.zero;
 
@@ -106,6 +111,8 @@ class RenderCssFlex extends RenderBox
   set wrap(String v) => _set(_wrap != v, () => _wrap = v);
   set justifyContent(String v) => _set(_justify != v, () => _justify = v);
   set alignItems(String v) => _set(_alignItems != v, () => _alignItems = v);
+  set alignContent(String v) =>
+      _set(_alignContent != v, () => _alignContent = v);
   set rowGap(ResolvedLength v) => _set(_rowGap != v, () => _rowGap = v);
   set columnGap(ResolvedLength v) =>
       _set(_columnGap != v, () => _columnGap = v);
@@ -416,11 +423,49 @@ class RenderCssFlex extends RenderBox
     }
     if (dry) return size;
 
+    // align-content: distribute the free cross space between the lines of a
+    // wrapping container (CSS Flexbox §8.4).
+    var crossLead = 0.0, crossBetween = 0.0;
+    final crossFree = _cross(size) - totalCross;
+    if (_wrap != 'nowrap' && lines.length > 1 && crossFree > 0) {
+      final n = lines.length;
+      switch (_alignContent) {
+        case 'center':
+          crossLead = crossFree / 2;
+        case 'flex-end' || 'end':
+          crossLead = crossFree;
+        case 'space-between':
+          crossBetween = crossFree / (n - 1);
+        case 'space-around':
+          crossLead = crossFree / n / 2;
+          crossBetween = crossFree / n;
+        case 'space-evenly':
+          crossLead = crossFree / (n + 1);
+          crossBetween = crossFree / (n + 1);
+        case 'flex-start' || 'start':
+          break;
+        default: // normal, stretch
+          for (var l = 0; l < n; l++) {
+            lineCross[l] += crossFree / n;
+            for (final i in lines[l]) {
+              if (_alignOf(i) != 'stretch' ||
+                  !_autoCross(i) ||
+                  i.autoCrossStart ||
+                  i.autoCrossEnd) {
+                continue;
+              }
+              final c = math.max(0.0, lineCross[l] - i.crossStart - i.crossEnd);
+              i.size = measure(i.child, _constraintsFor(i.target, c, c));
+            }
+          }
+      }
+    }
+
     // 5. Position.
     final finalMain = _main(size);
     final finalCross = _cross(size);
     final wrapReverse = _wrap == 'wrap-reverse';
-    var crossCursor = wrapReverse ? finalCross : 0.0;
+    var crossCursor = wrapReverse ? finalCross - crossLead : crossLead;
     for (var l = 0; l < lines.length; l++) {
       final line = lines[l];
       final lc = lineCross[l];
@@ -494,8 +539,8 @@ class RenderCssFlex extends RenderBox
             : Offset(crossPos, mainPos);
       }
       crossCursor = wrapReverse
-          ? crossCursor - crossGap
-          : crossCursor + lc + crossGap;
+          ? crossCursor - crossGap - crossBetween
+          : crossCursor + lc + crossGap + crossBetween;
     }
     return size;
   }
