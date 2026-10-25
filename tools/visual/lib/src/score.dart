@@ -100,9 +100,17 @@ class Evaluation {
   double get mismatchedPixelPct => pixels.totals.mismatchedPct;
 }
 
-/// Fidelity target: a page passes only when its overall score reaches
-/// 99.99 % (an error margin of 0.01 %).
+/// Fidelity target (strict judge): a page passes only when the overall score
+/// and every measured sub-score (position, layout, colour, design) reach
+/// 99.99 % and at most 0.01 % of the pixels differ from the reference.
 const double passOverall = 0.9999;
+
+/// Maximum share of differing pixels (percent) for a pass.
+const double passPixelMismatchPct = 0.01;
+
+/// Below this overall score a page fails; between it and [passOverall] it
+/// warns.
+const double failOverall = 0.99;
 
 Evaluation evaluate({
   required ProbeSnapshot chromeProbe,
@@ -221,13 +229,21 @@ Evaluation evaluate({
     reason =
         'ink mismatch ${inkPct.toStringAsFixed(1)} % of '
         '${pixels.totals.inkPixels} visible px';
-  } else if (overall < 0.70) {
+  } else if (overall < failOverall) {
     verdict = Verdict.fail;
-    reason = 'overall ${(overall * 100).toStringAsFixed(1)} % below 70 %';
+    reason = 'overall ${(overall * 100).toStringAsFixed(2)} % below '
+        '${(failOverall * 100).toStringAsFixed(0)} %';
   } else if (overall < passOverall) {
     verdict = Verdict.warn;
     reason = 'overall ${(overall * 100).toStringAsFixed(3)} % below '
         '${(passOverall * 100).toStringAsFixed(2)} %';
+  } else if ([position, layout, ?color, ?design].any((s) => s < passOverall)) {
+    verdict = Verdict.warn;
+    reason = 'a sub-score is below ${(passOverall * 100).toStringAsFixed(2)} %';
+  } else if (pixels.totals.mismatchedPct > passPixelMismatchPct) {
+    verdict = Verdict.warn;
+    reason = '${pixels.totals.mismatchedPct.toStringAsFixed(3)} % of pixels '
+        'differ (max $passPixelMismatchPct %)';
   } else if (someInk) {
     verdict = Verdict.warn;
     reason =

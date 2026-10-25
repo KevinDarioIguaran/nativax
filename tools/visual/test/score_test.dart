@@ -173,7 +173,7 @@ void main() {
       expect(evaluation.reason, contains('ink mismatch'));
     });
 
-    test('a tiny ink mismatch does not override a pass', () {
+    test('strict judge: a single-pixel ink mismatch is not a pass', () {
       final chrome = solid(40, 40, 255, 255, 255);
       chrome.rgba[0] = 0;
       chrome.rgba[1] = 0;
@@ -185,7 +185,7 @@ void main() {
         nativaImage: solid(40, 40, 255, 255, 255),
         checks: const [],
       );
-      expect(evaluation.verdict, Verdict.pass);
+      expect(evaluation.verdict, Verdict.warn);
     });
 
     test('soft environment warnings do not invalidate', () {
@@ -200,6 +200,36 @@ void main() {
         ],
       );
       expect(evaluation.verdict, Verdict.pass);
+    });
+
+    test('strict judge: one differing pixel in 1600 is not a pass', () {
+      // 1/1600 = 0.0625 % of pixels: above the 0.01 % pixel margin.
+      final nativa = solid(40, 40, 255, 255, 255);
+      nativa.rgba[0] = 0;
+      nativa.rgba[1] = 0;
+      nativa.rgba[2] = 0;
+      final evaluation = evaluate(
+        chromeProbe: snapshot(page()),
+        chromeImage: solid(40, 40, 255, 255, 255),
+        nativaProbe: snapshot(page()),
+        nativaImage: nativa,
+        checks: const [],
+      );
+      expect(evaluation.verdict, isNot(Verdict.pass));
+    });
+
+    test('strict judge: below 99 % overall fails', () {
+      expect(failOverall, 0.99);
+      expect(passPixelMismatchPct, 0.01);
+      final evaluation = evaluate(
+        chromeProbe: snapshot(page(dx: 3)),
+        chromeImage: solid(40, 40, 255, 255, 255),
+        nativaProbe: snapshot(page()),
+        nativaImage: solid(40, 40, 255, 255, 255),
+        checks: const [],
+      );
+      expect(evaluation.overall, lessThan(failOverall));
+      expect(evaluation.verdict, Verdict.fail);
     });
 
     test('the pass target is 99.99 %: a near match only warns', () {

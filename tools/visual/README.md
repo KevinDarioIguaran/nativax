@@ -65,7 +65,7 @@ All scores are percentages. Every formula is deterministic and unit-tested.
 | **Color** | Per element, sampled inside its **own** box: mean-colour ΔE76 and dominant-palette ΔE (top 5 colours, 5-bit/channel quantization). `score = 0.6 × paletteScore + 0.4 × meanScore`, where a ΔE of 2 scores 1 and 10 scores 0. Weighted by `sqrt(area)`. |
 | **Design** | Weighted equality of 27 computed properties (typography, text/background colour, borders, radii, shadow, display, position, opacity, overflow). Values are canonicalised first: `bold → 700`, `currentcolor` resolved, `border width → 0` when `border-style: none`, unitless `line-height` resolved against `font-size`, spacing/quotes normalised. |
 | **Overall** | `0.30 × Position + 0.30 × Layout + 0.25 × Color + 0.15 × Design`, renormalised when colour is not measurable. |
-| **Verdict** | `INVALID` if a hard environment check fails. `FAIL` if Position < 50 %, Layout < 50 %, Overall < 70 %, or ≥ 80 % of the visible ink differs while at least 0.2 % of the viewport changed. A ≥ 50 % ink mismatch caps at `WARN`. `WARN` below the 99.99 % target (`passOverall`). `PASS` at ≥ 99.99 % with low ink mismatch. |
+| **Verdict** | Strict judge. `INVALID` if a hard environment check fails. `FAIL` if Position < 50 %, Layout < 50 %, Overall < 99 % (`failOverall`), or ≥ 80 % of the visible ink differs while at least 0.2 % of the viewport changed. `PASS` only when Overall and every measured sub-score (position, layout, colour, design) are ≥ 99.99 % (`passOverall`) and at most 0.01 % of the pixels differ (`passPixelMismatchPct`); otherwise `WARN`. |
 
 **Why per-element colour and not per-pixel colour?** A moved element is a
 layout error; sampling the same screen coordinates would count its shift a
