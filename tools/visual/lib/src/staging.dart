@@ -12,6 +12,14 @@ const String freezeCss = '''
 }
 ''';
 
+/// Script shared by the reference and NativaX: modal dialogs return at once
+/// instead of blocking headless Chrome until the judge's timeout.
+const String dialogsScript = '''
+window.alert = function () {};
+window.confirm = function () { return false; };
+window.prompt = function () { return null; };
+''';
+
 /// Copies a fixture page into a private working directory.
 Directory stagePage(String sourceDirectory, Directory target, {String? entry}) {
   if (target.existsSync()) target.deleteSync(recursive: true);
@@ -26,6 +34,7 @@ Directory stagePage(String sourceDirectory, Directory target, {String? entry}) {
     File(html).copySync(index.path);
   }
   injectHead(index, '<style id="__visual_freeze">$freezeCss</style>');
+  injectHeadStart(index, '<script id="__visual_dialogs">$dialogsScript</script>');
   return target;
 }
 
@@ -56,6 +65,20 @@ void _copyContents(Directory source, Directory target) {
       }
     }
   }
+}
+
+/// Inserts [snippet] right after `<head>` so it runs before page scripts,
+/// falling back to [injectHead].
+void injectHeadStart(File index, String snippet) {
+  final text = index.readAsStringSync();
+  final head = RegExp(r'<head(\s[^>]*)?>', caseSensitive: false).firstMatch(text);
+  if (head == null) {
+    injectHead(index, snippet);
+    return;
+  }
+  index.writeAsStringSync(
+    '${text.substring(0, head.end)}$snippet${text.substring(head.end)}',
+  );
 }
 
 /// Inserts [snippet] right before `</head>` so `<meta charset>` keeps its
