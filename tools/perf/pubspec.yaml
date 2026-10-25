@@ -1,0 +1,12 @@
+name: nativa_perf
+description: Rendering and runtime performance suite for NativaX against a Chromium reference.
+version: 0.1.0
+publish_to: none
+resolution: workspace
+
+environment:
+  sdk: ^3.10.0
+
+dev_dependencies:
+  lints: ^6.0.0
+  test: ^1.26.0

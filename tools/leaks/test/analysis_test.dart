@@ -26,6 +26,14 @@ void _add(LeakContext c, int batch,
 }
 
 void main() {
+  test('matrix adds 30 unique release cases', () {
+    final cases = matrixLeakCases();
+    expect(cases, hasLength(30));
+    expect(cases.map((c) => c.id).toSet(), hasLength(30));
+    expect(cases.map((c) => c.subsystem).toSet(),
+        containsAll(['javascript', 'dom', 'runtime']));
+  });
+
   test('released with stable resource counters passes', () {
     final ctx = _context(LeakProfile.quick);
     for (var i = 0; i <= 5; i++) {

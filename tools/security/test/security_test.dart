@@ -4,6 +4,14 @@ import 'package:nativa_security/security.dart';
 import 'package:test/test.dart';
 
 void main() {
+  test('security matrix adds 30 unique adversarial cases', () {
+    final cases = matrixSecurityCases();
+    expect(cases, hasLength(30));
+    expect(cases.map((c) => c.id).toSet(), hasLength(30));
+    expect(cases.map((c) => c.category).toSet(),
+        containsAll(['sandbox', 'navigation', 'xss']));
+  });
+
   test('security suite runs with controlled statuses', () async {
     final results = await SecurityRunner().run(securityCases());
     expect(results, hasLength(securityCases().length));

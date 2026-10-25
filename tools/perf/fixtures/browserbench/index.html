@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Mini Speedometer — JS Browser Benchmark</title>
+  <style>
+    :root {
+      --bg: #0b0f14;
+      --panel: #10161d;
+      --panel-2: #0f141a;
+      --text: #e6f0ff;
+      --muted: #9fb3c8;
+      --accent: #7aa2ff;
+      --good: #8bd17c;
+      --warn: #ffd166;
+      --bad: #ff7a7a;
+      --shadow: 0 10px 30px rgba(0,0,0,.35);
+      --radius: 16px;
+    }
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      margin: 0; font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji";
+      color: var(--text); background: radial-gradient(1200px 800px at 10% -10%, #142032 0, #0b0f14 50%) fixed;
+    }
+    .wrap { max-width: 1100px; margin: 40px auto; padding: 0 20px; }
+    header { display: grid; gap: 12px; margin-bottom: 18px; }
+    h1 { font-size: 28px; margin: 0; letter-spacing: .2px; }
+    .tagline { color: var(--muted); font-size: 14px; }
+
+    .controls, .results, .playground {
+      background: linear-gradient(180deg, var(--panel), var(--panel-2));
+      border-radius: var(--radius); box-shadow: var(--shadow); border: 1px solid rgba(255,255,255,.06);
+      padding: 16px; margin: 14px 0;
+    }
+    .controls-grid { display: grid; grid-template-columns: 1fr auto; gap: 12px; align-items: end; }
+    .row { display: grid; grid-template-columns: repeat(4, minmax(120px, 1fr)); gap: 12px; }
+    label { display: grid; gap: 8px; font-size: 12px; color: var(--muted); }
+    input[type="number"], select { width: 100%; padding: 10px 12px; border-radius: 12px; border: 1px solid rgba(255,255,255,.08); background: #0a0f14; color: var(--text); }
+    .btns { display: flex; gap: 10px; flex-wrap: wrap; }
+    button { cursor: pointer; border: 0; border-radius: 14px; padding: 10px 14px; background: #1b2634; color: var(--text); box-shadow: var(--shadow); }
+    button.primary { background: linear-gradient(180deg, #5d82ff, #5a6dff); }
+    button.warn { background: #3a2a12; }
+    button:disabled { opacity: .6; cursor: not-allowed; }
+
+    table { width: 100%; border-collapse: collapse; }
+    th, td { padding: 10px 8px; border-bottom: 1px dashed rgba(255,255,255,.08); font-size: 14px; }
+    th { text-align: left; color: var(--muted); font-weight: 600; letter-spacing: .2px; }
+    td code { color: var(--muted); }
+    .score { font-weight: 800; letter-spacing: .3px; }
+    .badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 12px; }
+    .badge.good { background: rgba(139,209,124,.15); color: var(--good); }
+    .badge.mid { background: rgba(255,209,102,.12); color: var(--warn); }
+    .badge.bad { background: rgba(255,122,122,.12); color: var(--bad); }
+
+    .playground { display: grid; gap: 10px; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(90px, 1fr)); gap: 8px; }
+    .box { height: 64px; border-radius: 12px; background: #0d1520; border: 1px solid rgba(255,255,255,.06); display: grid; place-items: center; color: #7aa2ff; font-size: 12px; }
+    #newsArea { max-height: 180px; overflow: auto; border: 1px solid rgba(255,255,255,.06); border-radius: 12px; padding: 8px; }
+    #canvas { width: 100%; height: 180px; background: #0a0f14; border-radius: 12px; border: 1px solid rgba(255,255,255,.06); }
+
+    footer { margin-top: 22px; color: var(--muted); font-size: 12px; text-align: center; }
+    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
+  </style>
+</head>
+<body>
+  <!--
+    Mini Speedometer (client‑only, single file)
+    -------------------------------------------
+    This benchmark focuses on *responsiveness* under realistic tasks.
+    It runs a suite of micro‑workloads for a fixed duration each and reports ops/sec
+    and a composite score (geometric mean, normalized so ~200–400 on a modern laptop).
+
+    ⚠️ Scores are *not* comparable to BrowserBench Speedometer. Different workloads,
+       harness, and scoring. Use it for A/B comparisons on the same machine.
+
+    Tips:
+      • Close other tabs/apps for stable numbers
+      • Run more iterations for tighter variance
+      • Use the Export button to save JSON results
+  -->
+  <div class="wrap">
+    <header>
+      <h1>Mini Speedometer — Browser Responsiveness Benchmark</h1>
+      <div class="tagline">Runs realistic DOM, data, layout, canvas, and storage tasks to estimate how responsive your browser feels during typical web‑app usage.</div>
+    </header>
+
+    <section class="controls">
+      <div class="controls-grid">
+        <div class="row">
+          <label>
+            Test duration per workload (ms)
+            <input id="dur" type="number" value="1200" min="200" step="100" />
+          </label>
+          <label>
+            Warmup (ms)
+            <input id="warmup" type="number" value="300" min="0" step="50" />
+          </label>
+          <label>
+            Repetitions
+            <input id="reps" type="number" value="2" min="1" step="1" />
+          </label>
+          <label>
+            Variance control
+            <select id="variance">
+              <option value="balanced" selected>Balanced</option>
+              <option value="aggressive">Aggressive GC/cleanup</option>
+              <option value="minimal">Minimal cleanup</option>
+            </select>
+          </label>
+        </div>
+        <div class="btns">
+          <button id="run" class="primary">▶ Run Benchmark</button>
+          <button id="quick">⚡ Quick Run</button>
+          <button id="export">⬇ Export JSON</button>
+          <button id="reset" class="warn">♻ Reset Playground</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="results">
+      <table>
+        <thead>
+          <tr><th>Workload</th><th>Ops/sec (geom‑avg)</th><th>Notes</th></tr>
+        </thead>
+        <tbody id="tbody"></tbody>
+        <tfoot>
+          <tr><td class="score">Composite Score</td><td class="score" id="score">—</td><td id="scoreNote" class="mono" style="color:var(--muted)">Higher is better</td></tr>
+        </tfoot>
+      </table>
+    </section>
+
+    <section class="playground">
+      <div class="row" style="grid-template-columns: 1fr 1fr 1fr;">
+        <div>
+          <div style="font-weight:600;margin-bottom:8px;">DOM List Area</div>
+          <div id="listArea" class="grid"></div>
+        </div>
+        <div>
+          <div style="font-weight:600;margin-bottom:8px;">News Feed Area</div>
+          <div id="newsArea"></div>
+        </div>
+        <div>
+          <div style="font-weight:600;margin-bottom:8px;">Canvas</div>
+          <canvas id="canvas"></canvas>
+        </div>
+      </div>
+    </section>
+
+    <footer>
+      Built for educational purposes. Inspired by the spirit (not the code) of BrowserBench Speedometer. Results are local and not uploaded.
+    </footer>
+  </div>
+
+  <script>
+    // --- Utilities -----------------------------------------------------------
+    const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+    function now() { return performance.now(); }
+    function geomMean(values) {
+      const filtered = values.filter(v => v > 0);
+      if (!filtered.length) return 0;
+      const logSum = filtered.reduce((s, v) => s + Math.log(v), 0);
+      return Math.exp(logSum / filtered.length);
+    }
+    function classify(v, ref) {
+      if (v >= ref * 1.1) return 'good';
+      if (v >= ref * 0.7) return 'mid';
+      return 'bad';
+    }
+    function clampCanvasSize(canvas) {
+      const rect = canvas.getBoundingClientRect();
+      const dpr = Math.min(2, window.devicePixelRatio || 1);
+      canvas.width = Math.max(320, Math.floor(rect.width * dpr));
+      canvas.height = Math.max(160, Math.floor(rect.height * dpr));
+    }
+
+    // Baseline references (tuned to give ~200–400 on a mid‑range laptop)
+    const BASELINES = {
+      domTodos: 5000,
+      inputTyping: 8000,
+      dataCrunch: 18000,
+      jsonRoundtrip: 9000,
+      layoutThrash: 2500,
+      canvasDraw: 12000,
+      storageTouch: 3500,
+      microtasks: 20000,
+    };
+
+    // --- Workloads -----------------------------------------------------------
+    const workloads = {
+      async domTodos(env, until) {
+        // Create, update, delete list items inside #listArea
+        const grid = env.listGrid;
+        let ops = 0;
+        while (now() < until) {
+          // create batch
+          const frag = document.createDocumentFragment();
+          for (let i = 0; i < 100; i++) {
+            const d = document.createElement('div');
+            d.className = 'box';
+            d.textContent = 'Task ' + (ops + i);
+            d.dataset.id = String(ops + i);
+            frag.appendChild(d);
+          }
+          grid.appendChild(frag);
+          // update
+          const kids = grid.children;
+          for (let i = 0; i < kids.length; i += 10) {
+            const el = kids[i];
+            el.textContent = '✔ ' + el.textContent;
+          }
+          // delete some
+          for (let i = 0; i < 50 && grid.firstChild; i++) grid.removeChild(grid.firstChild);
+          ops += 100;
+        }
+        return ops; // ops ~= items processed
+      },
+
+      async inputTyping(env, until) {
+        // Simulate key events and handler work
+        const area = env.newsArea;
+        let ops = 0;
+        while (now() < until) {
+          const p = document.createElement('p');
+          p.textContent = 'Breaking: ' + Math.random().toString(36).slice(2).repeat(2);
+          area.appendChild(p);
+          if (area.childNodes.length > 120) area.removeChild(area.firstChild);
+          ops += 50;
+        }
+        return ops;
+      },
+
+      async dataCrunch(env, until) {
+        // Array map/filter/reduce over medium arrays
+        let ops = 0;
+        const base = new Array(5000).fill(0).map((_, i) => (i * 48271) % 2147483647);
+        while (now() < until) {
+          const a = base.map(v => (v ^ 12345) >>> 0);
+          const b = a.filter(v => (v & 1) === 0);
+          const sum = b.reduce((s, v) => s + (v % 97), 0);
+          if (sum < 0) console.log(sum); // prevent DCE
+          ops += base.length; // count by elements processed
+        }
+        return ops;
+      },
+
+      async jsonRoundtrip(env, until) {
+        let ops = 0;
+        const makeObj = () => ({
+          id: ops,
+          title: 'Item ' + ops,
+          tags: ['js','perf','bench','web'],
+          meta: { a: Math.random(), b: Date.now(), c: crypto.getRandomValues(new Uint32Array(4))[0] },
+          data: Array.from({length: 200}, (_, i) => ({ i, n: Math.sin(i/5), t: Date.now() }))
+        });
+        while (now() < until) {
+          const obj = makeObj();
+          const s = JSON.stringify(obj);
+          const o = JSON.parse(s);
+          if (!o || !o.meta) throw new Error('json failed');
+          ops += 1;
+        }
+        return ops;
+      },
+
+      async layoutThrash(env, until) {
+        // Alternate write/read style to trigger reflow work
+        const grid = env.listGrid;
+        // Ensure some nodes exist
+        if (grid.children.length < 200) {
+          const frag = document.createDocumentFragment();
+          for (let i = 0; i < 200; i++) {
+            const d = document.createElement('div');
+            d.className = 'box';
+            d.textContent = 'L' + i;
+            frag.appendChild(d);
+          }
+          grid.appendChild(frag);
+        }
+        let ops = 0;
+        while (now() < until) {
+          for (let i = 0; i < 100; i++) {
+            const idx = (i * 7 + ops) % grid.children.length;
+            const el = grid.children[idx];
+            el.style.transform = `scale(${1 + ((ops + i) % 5) / 50})`;
+          }
+          // Forced read
+          let h = 0;
+          for (let i = 0; i < 50; i++) {
+            const el = grid.children[(i * 11 + ops) % grid.children.length];
+            h += el.offsetHeight;
+          }
+          if (h < 0) console.log(h);
+          ops += 150;
+        }
+        return ops;
+      },
+
+      async canvasDraw(env, until) {
+        const ctx = env.ctx;
+        let ops = 0;
+        while (now() < until) {
+          const { width: w, height: h } = ctx.canvas;
+          ctx.clearRect(0, 0, w, h);
+          for (let i = 0; i < 200; i++) {
+            ctx.globalAlpha = 0.3 + (i % 5) * 0.1;
+            ctx.fillRect((i*37)%w, (i*53)%h, 20 + (i%30), 20 + ((i*7)%30));
+          }
+          ctx.globalAlpha = 1;
+          ctx.font = '16px system-ui, sans-serif';
+          ctx.fillText('Drawing… ' + ops, 10, 24);
+          ops += 200;
+        }
+        return ops;
+      },
+
+      async storageTouch(env, until) {
+        let ops = 0;
+        while (now() < until) {
+          const k = 'bench:' + (ops % 500);
+          localStorage.setItem(k, Math.random().toString(36).slice(2));
+          const v = localStorage.getItem(k);
+          if (!v) throw new Error('storage failed');
+          ops += 5;
+        }
+        return ops;
+      },
+
+      async microtasks(env, until) {
+        let ops = 0;
+        while (now() < until) {
+          await Promise.resolve().then(() => 1).then(() => 2).then(() => 3);
+          ops += 100;
+        }
+        return ops;
+      },
+    };
+
+    // --- Harness -------------------------------------------------------------
+    const tbody = document.getElementById('tbody');
+    const scoreEl = document.getElementById('score');
+    const scoreNote = document.getElementById('scoreNote');
+
+    const env = {
+      listGrid: document.getElementById('listArea'),
+      newsArea: document.getElementById('newsArea'),
+      canvas: document.getElementById('canvas'),
+      ctx: null,
+      reset() {
+        this.listGrid.innerHTML = '';
+        this.newsArea.innerHTML = '';
+        // Clean localStorage keys used by us
+        const keys = [];
+        for (let i = 0; i < localStorage.length; i++) keys.push(localStorage.key(i));
+        for (const k of keys) if (k && k.startsWith('bench:')) localStorage.removeItem(k);
+        // Canvas
+        clampCanvasSize(this.canvas);
+        this.ctx = this.canvas.getContext('2d', { alpha: true, desynchronized: true });
+        this.ctx.clearRect(0,0,this.canvas.width,this.canvas.height);
+      }
+    };
+    env.reset();
+    window.addEventListener('resize', () => clampCanvasSize(env.canvas));
+
+    function renderRow(name, ops, baseline) {
+      const tr = document.createElement('tr');
+      const cls = classify(ops, baseline);
+      tr.innerHTML = `
+        <td class="mono">${name}</td>
+        <td><span class="badge ${cls}">${ops.toFixed(0)}</span></td>
+        <td class="mono" style="color:var(--muted)">baseline ${baseline.toFixed(0)}</td>
+      `;
+      tbody.appendChild(tr);
+    }
+
+    function clearRows() { tbody.innerHTML = ''; }
+
+    async function runOnce(opts) {
+      const { duration, warmup, varianceMode } = opts;
+      const names = Object.keys(workloads);
+      const opsPerSec = [];
+      for (const name of names) {
+        // warmup
+        const wUntil = now() + warmup;
+        try { await workloads[name](env, wUntil); } catch (e) {}
+        // run timed
+        const start = now();
+        const until = start + duration;
+        let ops = 0;
+        try { ops = await workloads[name](env, until); } catch (e) { console.error(e); }
+        const elapsed = Math.max(1, now() - start);
+        const opsSec = ops * 1000 / elapsed;
+        opsPerSec.push({ name, opsSec, baseline: BASELINES[name] || 1000 });
+        if (varianceMode !== 'minimal') await sleep(20);
+        if (varianceMode === 'aggressive') {
+          env.reset();
+          await sleep(50);
+        }
+      }
+      return opsPerSec;
+    }
+
+    async function runBenchmark({ duration, warmup, reps, varianceMode }) {
+      clearRows();
+      const all = [];
+      for (let r = 0; r < reps; r++) {
+        const res = await runOnce({ duration, warmup, varianceMode });
+        all.push(res);
+      }
+      // geometric mean per test across reps
+      const names = Object.keys(workloads);
+      const agg = names.map(name => {
+        const series = all.map(run => run.find(x => x.name === name).opsSec);
+        const g = geomMean(series);
+        return { name, opsSec: g, baseline: BASELINES[name] };
+      });
+      // render
+      clearRows();
+      agg.forEach(({ name, opsSec, baseline }) => renderRow(name, opsSec, baseline));
+      const comp = geomMean(agg.map(x => x.opsSec / x.baseline)) * 300; // scale factor for nice numbers
+      const score = comp.toFixed(1);
+      scoreEl.textContent = score;
+      scoreNote.textContent = `≈ geometric mean across ${names.length} workloads (scaled)`;
+      return { results: agg, score: Number(score), params: { duration, warmup, reps, varianceMode }, ua: navigator.userAgent };
+    }
+
+    // --- Wiring --------------------------------------------------------------
+    const durEl = document.getElementById('dur');
+    const warmupEl = document.getElementById('warmup');
+    const repsEl = document.getElementById('reps');
+    const varianceEl = document.getElementById('variance');
+
+    document.getElementById('run').addEventListener('click', async (e) => {
+      e.target.disabled = true;
+      try {
+        const out = await runBenchmark({
+          duration: Number(durEl.value),
+          warmup: Number(warmupEl.value),
+          reps: Number(repsEl.value),
+          varianceMode: varianceEl.value,
+        });
+        window.__lastRun = out;
+      } finally { e.target.disabled = false; }
+    });
+
+    document.getElementById('quick').addEventListener('click', async (e) => {
+      const oldD = durEl.value, oldW = warmupEl.value, oldR = repsEl.value;
+      durEl.value = 600; warmupEl.value = 150; repsEl.value = 1;
+      document.getElementById('run').click();
+      // restore after a tick
+      setTimeout(() => { durEl.value = oldD; warmupEl.value = oldW; repsEl.value = oldR; }, 0);
+    });
+
+    document.getElementById('reset').addEventListener('click', () => env.reset());
+
+    document.getElementById('export').addEventListener('click', () => {
+      const data = window.__lastRun || { note: 'Run the benchmark first.' };
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = Object.assign(document.createElement('a'), { href: url, download: `mini-speedometer-${Date.now()}.json` });
+      document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+    });
+  </script>
+</body>
+</html>

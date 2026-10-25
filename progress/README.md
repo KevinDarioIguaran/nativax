@@ -11,7 +11,14 @@ resumen de sesión; aquí están los números, las fases y el histórico.
   brechas principales.
 - [`log.md`](log.md): histórico de sesiones y comandos ejecutados.
 - [`reports/`](reports/): informes generados por `tools/conformance`
-  (`test262-latest.md`, `html5lib-tokenizer-latest.md`, `wpt-*.md`).
+  (`test262-latest.md`, `html5lib-tokenizer-latest.md`, `wpt-*.md`) y la
+  última línea base visual (`visual-50projects50days-latest.md`) y la de
+  rendimiento (`perf-latest.md`). El informe consolidado de capacidades y
+  evidencia es [`nativa-quality-latest.md`](reports/nativa-quality-latest.md).
+  [`recommendations-latest.md`](reports/recommendations-latest.md) se genera
+  automáticamente con prioridades y evidencia, y
+  [`test-matrix-300.md`](reports/test-matrix-300.md) documenta la matriz de
+  cobertura.
 
 ## Regla
 

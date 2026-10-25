@@ -2,6 +2,7 @@
 library;
 
 export 'src/cases.dart';
+export 'src/matrix_cases.dart';
 export 'src/model.dart';
 export 'src/report.dart';
 export 'src/runner.dart';

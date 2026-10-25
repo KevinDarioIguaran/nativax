@@ -75,9 +75,7 @@ Future<void> _run(List<String> args) async {
     name: base.name,
     batches: batches ?? base.batches,
     iterations: iterations ?? base.iterations,
-    settle: settleMs == null
-        ? base.settle
-        : Duration(milliseconds: settleMs),
+    settle: settleMs == null ? base.settle : Duration(milliseconds: settleMs),
     maxDuration: base.maxDuration,
     rssGrowthBytesPerBatch: base.rssGrowthBytesPerBatch,
     engineGrowthBytesPerBatch: base.engineGrowthBytesPerBatch,
@@ -102,9 +100,11 @@ Future<void> _run(List<String> args) async {
     return;
   }
 
-  stdout.writeln('NativaX leaks: ${cases.length} cases, '
-      'profile=${profile.name} batches=${profile.batches} '
-      'iterations=${profile.iterations}');
+  stdout.writeln(
+    'NativaX leaks: ${cases.length} cases, '
+    'profile=${profile.name} batches=${profile.batches} '
+    'iterations=${profile.iterations}',
+  );
   final runner = LeakRunner(
     profile,
     onProgress: (id, i, total) => stdout.writeln('  [$i/$total] $id'),
@@ -129,19 +129,24 @@ Future<void> _run(List<String> args) async {
   );
 
   for (final r in results) {
-    stdout.writeln('  ${r.status.label.padRight(13)} ${r.id.padRight(26)} '
-        '${r.reason}');
+    stdout.writeln(
+      '  ${r.status.label.padRight(13)} ${r.id.padRight(26)} '
+      '${r.reason}',
+    );
   }
   final fail = results.where((r) => r.status == LeakStatus.fail).length;
   final error = results.where((r) => r.status == LeakStatus.error).length;
-  final inconclusive =
-      results.where((r) => r.status == LeakStatus.inconclusive).length;
+  final inconclusive = results
+      .where((r) => r.status == LeakStatus.inconclusive)
+      .length;
   stdout
     ..writeln()
-    ..writeln('PASS ${results.where((r) => r.status == LeakStatus.pass).length}'
-        '  FAIL $fail  SKIP '
-        '${results.where((r) => r.status == LeakStatus.skip).length}'
-        '  ERROR $error  INCONCLUSIVE $inconclusive')
+    ..writeln(
+      'PASS ${results.where((r) => r.status == LeakStatus.pass).length}'
+      '  FAIL $fail  SKIP '
+      '${results.where((r) => r.status == LeakStatus.skip).length}'
+      '  ERROR $error  INCONCLUSIVE $inconclusive',
+    )
     ..writeln('JSON:  ${files.json}')
     ..writeln('JSONL: ${files.jsonl}')
     ..writeln('MD:    ${files.markdown}');
@@ -175,8 +180,11 @@ Future<void> _compare(List<String> args) async {
     return;
   }
   final changes = compareLeakRuns(loadLeakRun(baseline), loadLeakRun(current));
-  final text = renderLeakComparison(changes,
-      baseline: baseline, current: current);
+  final text = renderLeakComparison(
+    changes,
+    baseline: baseline,
+    current: current,
+  );
   stdout.write(text);
   if (markdown != null) {
     Directory(p.dirname(markdown)).createSync(recursive: true);
@@ -186,13 +194,14 @@ Future<void> _compare(List<String> args) async {
 }
 
 List<LeakCase> allLeakCases() => [
-      releaseControl(),
-      retainedControl(),
-      ...jsLeakCases(),
-      ...domLeakCases(),
-      ...cssLeakCases(),
-      ...runtimeLeakCases(),
-    ];
+  releaseControl(),
+  retainedControl(),
+  ...jsLeakCases(),
+  ...domLeakCases(),
+  ...cssLeakCases(),
+  ...runtimeLeakCases(),
+  ...matrixLeakCases(),
+];
 
 void _usage() {
   stdout
@@ -201,6 +210,8 @@ void _usage() {
     ..writeln('    [--batches N] [--iterations N] [--settle-ms N]')
     ..writeln('    [--only TEXT] [--list] [--out DIR]')
     ..writeln('    [--json FILE] [--jsonl FILE] [--md FILE]')
-    ..writeln('  dart run bin/leaks.dart compare --baseline JSON --current JSON')
+    ..writeln(
+      '  dart run bin/leaks.dart compare --baseline JSON --current JSON',
+    )
     ..writeln('    [--md FILE]');
 }

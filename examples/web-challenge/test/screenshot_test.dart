@@ -154,5 +154,8 @@ void main() {
       // ignore: avoid_print
       print(l);
     }
+    // Stop QuickJS timers/isolates so the test process exits promptly and does
+    // not leave a stuck `flutter_tester` behind.
+    runtime?.dispose();
   });
 }

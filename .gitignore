@@ -16,3 +16,9 @@ benchmarks/leaks/
 
 # Security suite outputs are generated locally.
 benchmarks/security/
+
+# Visual fidelity runs and downloaded fixture suites are generated locally.
+.visual/
+
+# Performance suite runs, fetched suites and app idle measurements.
+.perf/

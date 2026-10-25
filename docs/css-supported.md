@@ -4,9 +4,12 @@ NativaX implementa CSS con su propio motor (cascada + layout en
 RenderObjects de Flutter). No es un motor de navegador completo: esta página
 define qué se pinta como en un navegador, qué se aproxima y qué falta.
 
-La referencia de calidad es la comparación visual contra Chrome de
-`examples/web-challenge` (HTML/CSS/JS original, sin modificar) con la
-herramienta `examples/web-challenge/test/screenshot_test.dart`.
+La referencia de calidad es la comparación visual contra Chrome sin ventana:
+`tools/visual` (Chromium headless contra NativaX offscreen, con puntuaciones de
+posición, layout, color, diseño y píxeles). Ver
+[`visual-fidelity.md`](visual-fidelity.md). El arnés histórico
+`examples/web-challenge/test/screenshot_test.dart` sigue sirviendo para
+capturas puntuales.
 
 ## Selectores y cascada
 

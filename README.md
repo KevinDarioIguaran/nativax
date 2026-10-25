@@ -38,6 +38,8 @@ números y pendientes:
 - [`docs/css-supported.md`](docs/css-supported.md) (CSS y layout soportados)
 - [`docs/hot-reload.md`](docs/hot-reload.md) (recarga de documentos en desarrollo)
 - [`docs/benchmarks.md`](docs/benchmarks.md) (rendimiento y comparación)
+- [`docs/performance-suite.md`](docs/performance-suite.md) (UI, scroll, memoria y panel Tkinter)
+- [`progress/reports/nativa-quality-latest.md`](progress/reports/nativa-quality-latest.md) (informe consolidado de capacidad y evidencia)
 - [`tools/leaks/README.md`](tools/leaks/README.md) (fugas, retención y ciclo de vida)
 - [`docs/security/audit.md`](docs/security/audit.md) (auditoría y hallazgos)
 - [`docs/security/threat-model.md`](docs/security/threat-model.md) (modelo de amenazas)
@@ -56,7 +58,7 @@ números y pendientes:
 | **NativaFlow** | `nativax/lib/src/workers.dart` (embebido) | Workers, mensajería y concurrencia |
 | **NativaForge** | `tools/` | Tests, conformidad, empaquetado y herramientas de desarrollo |
 | **NativaShield** | `tools/security`, `SECURITY_*` | Aislamiento, permisos, límites y auditoría |
-| **NativaBench** | `benchmarks/`, `tools/benchmark`, `tools/leaks` | Benchmarks reproducibles de rendimiento y conformidad |
+| **NativaBench** | `benchmarks/`, `tools/benchmark`, `tools/perf`, `tools/leaks` | Benchmarks reproducibles de rendimiento y conformidad |
 
 NativaWeb **no** es un paquete monolítico: es la familia de cuatro módulos
 independientes que pueden usarse por separado.
@@ -99,6 +101,27 @@ void main() => runApp(const MaterialApp(
 ```bash
 ./tools/test_all.sh
 ```
+
+## Calidad visual y rendimiento
+
+```bash
+tools/quality_report.sh          # 51 páginas visuales + 245 escenarios + app idle
+tools/quality_report.sh --all-visual  # 300 páginas visuales
+tools/quality_report.sh --gui    # y abre el panel Tkinter
+
+# Compuerta sin UI para IA/CI (visual + rendimiento + compatibilidad)
+python3 tools/quality_gate.py --run
+python3 tools/quality_gate.py --json
+
+# Aislamiento por contenedor con CPU/RAM limitadas
+tools/perf/container/matrix.sh
+
+# Vista previa renderizada del informe (no código fuente)
+tools/preview_report.sh
+```
+
+Informe consolidado:
+[`progress/reports/nativa-quality-latest.md`](progress/reports/nativa-quality-latest.md).
 
 ## Conformidad
 

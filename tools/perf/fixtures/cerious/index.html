@@ -1,0 +1,4126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Performance Benchmark · Cerious-Scroll</title>
+  <meta name="description" content="Reproducible in-browser benchmark for cerious-scroll. Measures frame cost, mount time, random-access latency, DOM footprint and heap across 1K to 10M rows.">
+  <link rel="stylesheet" href="shared-styles.css?v=20260922">
+  <style>
+    /* Declared in shared-styles.css too, but repeated here so the page still
+       renders native controls, scrollbars and popups dark if used standalone. */
+    :root { color-scheme: dark; }
+
+    /* A class-level `display` beats the UA rule for [hidden], and several blocks
+       on this page are toggled by the hidden attribute while also being flex or
+       grid. Make the attribute win. */
+    [hidden] { display: none !important; }
+
+    /* ---------- Benchmark page ---------- */
+    .bench {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 28px 20px 64px;
+    }
+
+    .bench__hero h1 {
+      margin: 0 0 6px;
+      font-size: 1.75rem;
+      letter-spacing: -0.02em;
+    }
+    .bench__hero p {
+      margin: 0;
+      max-width: 74ch;
+      color: var(--muted);
+      line-height: 1.55;
+    }
+    .bench__hero .tagline {
+      display: inline-block;
+      margin-bottom: 10px;
+      padding: 3px 10px;
+      border-radius: 999px;
+      font-size: 0.7rem;
+      font-weight: 800;
+      letter-spacing: .09em;
+      text-transform: uppercase;
+      color: #061019;
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 1rem;
+      padding: 18px;
+      margin-top: 20px;
+    }
+    .panel__title {
+      display: flex;
+      align-items: baseline;
+      gap: 10px;
+      margin: 0 0 14px;
+      font-size: 0.78rem;
+      font-weight: 800;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+    .panel__title small {
+      font-weight: 500;
+      letter-spacing: 0;
+      text-transform: none;
+      font-size: 0.8rem;
+      color: rgba(167,177,194,.75);
+    }
+
+    /* ---- Environment strip under the hero ---- */
+    .envstrip {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 16px;
+    }
+    .envstrip span {
+      display: inline-flex;
+      align-items: baseline;
+      gap: 6px;
+      padding: 5px 11px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: rgba(255,255,255,.04);
+      font-size: 0.76rem;
+      color: var(--muted);
+      font-variant-numeric: tabular-nums;
+    }
+    .envstrip b { color: var(--text); font-weight: 650; }
+
+
+    /* ---- Benchmark chooser ---- */
+    .modebar {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      margin: 24px 0 4px;
+      padding: 10px 0;
+      background: linear-gradient(180deg, rgba(8,11,18,.96) 62%, rgba(8,11,18,0));
+      backdrop-filter: blur(8px);
+    }
+    .modeswitch {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      padding: 6px;
+      border: 1px solid var(--line);
+      border-radius: 1rem;
+      background: var(--panel);
+    }
+    .modeswitch button {
+      display: block;
+      text-align: left;
+      padding: 12px 16px;
+      border: 1px solid transparent;
+      border-radius: .75rem;
+      background: transparent;
+      color: var(--muted);
+      font: inherit;
+      cursor: pointer;
+      transition: background .12s ease, color .12s ease, border-color .12s ease;
+    }
+    .modeswitch button b {
+      display: block;
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: inherit;
+    }
+    .modeswitch button span {
+      display: block;
+      margin-top: 2px;
+      font-size: 0.76rem;
+      line-height: 1.35;
+      opacity: .85;
+    }
+    .modeswitch button:hover:not(:disabled) { color: var(--text); background: rgba(255,255,255,.05); }
+    .modeswitch button:disabled { cursor: not-allowed; }
+    .modeswitch button:disabled:not(.is-active) { opacity: .45; }
+    .modeswitch button.is-active {
+      color: #061019;
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      border-color: transparent;
+    }
+    .modeswitch button.is-active span { opacity: .78; }
+
+    /* ---- Numbered steps ---- */
+    .step {
+      position: relative;
+      margin-top: 18px;
+      padding: 20px 22px 24px;
+      border: 1px solid var(--line);
+      border-radius: 1rem;
+      background: var(--panel);
+    }
+    .step__head {
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+      margin-bottom: 18px;
+    }
+    .step__num {
+      flex: none;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      font-size: 0.85rem;
+      font-weight: 800;
+      color: #061019;
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+    }
+    .step__head h2 {
+      margin: 2px 0 4px;
+      font-size: 1.05rem;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+    }
+    .step__head p {
+      margin: 0;
+      max-width: 84ch;
+      font-size: 0.85rem;
+      line-height: 1.6;
+      color: var(--muted);
+    }
+    .step__body > .table-scroll,
+    .step__body > .chart-box,
+    .step__body > .result-block { margin-top: 18px; }
+    .step__body > .stage { margin-top: 16px; }
+    .step__body > .tiles + .result-block { margin-top: 20px; }
+
+    .result-block__title {
+      margin: 0 0 10px;
+      font-size: 0.72rem;
+      font-weight: 800;
+      letter-spacing: .09em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    .panel--method { margin-top: 26px; }
+
+    /* A full-width caption under a control group. Deliberately not a child of
+       .ctl, which uppercases and letter-spaces its own label span. */
+    .ctl-note {
+      margin: 12px 0 0;
+      font-size: 0.79rem;
+      line-height: 1.5;
+      color: rgba(167,177,194,.82);
+      font-weight: 400;
+      letter-spacing: 0;
+      text-transform: none;
+    }
+    .ctl-note::before {
+      content: '';
+      display: inline-block;
+      width: 3px;
+      height: 0.78em;
+      margin-right: 8px;
+      border-radius: 2px;
+      background: var(--accent);
+      vertical-align: -1px;
+      opacity: .7;
+    }
+
+    /* ---- Result view tabs ---- */
+    .subtabs {
+      display: flex;
+      gap: 4px;
+      margin: 22px 0 20px;
+      padding: 4px;
+      border: 1px solid var(--line);
+      border-radius: .7rem;
+      background: rgba(0,0,0,.22);
+      width: fit-content;
+      max-width: 100%;
+      overflow-x: auto;
+    }
+    .subtab {
+      appearance: none;
+      border: none;
+      border-radius: .5rem;
+      padding: 7px 14px;
+      background: transparent;
+      color: var(--muted);
+      font: inherit;
+      font-size: 0.82rem;
+      font-weight: 600;
+      white-space: nowrap;
+      cursor: pointer;
+      transition: background .12s ease, color .12s ease;
+    }
+    .subtab:hover { color: var(--text); background: rgba(255,255,255,.05); }
+    .subtab.is-active {
+      color: #061019;
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+    }
+
+    /* ---- Checkbox with an explanation ---- */
+    .switch {
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+      margin-top: 16px;
+      padding: 12px 14px;
+      border: 1px solid var(--line);
+      border-radius: .7rem;
+      background: rgba(255,255,255,.03);
+      cursor: pointer;
+    }
+    .switch:hover { border-color: rgba(120,243,210,.4); }
+    .switch input { accent-color: var(--accent); margin: 2px 0 0; flex: none; }
+    .switch span { font-size: 0.79rem; line-height: 1.5; color: var(--muted); }
+    .switch b {
+      display: block;
+      color: var(--text);
+      font-size: 0.85rem;
+      font-weight: 650;
+      margin-bottom: 2px;
+    }
+
+    .view-lead {
+      margin: 0 0 20px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid var(--line);
+      max-width: 90ch;
+      font-size: 0.83rem;
+      line-height: 1.6;
+      color: var(--muted);
+    }
+
+    /* Two engines in one cell, so the table stays five columns wide. */
+    .bench-table th small {
+      display: block;
+      margin-top: 3px;
+      font-size: 0.66rem;
+      font-weight: 500;
+      letter-spacing: 0;
+      text-transform: none;
+      color: rgba(167,177,194,.65);
+    }
+    /* Windows keeps a ~17px vertical scrollbar on screen permanently, so the
+       content column is narrower there than on macOS. This table fit its
+       container exactly; trim the cells so it still does with the bar present. */
+    .bench-table--cmp td { padding: 12px 7px; }
+    .bench-table--cmp th { padding-left: 7px; padding-right: 7px; }
+    .cmp { white-space: nowrap; }
+    .cmp__v { color: #7ee2b8; }
+    .cmp__sep { margin: 0 5px; color: rgba(167,177,194,.5); }
+    .cmp__n { color: #ff8d8d; }
+    .cmp__r {
+      display: inline-block;
+      margin-left: 7px;
+      padding: 1px 6px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.07);
+      color: var(--muted);
+      font-size: 0.7rem;
+      font-weight: 700;
+    }
+    .cmp__r--big { background: rgba(120,243,210,.14); color: var(--accent); }
+    .cmp__r--bad { background: rgba(255,141,141,.16); color: #ff8d8d; }
+
+    /* Baseline outcomes that are results in their own right. */
+    .verdict {
+      display: inline-block;
+      padding: 2px 9px;
+      border-radius: 999px;
+      font-size: 0.7rem;
+      font-weight: 700;
+      letter-spacing: .03em;
+      text-transform: uppercase;
+    }
+    .verdict--refused { background: rgba(255,141,141,.16); color: #ff8d8d; }
+    .verdict--timeout { background: rgba(242,198,109,.16); color: #f2c66d; }
+    .baseline-host { position: absolute; inset: 0; overflow-y: auto; overflow-x: hidden; }
+    .bench-table td.verdict-note {
+      text-align: left;
+      font-size: 0.76rem;
+      color: var(--muted);
+      white-space: normal;
+    }
+
+    .table-note {
+      margin: 8px 0 0;
+      font-size: 0.76rem;
+      color: rgba(167,177,194,.75);
+    }
+
+    .env-details {
+      margin-top: 18px;
+      border-top: 1px solid var(--line);
+      padding-top: 14px;
+    }
+    .env-details summary {
+      cursor: pointer;
+      font-size: 0.8rem;
+      font-weight: 650;
+      color: var(--text);
+      list-style: none;
+    }
+    .env-details summary::-webkit-details-marker { display: none; }
+    .env-details summary::before {
+      content: '▸ ';
+      color: var(--accent);
+    }
+    .env-details[open] summary::before { content: '▾ '; }
+    .env-details .kv { margin-top: 14px; }
+
+    /* ---- Controls ---- */
+    .ctl-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+      gap: 16px;
+      align-items: start;
+    }
+    .ctl {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .ctl > span small {
+      font-weight: 500;
+      letter-spacing: 0;
+      text-transform: none;
+      color: rgba(167,177,194,.8);
+    }
+    .ctl > span {
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: .07em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+    /* Form controls use OPAQUE colours, not rgba.
+       A <select>'s dropdown popup is painted by the platform, and on Windows the
+       option list takes its colours from the select itself. A translucent
+       background there composites against the popup's own base rather than the
+       page, which is how you end up with near-white text on a near-white list.
+       macOS hides this because the popup ignores the styling entirely. The
+       values below are the panel-over-page colours resolved to flat hex. */
+    .ctl select,
+    .ctl input[type='number'] {
+      padding: 8px 10px;
+      border: 1px solid var(--line);
+      border-radius: .6rem;
+      background-color: #23262c;
+      color: var(--text);
+      font: inherit;
+      font-size: 0.88rem;
+    }
+    /* Room for the native dropdown arrow, which is wider on Windows. */
+    .ctl select { padding-right: 30px; }
+    .ctl select option {
+      background-color: #191d23;
+      color: #f6f8fb;
+    }
+    .ctl select optgroup {
+      background-color: #12151b;
+      color: #a7b1c2;
+    }
+    .ctl select:focus,
+    .ctl input:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 2px rgba(120,243,210,.22);
+    }
+
+    /* ---- Dropdown -----------------------------------------------------
+       A native <select> renders its popup through the operating system, so its
+       list cannot be styled reliably and looks different on every platform.
+       This is an ordinary DOM listbox instead: every pixel comes from the CSS
+       below, so Windows, macOS and Linux get the identical control. The native
+       <select> stays in the document as the value holder, so anything reading
+       `.value` or listening for `change` keeps working. */
+    .dd { position: relative; }
+    .dd__native {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      opacity: 0;
+      pointer-events: none;
+      clip-path: inset(50%);
+    }
+    .dd__button {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      width: 100%;
+      padding: 8px 10px;
+      border: 1px solid var(--line);
+      border-radius: .6rem;
+      background-color: #23262c;
+      color: var(--text);
+      font: inherit;
+      font-size: 0.88rem;
+      text-align: left;
+      cursor: pointer;
+    }
+    .dd__button:hover { border-color: rgba(120,243,210,.45); }
+    .dd__button:focus-visible,
+    .dd.is-open .dd__button {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 2px rgba(120,243,210,.22);
+    }
+    .dd__button:disabled { opacity: .5; cursor: not-allowed; }
+    .dd__label {
+      flex: 1;
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    /* Chevron drawn here rather than by the platform, so it never shifts. */
+    .dd__chev {
+      flex: none;
+      width: 9px;
+      height: 9px;
+      margin-right: 2px;
+      border-right: 1.6px solid var(--muted);
+      border-bottom: 1.6px solid var(--muted);
+      transform: translateY(-2px) rotate(45deg);
+      transition: transform .14s ease;
+    }
+    .dd.is-open .dd__chev { transform: translateY(1px) rotate(225deg); }
+
+    .dd__panel {
+      position: absolute;
+      z-index: 60;
+      top: calc(100% + 6px);
+      left: 0;
+      min-width: 100%;
+      width: max-content;
+      max-width: min(360px, 78vw);
+      max-height: 288px;
+      overflow-y: auto;
+      padding: 5px;
+      border: 1px solid var(--line);
+      border-radius: .7rem;
+      background: #171a21;
+      box-shadow: 0 18px 44px rgba(0,0,0,.55);
+    }
+    .dd.is-up .dd__panel { top: auto; bottom: calc(100% + 6px); }
+    .dd__group {
+      padding: 9px 10px 4px;
+      font-size: 0.64rem;
+      font-weight: 800;
+      letter-spacing: .07em;
+      text-transform: uppercase;
+      color: rgba(167,177,194,.7);
+    }
+    .dd__opt {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 7px 10px;
+      border-radius: .45rem;
+      font-size: 0.85rem;
+      color: var(--text);
+      cursor: pointer;
+    }
+    .dd__opt::before {
+      content: '';
+      flex: none;
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: transparent;
+    }
+    .dd__opt.is-selected::before { background: var(--accent); }
+    .dd__opt.is-active { background: rgba(255,255,255,.08); }
+    .dd__opt.is-selected { color: var(--accent); font-weight: 600; }
+    .dd__opt.is-selected.is-active { background: rgba(120,243,210,.13); }
+
+    .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 7px 11px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: rgba(255,255,255,.04);
+      font-size: 0.83rem;
+      font-variant-numeric: tabular-nums;
+      cursor: pointer;
+      user-select: none;
+      transition: border-color .12s ease, background .12s ease;
+    }
+    .chip:hover { border-color: rgba(120,243,210,.5); }
+    .chip input { accent-color: var(--accent); margin: 0; }
+    .chip.is-on {
+      border-color: rgba(120,243,210,.65);
+      background: rgba(120,243,210,.11);
+    }
+
+    .run-bar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 12px;
+      margin-top: 18px;
+      padding-top: 16px;
+      border-top: 1px solid var(--line);
+    }
+    .btn {
+      padding: 10px 18px;
+      border: 1px solid var(--line);
+      border-radius: .65rem;
+      background: var(--panel);
+      color: var(--text);
+      font: inherit;
+      font-size: 0.88rem;
+      cursor: pointer;
+    }
+    .btn:hover:not(:disabled) { background: var(--panel-strong); border-color: var(--accent); }
+    .btn:disabled { opacity: .45; cursor: not-allowed; }
+    .btn--primary {
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      color: #061019;
+      border-color: transparent;
+      font-weight: 800;
+    }
+    .btn--sm { padding: 6px 12px; font-size: 0.8rem; }
+
+    .progress {
+      flex: 1 1 220px;
+      min-width: 180px;
+      height: 6px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.09);
+      overflow: hidden;
+    }
+    .progress__fill {
+      height: 100%;
+      width: 0%;
+      border-radius: 999px;
+      background: linear-gradient(90deg, var(--accent), var(--accent-2));
+      transition: width .2s ease;
+    }
+    .run-status {
+      font-size: 0.83rem;
+      color: var(--muted);
+      font-variant-numeric: tabular-nums;
+      min-width: 200px;
+    }
+
+    /* ---- Stage ---- */
+    .stage-wrap { position: relative; }
+    .stage {
+      position: relative;
+      height: 380px;
+      border: 1px solid var(--line);
+      border-radius: .8rem;
+      overflow: hidden;
+      background: rgba(0,0,0,.28);
+    }
+    .bench-host { position: absolute; inset: 0; }
+    .stage__badge {
+      position: absolute;
+      top: 10px;
+      left: 12px;
+      z-index: 5;
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      padding: 5px 10px;
+      border-radius: 999px;
+      background: rgba(8,11,18,.82);
+      border: 1px solid var(--line);
+      backdrop-filter: blur(6px);
+      font-size: 0.76rem;
+      font-variant-numeric: tabular-nums;
+      color: var(--muted);
+      pointer-events: none;
+    }
+    .stage__badge b { color: var(--text); font-weight: 700; }
+    .dot {
+      width: 7px; height: 7px; border-radius: 50%;
+      background: #6b7484;
+    }
+    .dot.is-live { background: var(--accent); box-shadow: 0 0 0 0 rgba(120,243,210,.7); animation: pulse 1.2s infinite; }
+    @keyframes pulse {
+      to { box-shadow: 0 0 0 8px rgba(120,243,210,0); }
+    }
+
+    /* ---- Benchmark rows ---- */
+    .bench-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 0 14px;
+      border-bottom: 1px solid rgba(255,255,255,.07);
+      box-sizing: border-box;
+      font-size: 0.85rem;
+    }
+    .bench-row__i {
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 0.76rem;
+      color: var(--muted);
+      min-width: 92px;
+    }
+    .bench-row__bar {
+      height: 6px;
+      border-radius: 999px;
+      opacity: .85;
+    }
+    .bench-row__h {
+      margin-left: auto;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 0.72rem;
+      color: rgba(167,177,194,.7);
+    }
+
+    .bench-card {
+      display: flex;
+      gap: 12px;
+      padding: 12px 14px;
+      border-bottom: 1px solid rgba(255,255,255,.07);
+      box-sizing: border-box;
+    }
+    .bench-card__av {
+      width: 34px; height: 34px; border-radius: 10px; flex: none;
+      display: grid; place-items: center;
+      font-weight: 800; font-size: 0.8rem; color: #061019;
+    }
+    .bench-card__body { min-width: 0; flex: 1; }
+    .bench-card__title { font-size: 0.88rem; font-weight: 650; margin-bottom: 3px; }
+    .bench-card__line {
+      height: 8px; border-radius: 999px;
+      background: rgba(255,255,255,.09);
+      margin: 6px 0;
+    }
+    .bench-card__tags { display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
+    .bench-card__tag {
+      font-size: 0.68rem; padding: 2px 8px; border-radius: 999px;
+      background: rgba(255,255,255,.07); color: var(--muted);
+    }
+
+    /* ---- Complex row profiles ---------------------------------------
+       Deliberately expensive templates: many nodes, deep trees, native form
+       controls, inline SVG and paint-heavy effects. The point is to show what
+       the engine costs when the ROW is the expensive part. */
+
+    /* Dense data-grid row */
+    .bx-grid {
+      display: grid;
+      grid-template-columns: 96px 110px repeat(6, minmax(60px, 1fr)) 84px 92px 76px;
+      align-items: center;
+      gap: 10px;
+      padding: 9px 14px;
+      border-bottom: 1px solid rgba(255,255,255,.07);
+      box-sizing: border-box;
+      font-size: 0.78rem;
+    }
+    .bx-grid__c {
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      text-align: right;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .bx-grid__c--id { text-align: left; color: var(--muted); }
+    .bx-grid__c--sym { text-align: left; font-weight: 700; font-family: inherit; }
+    .bx-badge {
+      justify-self: start;
+      font-size: 0.66rem;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 999px;
+      text-transform: uppercase;
+      letter-spacing: .04em;
+    }
+    .bx-badge--ok { background: rgba(120,243,210,.16); color: #7ee2b8; }
+    .bx-badge--warn { background: rgba(242,198,109,.16); color: #f2c66d; }
+    .bx-badge--off { background: rgba(255,255,255,.08); color: var(--muted); }
+    .bx-delta { font-family: ui-monospace, Menlo, monospace; text-align: right; }
+    .bx-delta--up { color: #7ee2b8; }
+    .bx-delta--down { color: #ff8d8d; }
+    .bx-spark { display: flex; align-items: flex-end; gap: 2px; height: 20px; }
+    .bx-spark i { flex: 1; background: rgba(140,183,255,.55); border-radius: 1px; }
+
+    /* Media card */
+    .bx-media {
+      display: flex;
+      gap: 14px;
+      padding: 12px 14px;
+      border-bottom: 1px solid rgba(255,255,255,.07);
+      box-sizing: border-box;
+    }
+    .bx-media__thumb {
+      position: relative;
+      flex: none;
+      width: 148px;
+      aspect-ratio: 16 / 9;
+      border-radius: .6rem;
+      overflow: hidden;
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,.12);
+    }
+    .bx-media__play {
+      position: absolute;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      font-size: 1.1rem;
+      color: rgba(255,255,255,.92);
+      text-shadow: 0 2px 6px rgba(0,0,0,.6);
+    }
+    .bx-media__dur {
+      position: absolute;
+      right: 6px;
+      bottom: 6px;
+      padding: 1px 6px;
+      border-radius: 4px;
+      background: rgba(0,0,0,.66);
+      font-size: 0.66rem;
+      font-variant-numeric: tabular-nums;
+    }
+    .bx-media__body { min-width: 0; flex: 1; }
+    .bx-media__title { font-size: 0.92rem; font-weight: 650; margin-bottom: 4px; }
+    .bx-media__meta { font-size: 0.76rem; color: var(--muted); margin-bottom: 8px; }
+    .bx-media__row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 6px; }
+    .bx-stars { display: inline-flex; gap: 1px; font-size: 0.76rem; color: rgba(255,255,255,.22); }
+    .bx-stars .is-on { color: #f2c66d; }
+    .bx-avatars { display: flex; }
+    .bx-avatars span {
+      width: 22px; height: 22px; border-radius: 50%;
+      border: 2px solid #0d1119;
+      margin-left: -7px;
+      display: grid; place-items: center;
+      font-size: 0.6rem; font-weight: 800; color: #061019;
+    }
+    .bx-avatars span:first-child { margin-left: 0; }
+    .bx-btn {
+      font: inherit;
+      font-size: 0.72rem;
+      padding: 4px 10px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,.05);
+      color: var(--text);
+      cursor: pointer;
+    }
+
+    /* Inline SVG chart row */
+    .bx-chart {
+      padding: 10px 14px;
+      border-bottom: 1px solid rgba(255,255,255,.07);
+      box-sizing: border-box;
+    }
+    .bx-chart__head {
+      display: flex; align-items: baseline; gap: 10px;
+      font-size: 0.78rem; margin-bottom: 6px;
+    }
+    .bx-chart__head b { font-weight: 650; }
+    .bx-chart__head span { color: var(--muted); font-variant-numeric: tabular-nums; }
+    .bx-chart svg { display: block; width: 100%; height: 64px; }
+
+    /* Native form controls */
+    .bx-form {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
+      padding: 10px 14px;
+      border-bottom: 1px solid rgba(255,255,255,.07);
+      box-sizing: border-box;
+      font-size: 0.78rem;
+    }
+    .bx-form__label { min-width: 104px; color: var(--muted); font-family: ui-monospace, Menlo, monospace; font-size: 0.72rem; }
+    .bx-form input[type='text'],
+    .bx-form select {
+      font: inherit;
+      font-size: 0.76rem;
+      padding: 4px 8px;
+      border-radius: .4rem;
+      border: 1px solid var(--line);
+      background-color: var(--control-bg);
+      color: var(--text);
+    }
+    .bx-form input[type='text'] { width: 130px; }
+    .bx-form__check { display: inline-flex; align-items: center; gap: 5px; color: var(--muted); }
+    .bx-form input[type='checkbox'],
+    .bx-form input[type='range'] { accent-color: var(--accent); margin: 0; }
+    .bx-form input[type='range'] { width: 96px; }
+
+    /* Deeply nested tree */
+    .bx-deep {
+      padding: 11px 14px 13px;
+      border-bottom: 1px solid rgba(255,255,255,.07);
+      box-sizing: border-box;
+      font-size: 0.76rem;
+    }
+    .bx-deep__head {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      flex-wrap: wrap;
+      margin-bottom: 7px;
+    }
+    .bx-deep__chip {
+      font-size: 0.66rem;
+      font-weight: 700;
+      letter-spacing: .04em;
+      text-transform: uppercase;
+      padding: 2px 8px;
+      border-radius: 999px;
+      background: rgba(140,183,255,.16);
+      color: #a9c6ff;
+    }
+    .bx-deep__head b {
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 0.76rem;
+      font-weight: 650;
+    }
+    .bx-deep__note { font-size: 0.72rem; color: rgba(167,177,194,.7); }
+    .bx-deep__lvl {
+      padding-left: 13px;
+      border-left: 1px solid rgba(140,183,255,.3);
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 0.7rem;
+      line-height: 1.5;
+      color: rgba(167,177,194,.6);
+    }
+    .bx-deep__leaf {
+      display: inline-block;
+      margin-top: 3px;
+      padding: 3px 9px;
+      border-radius: .4rem;
+      background: rgba(120,243,210,.12);
+      color: var(--accent);
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 0.7rem;
+    }
+
+    /* Kitchen sink: paint-heavy */
+    .bx-sink {
+      margin: 10px 12px;
+      padding: 12px 14px;
+      border-radius: .8rem;
+      border: 1px solid var(--line);
+      background:
+        radial-gradient(circle at 100% 0%, rgba(140,183,255,.14), transparent 60%),
+        linear-gradient(180deg, rgba(255,255,255,.07), rgba(255,255,255,.02));
+      box-shadow: 0 8px 24px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.07);
+      box-sizing: border-box;
+    }
+    .bx-sink__head { display: flex; align-items: center; gap: 9px; margin-bottom: 10px; }
+    .bx-sink__icon {
+      width: 26px; height: 26px; border-radius: 8px;
+      display: grid; place-items: center;
+      transform: rotate(-6deg);
+      box-shadow: 0 3px 10px rgba(0,0,0,.4);
+    }
+    .bx-sink__icon svg { width: 14px; height: 14px; }
+    .bx-sink__titles { flex: 1; min-width: 0; }
+    .bx-sink__title { font-size: 0.88rem; font-weight: 650; }
+    .bx-sink__sub { font-size: 0.72rem; color: var(--muted); margin-top: 1px; }
+    .bx-sink__stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+    .bx-sink__stat {
+      padding: 7px 9px;
+      border-radius: .5rem;
+      background: rgba(255,255,255,.05);
+      border: 1px solid rgba(255,255,255,.07);
+    }
+    .bx-sink__stat i {
+      display: block;
+      font-style: normal;
+      font-size: 0.62rem;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+    .bx-sink__stat b { font-size: 0.9rem; font-variant-numeric: tabular-nums; }
+    .bx-sink__track {
+      height: 6px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.09);
+      overflow: hidden;
+      margin-bottom: 10px;
+    }
+    .bx-sink__track span {
+      display: block;
+      height: 100%;
+      border-radius: 999px;
+      background: linear-gradient(90deg, var(--accent), var(--accent-2));
+    }
+    .bx-sink__foot { display: flex; align-items: center; gap: 7px; flex-wrap: wrap; }
+
+    /* ---- Summary tiles ---- */
+    /* One row, always. Columns divide the available width evenly however many
+       tiles there are, so adding the baseline tile narrows them instead of
+       wrapping a lone card onto a second line. */
+    .tiles {
+      display: grid;
+      grid-auto-flow: column;
+      grid-auto-columns: minmax(0, 1fr);
+      gap: 10px;
+    }
+    .tile {
+      min-width: 0;
+      padding: 12px 13px;
+      border: 1px solid var(--line);
+      border-radius: .8rem;
+      background: rgba(255,255,255,.04);
+    }
+    .tile__k {
+      font-size: 0.64rem;
+      font-weight: 700;
+      letter-spacing: .07em;
+      text-transform: uppercase;
+      color: var(--muted);
+      line-height: 1.3;
+    }
+    .tile__v {
+      margin-top: 6px;
+      font-size: 1.32rem;
+      font-weight: 750;
+      letter-spacing: -0.02em;
+      font-variant-numeric: tabular-nums;
+      line-height: 1.15;
+      white-space: nowrap;
+    }
+    .tile__v small { font-size: 0.78rem; font-weight: 600; color: var(--muted); margin-left: 3px; }
+    .tile__sub {
+      margin-top: 4px;
+      font-size: 0.72rem;
+      line-height: 1.4;
+      color: var(--muted);
+    }
+
+    /* Below this the row would squash past readability, so let it wrap again. */
+    @media (max-width: 1040px) {
+      .tiles {
+        grid-auto-flow: row;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      }
+    }
+    .tile--hero .tile__v { color: var(--accent); }
+
+    /* ---- Table ---- */
+    .table-scroll { overflow-x: auto; }
+    table.bench-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.84rem;
+      font-variant-numeric: tabular-nums;
+      white-space: nowrap;
+    }
+    .bench-table th {
+      text-align: right;
+      font-size: 0.68rem;
+      font-weight: 700;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+      color: var(--muted);
+      padding: 0 12px 9px;
+      border-bottom: 1px solid var(--line);
+    }
+    .bench-table th:first-child,
+    .bench-table td:first-child { text-align: left; }
+    .bench-table td {
+      text-align: right;
+      padding: 10px 12px;
+      border-bottom: 1px solid rgba(255,255,255,.06);
+    }
+    .bench-table tbody tr { cursor: pointer; }
+    .bench-table tbody tr:hover { background: rgba(255,255,255,.045); }
+    .bench-table tbody tr.is-sel { background: rgba(120,243,210,.09); }
+    .bench-table tbody tr.is-sel td:first-child { box-shadow: inset 3px 0 0 var(--accent); }
+    .bench-table .g { color: #7ee2b8; }
+    .bench-table .w { color: #f2c66d; }
+    .bench-table .b { color: #ff8d8d; }
+    .bench-table .muted { color: var(--muted); }
+    .bench-table td.size { font-weight: 700; }
+
+    .empty {
+      padding: 34px 10px;
+      text-align: center;
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+
+    /* ---- Charts ---- */
+    .chart-box {
+      border: 1px solid var(--line);
+      border-radius: .8rem;
+      background: rgba(0,0,0,.22);
+      padding: 12px 12px 8px;
+    }
+    .chart-box h3 {
+      margin: 0 0 2px;
+      font-size: 0.85rem;
+      font-weight: 650;
+    }
+    .chart-box p {
+      margin: 0 0 8px;
+      font-size: 0.75rem;
+      color: var(--muted);
+    }
+    .chart-box canvas { width: 100%; height: 230px; display: block; }
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 8px;
+      font-size: 0.74rem;
+      color: var(--muted);
+    }
+    .legend i {
+      display: inline-block;
+      width: 18px; height: 3px; border-radius: 2px;
+      vertical-align: middle;
+      margin-right: 5px;
+    }
+
+    /* ---- Env + method ---- */
+    .kv {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 10px 22px;
+      font-size: 0.83rem;
+    }
+    .kv div { display: flex; justify-content: space-between; gap: 12px; padding: 5px 0; border-bottom: 1px dashed rgba(255,255,255,.08); }
+    .kv dt, .kv .k { color: var(--muted); }
+    .kv .v { font-variant-numeric: tabular-nums; text-align: right; }
+
+    .method { font-size: 0.86rem; color: var(--muted); line-height: 1.6; }
+    .method ol { margin: 0 0 12px; padding-left: 20px; }
+    .method li { margin-bottom: 7px; }
+    .method strong { color: var(--text); }
+    .method code {
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 0.85em;
+      padding: 1px 5px;
+      border-radius: 4px;
+      background: rgba(255,255,255,.07);
+      color: var(--accent);
+    }
+    .note {
+      margin-top: 12px;
+      padding: 12px 14px;
+      border-left: 3px solid rgba(140,183,255,.6);
+      border-radius: 0 .5rem .5rem 0;
+      background: rgba(140,183,255,.07);
+      font-size: 0.82rem;
+      color: var(--muted);
+      line-height: 1.55;
+    }
+    .export-bar { display: flex; flex-wrap: wrap; gap: 10px; }
+
+    @media (max-width: 768px) {
+      .bench { padding: 18px 14px 48px; }
+      .bench__hero h1 { font-size: 1.35rem; }
+      .stage { height: 300px; }
+      .step { padding: 16px 14px 18px; }
+      .step__head { gap: 10px; }
+      .modeswitch { grid-template-columns: 1fr; }
+      .modeswitch button span { font-size: 0.72rem; }
+      .tile__v { font-size: 1.3rem; }
+    }
+  </style>
+  <script src="demo-icons.js?v=20260922" defer></script>
+  <script src="demo-bootstrap.js?v=20260922" defer></script>
+</head>
+<body>
+  <header class="topbar" data-auto-topbar></header>
+
+  <main class="content">
+    <div class="bench">
+
+      <!-- ============================ Intro ============================ -->
+      <section class="bench__hero">
+        <span class="tagline">Live benchmark</span>
+        <h1><span data-demo-icon="benchmark"></span>Cerious-Scroll performance benchmark</h1>
+        <p>
+          Everything on this page is measured in <em>your</em> browser when you press Run. Nothing is
+          pre-recorded. The harness drives the same engine the demos use and reports per-frame cost,
+          mount time, random-access latency, DOM footprint and heap.
+        </p>
+        <div class="envstrip" id="envChips"></div>
+      </section>
+
+      <!-- ======================= Benchmark chooser ======================= -->
+      <div class="modebar">
+        <div class="modeswitch" role="tablist">
+          <button type="button" role="tab" data-mode-btn="scale" class="is-active">
+            <b>Scale sweep</b>
+            <span>Hold the row still, grow the dataset from 1K to 10M</span>
+          </button>
+          <button type="button" role="tab" data-mode-btn="complexity">
+            <b>Complexity sweep</b>
+            <span>Hold the dataset still, grow the row from 4 to 61 nodes</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- ========================= Step 1: configure ========================= -->
+      <section class="step">
+        <header class="step__head">
+          <span class="step__num">1</span>
+          <div>
+            <h2>Configure</h2>
+            <p data-mode="scale">
+              Pick one row template and the dataset sizes to walk through. If the engine is doing its
+              job, every number in the results stays flat as the row count climbs.
+            </p>
+            <p data-mode="complexity" hidden>
+              Pick one dataset size and the row templates to walk through, from a four-node row up to a
+              sixty-node panel with gradients and drop shadows. This is what separates engine cost from
+              renderer cost.
+            </p>
+          </div>
+        </header>
+
+        <div class="step__body" data-mode="scale">
+          <div class="ctl-grid">
+            <div class="ctl">
+              <span>Row template</span>
+              <select id="profile">
+                <optgroup label="Synthetic, fixed heights">
+                  <option value="uniform">Uniform 44px rows</option>
+                  <option value="mixed" selected>Mixed 44 / 64 / 104px</option>
+                  <option value="wild">Wild, 32 to 420px</option>
+                </optgroup>
+                <optgroup label="Realistic, height measured from the DOM">
+                  <option value="rich">Rich cards (avatar, text, tags)</option>
+                  <option value="grid">Dense data grid (12 columns, sparkline)</option>
+                  <option value="media">Media cards (thumbnail, rating, avatars)</option>
+                  <option value="chart">Inline SVG charts (path, bars, gridlines)</option>
+                </optgroup>
+                <optgroup label="Stress, deliberately expensive DOM">
+                  <option value="form">Native form controls (input, select, range)</option>
+                  <option value="nested">Deep tree, 16 levels of nesting</option>
+                  <option value="sink">Kitchen sink (gradients, shadows, transform)</option>
+                </optgroup>
+              </select>
+            </div>
+            <div class="ctl">
+              <span>Scroll sample per size</span>
+              <select id="duration">
+                <option value="2000">2 seconds (fast)</option>
+                <option value="4000" selected>4 seconds (default)</option>
+                <option value="8000">8 seconds (thorough)</option>
+              </select>
+            </div>
+            <div class="ctl">
+              <span>Fling velocity</span>
+              <select id="velocity">
+                <option value="24">Reading pace, 24 px/frame</option>
+                <option value="60" selected>Fast scroll, 60 px/frame</option>
+                <option value="160">Hard fling, 160 px/frame</option>
+              </select>
+            </div>
+            <div class="ctl">
+              <span>Mount repetitions</span>
+              <select id="reps">
+                <option value="3">3 (median)</option>
+                <option value="5" selected>5 (median)</option>
+                <option value="9">9 (median)</option>
+              </select>
+            </div>
+          </div>
+          <p class="ctl-note" id="profileNote"></p>
+
+          <label class="switch" id="baselineToggleWrap">
+            <input type="checkbox" id="baselineToggle" checked>
+            <span>
+              <b>Also measure an unvirtualized baseline</b>
+              Mounts every row into a plain scrollable div, the way you would without a
+              virtualiser, so the numbers above have a control group. It is refused above
+              two million DOM nodes and abandoned after ten seconds, and both outcomes are
+              reported rather than hidden.
+            </span>
+          </label>
+
+          <div class="ctl" style="margin-top:18px">
+            <span>Dataset sizes</span>
+            <div class="chips" id="sizes"></div>
+          </div>
+        </div>
+
+        <div class="step__body" data-mode="complexity" hidden>
+          <div class="ctl-grid">
+            <div class="ctl">
+              <span>Dataset size</span>
+              <select id="cxSize">
+                <option value="10000">10,000 rows</option>
+                <option value="100000">100,000 rows</option>
+                <option value="1000000" selected>1,000,000 rows</option>
+                <option value="10000000">10,000,000 rows</option>
+              </select>
+            </div>
+            <div class="ctl">
+              <span>Scroll sample per template</span>
+              <select id="cxDuration">
+                <option value="1500">1.5 seconds (fast)</option>
+                <option value="3000" selected>3 seconds (default)</option>
+                <option value="6000">6 seconds (thorough)</option>
+              </select>
+            </div>
+          </div>
+          <div class="ctl" style="margin-top:18px">
+            <span>Row templates <small>node counts are measured, not claimed</small></span>
+            <div class="chips" id="cxProfiles"></div>
+          </div>
+          <p class="ctl-note" id="cxProfileNote">Hover a template to see what it stresses.</p>
+        </div>
+      </section>
+
+      <!-- =========================== Step 2: run =========================== -->
+      <section class="step">
+        <header class="step__head">
+          <span class="step__num">2</span>
+          <div>
+            <h2>Run</h2>
+            <p>
+              The surface below is the engine under test. It stays visible and interactive the whole
+              time, so you can watch each phase happen and grab it yourself once the run finishes.
+            </p>
+          </div>
+        </header>
+
+        <div class="step__body">
+          <div class="run-bar" data-mode="scale">
+            <button class="btn btn--primary" id="runBtn" type="button">▶ Run scale sweep</button>
+            <button class="btn" id="abortBtn" type="button" disabled>Stop</button>
+            <div class="progress"><div class="progress__fill" id="progressFill"></div></div>
+            <span class="run-status" id="runStatus">Idle. Press Run to start.</span>
+          </div>
+
+          <div class="run-bar" data-mode="complexity" hidden>
+            <button class="btn btn--primary" id="cxRunBtn" type="button">▶ Run complexity sweep</button>
+            <button class="btn" id="cxAbortBtn" type="button" disabled>Stop</button>
+            <div class="progress"><div class="progress__fill" id="cxProgressFill"></div></div>
+            <span class="run-status" id="cxStatus">Idle. Press Run to start.</span>
+          </div>
+
+          <div class="stage" id="stage">
+            <div class="stage__badge">
+              <span class="dot" id="stageDot"></span>
+              <span id="stageLabel">idle</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ========================= Step 3: results ========================= -->
+      <section class="step">
+        <header class="step__head">
+          <span class="step__num">3</span>
+          <div>
+            <h2>Results</h2>
+            <p id="resultsSub">Nothing measured yet. Run the sweep above and the numbers land here.</p>
+          </div>
+        </header>
+
+        <div class="step__body">
+          <div class="tiles" id="tiles">
+            <div class="empty">Waiting for a run.</div>
+          </div>
+
+          <div class="subtabs" role="tablist">
+            <button class="subtab is-active" type="button" role="tab" data-view-btn="table">Table</button>
+            <button class="subtab" type="button" role="tab" data-view-btn="timeline">Frame timeline</button>
+            <button class="subtab" type="button" role="tab" data-view-btn="chart">Cost curve</button>
+            <button class="subtab" type="button" role="tab" data-view-btn="baseline">vs. baseline</button>
+          </div>
+
+          <div data-view="table">
+          <div class="result-block" data-mode="scale">
+            <h3 class="result-block__title">Every dataset size</h3>
+            <div class="table-scroll">
+              <table class="bench-table">
+                <thead>
+                  <tr>
+                    <th>Rows</th>
+                    <th title="Time to construct the scroller and paint the first viewport">Mount</th>
+                    <th title="Median JS time spent per animation frame doing scroll math and render">Frame p50</th>
+                    <th title="95th-percentile per-frame JS time">Frame p95</th>
+                    <th title="Frames per second observed during the sustained scroll">FPS</th>
+                    <th title="Longest single frame interval during the run">Worst frame</th>
+                    <th title="Share of frames that missed the display budget">Jank</th>
+                    <th title="95th-percentile time to jump to a random index and repaint">Jump p95</th>
+                    <th title="DOM elements resident inside the scroll surface at steady state">DOM nodes</th>
+                    <th title="Chromium-only JS heap reading after the run">Heap</th>
+                  </tr>
+                </thead>
+                <tbody id="tbody">
+                  <tr><td colspan="10" class="empty">No scale sweep has been run yet.</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="result-block" data-mode="complexity" hidden>
+            <h3 class="result-block__title">Every row template</h3>
+            <div class="table-scroll">
+              <table class="bench-table">
+                <thead>
+                  <tr>
+                    <th>Row template</th>
+                    <th title="DOM elements the template creates for a single row">Nodes / row</th>
+                    <th title="Median row height as measured from the DOM by the engine">Row height</th>
+                    <th title="Time to construct the scroller and paint the first viewport">Mount</th>
+                    <th title="Median JS time per animation frame: engine math plus your renderer">Frame p50</th>
+                    <th title="95th-percentile per-frame JS time">Frame p95</th>
+                    <th>FPS</th>
+                    <th title="Share of frames that missed the display budget">Jank</th>
+                    <th title="Renderer invocations per frame: the rows that actually entered the viewport">Renders / frame</th>
+                    <th title="Average JS time attributable to building one row">Per row</th>
+                    <th title="DOM elements resident in the scroll surface at steady state">Live nodes</th>
+                  </tr>
+                </thead>
+                <tbody id="cxBody">
+                  <tr><td colspan="11" class="empty">No complexity sweep has been run yet.</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <p class="table-note">Click any row to select it. The Frame timeline tab follows your selection.</p>
+          </div>
+
+          <div data-view="timeline" hidden>
+          <div class="chart-box">
+            <h3 id="timelineTitle">Frame timeline</h3>
+            <p>Every animation frame of the selected run, in order. Green is the wall-clock gap between
+              frames, blue is the JS the library spent, and the dashed line is the display budget.
+              On a healthy run the green trace sits <em>on</em> the budget rather than below it: the
+              browser paces frames to the refresh rate, so matching it is the best result available.
+              What matters is the shaded band above, where missed frames appear.</p>
+            <canvas id="timelineChart"></canvas>
+            <div class="legend">
+              <span><i style="background:#78f3d2"></i>Frame interval</span>
+              <span><i style="background:#8cb7ff"></i>JS work per frame</span>
+              <span><i style="background:#f2c66d"></i>Display budget (shaded above = missed)</span>
+            </div>
+          </div>
+
+          </div>
+
+          <div data-view="chart" hidden>
+          <div class="chart-box" data-mode="scale">
+            <h3>Cost against dataset size</h3>
+            <p>The dataset grows by orders of magnitude on a log scale. Flat lines mean cost is
+              independent of row count.</p>
+            <canvas id="scalingChart"></canvas>
+            <div class="legend">
+              <span><i style="background:#78f3d2"></i>Frame p50 (ms)</span>
+              <span><i style="background:#8cb7ff"></i>Mount (ms)</span>
+              <span><i style="background:#c9a2ff"></i>Jump p95 (ms)</span>
+            </div>
+          </div>
+
+          <div class="chart-box" data-mode="complexity" hidden>
+            <h3>Cost against row complexity</h3>
+            <p>Per-frame JS cost plotted against the number of DOM nodes each row template creates.</p>
+            <canvas id="complexityChart"></canvas>
+            <div class="legend">
+              <span><i style="background:#78f3d2"></i>Frame p50 (ms)</span>
+              <span><i style="background:#c9a2ff"></i>Per-row build cost (µs)</span>
+            </div>
+          </div>
+          </div>
+
+          <div data-view="baseline" hidden>
+            <p class="view-lead">
+              The same harness, run against a plain scrollable div with every row mounted.
+              Frame <em>work</em> is not compared here: the unvirtualized list does almost no JavaScript
+              per frame because the browser pays the cost at layout and paint instead. So the
+              honest comparison is the wall-clock <em>frame interval</em>, plus what it costs to
+              mount and how much DOM stays resident.
+            </p>
+            <div class="table-scroll">
+              <table class="bench-table bench-table--cmp">
+                <thead>
+                  <tr>
+                    <th>Rows</th>
+                    <th title="Time to a usable list: first painted viewport when virtualized, every row mounted when not">
+                      Mount<small>virtualized → unvirtualized</small></th>
+                    <th title="Median wall-clock gap between frames while scrolling, with the share of unvirtualized frames that missed the display budget">
+                      Frame interval<small>virtualized → unvirtualized</small></th>
+                    <th title="DOM elements resident in the scroll surface at steady state">
+                      DOM nodes<small>virtualized → unvirtualized</small></th>
+                  </tr>
+                </thead>
+                <tbody id="baselineBody">
+                  <tr><td colspan="4" class="empty">No baseline measured yet.</td></tr>
+                </tbody>
+              </table>
+            </div>
+
+            <div class="chart-box">
+              <h3>Resident DOM nodes, both engines</h3>
+              <p>Log scale on both axes. One line stays flat; the other tracks the dataset until
+                it cannot be built at all.</p>
+              <canvas id="baselineChart"></canvas>
+              <div class="legend">
+                <span><i style="background:#78f3d2"></i>cerious-scroll</span>
+                <span><i style="background:#ff8d8d"></i>unvirtualized</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ========================= Step 4: export ========================= -->
+      <section class="step">
+        <header class="step__head">
+          <span class="step__num">4</span>
+          <div>
+            <h2>Export</h2>
+            <p>
+              Every export carries the full environment block, browser, cores, device memory, DPR and
+              measured refresh rate, alongside the numbers from both sweeps. A result should never be
+              quoted without the machine that produced it.
+            </p>
+          </div>
+        </header>
+        <div class="step__body">
+          <div class="export-bar">
+            <button class="btn btn--sm" id="copyMd" type="button" disabled>Copy Markdown</button>
+            <button class="btn btn--sm" id="copyJson" type="button" disabled>Copy JSON</button>
+            <button class="btn btn--sm" id="dlJson" type="button" disabled>Download JSON</button>
+            <button class="btn btn--sm" id="dlCsv" type="button" disabled>Download CSV</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ========================== How it works ========================== -->
+      <section class="panel panel--method">
+        <h2 class="panel__title">How it works <small>what is measured, and what it is not</small></h2>
+        <div class="method">
+          <ol>
+            <li>
+              <strong>Refresh-rate calibration.</strong> Before anything runs, the harness samples idle
+              <code>requestAnimationFrame</code> intervals and takes the median to derive your display's
+              refresh rate. That sets the frame budget behind the jank and FPS columns, so on a
+              120&nbsp;Hz panel the budget works out at 8.3&nbsp;ms rather than 16.7&nbsp;ms.
+            </li>
+            <li>
+              <strong>Warm-up, discarded.</strong> Each case gets a short scroll burst whose frames are
+              thrown away, so JIT warm-up and first-paint costs never land in the reported numbers.
+            </li>
+            <li>
+              <strong>Mount.</strong> Constructs a fresh <code>CeriousScroll</code>, renders the first
+              viewport and forces a layout flush. Repeated <em>n</em> times; the <em>median</em> is
+              reported, which is far more stable than a mean under background noise.
+            </li>
+            <li>
+              <strong>Sustained scroll.</strong> A rAF loop applies a fixed pixel delta through
+              <code>scroll(delta, viewportHeight)</code> and repaints via <code>renderViewport()</code>,
+              bouncing at either end of the dataset. Two things are recorded per frame: the
+              <em>frame interval</em>, the wall-clock gap between frames, which carries browser layout,
+              paint and compositing with it; and the <em>JS work</em> the library itself spent. FPS comes
+              from the intervals, while frame p50/p95 report the library's own cost.
+            </li>
+            <li>
+              <strong>Random access.</strong> Jumps to uniformly random indices across the whole dataset
+              via <code>jumpToElement()</code>, repaints, and forces layout. This is the "seek to row
+              7,431,902" case, and it is where true virtualization parts company with DOM clustering.
+            </li>
+            <li>
+              <strong>DOM footprint.</strong> Counts every element resident inside the scroll surface at
+              steady state. This is the O(1) claim in its most falsifiable form: the count must not grow
+              with the dataset.
+            </li>
+            <li>
+              <strong>Row complexity.</strong> The complexity sweep pins the dataset size and walks the
+              row template instead. There is a plain card, a twelve-column grid row with a sparkline, a
+              media card with an aspect-ratio thumbnail, star rating and avatar stack, an inline
+              <code>&lt;svg&gt;</code> chart built from gridlines, bars, an area path and a polyline, a
+              row of native form controls, a sixteen-level-deep tree, and a panel carrying gradients,
+              drop shadows and a transform. Every one of them is built from local DOM only, with no
+              network images and no remote fonts, so a run stays deterministic and works offline. The
+              node count on each chip is measured rather than asserted: five rows go into a detached,
+              off-screen probe and the elements are counted.
+            </li>
+            <li>
+              <strong>The control group.</strong> With the baseline enabled, every dataset size is
+              also measured against a plain scrollable <code>&lt;div&gt;</code> holding every row,
+              which is what you get without a virtualiser. It is built the way a competent developer
+              would build it, one <code>DocumentFragment</code> and one append, and it renders the
+              identical row template, so it is a fair control rather than a strawman. Two safety
+              limits apply, and both are reported as results rather than hidden: a size needing more
+              than two million DOM nodes is refused outright, and a build that has not finished
+              within ten seconds is abandoned with the row count it reached. One caveat matters for
+              reading the numbers: per-frame JS <em>work</em> is not comparable between the two,
+              because the unvirtualized list does almost nothing in JavaScript per frame while the browser
+              pays the cost at layout and paint. The comparison table therefore comes down to
+              wall-clock frame interval, mount time, and resident DOM.
+            </li>
+            <li>
+              <strong>Engine cost against renderer cost.</strong> The harness counts renderer invocations
+              during the measured scroll. <em>Renders&nbsp;/&nbsp;frame</em> is how many rows genuinely
+              entered the viewport on that frame, and it should stay in the low single digits no matter
+              how large the dataset gets. <em>Per row</em> divides the total per-frame JS by those
+              invocations to give the average cost of building one row. Read together, they tell you
+              which side of the boundary your frame budget is going to: the virtualiser, or your own
+              row template.
+            </li>
+          </ol>
+          <div class="note">
+            <strong>Honest caveats.</strong> FPS is capped by your display. A 60&nbsp;Hz panel cannot
+            report much beyond 60, so <em>frame p50/p95</em>, the library's own JS cost, is the number
+            that actually measures headroom. Heap readings come from <code>performance.memory</code>,
+            which is Chromium-only, quantised, and at the mercy of garbage collection timing, so treat it
+            as an order-of-magnitude signal rather than a precise figure. Sub-millisecond results sit
+            close to the floor of the clock itself, since browsers quantise
+            <code>performance.now()</code> to roughly 100&nbsp;µs; a 0.30&nbsp;ms frame and a
+            0.35&nbsp;ms frame are not meaningfully different, so raise the fling velocity or reach for a
+            heavier row template when you want separation. Numbers also move with background tabs,
+            battery saver, thermal state and extensions, so close the noisy ones before quoting
+            anything. And remember the harness measures the scroller together with whatever renderer you
+            point it at: a heavier row template lifts every column, which is exactly why the template is
+            a knob you can turn.
+          </div>
+
+          <details class="env-details">
+            <summary>Full environment readout</summary>
+            <div class="kv" id="envKv"></div>
+          </details>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <script src="dist/cerious-scroll.bundle.js?v=20260922"></script>
+  <script>
+  (function () {
+    'use strict';
+
+    const CS = (typeof window.CeriousScroll === 'function')
+      ? window.CeriousScroll
+      : (window.CeriousScroll && window.CeriousScroll.CeriousScroll);
+
+    // ---------------------------------------------------------------- utils
+    const $ = (id) => document.getElementById(id);
+    const nf = new Intl.NumberFormat('en-US');
+    const nextFrame = () => new Promise((r) => requestAnimationFrame(r));
+    const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+    function hash(index, salt) {
+      let h = (index * 374761393 + (salt || 1) * 668265263) | 0;
+      h = (h ^ (h >>> 13)) * 1274126177;
+      return ((h ^ (h >>> 16)) >>> 0) / 4294967295;
+    }
+
+    function percentile(sorted, p) {
+      if (!sorted.length) return NaN;
+      const i = (sorted.length - 1) * (p / 100);
+      const lo = Math.floor(i), hi = Math.ceil(i);
+      return lo === hi ? sorted[lo] : sorted[lo] + (sorted[hi] - sorted[lo]) * (i - lo);
+    }
+    const sortNum = (a) => a.slice().sort((x, y) => x - y);
+    const mean = (a) => a.reduce((s, v) => s + v, 0) / (a.length || 1);
+
+    const ms = (v, d) => (Number.isFinite(v) ? v.toFixed(d == null ? 2 : d) : '—');
+    const heapMB = () => (performance.memory ? performance.memory.usedJSHeapSize / 1048576 : NaN);
+
+    function compactRows(n) {
+      if (n >= 1e6) return (n / 1e6) + 'M';
+      if (n >= 1e3) return (n / 1e3) + 'K';
+      return String(n);
+    }
+
+    // ----------------------------------------------------------- dropdown
+    /**
+     * Replace a native <select> with a DOM listbox.
+     *
+     * The reason is presentational, not stylistic: a <select>'s popup is drawn
+     * by the operating system, which means its list cannot be styled reliably
+     * and differs between Windows, macOS and Linux. Everything below is ordinary
+     * markup, so every platform gets the same control.
+     *
+     * The native element stays in the document and remains the single source of
+     * truth. Reading `select.value`, assigning to it, or dispatching `change`
+     * all behave exactly as before, so nothing else on the page had to change.
+     */
+    function enhanceSelect(select) {
+      const wrap = document.createElement('div');
+      wrap.className = 'dd';
+      select.parentNode.insertBefore(wrap, select);
+      wrap.appendChild(select);
+      select.classList.add('dd__native');
+      select.setAttribute('tabindex', '-1');
+      select.setAttribute('aria-hidden', 'true');
+
+      const caption = wrap.parentElement.querySelector('span');
+      const listId = 'ddlist-' + (select.id || Math.random().toString(36).slice(2));
+
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'dd__button';
+      button.setAttribute('role', 'combobox');
+      button.setAttribute('aria-haspopup', 'listbox');
+      button.setAttribute('aria-expanded', 'false');
+      button.setAttribute('aria-controls', listId);
+      if (caption) button.setAttribute('aria-label', caption.textContent.trim());
+
+      const label = document.createElement('span');
+      label.className = 'dd__label';
+      const chev = document.createElement('span');
+      chev.className = 'dd__chev';
+      button.append(label, chev);
+
+      const panel = document.createElement('div');
+      panel.className = 'dd__panel';
+      panel.id = listId;
+      panel.setAttribute('role', 'listbox');
+      panel.hidden = true;
+
+      wrap.append(button, panel);
+
+      // Mirror the native option tree, groups included.
+      const options = [];
+      Array.from(select.children).forEach((node) => {
+        if (node.tagName === 'OPTGROUP') {
+          const g = document.createElement('div');
+          g.className = 'dd__group';
+          g.textContent = node.label;
+          panel.appendChild(g);
+          Array.from(node.children).forEach((o) => panel.appendChild(makeOption(o)));
+        } else if (node.tagName === 'OPTION') {
+          panel.appendChild(makeOption(node));
+        }
+      });
+
+      function makeOption(optionEl) {
+        const el = document.createElement('div');
+        el.className = 'dd__opt';
+        el.setAttribute('role', 'option');
+        el.dataset.value = optionEl.value;
+        el.textContent = optionEl.textContent;
+        options.push(el);
+        el.addEventListener('click', () => {
+          choose(optionEl.value);
+          close(true);
+        });
+        return el;
+      }
+
+      let activeIndex = 0;
+
+      function syncFromNative() {
+        const current = select.value;
+        options.forEach((el, i) => {
+          const on = el.dataset.value === current;
+          el.classList.toggle('is-selected', on);
+          el.setAttribute('aria-selected', on ? 'true' : 'false');
+          if (on) activeIndex = i;
+        });
+        const selected = select.options[select.selectedIndex];
+        label.textContent = selected ? selected.textContent : '';
+      }
+
+      function setActive(i) {
+        activeIndex = Math.max(0, Math.min(options.length - 1, i));
+        options.forEach((el, k) => el.classList.toggle('is-active', k === activeIndex));
+        const el = options[activeIndex];
+        if (el) el.scrollIntoView({ block: 'nearest' });
+      }
+
+      function choose(value) {
+        if (select.value === value) return;
+        select.value = value;
+        syncFromNative();
+        select.dispatchEvent(new Event('change', { bubbles: true }));
+      }
+
+      function open() {
+        if (select.disabled) return;
+        // Open toward whichever side has more room, and never ask for more
+        // height than that side actually has. Flipping up unconditionally just
+        // moves the clipping from the bottom of the window to the top of it.
+        const rect = button.getBoundingClientRect();
+        const roomBelow = window.innerHeight - rect.bottom - 14;
+        const roomAbove = rect.top - 14;
+        const up = roomBelow < 220 && roomAbove > roomBelow;
+        wrap.classList.toggle('is-up', up);
+        panel.style.maxHeight = Math.max(140, Math.min(288, up ? roomAbove : roomBelow)) + 'px';
+        panel.hidden = false;
+        wrap.classList.add('is-open');
+        button.setAttribute('aria-expanded', 'true');
+        setActive(activeIndex);
+      }
+
+      function close(focusButton) {
+        panel.hidden = true;
+        wrap.classList.remove('is-open', 'is-up');
+        button.setAttribute('aria-expanded', 'false');
+        if (focusButton) button.focus();
+      }
+
+      const isOpen = () => !panel.hidden;
+
+      button.addEventListener('click', () => { isOpen() ? close(false) : open(); });
+
+      button.addEventListener('keydown', (e) => {
+        if (e.key === 'ArrowDown' || e.key === 'ArrowUp' || e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          if (!isOpen()) { open(); return; }
+          if (e.key === 'ArrowDown') setActive(activeIndex + 1);
+          else if (e.key === 'ArrowUp') setActive(activeIndex - 1);
+          else { choose(options[activeIndex].dataset.value); close(true); }
+        } else if (e.key === 'Escape' && isOpen()) {
+          e.preventDefault();
+          close(true);
+        } else if (e.key === 'Home' && isOpen()) {
+          e.preventDefault(); setActive(0);
+        } else if (e.key === 'End' && isOpen()) {
+          e.preventDefault(); setActive(options.length - 1);
+        } else if (e.key.length === 1 && /\S/.test(e.key)) {
+          // Type-ahead, the one affordance people miss most when a native
+          // select is replaced.
+          const needle = e.key.toLowerCase();
+          const from = isOpen() ? activeIndex + 1 : 0;
+          for (let k = 0; k < options.length; k++) {
+            const idx = (from + k) % options.length;
+            if (options[idx].textContent.trim().toLowerCase().startsWith(needle)) {
+              if (!isOpen()) choose(options[idx].dataset.value);
+              setActive(idx);
+              break;
+            }
+          }
+        }
+      });
+
+      document.addEventListener('pointerdown', (e) => {
+        if (isOpen() && !wrap.contains(e.target)) close(false);
+      });
+      // Keep the button in step when the value is set from code.
+      select.addEventListener('change', syncFromNative);
+      // Mirror the disabled state the run lock puts on the native element.
+      new MutationObserver(() => { button.disabled = select.disabled; })
+        .observe(select, { attributes: true, attributeFilter: ['disabled'] });
+
+      syncFromNative();
+    }
+
+    // ------------------------------------------------------------ profiles
+    const PALETTE = ['#78f3d2', '#8cb7ff', '#c9a2ff', '#f2c66d', '#ff9f9f', '#8ee6a0'];
+
+    function renderSimple(index, container, heightFn) {
+      const h = heightFn(index);
+      const color = PALETTE[index % PALETTE.length];
+      const row = document.createElement('div');
+      row.className = 'bench-row';
+      row.style.height = h + 'px';
+
+      const idx = document.createElement('span');
+      idx.className = 'bench-row__i';
+      idx.textContent = '#' + nf.format(index);
+
+      const bar = document.createElement('span');
+      bar.className = 'bench-row__bar';
+      bar.style.background = color;
+      bar.style.width = (25 + (index % 65)) + '%';
+
+      const meta = document.createElement('span');
+      meta.className = 'bench-row__h';
+      meta.textContent = h + 'px';
+
+      row.append(idx, bar, meta);
+      container.appendChild(row);
+    }
+
+    const TITLES = [
+      'Deploy succeeded', 'Latency spike detected', 'Cache invalidated',
+      'Pull request merged', 'Queue drained', 'Auth token refreshed',
+      'Index rebuilt', 'Snapshot uploaded',
+    ];
+
+    // No explicit height. The engine must measure this card from the DOM.
+    function renderRich(index, container) {
+      const color = PALETTE[index % PALETTE.length];
+      const lines = 1 + Math.floor(hash(index, 11) * 4);
+      const card = document.createElement('div');
+      card.className = 'bench-card';
+
+      const av = document.createElement('div');
+      av.className = 'bench-card__av';
+      av.style.background = color;
+      av.textContent = TITLES[index % TITLES.length][0];
+
+      const body = document.createElement('div');
+      body.className = 'bench-card__body';
+
+      const title = document.createElement('div');
+      title.className = 'bench-card__title';
+      title.textContent = TITLES[index % TITLES.length] + ' · #' + nf.format(index);
+      body.appendChild(title);
+
+      for (let i = 0; i < lines; i++) {
+        const line = document.createElement('div');
+        line.className = 'bench-card__line';
+        line.style.width = (52 + Math.floor(hash(index, 20 + i) * 46)) + '%';
+        body.appendChild(line);
+      }
+
+      const tags = document.createElement('div');
+      tags.className = 'bench-card__tags';
+      const tagCount = 1 + Math.floor(hash(index, 31) * 3);
+      for (let i = 0; i < tagCount; i++) {
+        const t = document.createElement('span');
+        t.className = 'bench-card__tag';
+        t.textContent = ['prod', 'edge', 'db', 'api', 'worker', 'cdn'][(index + i) % 6];
+        tags.appendChild(t);
+      }
+      body.appendChild(tags);
+
+      card.append(av, body);
+      container.appendChild(card);
+    }
+
+    // -------------------------------------------------- complex templates
+    // Everything below is built from local DOM only (no network images, no
+    // fonts to fetch, so a benchmark run is deterministic and works offline.
+    const SVG_NS = 'http://www.w3.org/2000/svg';
+
+    function el(tag, cls, text) {
+      const n = document.createElement(tag);
+      if (cls) n.className = cls;
+      if (text != null) n.textContent = text;
+      return n;
+    }
+    function svg(tag, attrs) {
+      const n = document.createElementNS(SVG_NS, tag);
+      for (const k in attrs) n.setAttribute(k, attrs[k]);
+      return n;
+    }
+
+    const SYMBOLS = ['ACME', 'GLBX', 'NRTH', 'VECT', 'QNTM', 'HELX', 'ORBT', 'PLSR'];
+    const REGIONS = ['us-east-1', 'eu-west-2', 'ap-south-1', 'sa-east-1'];
+    const OWNERS = ['A. Okafor', 'M. Duarte', 'S. Kaur', 'J. Lindqvist', 'R. Osei'];
+
+    /** Dense spreadsheet-style row: 12 cells, a badge, a delta and a sparkline. */
+    function renderGrid(index, container) {
+      const row = el('div', 'bx-grid');
+      row.appendChild(el('span', 'bx-grid__c bx-grid__c--id', '#' + nf.format(index)));
+      row.appendChild(el('span', 'bx-grid__c bx-grid__c--sym', SYMBOLS[index % SYMBOLS.length]));
+      for (let c = 0; c < 6; c++) {
+        const v = 10 + hash(index, 40 + c) * 9990;
+        row.appendChild(el('span', 'bx-grid__c', v.toFixed(2)));
+      }
+      const state = index % 7 === 0 ? ['warn', 'review'] : (index % 3 === 0 ? ['off', 'idle'] : ['ok', 'active']);
+      row.appendChild(el('span', 'bx-badge bx-badge--' + state[0], state[1]));
+      const d = (hash(index, 51) - 0.5) * 12;
+      row.appendChild(el('span', 'bx-grid__c bx-delta bx-delta--' + (d >= 0 ? 'up' : 'down'),
+        (d >= 0 ? '▲ ' : '▼ ') + Math.abs(d).toFixed(2) + '%'));
+      const spark = el('div', 'bx-spark');
+      for (let b = 0; b < 12; b++) {
+        const bar = document.createElement('i');
+        bar.style.height = (18 + hash(index, 60 + b) * 82) + '%';
+        spark.appendChild(bar);
+      }
+      row.appendChild(spark);
+      container.appendChild(row);
+    }
+
+    /** Media card: aspect-ratio thumbnail, overlay chrome, avatar stack, actions. */
+    function renderMedia(index, container) {
+      const c1 = PALETTE[index % PALETTE.length];
+      const c2 = PALETTE[(index + 3) % PALETTE.length];
+      const card = el('div', 'bx-media');
+
+      const thumb = el('div', 'bx-media__thumb');
+      thumb.style.background = 'linear-gradient(' + Math.floor(hash(index, 5) * 360) +
+        'deg, ' + c1 + ', ' + c2 + ')';
+      thumb.appendChild(el('div', 'bx-media__play', '▶'));
+      const secs = 30 + Math.floor(hash(index, 6) * 5400);
+      thumb.appendChild(el('div', 'bx-media__dur',
+        Math.floor(secs / 60) + ':' + String(secs % 60).padStart(2, '0')));
+      card.appendChild(thumb);
+
+      const body = el('div', 'bx-media__body');
+      body.appendChild(el('div', 'bx-media__title',
+        TITLES[index % TITLES.length] + ' · segment ' + nf.format(index)));
+      body.appendChild(el('div', 'bx-media__meta',
+        REGIONS[index % REGIONS.length] + ' · ' +
+        nf.format(120 + Math.floor(hash(index, 8) * 900000)) + ' views · ' +
+        (1 + Math.floor(hash(index, 9) * 30)) + 'd ago'));
+
+      const desc = el('div', 'bx-media__meta');
+      desc.appendChild(el('span', null, 'Captured by ' + OWNERS[index % OWNERS.length] + '. '));
+      desc.appendChild(el('span', null, 'Retention ' + (1 + Math.floor(hash(index, 15) * 12)) + ' months.'));
+      body.appendChild(desc);
+
+      const rating = el('div', 'bx-media__row');
+      const stars = el('div', 'bx-stars');
+      const score = 1 + Math.floor(hash(index, 16) * 5);
+      for (let st = 0; st < 5; st++) {
+        stars.appendChild(el('span', st < score ? 'is-on' : null, '★'));
+      }
+      rating.appendChild(stars);
+      rating.appendChild(el('span', 'bx-media__meta', score + '.0 · ' +
+        nf.format(20 + Math.floor(hash(index, 17) * 4000)) + ' ratings'));
+      body.appendChild(rating);
+
+      const track = el('div', 'bx-sink__track');
+      const fill = document.createElement('span');
+      fill.style.width = (10 + hash(index, 18) * 88) + '%';
+      track.appendChild(fill);
+      body.appendChild(track);
+
+      const row = el('div', 'bx-media__row');
+      const avatars = el('div', 'bx-avatars');
+      for (let a = 0; a < 3; a++) {
+        const av = document.createElement('span');
+        av.style.background = PALETTE[(index + a) % PALETTE.length];
+        av.textContent = OWNERS[(index + a) % OWNERS.length][0];
+        avatars.appendChild(av);
+      }
+      row.appendChild(avatars);
+      row.appendChild(el('button', 'bx-btn', 'Open'));
+      row.appendChild(el('button', 'bx-btn', 'Share'));
+      body.appendChild(row);
+
+      card.appendChild(body);
+      container.appendChild(card);
+    }
+
+    /** Inline SVG: gridlines, an area path, a polyline and a bar series. */
+    function renderChart(index, container) {
+      const wrap = el('div', 'bx-chart');
+      const head = el('div', 'bx-chart__head');
+      head.appendChild(el('b', null, SYMBOLS[index % SYMBOLS.length] + ' · series ' + nf.format(index)));
+      head.appendChild(el('span', null, (hash(index, 12) * 100).toFixed(2) + ' avg'));
+      wrap.appendChild(head);
+
+      const W = 300, H = 64, N = 28;
+      const chart = svg('svg', { viewBox: '0 0 ' + W + ' ' + H, preserveAspectRatio: 'none' });
+      for (let g = 1; g < 4; g++) {
+        chart.appendChild(svg('line', {
+          x1: 0, x2: W, y1: (H / 4) * g, y2: (H / 4) * g,
+          stroke: 'rgba(255,255,255,.08)', 'stroke-width': 1,
+        }));
+      }
+      const pts = [];
+      for (let i = 0; i < N; i++) {
+        const x = (W * i) / (N - 1);
+        const y = 6 + hash(index, 70 + i) * (H - 14);
+        pts.push(x.toFixed(1) + ',' + y.toFixed(1));
+        chart.appendChild(svg('rect', {
+          x: x - 2, y: H - 4 - hash(index, 90 + i) * 18,
+          width: 4, height: hash(index, 90 + i) * 18,
+          fill: 'rgba(140,183,255,.35)',
+        }));
+      }
+      chart.appendChild(svg('path', {
+        d: 'M0,' + H + ' L' + pts.join(' L') + ' L' + W + ',' + H + ' Z',
+        fill: 'rgba(120,243,210,.12)',
+      }));
+      chart.appendChild(svg('polyline', {
+        points: pts.join(' '), fill: 'none',
+        stroke: '#78f3d2', 'stroke-width': 1.5, 'stroke-linejoin': 'round',
+      }));
+      const lastPt = pts[pts.length - 1].split(',');
+      chart.appendChild(svg('circle', { cx: lastPt[0], cy: lastPt[1], r: 2.5, fill: '#78f3d2' }));
+      wrap.appendChild(chart);
+      container.appendChild(wrap);
+    }
+
+    /** Native form controls: the most layout-expensive widgets a row can hold. */
+    function renderForm(index, container) {
+      const row = el('div', 'bx-form');
+      row.appendChild(el('span', 'bx-form__label', 'row.' + nf.format(index)));
+
+      const text = document.createElement('input');
+      text.type = 'text';
+      text.value = SYMBOLS[index % SYMBOLS.length] + '-' + (1000 + (index % 8999));
+      text.setAttribute('aria-label', 'identifier');
+      row.appendChild(text);
+
+      const sel = document.createElement('select');
+      sel.setAttribute('aria-label', 'region');
+      for (let o = 0; o < 6; o++) {
+        const opt = document.createElement('option');
+        opt.textContent = REGIONS[o % REGIONS.length] + (o > 3 ? '-b' : '');
+        sel.appendChild(opt);
+      }
+      sel.selectedIndex = index % 6;
+      row.appendChild(sel);
+
+      ['sync', 'audit', 'alerts'].forEach((name, k) => {
+        const lab = el('label', 'bx-form__check');
+        const cb = document.createElement('input');
+        cb.type = 'checkbox';
+        cb.checked = hash(index, 100 + k) > 0.5;
+        lab.appendChild(cb);
+        lab.appendChild(document.createTextNode(name));
+        row.appendChild(lab);
+      });
+
+      const range = document.createElement('input');
+      range.type = 'range';
+      range.value = String(Math.floor(hash(index, 13) * 100));
+      range.setAttribute('aria-label', 'weight');
+      row.appendChild(range);
+      row.appendChild(el('button', 'bx-btn', 'Apply'));
+      container.appendChild(row);
+    }
+
+    const DEEP_LEVELS = 16;
+    const DEEP_TAGS = [
+      'section', 'header', 'div', 'ul', 'li', 'article', 'figure', 'span',
+      'p', 'em', 'small', 'label', 'nav', 'aside', 'main', 'footer',
+    ];
+
+    /**
+     * Sixteen elements nested inside one another, each wrapping the next, with
+     * the payload at the bottom. This is the one template that stresses DOM
+     * DEPTH rather than DOM WIDTH: style inheritance and layout recursion have
+     * to walk all sixteen levels to place a single row.
+     *
+     * The per-level labels are bare text nodes, not elements, precisely so the
+     * node count stays low and depth is the only variable that moved.
+     */
+    function renderNested(index, container) {
+      const root = el('div', 'bx-deep');
+
+      const head = el('div', 'bx-deep__head');
+      head.appendChild(el('span', 'bx-deep__chip', DEEP_LEVELS + ' levels deep'));
+      head.appendChild(el('b', null, 'node[' + nf.format(index) + ']'));
+      head.appendChild(el('span', 'bx-deep__note',
+        'each line is a real element wrapping the one below it'));
+      root.appendChild(head);
+
+      let cursor = root;
+      for (let d = 0; d < DEEP_LEVELS; d++) {
+        const lvl = el('div', 'bx-deep__lvl');
+        lvl.appendChild(document.createTextNode('<' + DEEP_TAGS[d] + '>'));
+        cursor.appendChild(lvl);
+        cursor = lvl;
+      }
+      cursor.appendChild(el('div', 'bx-deep__leaf',
+        OWNERS[index % OWNERS.length] + ' · payload at depth ' + DEEP_LEVELS));
+
+      container.appendChild(root);
+    }
+
+    /** Everything at once: gradients, drop shadows, a transform, SVG and a grid. */
+    function renderSink(index, container) {
+      const color = PALETTE[index % PALETTE.length];
+      const card = el('div', 'bx-sink');
+
+      const head = el('div', 'bx-sink__head');
+      const icon = el('div', 'bx-sink__icon');
+      icon.style.background = color;
+      const ic = svg('svg', { viewBox: '0 0 24 24' });
+      ic.appendChild(svg('path', {
+        d: 'M4 18 L9 9 L14 14 L20 5', fill: 'none', stroke: '#061019',
+        'stroke-width': 2.5, 'stroke-linecap': 'round', 'stroke-linejoin': 'round',
+      }));
+      icon.appendChild(ic);
+      head.appendChild(icon);
+      const titles = el('div', 'bx-sink__titles');
+      titles.appendChild(el('div', 'bx-sink__title',
+        TITLES[index % TITLES.length] + ' · ' + nf.format(index)));
+      titles.appendChild(el('div', 'bx-sink__sub',
+        OWNERS[index % OWNERS.length] + ' · updated ' +
+        (1 + Math.floor(hash(index, 19) * 59)) + 'm ago'));
+      head.appendChild(titles);
+      head.appendChild(el('span', 'bx-badge bx-badge--ok', REGIONS[index % REGIONS.length]));
+      head.appendChild(el('button', 'bx-btn', '⋯'));
+      card.appendChild(head);
+
+      const stats = el('div', 'bx-sink__stats');
+      ['p50', 'p95', 'errors', 'rps', 'cpu', 'queue'].forEach((k, i) => {
+        const cell = el('div', 'bx-sink__stat');
+        cell.appendChild(el('i', null, k));
+        cell.appendChild(el('b', null, (hash(index, 110 + i) * 400).toFixed(1)));
+        stats.appendChild(cell);
+      });
+      card.appendChild(stats);
+
+      const band = el('div', 'bx-spark');
+      band.style.height = '26px';
+      for (let b = 0; b < 20; b++) {
+        const bar = document.createElement('i');
+        bar.style.height = (14 + hash(index, 130 + b) * 86) + '%';
+        bar.style.background = b % 4 === 0 ? 'rgba(120,243,210,.6)' : 'rgba(140,183,255,.45)';
+        band.appendChild(bar);
+      }
+      card.appendChild(band);
+
+      const track = el('div', 'bx-sink__track');
+      track.style.marginTop = '10px';
+      const fill = document.createElement('span');
+      fill.style.width = (12 + hash(index, 14) * 86) + '%';
+      track.appendChild(fill);
+      card.appendChild(track);
+
+      const foot = el('div', 'bx-sink__foot');
+      ['prod', 'edge', 'db', 'api', 'cache', 'worker'].forEach((t, i) => {
+        foot.appendChild(el('span', 'bx-badge bx-badge--' +
+          (i === 0 ? 'ok' : i === 1 ? 'warn' : 'off'), t));
+      });
+      foot.appendChild(el('button', 'bx-btn', 'Inspect'));
+      foot.appendChild(el('button', 'bx-btn', 'Mute'));
+      card.appendChild(foot);
+
+      container.appendChild(card);
+    }
+
+    const PROFILES = {
+      uniform: {
+        label: 'Uniform 44px',
+        note: 'Control case: one fixed height, so there is nothing to measure and nothing to vary.',
+        render: (i, c) => renderSimple(i, c, () => 44),
+      },
+      mixed: {
+        label: 'Mixed 44/64/104px',
+        note: 'Three repeating heights, so the engine can no longer assume a constant row height.',
+        render: (i, c) => renderSimple(i, c, (n) => [44, 64, 104][n % 3]),
+      },
+      wild: {
+        label: 'Wild 32-420px',
+        note: 'Heights scattered from 32px to 420px with no pattern, forcing a real measurement on every row.',
+        render: (i, c) => renderSimple(i, c, (n) => 32 + Math.floor(hash(n, 7) * 388)),
+      },
+      rich: {
+        label: 'Rich cards',
+        note: 'The everyday card: avatar, title, a few text lines and tags. Height comes from the content.',
+        render: renderRich,
+      },
+      grid: {
+        label: 'Dense data grid',
+        note: 'Twelve columns of tabular numbers plus a badge, a delta and a sparkline. Many siblings per row.',
+        render: renderGrid,
+      },
+      media: {
+        label: 'Media cards',
+        note: 'Aspect-ratio thumbnail with overlay chrome, star rating, progress, avatar stack and buttons.',
+        render: renderMedia,
+      },
+      chart: {
+        label: 'Inline SVG charts',
+        note: 'A real inline SVG per row: gridlines, 28 bars, a filled area path, a polyline and an end marker.',
+        render: renderChart,
+      },
+      form: {
+        label: 'Native form controls',
+        note: 'Genuine widgets: text input, six-option select, checkboxes, range and button. Expensive to lay out.',
+        render: renderForm,
+      },
+      nested: {
+        label: 'Deep tree (16 levels)',
+        note: 'The depth test: 16 elements wrapping one another. Adds ancestors rather than siblings, so the browser walks 16 levels of style and layout for one row.',
+        render: renderNested,
+      },
+      sink: {
+        label: 'Kitchen sink',
+        note: 'Everything at once: gradients, drop shadows, a transform, an SVG glyph, a stat grid and six badges.',
+        render: renderSink,
+      },
+    };
+
+    const COMPLEX_KEYS = ['rich', 'grid', 'media', 'chart', 'form', 'nested', 'sink'];
+    const SWEEP_KEYS = ['mixed'].concat(COMPLEX_KEYS);
+
+    /** Build one row of a profile off-screen and count what it costs in nodes. */
+    function profileFootprint(profileKey) {
+      const probe = document.createElement('div');
+      probe.style.cssText = 'position:absolute;left:-99999px;top:0;width:900px;visibility:hidden';
+      document.body.appendChild(probe);
+      let nodes = 0;
+      for (let i = 0; i < 5; i++) {
+        const cell = document.createElement('div');
+        probe.appendChild(cell);
+        PROFILES[profileKey].render(i, cell);
+        nodes += cell.querySelectorAll('*').length;
+      }
+      probe.remove();
+      return Math.round(nodes / 5);
+    }
+
+    // ------------------------------------------------------------- the rig
+    const stage = $('stage');
+    const stageDot = $('stageDot');
+    const stageLabel = $('stageLabel');
+
+    function buildRig(total, profileKey) {
+      const profile = PROFILES[profileKey];
+      // Tear the previous rig down properly: dispose the engine and detach its
+      // scrollbar, not just drop the host, or the old instance keeps observing.
+      if (state.rig) { try { state.rig.destroy(); } catch (e) {} state.rig = null; }
+      Array.from(stage.querySelectorAll('.bench-host')).forEach((n) => n.remove());
+
+      const host = document.createElement('div');
+      host.className = 'bench-host';
+      const content = document.createElement('div');
+      content.setAttribute('data-cerious-scroll-content', '');
+      content.style.cssText = 'position:relative;width:100%;height:100%;overflow-y:clip;overflow-x:hidden;';
+      host.appendChild(content);
+      stage.appendChild(host);
+
+      // Counting renderer invocations is how the harness separates engine cost
+      // from row cost: only rows that newly entered the viewport get rendered,
+      // so `renders / frame` stays small no matter how big the dataset is.
+      let renderCalls = 0;
+      const render = (index, container) => {
+        renderCalls++;
+        container.textContent = '';
+        profile.render(index, container);
+      };
+
+      let scroller = null;
+      const vh = () => content.clientHeight || host.clientHeight || 0;
+
+      const rig = {
+        host: host,
+        content: content,
+        get scroller() { return scroller; },
+        /** Construct + first paint. Returns elapsed ms including layout flush. */
+        mount: function () {
+          const t0 = performance.now();
+          scroller = new CS(host, total, {
+            keyboard: { enabled: false },
+            wheel: { enabled: true },
+            touch: { enabled: true },
+            onScroll: function () { rig.paint(); },
+          });
+          scroller.renderViewport(vh(), content, render);
+          // Force style + layout so the measured cost is the real one.
+          void content.offsetHeight;
+          return performance.now() - t0;
+        },
+        paint: function () { return scroller.renderViewport(vh(), content, render); },
+        pct: function () {
+          try { return scroller.calculateScrollPercentage(); } catch (e) { return 0; }
+        },
+        nodes: function () { return content.querySelectorAll('*').length; },
+        rows: function () { return content.children.length; },
+        get renderCalls() { return renderCalls; },
+        resetRenderCalls: function () { renderCalls = 0; },
+        /** Median height the engine actually measured for the resident rows. */
+        medianRowHeight: function () {
+          const hs = Array.from(content.children)
+            .map((n) => n.offsetHeight)
+            .filter((h) => h > 0);
+          return hs.length ? percentile(sortNum(hs), 50) : NaN;
+        },
+        destroy: function () {
+          if (scroller) {
+            try { scroller.detachScrollbar(host); } catch (e) {}
+            try { scroller.dispose(); } catch (e) {}
+          }
+          scroller = null;
+          host.remove();
+          if (state.rig === rig) state.rig = null;
+        },
+      };
+      state.rig = rig;
+      return rig;
+    }
+
+    // ----------------------------------------------- unvirtualized baseline
+    // The control group: a plain scrollable div with EVERY row mounted, which is
+    // what you get without virtualization. It exists so the virtualized numbers
+    // have something to be measured against. It is built the way a competent
+    // developer would build it (one DocumentFragment, one append), not
+    // strawmanned, and it renders the identical row template.
+
+    /** Refuse to build past this many estimated DOM nodes; the tab would die. */
+    const BASELINE_NODE_CEILING = 2000000;
+    /** Abandon a build that has not finished within this wall-clock budget. */
+    const BASELINE_BUILD_BUDGET_MS = 10000;
+
+    function buildBaselineRig(total, profileKey) {
+      const profile = PROFILES[profileKey];
+      if (state.rig) { try { state.rig.destroy(); } catch (e) {} state.rig = null; }
+      Array.from(stage.querySelectorAll('.bench-host')).forEach((n) => n.remove());
+
+      const host = document.createElement('div');
+      host.className = 'bench-host baseline-host';
+      const list = document.createElement('div');
+      host.appendChild(list);
+      stage.appendChild(host);
+
+      const rig = {
+        host: host,
+        content: list,
+        rowsMounted: 0,
+        status: 'ok',
+        /**
+         * Mount every row. Chunked only so the wall-clock budget can be checked;
+         * it is still one synchronous pass, so the reported time is honest.
+         */
+        mount: function () {
+          const t0 = performance.now();
+          const frag = document.createDocumentFragment();
+          let i = 0;
+          while (i < total) {
+            const chunkEnd = Math.min(i + 500, total);
+            for (; i < chunkEnd; i++) {
+              const cell = document.createElement('div');
+              profile.render(i, cell);
+              frag.appendChild(cell);
+            }
+            if (performance.now() - t0 > BASELINE_BUILD_BUDGET_MS) {
+              rig.status = 'timeout';
+              break;
+            }
+          }
+          rig.rowsMounted = i;
+          list.appendChild(frag);
+          void host.offsetHeight;
+          return performance.now() - t0;
+        },
+        // Nothing to repaint: the browser owns scrolling and painting here.
+        paint: function () {},
+        scroll: function (delta) { host.scrollTop += delta; },
+        pct: function () {
+          const range = host.scrollHeight - host.clientHeight;
+          return range > 0 ? (host.scrollTop / range) * 100 : 100;
+        },
+        jumpTo: function (index) {
+          const child = list.children[Math.min(index, list.children.length - 1)];
+          if (child) host.scrollTop = child.offsetTop;
+        },
+        nodes: function () { return list.querySelectorAll('*').length; },
+        rows: function () { return list.children.length; },
+        destroy: function () {
+          list.textContent = '';
+          host.remove();
+          if (state.rig === rig) state.rig = null;
+        },
+      };
+      state.rig = rig;
+      return rig;
+    }
+
+    /** Drive the unvirtualized list with the same rAF cadence used for the engine. */
+    async function driveBaselineScroll(rig, durationMs, velocity, collect) {
+      const intervals = [];
+      let dir = 1;
+      let last = await nextFrame();
+      const t0 = last;
+      while (true) {
+        if (state.abort) break;
+        rig.scroll(dir * velocity);
+        const now = await nextFrame();
+        if (collect) intervals.push(now - last);
+        last = now;
+        const p = rig.pct();
+        if (p >= 99.5) dir = -1;
+        else if (p <= 0.5) dir = 1;
+        if (now - t0 >= durationMs) break;
+      }
+      return intervals;
+    }
+
+    /**
+     * Measure the unvirtualized list at one dataset size. Returns a row whose `status`
+     * says whether it ran at all: 'ok', 'refused' (too large to attempt without
+     * killing the tab) or 'timeout' (the build blew its wall-clock budget).
+     * A refusal is a result, not an error.
+     */
+    async function measureBaselineCase(total, profileKey, cfg, env, ui) {
+      const nodesPerRow = profileFootprint(profileKey);
+      const estimatedNodes = total * (nodesPerRow + 1);
+      const base = {
+        total: total,
+        profile: profileKey,
+        nodesPerRow: nodesPerRow,
+        estimatedNodes: estimatedNodes,
+      };
+
+      if (estimatedNodes > BASELINE_NODE_CEILING) {
+        ui.setStatus(ui.label + ': unvirtualized baseline refused, ' +
+          nf.format(estimatedNodes) + ' nodes would exhaust the tab.', null);
+        return Object.assign(base, {
+          status: 'refused',
+          note: 'Would need about ' + nf.format(estimatedNodes) +
+            ' DOM nodes. Not attempted: the tab would run out of memory.',
+        });
+      }
+
+      ui.setStage('<b>' + ui.label + '</b> · unvirtualized · mounting every row', true);
+      ui.setStatus(ui.label + ': mounting the unvirtualized baseline…', null);
+      await nextFrame();
+
+      const rig = buildBaselineRig(total, profileKey);
+      const mountMs = rig.mount();
+      await nextFrame();
+
+      if (rig.status === 'timeout') {
+        const partial = {
+          status: 'timeout',
+          mountMs: mountMs,
+          rowsMounted: rig.rowsMounted,
+          note: 'Abandoned after ' + (mountMs / 1000).toFixed(1) + 's with ' +
+            nf.format(rig.rowsMounted) + ' of ' + nf.format(total) + ' rows mounted.',
+        };
+        rig.destroy();
+        return Object.assign(base, partial);
+      }
+
+      // Warm-up, discarded, exactly as for the real engine.
+      await driveBaselineScroll(rig, Math.min(700, cfg.scrollSampleMs / 2), cfg.velocityPxPerFrame, false);
+
+      ui.setStage('<b>' + ui.label + '</b> · unvirtualized · sustained scroll', true);
+      ui.setStatus(ui.label + ': scrolling the unvirtualized baseline…', null);
+      const intervals = await driveBaselineScroll(
+        rig, cfg.scrollSampleMs, cfg.velocityPxPerFrame, true);
+
+      const domNodes = rig.nodes();
+      const domRows = rig.rows();
+
+      const jumpTimes = [];
+      for (let k = 0; k < cfg.jumpSamples && !state.abort; k++) {
+        await nextFrame();
+        const target = Math.floor(hash(k, 97) * total);
+        const t0 = performance.now();
+        rig.jumpTo(target);
+        void rig.host.offsetHeight;
+        jumpTimes.push(performance.now() - t0);
+      }
+
+      const heap = heapMB();
+      const iv = sortNum(intervals);
+      const jt = sortNum(jumpTimes);
+      const budget = env.frameBudgetMs;
+      const janked = intervals.filter((v) => v > budget * 1.5).length;
+
+      rig.destroy();
+
+      return Object.assign(base, {
+        status: 'ok',
+        mountMs: mountMs,
+        rowsMounted: rig.rowsMounted,
+        fps: intervals.length ? 1000 / mean(intervals) : NaN,
+        frameIntervalP50: percentile(iv, 50),
+        frameIntervalP95: percentile(iv, 95),
+        worstFrameMs: iv.length ? iv[iv.length - 1] : NaN,
+        jankPct: intervals.length ? (janked / intervals.length) * 100 : NaN,
+        frameCount: intervals.length,
+        jumpP50: percentile(jt, 50),
+        jumpP95: percentile(jt, 95),
+        domNodes: domNodes,
+        domRows: domRows,
+        heapMB: Number.isFinite(heap) ? heap : NaN,
+      });
+    }
+
+    // ------------------------------------------------------------ measures
+    async function measureRefreshRate(sampleMs) {
+      const gaps = [];
+      let last = await nextFrame();
+      const start = last;
+      while (last - start < sampleMs) {
+        const now = await nextFrame();
+        gaps.push(now - last);
+        last = now;
+      }
+      const med = percentile(sortNum(gaps), 50);
+      const hz = med > 0 ? Math.round(1000 / med) : 60;
+      // Snap to the common panel rates so a noisy sample doesn't read "58 Hz".
+      const snaps = [60, 75, 90, 120, 144, 165, 240];
+      const near = snaps.find((s) => Math.abs(s - hz) <= Math.max(3, s * 0.06));
+      return near || hz;
+    }
+
+    async function driveScroll(rig, durationMs, velocity, collect) {
+      const intervals = [];
+      const work = [];
+      let dir = 1;
+      let last = await nextFrame();
+      const t0 = last;
+
+      while (true) {
+        if (state.abort) break;
+        const w0 = performance.now();
+        rig.scroller.scroll(dir * velocity, rig.content.clientHeight || rig.host.clientHeight);
+        rig.paint();
+        const w1 = performance.now();
+
+        const now = await nextFrame();
+        if (collect) {
+          intervals.push(now - last);
+          work.push(w1 - w0);
+        }
+        last = now;
+
+        const p = rig.pct();
+        if (p >= 99.5) dir = -1;
+        else if (p <= 0.5) dir = 1;
+
+        if (now - t0 >= durationMs) break;
+      }
+      return { intervals: intervals, work: work };
+    }
+
+    async function measureJumps(rig, total, count) {
+      const times = [];
+      for (let k = 0; k < count; k++) {
+        if (state.abort) break;
+        await nextFrame();
+        const target = Math.floor(hash(k, 97) * total);
+        const t0 = performance.now();
+        rig.scroller.jumpToElement(target);
+        rig.paint();
+        void rig.content.offsetHeight;
+        times.push(performance.now() - t0);
+      }
+      return times;
+    }
+
+    // ---------------------------------------------------------- run engine
+    const SIZES = [1000, 10000, 100000, 1000000, 10000000];
+    const DEFAULT_ON = [1000, 10000, 100000, 1000000];
+
+    const state = {
+      running: false,
+      abort: false,
+      rig: null,
+      env: null,
+      results: null,
+      complexity: [],
+      selected: 0,
+      cxSelected: -1,
+      // The page shows one benchmark at a time. Everything below step 1 follows
+      // this: which controls, which table, which chart, which timeline.
+      mode: 'scale',
+      // Which result region step 3 is showing: 'table', 'timeline' or 'chart'.
+      view: 'table',
+      baseline: [],
+      // Set when a run was cut short because the tab went into the background.
+      hiddenAbort: false,
+    };
+
+    function selectedSizes() {
+      return Array.from(document.querySelectorAll('#sizes input:checked'))
+        .map((el) => Number(el.value))
+        .sort((a, b) => a - b);
+    }
+
+    function setStatus(text, pct) {
+      $('runStatus').textContent = text;
+      if (pct != null) $('progressFill').style.width = Math.max(0, Math.min(100, pct)) + '%';
+    }
+
+    function setStage(label, live) {
+      stageLabel.innerHTML = label;
+      stageDot.classList.toggle('is-live', !!live);
+    }
+
+    async function collectEnv() {
+      const ua = navigator.userAgentData;
+      let browser = '';
+      if (ua && ua.brands && ua.brands.length) {
+        const b = ua.brands.filter((x) => !/Not.?A.?Brand/i.test(x.brand)).pop() || ua.brands[0];
+        browser = b.brand + ' ' + b.version;
+      } else {
+        const m = navigator.userAgent.match(/(Firefox|Edg|Chrome|Version)\/([\d.]+)/);
+        browser = m ? (m[1] === 'Version' ? 'Safari' : m[1]) + ' ' + m[2].split('.')[0] : 'Unknown';
+      }
+      const hz = await measureRefreshRate(700);
+      return {
+        browser: browser,
+        platform: (ua && ua.platform) || navigator.platform || 'Unknown',
+        cores: navigator.hardwareConcurrency || null,
+        deviceMemoryGB: navigator.deviceMemory || null,
+        dpr: window.devicePixelRatio || 1,
+        viewport: window.innerWidth + '×' + window.innerHeight,
+        surface: Math.round(stage.clientWidth) + '×' + Math.round(stage.clientHeight),
+        refreshHz: hz,
+        frameBudgetMs: 1000 / hz,
+        heapApi: !!performance.memory,
+        library: 'cerious-scroll',
+        timestamp: new Date().toISOString(),
+      };
+    }
+
+    function renderEnv(env) {
+      // Compact strip under the hero: the few facts a reader needs to interpret
+      // every number on the page without opening the full readout.
+      const chips = [
+        ['', env.browser],
+        ['', env.platform],
+        ['cores', env.cores || '?'],
+        ['refresh', env.refreshHz + ' Hz'],
+        ['budget', env.frameBudgetMs.toFixed(1) + ' ms'],
+        ['surface', env.surface],
+      ];
+      $('envChips').innerHTML = chips.map((c) =>
+        '<span>' + (c[0] ? c[0] + ' ' : '') + '<b>' + c[1] + '</b></span>'
+      ).join('');
+
+      const rows = [
+        ['Browser', env.browser],
+        ['Platform', env.platform],
+        ['Logical cores', env.cores ? env.cores + '' : 'not exposed'],
+        ['Device memory', env.deviceMemoryGB ? env.deviceMemoryGB + ' GB' : 'not exposed'],
+        ['Device pixel ratio', env.dpr + '×'],
+        ['Window', env.viewport + ' px'],
+        ['Scroll surface', env.surface + ' px'],
+        ['Measured refresh rate', env.refreshHz + ' Hz'],
+        ['Frame budget', env.frameBudgetMs.toFixed(1) + ' ms'],
+        ['Heap API', env.heapApi ? 'available (Chromium)' : 'unavailable in this browser'],
+      ];
+      $('envKv').innerHTML = rows
+        .map((r) => '<div><span class="k">' + r[0] + '</span><span class="v">' + r[1] + '</span></div>')
+        .join('');
+    }
+
+    /**
+     * One complete measurement of a (dataset size × row template) pair.
+     * Shared by both sweeps so the two tables are strictly comparable.
+     * Returns null if the run was aborted mid-way.
+     */
+    async function measureCase(total, profileKey, cfg, env, ui) {
+      const label = ui.label;
+      const at = (frac) => ui.base + ui.span * frac;
+      const durationMs = cfg.scrollSampleMs;
+      const velocity = cfg.velocityPxPerFrame;
+
+      // ---- mount (median of reps) ---------------------------------------
+      ui.setStage('<b>' + label + '</b> · mount ×' + cfg.mountReps, true);
+      ui.setStatus(label + ': measuring mount…', at(0.05));
+      const mountTimes = [];
+      let rig = null;
+      for (let r = 0; r < cfg.mountReps && !state.abort; r++) {
+        if (rig) rig.destroy();
+        rig = buildRig(total, profileKey);
+        mountTimes.push(rig.mount());
+        await nextFrame();
+      }
+      if (state.abort) { if (rig) rig.destroy(); return null; }
+
+      // ---- warm-up (discarded) ------------------------------------------
+      ui.setStage('<b>' + label + '</b> · warm-up', true);
+      ui.setStatus(label + ': warming up…', at(0.2));
+      await driveScroll(rig, Math.min(700, durationMs / 2), velocity, false);
+
+      const heapBefore = heapMB();
+      const rowHeight = rig.medianRowHeight();
+
+      // ---- sustained scroll ----------------------------------------------
+      ui.setStage('<b>' + label + '</b> · sustained scroll @ ' + velocity + ' px/frame', true);
+      ui.setStatus(label + ': sustained scroll for ' + (durationMs / 1000) + 's…', at(0.3));
+      rig.resetRenderCalls();
+      const scrollRes = await driveScroll(rig, durationMs, velocity, true);
+      const renderCalls = rig.renderCalls;
+      if (state.abort) { rig.destroy(); return null; }
+
+      // ---- steady-state DOM footprint -------------------------------------
+      const domNodes = rig.nodes();
+      const domRows = rig.rows();
+
+      // ---- random access ---------------------------------------------------
+      ui.setStage('<b>' + label + '</b> · random access ×' + cfg.jumpSamples, true);
+      ui.setStatus(label + ': random-access seeks…', at(0.75));
+      const jumpTimes = await measureJumps(rig, total, cfg.jumpSamples);
+
+      const heapAfter = heapMB();
+
+      // ---- reduce -----------------------------------------------------------
+      const iv = sortNum(scrollRes.intervals);
+      const wk = sortNum(scrollRes.work);
+      const jt = sortNum(jumpTimes);
+      const budget = env.frameBudgetMs;
+      const janked = scrollRes.intervals.filter((v) => v > budget * 1.5).length;
+      const totalWork = scrollRes.work.reduce((a, b) => a + b, 0);
+      const frameCount = scrollRes.intervals.length;
+
+      const result = {
+        total: total,
+        profile: profileKey,
+        profileLabel: PROFILES[profileKey].label,
+        nodesPerRow: profileFootprint(profileKey),
+        rowHeightPx: rowHeight,
+        mountMs: percentile(sortNum(mountTimes), 50),
+        mountSamples: mountTimes.map((v) => +v.toFixed(3)),
+        frameWorkP50: percentile(wk, 50),
+        frameWorkP95: percentile(wk, 95),
+        frameWorkMax: wk.length ? wk[wk.length - 1] : NaN,
+        fps: frameCount ? 1000 / mean(scrollRes.intervals) : NaN,
+        frameIntervalP50: percentile(iv, 50),
+        frameIntervalP95: percentile(iv, 95),
+        worstFrameMs: iv.length ? iv[iv.length - 1] : NaN,
+        jankPct: frameCount ? (janked / frameCount) * 100 : NaN,
+        frameCount: frameCount,
+        renderCalls: renderCalls,
+        rendersPerFrame: frameCount ? renderCalls / frameCount : NaN,
+        // Average JS time attributable to building a single row, in microseconds.
+        usPerRender: renderCalls ? (totalWork * 1000) / renderCalls : NaN,
+        jumpP50: percentile(jt, 50),
+        jumpP95: percentile(jt, 95),
+        jumpMax: jt.length ? jt[jt.length - 1] : NaN,
+        domNodes: domNodes,
+        domRows: domRows,
+        heapMB: Number.isFinite(heapAfter) ? heapAfter : NaN,
+        heapDeltaMB: (Number.isFinite(heapAfter) && Number.isFinite(heapBefore))
+          ? heapAfter - heapBefore : NaN,
+        series: {
+          intervals: scrollRes.intervals.map((v) => +v.toFixed(3)),
+          work: scrollRes.work.map((v) => +v.toFixed(3)),
+        },
+      };
+
+      rig.destroy();
+      ui.setStatus(label + ': done.', at(1));
+      return result;
+    }
+
+    /**
+     * Browsers suspend requestAnimationFrame for hidden tabs. The harness is
+     * built entirely on rAF, so a backgrounded run does not slow down, it stops
+     * dead and then reports frames that never happened. Refuse to start, and
+     * abandon a run in progress, rather than publishing a meaningless number.
+     */
+    const BACKGROUND_MSG =
+      'This tab is in the background. Browsers suspend animation frames for hidden ' +
+      'tabs, so nothing can be measured. Bring the page to the front and press Run again.';
+
+    function tabIsHidden() {
+      return document.visibilityState === 'hidden';
+    }
+
+    document.addEventListener('visibilitychange', () => {
+      if (!state.running || !tabIsHidden()) return;
+      state.abort = true;
+      state.hiddenAbort = true;
+      const msg = 'Stopping: the tab went into the background, so the remaining ' +
+        'frames would be meaningless.';
+      $('runStatus').textContent = msg;
+      $('cxStatus').textContent = msg;
+    });
+
+    function setRunning(on) {
+      state.running = on;
+      $('runBtn').disabled = on;
+      $('cxRunBtn').disabled = on;
+      // Switching benchmarks mid-run would tear down the rig being measured, so
+      // the chooser goes dead until the run finishes or is stopped.
+      Array.from(document.querySelectorAll('[data-mode-btn]')).forEach((b) => {
+        b.disabled = on;
+      });
+      // A finished run leaves its own rig on the stage, so forget which template
+      // the idle preview was showing and let the next pick remount freely.
+      if (!on) previewKey = null;
+    }
+
+    function enableExports() {
+      const any = (state.results && state.results.rows.length) || state.complexity.length;
+      ['copyMd', 'copyJson', 'dlJson', 'dlCsv'].forEach((id) => { $(id).disabled = !any; });
+    }
+
+    async function runBenchmark() {
+      if (!CS) {
+        setStatus('CeriousScroll bundle not found. Build dist/ first.', 0);
+        return;
+      }
+      const sizes = selectedSizes();
+      if (!sizes.length) {
+        setStatus('Pick at least one dataset size.', 0);
+        return;
+      }
+      if (tabIsHidden()) {
+        setStatus(BACKGROUND_MSG, 0);
+        return;
+      }
+      state.hiddenAbort = false;
+      const wantBaseline = $('baselineToggle').checked;
+      state.baseline = [];
+
+      state.abort = false;
+      setMode('scale');
+      setRunning(true);
+      $('abortBtn').disabled = false;
+
+      const profileKey = $('profile').value;
+      const durationMs = Number($('duration').value);
+      const velocity = Number($('velocity').value);
+      const reps = Number($('reps').value);
+
+      setStatus('Calibrating display…', 1);
+      setStage('calibrating', true);
+      const env = await collectEnv();
+      state.env = env;
+      renderEnv(env);
+
+      const run = {
+        env: env,
+        config: {
+          profile: profileKey,
+          profileLabel: PROFILES[profileKey].label,
+          scrollSampleMs: durationMs,
+          velocityPxPerFrame: velocity,
+          mountReps: reps,
+          jumpSamples: 40,
+          baseline: wantBaseline,
+        },
+        rows: [],
+      };
+
+      // Phase weighting for the progress bar.
+      const perSize = 100 / sizes.length;
+
+      for (let s = 0; s < sizes.length && !state.abort; s++) {
+        const total = sizes[s];
+        const base = s * perSize;
+        const row = await measureCase(total, profileKey, run.config, env, {
+          label: nf.format(total) + ' rows',
+          base: base,
+          span: perSize,
+          setStatus: setStatus,
+          setStage: setStage,
+        });
+        if (!row) break;
+        run.rows.push(row);
+        renderActive();
+
+        if (wantBaseline && !state.abort) {
+          const b = await measureBaselineCase(total, profileKey, run.config, env, {
+            label: nf.format(total) + ' rows',
+            setStatus: setStatus,
+            setStage: setStage,
+          });
+          if (b) { state.baseline.push(b); renderActive(); }
+        }
+        await sleep(80);
+      }
+
+      state.results = run;
+      setRunning(false);
+      $('abortBtn').disabled = true;
+
+      // Leave the surface alive on the largest size that finished, so the stage
+      // is something you can grab and scroll rather than an empty rectangle.
+      const restTotal = run.rows.length ? run.rows[run.rows.length - 1].total : sizes[0];
+      const restRig = buildRig(restTotal, profileKey);
+      restRig.mount();
+      setStage(
+        (state.abort ? 'stopped' : 'complete') + ' · <b>' + nf.format(restTotal) +
+        ' rows</b> · scroll me',
+        false
+      );
+      setStatus(
+        state.hiddenAbort
+          ? 'Stopped after ' + run.rows.length + ' of ' + sizes.length +
+            ' sizes: the tab was backgrounded mid-run, so the rest was discarded.'
+          : state.abort
+          ? 'Stopped after ' + run.rows.length + ' of ' + sizes.length + ' sizes.'
+          : 'Complete. ' + run.rows.length + ' dataset size' + (run.rows.length === 1 ? '' : 's') +
+            ' measured with the "' + PROFILES[profileKey].label + '" template.',
+        100
+      );
+      enableExports();
+      renderActive();
+    }
+
+    // ------------------------------------------------- complexity sweep run
+    async function runComplexity() {
+      if (!CS) return;
+      const keys = Array.from(document.querySelectorAll('#cxProfiles input:checked'))
+        .map((el2) => el2.value);
+      if (!keys.length) {
+        $('cxStatus').textContent = 'Pick at least one row template.';
+        return;
+      }
+      if (tabIsHidden()) {
+        $('cxStatus').textContent = BACKGROUND_MSG;
+        return;
+      }
+      state.hiddenAbort = false;
+
+      state.abort = false;
+      setMode('complexity');
+      setRunning(true);
+      $('cxAbortBtn').disabled = false;
+
+      const total = Number($('cxSize').value);
+      const durationMs = Number($('cxDuration').value);
+      const cfg = {
+        profile: 'sweep',
+        profileLabel: 'complexity sweep',
+        scrollSampleMs: durationMs,
+        velocityPxPerFrame: Number($('velocity').value),
+        mountReps: 3,
+        jumpSamples: 30,
+      };
+
+      const cxStatus = (text, pct) => {
+        $('cxStatus').textContent = text;
+        if (pct != null) $('cxProgressFill').style.width = Math.max(0, Math.min(100, pct)) + '%';
+      };
+
+      cxStatus('Calibrating display…', 1);
+      const env = state.env || (await collectEnv());
+      state.env = env;
+      renderEnv(env);
+
+      state.complexity = [];
+      state.cxSelected = -1;
+      const span = 100 / keys.length;
+
+      for (let i = 0; i < keys.length && !state.abort; i++) {
+        const key = keys[i];
+        const row = await measureCase(total, key, cfg, env, {
+          label: PROFILES[key].label,
+          base: i * span,
+          span: span,
+          setStatus: cxStatus,
+          setStage: setStage,
+        });
+        if (!row) break;
+        row.datasetSize = total;
+        state.complexity.push(row);
+        if (state.cxSelected < 0) state.cxSelected = 0;
+        renderActive();
+        await sleep(80);
+      }
+
+      state.cxConfig = { datasetSize: total, scrollSampleMs: durationMs,
+        velocityPxPerFrame: cfg.velocityPxPerFrame, mountReps: cfg.mountReps,
+        jumpSamples: cfg.jumpSamples };
+
+      setRunning(false);
+      $('cxAbortBtn').disabled = true;
+
+      // Leave the heaviest template that finished on screen to poke at.
+      if (state.complexity.length) {
+        const heaviest = state.complexity.reduce(
+          (a, b) => (b.nodesPerRow > a.nodesPerRow ? b : a), state.complexity[0]);
+        buildRig(total, heaviest.profile).mount();
+        setStage('<b>' + heaviest.profileLabel + '</b> · ' + nf.format(total) + ' rows · scroll me', false);
+      }
+
+      cxStatus(
+        state.hiddenAbort
+          ? 'Stopped after ' + state.complexity.length + ' of ' + keys.length +
+            ' templates: the tab was backgrounded mid-run, so the rest was discarded.'
+          : state.abort
+          ? 'Stopped after ' + state.complexity.length + ' of ' + keys.length + ' templates.'
+          : 'Complete. ' + state.complexity.length + ' row template' +
+            (state.complexity.length === 1 ? '' : 's') + ' measured at ' + nf.format(total) + ' rows.',
+        100
+      );
+      enableExports();
+      renderActive();
+    }
+
+    // ------------------------------------------------------------ renderer
+    function cls(value, good, warn) {
+      if (!Number.isFinite(value)) return 'muted';
+      if (value <= good) return 'g';
+      if (value <= warn) return 'w';
+      return 'b';
+    }
+
+    function tileHtml(tiles) {
+      return tiles.map((t) =>
+        '<div class="tile' + (t.hero ? ' tile--hero' : '') + '">' +
+          '<div class="tile__k">' + t.k + '</div>' +
+          '<div class="tile__v">' + t.v + (t.unit ? '<small>' + t.unit + '</small>' : '') + '</div>' +
+          '<div class="tile__sub">' + t.sub + '</div>' +
+        '</div>'
+      ).join('');
+    }
+
+    /**
+     * Headline tiles summarise the benchmark you are currently looking at, so the
+     * top of step 3 always answers the question the active sweep was asking.
+     */
+    function renderTiles() {
+      const budget = (state.env && state.env.frameBudgetMs) || 16.7;
+
+      if (state.mode === 'scale') {
+        const run = state.results;
+        const rows = (run && run.rows) || [];
+        if (!rows.length) {
+          $('resultsSub').textContent =
+            'Nothing measured yet. Run the scale sweep above and the numbers land here.';
+          $('tiles').innerHTML = '<div class="empty">Waiting for a scale sweep.</div>';
+          return;
+        }
+        const biggest = rows[rows.length - 1];
+        const domSpread = rows.map((r) => r.domNodes);
+        const domMin = Math.min.apply(null, domSpread);
+        const domMax = Math.max.apply(null, domSpread);
+
+        $('resultsSub').textContent =
+          run.config.profileLabel + ' · ' + (run.config.scrollSampleMs / 1000) + 's per size · ' +
+          run.config.velocityPxPerFrame + ' px/frame · ' + run.env.refreshHz + ' Hz display';
+
+        $('tiles').innerHTML = tileHtml([
+          {
+            k: 'Largest dataset',
+            v: compactRows(biggest.total),
+            sub: nf.format(biggest.total) + ' rows navigable',
+            hero: true,
+          },
+          {
+            k: 'Frame cost',
+            v: ms(biggest.frameWorkP50, 2), unit: 'ms',
+            sub: 'p95 ' + ms(biggest.frameWorkP95, 2) + ' ms · budget ' + budget.toFixed(1) + ' ms',
+          },
+          {
+            k: 'Sustained FPS',
+            v: Math.round(biggest.fps) + '', unit: 'fps',
+            sub: nf.format(biggest.frameCount) + ' frames · ' + ms(biggest.jankPct, 1) + '% janked',
+          },
+          {
+            k: 'Random seek',
+            v: ms(biggest.jumpP95, 2), unit: 'ms',
+            sub: 'p95 over ' + run.config.jumpSamples + ' seeks',
+          },
+          {
+            k: 'DOM nodes',
+            v: nf.format(biggest.domNodes),
+            sub: domMin === domMax
+              ? 'constant across every size'
+              : nf.format(domMin) + ' to ' + nf.format(domMax) + ' across all sizes',
+          },
+          {
+            k: 'JS heap',
+            v: Number.isFinite(biggest.heapMB) ? ms(biggest.heapMB, 1) : 'n/a',
+            unit: Number.isFinite(biggest.heapMB) ? 'MB' : '',
+            sub: Number.isFinite(biggest.heapMB) ? 'whole page, post-run' : 'Chromium only',
+          },
+        ].concat(baselineTile()));
+        return;
+      }
+
+      // ---- complexity mode -------------------------------------------------
+      const rows = state.complexity;
+      if (!rows.length) {
+        $('resultsSub').textContent =
+          'Nothing measured yet. Run the complexity sweep above and the numbers land here.';
+        $('tiles').innerHTML = '<div class="empty">Waiting for a complexity sweep.</div>';
+        return;
+      }
+      const heaviest = rows.reduce((a, b) => (b.nodesPerRow > a.nodesPerRow ? b : a), rows[0]);
+      const lightest = rows.reduce((a, b) => (b.nodesPerRow < a.nodesPerRow ? b : a), rows[0]);
+      const worstFrame = rows.reduce((a, b) => (b.frameWorkP50 > a.frameWorkP50 ? b : a), rows[0]);
+      const maxRenders = rows.reduce((a, b) => (b.rendersPerFrame > a.rendersPerFrame ? b : a), rows[0]);
+      const buildRatio = (lightest.usPerRender > 0)
+        ? heaviest.usPerRender / lightest.usPerRender : NaN;
+
+      $('resultsSub').textContent =
+        nf.format(heaviest.total) + ' rows · ' + rows.length + ' row template' +
+        (rows.length === 1 ? '' : 's') + ' · ' +
+        (state.cxConfig ? state.cxConfig.scrollSampleMs / 1000 : 3) + 's each · ' +
+        (state.env ? state.env.refreshHz + ' Hz display' : '');
+
+      $('tiles').innerHTML = tileHtml([
+        {
+          k: 'Heaviest row',
+          v: nf.format(heaviest.nodesPerRow), unit: 'nodes/row',
+          sub: heaviest.profileLabel + ' at ' + compactRows(heaviest.total) + ' rows',
+          hero: true,
+        },
+        {
+          k: 'Frame cost',
+          v: ms(heaviest.frameWorkP50, 2), unit: 'ms',
+          sub: 'p95 ' + ms(heaviest.frameWorkP95, 2) + ' ms · budget ' + budget.toFixed(1) + ' ms',
+        },
+        {
+          k: 'Worst frame cost',
+          v: ms(worstFrame.frameWorkP50, 2), unit: 'ms',
+          sub: 'on ' + worstFrame.profileLabel,
+        },
+        {
+          k: 'Build cost climb',
+          v: Number.isFinite(buildRatio) ? buildRatio.toFixed(1) : '—', unit: '×',
+          sub: ms(lightest.usPerRender, 0) + ' µs to ' + ms(heaviest.usPerRender, 0) +
+            ' µs per row',
+        },
+        {
+          k: 'Renders / frame',
+          v: ms(maxRenders.rendersPerFrame, 2),
+          sub: 'peak, on ' + maxRenders.profileLabel,
+        },
+        {
+          k: 'Live nodes',
+          v: nf.format(heaviest.domNodes),
+          sub: nf.format(heaviest.domRows) + ' rows at ' + compactRows(heaviest.total),
+        },
+      ]);
+    }
+
+    /**
+     * One tile summarising the control group: either the size at which the unvirtualized
+     * list stopped being buildable, or the widest DOM-footprint gap measured.
+     */
+    function baselineTile() {
+      const rows = state.baseline;
+      if (!rows.length) return [];
+
+      const failed = rows.filter((b) => b.status !== 'ok');
+      if (failed.length) {
+        const first = failed.reduce((a, b) => (b.total < a.total ? b : a), failed[0]);
+        return [{
+          k: 'Baseline fails at',
+          v: compactRows(first.total), unit: 'rows',
+          sub: first.status === 'refused'
+            ? 'unvirtualized needs ~' + nf.format(first.estimatedNodes) + ' nodes'
+            : 'unvirtualized mount never finished',
+        }];
+      }
+
+      const virt = (state.results && state.results.rows) || [];
+      let best = null;
+      rows.forEach((b) => {
+        const v = virt.filter((x) => x.total === b.total)[0];
+        const r = v ? ratio(v.domNodes, b.domNodes) : null;
+        if (r && (!best || r > best.r)) best = { r: r, total: b.total };
+      });
+      if (!best) return [];
+      return [{
+        k: 'DOM vs baseline',
+        v: best.r >= 100 ? Math.round(best.r) + '' : best.r.toFixed(1), unit: '× fewer',
+        sub: 'at ' + compactRows(best.total) + ' rows',
+      }];
+    }
+
+    function renderScaleTable() {
+      const run = state.results;
+      const rows = run.rows;
+      if (state.selected >= rows.length) state.selected = rows.length - 1;
+      const budget = run.env.frameBudgetMs;
+
+      $('tbody').innerHTML = rows.map((r, i) =>
+        '<tr data-i="' + i + '"' + (i === state.selected ? ' class="is-sel"' : '') + '>' +
+          '<td class="size">' + nf.format(r.total) + '</td>' +
+          '<td class="' + cls(r.mountMs, 8, 25) + '">' + ms(r.mountMs) + ' ms</td>' +
+          '<td class="' + cls(r.frameWorkP50, budget * 0.5, budget) + '">' + ms(r.frameWorkP50) + ' ms</td>' +
+          '<td class="' + cls(r.frameWorkP95, budget * 0.75, budget * 1.5) + '">' + ms(r.frameWorkP95) + ' ms</td>' +
+          '<td>' + (Number.isFinite(r.fps) ? Math.round(r.fps) : '—') + '</td>' +
+          '<td class="' + cls(r.worstFrameMs, budget * 2, budget * 4) + '">' + ms(r.worstFrameMs, 1) + ' ms</td>' +
+          '<td class="' + cls(r.jankPct, 1, 5) + '">' + ms(r.jankPct, 1) + '%</td>' +
+          '<td class="' + cls(r.jumpP95, 4, 16) + '">' + ms(r.jumpP95) + ' ms</td>' +
+          '<td>' + nf.format(r.domNodes) + '<span class="muted"> / ' + nf.format(r.domRows) + ' rows</span></td>' +
+          '<td class="muted">' + (Number.isFinite(r.heapMB) ? ms(r.heapMB, 1) + ' MB' : 'n/a') + '</td>' +
+        '</tr>'
+      ).join('');
+
+      Array.from($('tbody').querySelectorAll('tr')).forEach((tr) => {
+        tr.addEventListener('click', () => {
+          state.selected = Number(tr.dataset.i);
+          renderScaleTable();
+          drawTimeline(timelineRow());
+        });
+      });
+    }
+
+    /** Draw whatever the active benchmark currently holds. Safe to call anytime. */
+    function renderActive() {
+      const hasScale = !!(state.results && state.results.rows.length);
+      const hasCx = state.complexity.length > 0;
+      renderTiles();
+      if (state.mode === 'scale') {
+        if (hasScale) { renderScaleTable(); drawScaling(state.results); }
+      } else if (hasCx) {
+        renderComplexityTable();
+        drawComplexity();
+      }
+      drawTimeline(timelineRow());
+      renderBaselineTable();
+      // Tables always re-render; the charts above no-op while their tab is
+      // hidden, so re-assert the active view to draw whichever one is showing.
+      if (state.view !== 'table') setView(state.view);
+    }
+
+    /** The result row currently driving the frame-timeline chart. */
+    function timelineRow() {
+      if (state.mode === 'complexity') return state.complexity[state.cxSelected] || null;
+      const rows = (state.results && state.results.rows) || [];
+      return rows[state.selected] || null;
+    }
+
+    function renderComplexityTable() {
+      const rows = state.complexity;
+      if (!rows.length) return;
+      if (state.cxSelected >= rows.length) state.cxSelected = rows.length - 1;
+      if (state.cxSelected < 0) state.cxSelected = 0;
+      const budget = (state.env && state.env.frameBudgetMs) || 16.7;
+
+      $('cxBody').innerHTML = rows.map((r, i) =>
+        '<tr data-i="' + i + '"' + (i === state.cxSelected ? ' class="is-sel"' : '') + '>' +
+          '<td class="size">' + r.profileLabel + '</td>' +
+          '<td>' + nf.format(r.nodesPerRow) + '</td>' +
+          '<td class="muted">' + (Number.isFinite(r.rowHeightPx) ? Math.round(r.rowHeightPx) + ' px' : '—') + '</td>' +
+          '<td class="' + cls(r.mountMs, 8, 25) + '">' + ms(r.mountMs) + ' ms</td>' +
+          '<td class="' + cls(r.frameWorkP50, budget * 0.5, budget) + '">' + ms(r.frameWorkP50) + ' ms</td>' +
+          '<td class="' + cls(r.frameWorkP95, budget * 0.75, budget * 1.5) + '">' + ms(r.frameWorkP95) + ' ms</td>' +
+          '<td>' + (Number.isFinite(r.fps) ? Math.round(r.fps) : '—') + '</td>' +
+          '<td class="' + cls(r.jankPct, 1, 5) + '">' + ms(r.jankPct, 1) + '%</td>' +
+          '<td class="muted">' + ms(r.rendersPerFrame, 2) + '</td>' +
+          '<td>' + ms(r.usPerRender, 0) + ' µs</td>' +
+          '<td class="muted">' + nf.format(r.domNodes) + ' / ' + nf.format(r.domRows) + ' rows</td>' +
+        '</tr>'
+      ).join('');
+
+      Array.from($('cxBody').querySelectorAll('tr')).forEach((tr) => {
+        tr.addEventListener('click', () => {
+          state.cxSelected = Number(tr.dataset.i);
+          renderComplexityTable();
+          drawTimeline(timelineRow());
+        });
+      });
+    }
+
+    function ratio(a, b) {
+      if (!Number.isFinite(a) || !Number.isFinite(b) || a <= 0) return null;
+      return b / a;
+    }
+
+    /**
+     * One cell carrying both engines' value for a metric, plus the multiple
+     * between them. Pairing them this way keeps the table to five columns, which
+     * is the difference between reading it and scrolling it sideways.
+     */
+    function cmpCell(virtText, plainText, r, badgeHtml) {
+      let badge = badgeHtml || '';
+      if (!badge && r != null) {
+        const label = r >= 100 ? Math.round(r) + '×' : r.toFixed(1) + '×';
+        badge = '<span class="cmp__r' + (r >= 10 ? ' cmp__r--big' : '') + '">' + label + '</span>';
+      }
+      return '<td class="cmp">' +
+        '<span class="cmp__v">' + virtText + '</span>' +
+        '<span class="cmp__sep">→</span>' +
+        '<span class="cmp__n">' + plainText + '</span>' +
+        badge +
+      '</td>';
+    }
+
+    function renderBaselineTable() {
+      const rows = state.baseline;
+      const virt = (state.results && state.results.rows) || [];
+      if (!rows.length) {
+        $('baselineBody').innerHTML =
+          '<tr><td colspan="4" class="empty">No baseline measured yet. ' +
+          'Enable it in step 1 and run the scale sweep.</td></tr>';
+        return;
+      }
+
+      $('baselineBody').innerHTML = rows.map((b) => {
+        const v = virt.filter((x) => x.total === b.total)[0];
+        const vMount = v ? ms(v.mountMs) + ' ms' : '—';
+
+        if (b.status !== 'ok') {
+          const kind = b.status === 'refused' ? 'refused' : 'timeout';
+          const verdict = b.status === 'refused' ? 'cannot be built' : 'never finished';
+          return '<tr>' +
+            '<td class="size">' + nf.format(b.total) + '</td>' +
+            '<td class="cmp">' +
+              '<span class="cmp__v">' + vMount + '</span>' +
+              '<span class="cmp__sep">→</span>' +
+              '<span class="verdict verdict--' + kind + '">' + verdict + '</span>' +
+            '</td>' +
+            '<td class="verdict-note" colspan="2">' + b.note + '</td>' +
+          '</tr>';
+        }
+
+        return '<tr>' +
+          '<td class="size">' + nf.format(b.total) + '</td>' +
+          cmpCell(vMount, ms(b.mountMs, 1) + ' ms',
+            v ? ratio(v.mountMs, b.mountMs) : null) +
+          cmpCell(v ? ms(v.frameIntervalP50, 1) + ' ms' : '—',
+            ms(b.frameIntervalP50, 1) + ' ms', null,
+            '<span class="cmp__r ' + (b.jankPct >= 5 ? 'cmp__r--bad' : '') + '">' +
+              ms(b.jankPct, 0) + '% jank</span>') +
+          cmpCell(v ? nf.format(v.domNodes) : '—', nf.format(b.domNodes),
+            v ? ratio(v.domNodes, b.domNodes) : null) +
+        '</tr>';
+      }).join('');
+    }
+
+    // -------------------------------------------------------------- charts
+    function prepCanvas(canvas) {
+      const dpr = window.devicePixelRatio || 1;
+      const w = canvas.clientWidth;
+      if (!w) return null;
+      const h = canvas.clientHeight || 210;
+      canvas.width = Math.round(w * dpr);
+      canvas.height = Math.round(h * dpr);
+      const ctx = canvas.getContext('2d');
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      ctx.clearRect(0, 0, w, h);
+      ctx.font = '10px ui-monospace, SFMono-Regular, Menlo, monospace';
+      return { ctx: ctx, w: w, h: h };
+    }
+
+    /** Centred placeholder so an unpopulated chart explains itself. */
+    function emptyChart(p, message) {
+      const ctx = p.ctx;
+      ctx.fillStyle = 'rgba(167,177,194,.55)';
+      ctx.font = '12px Inter, system-ui, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(message, p.w / 2, p.h / 2);
+      ctx.textAlign = 'left';
+    }
+
+    function axes(ctx, pad, w, h, yMax, yLabel) {
+      ctx.strokeStyle = 'rgba(255,255,255,.10)';
+      ctx.fillStyle = 'rgba(167,177,194,.75)';
+      ctx.lineWidth = 1;
+      const ticks = 4;
+      for (let i = 0; i <= ticks; i++) {
+        const y = pad.t + ((h - pad.t - pad.b) * i) / ticks;
+        ctx.beginPath();
+        ctx.moveTo(pad.l, y + 0.5);
+        ctx.lineTo(w - pad.r, y + 0.5);
+        ctx.stroke();
+        const v = yMax * (1 - i / ticks);
+        ctx.textAlign = 'right';
+        // Keep enough decimals to distinguish ticks when the whole scale is
+        // sub-millisecond, which is the common case for the frame-cost series.
+        const dp = yMax < 1 ? 2 : (yMax < 10 ? 1 : 0);
+        ctx.fillText(v.toFixed(dp), pad.l - 6, y + 3);
+      }
+      if (yLabel) {
+        ctx.textAlign = 'left';
+        ctx.fillStyle = 'rgba(167,177,194,.6)';
+        ctx.fillText(yLabel, pad.l, pad.t - 6);
+      }
+    }
+
+    function drawTimeline(row) {
+      const canvas = $('timelineChart');
+      const p = prepCanvas(canvas);
+      if (!p) return;
+      const ctx = p.ctx;
+      const pad = { l: 34, r: 10, t: 16, b: 18 };
+      if (!row) {
+        $('timelineTitle').textContent = 'Frame timeline';
+        emptyChart(p, 'No run selected yet. Run a sweep, then pick a row in the Table tab.');
+        return;
+      }
+      $('timelineTitle').textContent = 'Frame timeline · ' + row.profileLabel +
+        ' · ' + nf.format(row.total) + ' rows';
+
+      const iv = row.series.intervals;
+      const wk = row.series.work;
+      if (!iv.length) return;
+
+      const budget = (state.env && state.env.frameBudgetMs) || 16.7;
+      const cap = Math.max(percentile(sortNum(iv), 99), budget * 2);
+      const yMax = Math.ceil(cap * 1.15);
+      const plotW = p.w - pad.l - pad.r;
+      const plotH = p.h - pad.t - pad.b;
+      const x = (i) => pad.l + (plotW * i) / Math.max(1, iv.length - 1);
+      const y = (v) => pad.t + plotH * (1 - Math.min(v, yMax) / yMax);
+
+      axes(ctx, pad, p.w, p.h, yMax, 'ms per frame');
+
+      // Everything above the budget line is a missed frame. Shade it, because on
+      // a healthy run the interval trace sits exactly ON the budget (the browser
+      // delivers frames at the refresh rate) and a bare line would be invisible
+      // underneath it. The band stays readable whether or not the line is.
+      const budgetY = y(budget);
+      ctx.fillStyle = 'rgba(242,198,109,.07)';
+      ctx.fillRect(pad.l, pad.t, plotW, Math.max(0, budgetY - pad.t));
+
+      function series(data, color, fill) {
+        ctx.beginPath();
+        for (let i = 0; i < data.length; i++) {
+          const px = x(i), py = y(data[i]);
+          if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+        }
+        if (fill) {
+          ctx.lineTo(x(data.length - 1), pad.t + plotH);
+          ctx.lineTo(x(0), pad.t + plotH);
+          ctx.closePath();
+          ctx.fillStyle = fill;
+          ctx.fill();
+        } else {
+          ctx.strokeStyle = color;
+          ctx.lineWidth = 1.25;
+          ctx.stroke();
+        }
+      }
+
+      series(wk, '#8cb7ff', 'rgba(140,183,255,.20)');
+      series(wk, '#8cb7ff');
+      series(iv, '#78f3d2');
+
+      // Budget line drawn last so it is never buried under the traces, over a
+      // dark halo so it stays legible where it crosses them.
+      ctx.strokeStyle = 'rgba(8,11,18,.75)';
+      ctx.lineWidth = 3.5;
+      ctx.beginPath();
+      ctx.moveTo(pad.l, budgetY);
+      ctx.lineTo(p.w - pad.r, budgetY);
+      ctx.stroke();
+      ctx.strokeStyle = '#f2c66d';
+      ctx.lineWidth = 1.5;
+      ctx.setLineDash([5, 4]);
+      ctx.beginPath();
+      ctx.moveTo(pad.l, budgetY);
+      ctx.lineTo(p.w - pad.r, budgetY);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.lineWidth = 1;
+
+      // Name the band, so the shading is not a mystery colour. It goes at the
+      // TOP of the band: down by the budget line it would land on the traces,
+      // which is exactly where nothing should be written.
+      ctx.font = '10px ui-monospace, SFMono-Regular, Menlo, monospace';
+      if (budgetY - pad.t > 26) {
+        ctx.fillStyle = 'rgba(242,198,109,.7)';
+        ctx.textAlign = 'right';
+        ctx.fillText('missed frames', p.w - pad.r - 8, pad.t + 14);
+      }
+
+      ctx.fillStyle = 'rgba(167,177,194,.7)';
+      ctx.textAlign = 'right';
+      ctx.fillText(nf.format(iv.length) + ' frames', p.w - pad.r, p.h - 5);
+      ctx.textAlign = 'left';
+      ctx.fillText('budget ' + budget.toFixed(1) + ' ms', pad.l, p.h - 5);
+    }
+
+    function drawScaling(run) {
+      const canvas = $('scalingChart');
+      const p = prepCanvas(canvas);
+      if (!p) return;
+      const ctx = p.ctx;
+      const pad = { l: 34, r: 10, t: 16, b: 24 };
+      const rows = (run && run.rows) || [];
+      if (!rows.length) {
+        emptyChart(p, 'No scale sweep yet. Run one from step 2.');
+        return;
+      }
+
+      const series = [
+        { key: 'frameWorkP50', color: '#78f3d2' },
+        { key: 'mountMs', color: '#8cb7ff' },
+        { key: 'jumpP95', color: '#c9a2ff' },
+      ];
+      let yMax = 0;
+      series.forEach((s) => rows.forEach((r) => {
+        if (Number.isFinite(r[s.key])) yMax = Math.max(yMax, r[s.key]);
+      }));
+      yMax = Math.max(yMax * 1.2, 1);
+
+      const plotW = p.w - pad.l - pad.r;
+      const plotH = p.h - pad.t - pad.b;
+      const logs = rows.map((r) => Math.log10(r.total));
+      const lMin = Math.min.apply(null, logs);
+      const lMax = Math.max.apply(null, logs);
+      const x = (i) => (lMax === lMin)
+        ? pad.l + plotW / 2
+        : pad.l + (plotW * (logs[i] - lMin)) / (lMax - lMin);
+      const y = (v) => pad.t + plotH * (1 - Math.min(v, yMax) / yMax);
+
+      axes(ctx, pad, p.w, p.h, yMax, 'ms');
+
+      series.forEach((s) => {
+        ctx.beginPath();
+        ctx.strokeStyle = s.color;
+        ctx.lineWidth = 2;
+        rows.forEach((r, i) => {
+          const px = x(i), py = y(r[s.key]);
+          if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+        });
+        ctx.stroke();
+        rows.forEach((r, i) => {
+          ctx.beginPath();
+          ctx.fillStyle = s.color;
+          ctx.arc(x(i), y(r[s.key]), 3, 0, Math.PI * 2);
+          ctx.fill();
+        });
+      });
+
+      ctx.fillStyle = 'rgba(167,177,194,.75)';
+      ctx.textAlign = 'center';
+      rows.forEach((r, i) => ctx.fillText(compactRows(r.total), x(i), p.h - 7));
+    }
+
+    /**
+     * Frame cost and per-row build cost against DOM nodes per row. Two y-scales
+     * (ms and µs) share the plot, each normalised to its own maximum. The shape
+     * is what matters: how steeply cost climbs as rows get heavier.
+     */
+    function drawComplexity() {
+      const canvas = $('complexityChart');
+      const p = prepCanvas(canvas);
+      if (!p) return;
+      const ctx = p.ctx;
+      const pad = { l: 34, r: 34, t: 16, b: 28 };
+      const rows = state.complexity.slice().sort((a, b) => a.nodesPerRow - b.nodesPerRow);
+      if (!rows.length) {
+        emptyChart(p, 'No complexity sweep yet. Run one from step 2.');
+        return;
+      }
+
+      const plotW = p.w - pad.l - pad.r;
+      const plotH = p.h - pad.t - pad.b;
+      const nMin = rows[0].nodesPerRow;
+      const nMax = rows[rows.length - 1].nodesPerRow;
+      const x = (n) => (nMax === nMin)
+        ? pad.l + plotW / 2
+        : pad.l + (plotW * (n - nMin)) / (nMax - nMin);
+
+      let msMax = 0, usMax = 0;
+      rows.forEach((r) => {
+        if (Number.isFinite(r.frameWorkP50)) msMax = Math.max(msMax, r.frameWorkP50);
+        if (Number.isFinite(r.usPerRender)) usMax = Math.max(usMax, r.usPerRender);
+      });
+      msMax = Math.max(msMax * 1.25, 0.5);
+      usMax = Math.max(usMax * 1.25, 10);
+
+      axes(ctx, pad, p.w, p.h, msMax, 'ms per frame');
+
+      // Right-hand axis for the µs series.
+      ctx.fillStyle = 'rgba(201,162,255,.8)';
+      ctx.textAlign = 'left';
+      for (let i = 0; i <= 4; i++) {
+        const y = pad.t + (plotH * i) / 4;
+        ctx.fillText((usMax * (1 - i / 4)).toFixed(0), p.w - pad.r + 5, y + 3);
+      }
+      ctx.fillText('µs', p.w - pad.r + 5, pad.t - 6);
+
+      function line(key, max, color) {
+        ctx.beginPath();
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 2;
+        rows.forEach((r, i) => {
+          const px = x(r.nodesPerRow);
+          const py = pad.t + plotH * (1 - Math.min(r[key], max) / max);
+          if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+        });
+        ctx.stroke();
+        rows.forEach((r) => {
+          ctx.beginPath();
+          ctx.fillStyle = color;
+          ctx.arc(x(r.nodesPerRow), pad.t + plotH * (1 - Math.min(r[key], max) / max), 3, 0, Math.PI * 2);
+          ctx.fill();
+        });
+      }
+      line('frameWorkP50', msMax, '#78f3d2');
+      line('usPerRender', usMax, '#c9a2ff');
+
+      ctx.fillStyle = 'rgba(167,177,194,.75)';
+      ctx.textAlign = 'center';
+      rows.forEach((r) => ctx.fillText(r.nodesPerRow + '', x(r.nodesPerRow), p.h - 14));
+      ctx.fillText('DOM nodes per row', pad.l + plotW / 2, p.h - 2);
+    }
+
+    /**
+     * Resident DOM nodes for both engines, log-log. Sizes where the unvirtualized list
+     * could not be built are drawn as a hollow marker on its estimated node
+     * count, so a refusal still appears on the curve instead of vanishing.
+     */
+    function drawBaseline() {
+      const canvas = $('baselineChart');
+      const p = prepCanvas(canvas);
+      if (!p) return;
+      const ctx = p.ctx;
+      const pad = { l: 52, r: 14, t: 16, b: 30 };
+      const rows = state.baseline;
+      const virt = (state.results && state.results.rows) || [];
+      if (!rows.length) {
+        emptyChart(p, 'No baseline measured yet. Enable it in step 1 and run the scale sweep.');
+        return;
+      }
+
+      const points = rows.map((b) => {
+        const v = virt.filter((x) => x.total === b.total)[0];
+        return {
+          total: b.total,
+          virt: v ? v.domNodes : NaN,
+          plain: b.status === 'ok' ? b.domNodes : b.estimatedNodes,
+          real: b.status === 'ok',
+        };
+      }).filter((pt) => Number.isFinite(pt.virt) || Number.isFinite(pt.plain));
+      if (!points.length) {
+        emptyChart(p, 'Not enough data to plot.');
+        return;
+      }
+
+      const plotW = p.w - pad.l - pad.r;
+      const plotH = p.h - pad.t - pad.b;
+      const xs = points.map((pt) => Math.log10(pt.total));
+      const xMin = Math.min.apply(null, xs);
+      const xMax = Math.max.apply(null, xs);
+      const x = (i) => (xMax === xMin)
+        ? pad.l + plotW / 2
+        : pad.l + (plotW * (xs[i] - xMin)) / (xMax - xMin);
+
+      let yTop = 1;
+      points.forEach((pt) => {
+        yTop = Math.max(yTop, pt.virt || 1, pt.plain || 1);
+      });
+      const yMaxLog = Math.ceil(Math.log10(yTop));
+      const y = (v) => {
+        const lv = Math.log10(Math.max(v, 1));
+        return pad.t + plotH * (1 - lv / yMaxLog);
+      };
+
+      // Decade gridlines, since a linear axis cannot show both curves at once.
+      ctx.strokeStyle = 'rgba(255,255,255,.10)';
+      ctx.fillStyle = 'rgba(167,177,194,.75)';
+      ctx.lineWidth = 1;
+      for (let d = 0; d <= yMaxLog; d++) {
+        const yy = y(Math.pow(10, d));
+        ctx.beginPath();
+        ctx.moveTo(pad.l, yy + 0.5);
+        ctx.lineTo(p.w - pad.r, yy + 0.5);
+        ctx.stroke();
+        ctx.textAlign = 'right';
+        ctx.fillText(compactRows(Math.pow(10, d)), pad.l - 6, yy + 3);
+      }
+      ctx.textAlign = 'left';
+      ctx.fillStyle = 'rgba(167,177,194,.6)';
+      ctx.fillText('resident DOM nodes', pad.l, pad.t - 6);
+
+      function series(key, color, dashed) {
+        ctx.beginPath();
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 2;
+        ctx.setLineDash(dashed ? [5, 4] : []);
+        points.forEach((pt, i) => {
+          const py = y(pt[key]);
+          if (i === 0) ctx.moveTo(x(i), py); else ctx.lineTo(x(i), py);
+        });
+        ctx.stroke();
+        ctx.setLineDash([]);
+        points.forEach((pt, i) => {
+          const py = y(pt[key]);
+          ctx.beginPath();
+          ctx.arc(x(i), py, 3.5, 0, Math.PI * 2);
+          if (key === 'plain' && !pt.real) {
+            // Hollow marker: an estimate for a size that could not be built.
+            ctx.strokeStyle = color;
+            ctx.lineWidth = 1.5;
+            ctx.stroke();
+          } else {
+            ctx.fillStyle = color;
+            ctx.fill();
+          }
+        });
+      }
+      series('virt', '#78f3d2');
+      series('plain', '#ff8d8d');
+
+      ctx.fillStyle = 'rgba(167,177,194,.75)';
+      ctx.textAlign = 'center';
+      points.forEach((pt, i) => ctx.fillText(compactRows(pt.total), x(i), p.h - 14));
+      ctx.fillText('dataset size', pad.l + plotW / 2, p.h - 2);
+
+      if (points.some((pt) => !pt.real)) {
+        ctx.textAlign = 'right';
+        ctx.fillStyle = 'rgba(255,141,141,.8)';
+        ctx.fillText('hollow = estimated, could not be built', p.w - pad.r, pad.t - 6);
+      }
+    }
+
+    // -------------------------------------------------------------- export
+    function exportJson() {
+      return JSON.stringify({
+        env: state.env,
+        sizeSweep: state.results
+          ? { config: state.results.config, rows: state.results.rows }
+          : null,
+        complexitySweep: state.complexity.length
+          ? { config: state.cxConfig || null, rows: state.complexity }
+          : null,
+        unvirtualizedBaseline: state.baseline.length
+          ? {
+              note: 'Control group: every row mounted into a plain scrollable div. ' +
+                'Frame work is not comparable (the unvirtualized list does almost no JS per ' +
+                'frame; the browser pays at layout and paint), so compare frame ' +
+                'intervals, mount time and resident DOM nodes.',
+              nodeCeiling: BASELINE_NODE_CEILING,
+              buildBudgetMs: BASELINE_BUILD_BUDGET_MS,
+              rows: state.baseline,
+            }
+          : null,
+      }, null, 2);
+    }
+
+    const CX_COLS = [
+      ['row_template', (r) => JSON.stringify(r.profileLabel)],
+      ['nodes_per_row', (r) => r.nodesPerRow],
+      ['row_height_px', (r) => (Number.isFinite(r.rowHeightPx) ? Math.round(r.rowHeightPx) : '')],
+      ['mount_ms_median', (r) => ms(r.mountMs, 3)],
+      ['frame_work_p50_ms', (r) => ms(r.frameWorkP50, 3)],
+      ['frame_work_p95_ms', (r) => ms(r.frameWorkP95, 3)],
+      ['fps_mean', (r) => ms(r.fps, 1)],
+      ['jank_pct', (r) => ms(r.jankPct, 2)],
+      ['renders_per_frame', (r) => ms(r.rendersPerFrame, 3)],
+      ['us_per_render', (r) => ms(r.usPerRender, 1)],
+      ['jump_p95_ms', (r) => ms(r.jumpP95, 3)],
+      ['dom_nodes', (r) => r.domNodes],
+      ['dom_rows', (r) => r.domRows],
+    ];
+
+    const CSV_COLS = [
+      ['rows', (r) => r.total],
+      ['mount_ms_median', (r) => ms(r.mountMs, 3)],
+      ['frame_work_p50_ms', (r) => ms(r.frameWorkP50, 3)],
+      ['frame_work_p95_ms', (r) => ms(r.frameWorkP95, 3)],
+      ['fps_mean', (r) => ms(r.fps, 1)],
+      ['frame_interval_p95_ms', (r) => ms(r.frameIntervalP95, 2)],
+      ['worst_frame_ms', (r) => ms(r.worstFrameMs, 2)],
+      ['jank_pct', (r) => ms(r.jankPct, 2)],
+      ['jump_p50_ms', (r) => ms(r.jumpP50, 3)],
+      ['jump_p95_ms', (r) => ms(r.jumpP95, 3)],
+      ['dom_nodes', (r) => r.domNodes],
+      ['dom_rows', (r) => r.domRows],
+      ['heap_mb', (r) => (Number.isFinite(r.heapMB) ? ms(r.heapMB, 2) : '')],
+    ];
+
+    function exportCsv() {
+      const e = state.env;
+      const c = (state.results && state.results.config) || {
+        profileLabel: 'n/a', scrollSampleMs: '', velocityPxPerFrame: '',
+      };
+      if (!state.results || !state.results.rows.length) {
+        return complexityOnlyCsv(e);
+      }
+      const head = [
+        '# cerious-scroll benchmark',
+        '# generated,' + e.timestamp,
+        '# browser,' + e.browser,
+        '# platform,' + e.platform,
+        '# cores,' + (e.cores || ''),
+        '# device_memory_gb,' + (e.deviceMemoryGB || ''),
+        '# refresh_hz,' + e.refreshHz,
+        '# frame_budget_ms,' + e.frameBudgetMs.toFixed(2),
+        '# surface_px,' + e.surface,
+        '# profile,' + c.profileLabel,
+        '# scroll_sample_ms,' + c.scrollSampleMs,
+        '# velocity_px_per_frame,' + c.velocityPxPerFrame,
+      ].join('\n');
+      const body = [CSV_COLS.map((c2) => c2[0]).join(',')]
+        .concat(state.results.rows.map((r) => CSV_COLS.map((c2) => c2[1](r)).join(',')))
+        .join('\n');
+      let out = head + '\n' + body + '\n';
+      if (state.baseline.length) {
+        out += '\n# unvirtualized baseline (control group)\n' +
+          'rows,status,mount_ms,frame_interval_p50_ms,jank_pct,dom_nodes,estimated_nodes,note\n' +
+          state.baseline.map((b) => [
+            b.total,
+            b.status,
+            Number.isFinite(b.mountMs) ? ms(b.mountMs, 1) : '',
+            Number.isFinite(b.frameIntervalP50) ? ms(b.frameIntervalP50, 2) : '',
+            Number.isFinite(b.jankPct) ? ms(b.jankPct, 2) : '',
+            Number.isFinite(b.domNodes) ? b.domNodes : '',
+            b.estimatedNodes,
+            JSON.stringify(b.note || ''),
+          ].join(',')).join('\n') + '\n';
+      }
+      if (state.complexity.length) {
+        out += '\n# dom complexity sweep at ' +
+          nf.format(state.complexity[0].total).replace(/,/g, '') + ' rows\n' +
+          [CX_COLS.map((c2) => c2[0]).join(',')]
+            .concat(state.complexity.map((r) => CX_COLS.map((c2) => c2[1](r)).join(',')))
+            .join('\n') + '\n';
+      }
+      return out;
+    }
+
+    function envCsvHeader(e) {
+      return [
+        '# cerious-scroll benchmark',
+        '# generated,' + e.timestamp,
+        '# browser,' + e.browser,
+        '# platform,' + e.platform,
+        '# cores,' + (e.cores || ''),
+        '# refresh_hz,' + e.refreshHz,
+        '# frame_budget_ms,' + e.frameBudgetMs.toFixed(2),
+        '# surface_px,' + e.surface,
+      ].join('\n');
+    }
+
+    function complexityOnlyCsv(e) {
+      return envCsvHeader(e) + '\n# dom complexity sweep\n' +
+        [CX_COLS.map((c2) => c2[0]).join(',')]
+          .concat(state.complexity.map((r) => CX_COLS.map((c2) => c2[1](r)).join(',')))
+          .join('\n') + '\n';
+    }
+
+    function baselineMarkdown() {
+      if (!state.baseline.length) return '';
+      const virt = (state.results && state.results.rows) || [];
+      return '\n**Unvirtualized baseline** (control group: every row mounted into a plain ' +
+        'scrollable div). Frame work is not comparable between the two, so the frame column ' +
+        'is the wall-clock interval.\n\n' +
+        '| Rows | Mount, virtualized | Mount, unvirtualized | Frame, virtualized | Frame, unvirtualized | Nodes, virtualized | Nodes, unvirtualized |\n' +
+        '| ---: | ---: | ---: | ---: | ---: | ---: | ---: |\n' +
+        state.baseline.map((b) => {
+          const v = virt.filter((x) => x.total === b.total)[0];
+          if (b.status !== 'ok') {
+            return '| ' + nf.format(b.total) +
+              ' | ' + (v ? ms(v.mountMs) + ' ms' : '—') +
+              ' | **' + (b.status === 'refused' ? 'cannot be built' : 'never finished') + '** |' +
+              ' — | — | ' + (v ? nf.format(v.domNodes) : '—') +
+              ' | ~' + nf.format(b.estimatedNodes) + ' (est.) |';
+          }
+          return '| ' + nf.format(b.total) +
+            ' | ' + (v ? ms(v.mountMs) + ' ms' : '—') +
+            ' | ' + ms(b.mountMs, 1) + ' ms' +
+            ' | ' + (v ? ms(v.frameIntervalP50, 1) + ' ms' : '—') +
+            ' | ' + ms(b.frameIntervalP50, 1) + ' ms' +
+            ' | ' + (v ? nf.format(v.domNodes) : '—') +
+            ' | ' + nf.format(b.domNodes) + ' |';
+        }).join('\n') + '\n';
+    }
+
+    function complexityMarkdown() {
+      if (!state.complexity.length) return '';
+      const size = state.complexity[0].total;
+      return '\n**DOM complexity sweep**, every row template at ' + nf.format(size) + ' rows\n\n' +
+        '| Row template | Nodes/row | Row height | Mount | Frame p50 | Frame p95 | FPS | Jank | Renders/frame | Per row |\n' +
+        '| :--- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |\n' +
+        state.complexity.map((r) =>
+          '| ' + r.profileLabel +
+          ' | ' + nf.format(r.nodesPerRow) +
+          ' | ' + (Number.isFinite(r.rowHeightPx) ? Math.round(r.rowHeightPx) + ' px' : '—') +
+          ' | ' + ms(r.mountMs) + ' ms' +
+          ' | ' + ms(r.frameWorkP50) + ' ms' +
+          ' | ' + ms(r.frameWorkP95) + ' ms' +
+          ' | ' + (Number.isFinite(r.fps) ? Math.round(r.fps) : '—') +
+          ' | ' + ms(r.jankPct, 1) + '%' +
+          ' | ' + ms(r.rendersPerFrame, 2) +
+          ' | ' + ms(r.usPerRender, 0) + ' µs |'
+        ).join('\n') + '\n';
+    }
+
+    function exportMarkdown() {
+      const e = state.env;
+      const c = (state.results && state.results.config) || { profileLabel: 'complexity sweep' };
+      if (!state.results || !state.results.rows.length) {
+        return '**cerious-scroll benchmark** · ' + e.browser + ' on ' + e.platform + ' · ' +
+          (e.cores || '?') + ' cores · ' + e.refreshHz + ' Hz\n' + complexityMarkdown();
+      }
+      const head =
+        '**cerious-scroll benchmark** · ' + c.profileLabel + ' · ' + e.browser + ' on ' + e.platform +
+        ' · ' + (e.cores || '?') + ' cores · ' + e.refreshHz + ' Hz (' + e.frameBudgetMs.toFixed(1) +
+        ' ms budget) · ' + new Date(e.timestamp).toISOString().slice(0, 10) + '\n\n';
+      const cols = '| Rows | Mount | Frame p50 | Frame p95 | FPS | Worst frame | Jank | Jump p95 | DOM nodes | Heap |\n' +
+        '| ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |\n';
+      const body = state.results.rows.map((r) =>
+        '| ' + nf.format(r.total) +
+        ' | ' + ms(r.mountMs) + ' ms' +
+        ' | ' + ms(r.frameWorkP50) + ' ms' +
+        ' | ' + ms(r.frameWorkP95) + ' ms' +
+        ' | ' + (Number.isFinite(r.fps) ? Math.round(r.fps) : '—') +
+        ' | ' + ms(r.worstFrameMs, 1) + ' ms' +
+        ' | ' + ms(r.jankPct, 1) + '%' +
+        ' | ' + ms(r.jumpP95) + ' ms' +
+        ' | ' + nf.format(r.domNodes) +
+        ' | ' + (Number.isFinite(r.heapMB) ? ms(r.heapMB, 1) + ' MB' : 'n/a') + ' |'
+      ).join('\n');
+      return head + cols + body + '\n' + baselineMarkdown() + complexityMarkdown();
+    }
+
+    function download(name, text, mime) {
+      const blob = new Blob([text], { type: mime });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = name;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    }
+
+    function legacyCopy(text) {
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.setAttribute('readonly', '');
+      ta.style.cssText = 'position:fixed;top:-1000px;opacity:0';
+      document.body.appendChild(ta);
+      ta.select();
+      let ok = false;
+      try { ok = document.execCommand('copy'); } catch (e) { ok = false; }
+      ta.remove();
+      return ok;
+    }
+
+    async function copy(btn, text, filename, mime) {
+      const original = btn.textContent;
+      let ok = false;
+      try {
+        await navigator.clipboard.writeText(text);
+        ok = true;
+      } catch (e) {
+        ok = legacyCopy(text);
+      }
+      if (ok) {
+        btn.textContent = '\u2713 Copied';
+      } else {
+        // Clipboard access can be denied outright (insecure origin, permissions
+        // policy). Don't lose the results: hand them over as a file instead.
+        download(filename, text, mime);
+        btn.textContent = '\u2713 Downloaded instead';
+      }
+      setTimeout(() => { btn.textContent = original; }, 1600);
+    }
+
+    function stamp() {
+      return 'cerious-scroll-benchmark-' + new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-');
+    }
+
+    // ---------------------------------------------------------------- wire
+    $('sizes').innerHTML = SIZES.map((n) =>
+      '<label class="chip' + (DEFAULT_ON.indexOf(n) >= 0 ? ' is-on' : '') + '">' +
+        '<input type="checkbox" value="' + n + '"' + (DEFAULT_ON.indexOf(n) >= 0 ? ' checked' : '') + '>' +
+        nf.format(n) +
+      '</label>'
+    ).join('');
+    $('sizes').addEventListener('change', (e) => {
+      const chip = e.target.closest('.chip');
+      if (chip) chip.classList.toggle('is-on', e.target.checked);
+    });
+
+    const CX_DEFAULT_NOTE = 'Pick the templates to compare. Each one isolates a different kind of DOM cost.';
+    $('cxProfiles').innerHTML = SWEEP_KEYS.map((k) =>
+      '<label class="chip is-on" data-profile="' + k + '" title="' +
+          PROFILES[k].note.replace(/"/g, '&quot;') + '">' +
+        '<input type="checkbox" value="' + k + '" checked>' +
+        PROFILES[k].label +
+        '<span style="color:var(--muted);font-size:.76rem"> · ' + profileFootprint(k) + ' nodes</span>' +
+      '</label>'
+    ).join('');
+    $('cxProfiles').addEventListener('change', (e) => {
+      const chip = e.target.closest('.chip');
+      if (chip) chip.classList.toggle('is-on', e.target.checked);
+    });
+    // Hovering a chip explains it in place, so the tooltip is a convenience
+    // rather than the only way to find out what a template is.
+    let previewTimer = null;
+    $('cxProfiles').addEventListener('pointerover', (e) => {
+      const chip = e.target.closest('[data-profile]');
+      if (!chip) return;
+      $('cxProfileNote').textContent = PROFILES[chip.dataset.profile].note;
+      clearTimeout(previewTimer);
+      previewTimer = setTimeout(() => previewTemplate(chip.dataset.profile), 220);
+    });
+    $('cxProfiles').addEventListener('pointerleave', () => {
+      $('cxProfileNote').textContent = CX_DEFAULT_NOTE;
+    });
+
+    /**
+     * Switch the whole page between the two benchmarks. A hidden element has no
+     * clientWidth, so any canvas that just became visible has to be redrawn.
+     */
+    function setMode(mode) {
+      state.mode = mode;
+      Array.from(document.querySelectorAll('[data-mode-btn]')).forEach((b) => {
+        const on = b.dataset.modeBtn === mode;
+        b.classList.toggle('is-active', on);
+        b.setAttribute('aria-selected', on ? 'true' : 'false');
+      });
+      Array.from(document.querySelectorAll('[data-mode]')).forEach((n) => {
+        n.hidden = n.dataset.mode !== mode;
+      });
+      // The baseline is a property of dataset size, so it belongs to the scale
+      // sweep. Hide its tab in complexity mode rather than showing a dead one.
+      const baselineTab = document.querySelector('[data-view-btn="baseline"]');
+      baselineTab.hidden = mode !== 'scale';
+      if (mode !== 'scale' && state.view === 'baseline') setView('table');
+      renderActive();
+    }
+    Array.from(document.querySelectorAll('[data-mode-btn]')).forEach((b) => {
+      b.addEventListener('click', () => { if (!state.running) setMode(b.dataset.modeBtn); });
+    });
+
+    /**
+     * Step 3 shows one result region at a time. The view containers wrap the
+     * mode-specific blocks, so hiding a view hides whatever mode is inside it
+     * and the two switches compose without extra bookkeeping.
+     */
+    function setView(view) {
+      state.view = view;
+      Array.from(document.querySelectorAll('[data-view-btn]')).forEach((b) => {
+        const on = b.dataset.viewBtn === view;
+        b.classList.toggle('is-active', on);
+        b.setAttribute('aria-selected', on ? 'true' : 'false');
+      });
+      Array.from(document.querySelectorAll('[data-view]')).forEach((n) => {
+        n.hidden = n.dataset.view !== view;
+      });
+      // A canvas that was hidden has no width to size against, so redraw the
+      // one that just came into view.
+      if (view === 'timeline') drawTimeline(timelineRow());
+      if (view === 'chart') {
+        if (state.mode === 'scale') drawScaling(state.results);
+        else drawComplexity();
+      }
+      if (view === 'baseline') drawBaseline();
+    }
+    Array.from(document.querySelectorAll('[data-view-btn]')).forEach((b) => {
+      b.addEventListener('click', () => setView(b.dataset.viewBtn));
+    });
+
+    $('cxRunBtn').addEventListener('click', () => { if (!state.running) runComplexity(); });
+    $('cxAbortBtn').addEventListener('click', () => {
+      state.abort = true;
+      $('cxStatus').textContent = 'Stopping after the current phase…';
+    });
+
+    /**
+     * Mount the live surface with a template so you can see what you picked
+     * before spending a run on it. Mounting is synchronous and costs a few
+     * milliseconds, so this is safe to fire on a hover.
+     */
+    const IDLE_PREVIEW_ROWS = 50000;
+    let previewKey = null;
+    function previewTemplate(key) {
+      if (state.running || !CS || key === previewKey || !PROFILES[key]) return;
+      previewKey = key;
+      buildRig(IDLE_PREVIEW_ROWS, key).mount();
+      setStage('<b>' + PROFILES[key].label + '</b> · ' +
+        nf.format(IDLE_PREVIEW_ROWS) + ' rows · scroll me', false);
+    }
+
+    Array.from(document.querySelectorAll('.ctl select')).forEach(enhanceSelect);
+
+    function syncProfileNote() {
+      const key = $('profile').value;
+      $('profileNote').textContent = (PROFILES[key] && PROFILES[key].note) || '';
+      previewTemplate(key);
+    }
+    $('profile').addEventListener('change', syncProfileNote);
+
+    $('runBtn').addEventListener('click', () => { if (!state.running) runBenchmark(); });
+    $('abortBtn').addEventListener('click', () => {
+      state.abort = true;
+      setStatus('Stopping after the current phase…');
+    });
+
+    $('copyMd').addEventListener('click', (e) =>
+      copy(e.currentTarget, exportMarkdown(), stamp() + '.md', 'text/markdown'));
+    $('copyJson').addEventListener('click', (e) =>
+      copy(e.currentTarget, exportJson(), stamp() + '.json', 'application/json'));
+    $('dlJson').addEventListener('click', () => download(stamp() + '.json', exportJson(), 'application/json'));
+    $('dlCsv').addEventListener('click', () => download(stamp() + '.csv', exportCsv(), 'text/csv'));
+
+    window.addEventListener('resize', () => {
+      renderActive();
+    });
+
+    // Idle preview so the page is never a dead rectangle, plus a first env read.
+    (async function boot() {
+      syncProfileNote();
+      const env = await collectEnv();
+      state.env = env;
+      renderEnv(env);
+      if (!CS) setStatus('CeriousScroll bundle missing. Run `npm run build` first.', 0);
+    })();
+  })();
+  </script>
+</body>
+</html>

@@ -1,6 +1,22 @@
 # Benchmarks
 
-La suite vive en [`tools/benchmark`](../tools/benchmark) y se ejecuta con:
+## Rendimiento de UI contra un navegador
+
+La suite de rendimiento de página completa está en
+[`tools/perf`](../tools/perf): Chromium headless contra NativaX offscreen, con
+escenarios de filas, scroll y JS, métricas de nodos/layout/RSS/CPU, objetivos
+(frame p95, ratio, idle 250 MB) y panel Tkinter. Contrato y límites en
+[`performance-suite.md`](performance-suite.md).
+
+```bash
+dart run tools/perf/bin/perf.dart run --app-idle --out .perf/latest
+python3 tools/perf/gui/perf_gui.py
+```
+
+## Microbenchmarks del motor
+
+La suite de microbenchmarks vive en [`tools/benchmark`](../tools/benchmark) y
+se ejecuta con:
 
 ```bash
 cd tools/benchmark

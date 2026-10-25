@@ -1,0 +1,2162 @@
+[
+  {
+    "id": "idle.blank",
+    "title": "Idle blank page",
+    "kind": "idle",
+    "source": "baseline",
+    "description": "Empty document held idle for 2.5 s. Measures resident memory and CPU without workload.",
+    "external": false
+  },
+  {
+    "id": "dom.rows-create-1k",
+    "title": "Create 1,000 rows",
+    "kind": "dom",
+    "source": "uibench / js-framework-benchmark / million-rows",
+    "description": "Append 1,000 identical rows in one fragment, then force layout.",
+    "external": false
+  },
+  {
+    "id": "dom.rows-create-10k",
+    "title": "Create 10,000 rows",
+    "kind": "dom",
+    "source": "uibench / js-framework-benchmark / million-rows",
+    "description": "Append 10,000 rows in one fragment, then force layout.",
+    "external": false
+  },
+  {
+    "id": "dom.rows-update-10k",
+    "title": "Update every 10th of 10,000 rows",
+    "kind": "dom",
+    "source": "js-framework-benchmark (partial update)",
+    "description": "Create 10,000 rows during setup, then update the text of every tenth row.",
+    "external": false
+  },
+  {
+    "id": "dom.rows-remove-10k",
+    "title": "Remove 10,000 rows",
+    "kind": "dom",
+    "source": "js-framework-benchmark (remove all)",
+    "description": "Create 10,000 rows during setup, then remove all of them.",
+    "external": false
+  },
+  {
+    "id": "scroll.rows-10k",
+    "title": "Scroll 10,000 rows",
+    "kind": "scroll",
+    "source": "PassMark 2D HTML Scroll / cerious-scroll",
+    "description": "Create 10,000 rows, then scroll 20 times and force layout on each step.",
+    "external": false
+  },
+  {
+    "id": "scroll.2d-tiles",
+    "title": "2D scroll over 900 tiles",
+    "kind": "scroll",
+    "source": "PassMark 2D HTML Scroll (equivalent scenario)",
+    "description": "900 absolutely positioned gradient tiles on a 6000x6000 board; 20 diagonal scroll steps.",
+    "external": false
+  },
+  {
+    "id": "js.arrays",
+    "title": "JS arrays: build, sort, sum",
+    "kind": "js",
+    "source": "Browser-Bench (JS responsiveness)",
+    "description": "Sort 100,000 numbers and sum them; checksum returned by the page.",
+    "external": false
+  },
+  {
+    "id": "js.objects",
+    "title": "JS objects: 50,000 allocations",
+    "kind": "js",
+    "source": "Browser-Bench (JS responsiveness)",
+    "description": "Allocate 50,000 objects and read every property back.",
+    "external": false
+  },
+  {
+    "id": "js.strings",
+    "title": "JS strings: join and hash",
+    "kind": "js",
+    "source": "Browser-Bench (JS responsiveness)",
+    "description": "Join 50,000 chunks and hash the resulting string.",
+    "external": false
+  },
+  {
+    "id": "js.json",
+    "title": "JS JSON: stringify + parse",
+    "kind": "js",
+    "source": "Browser-Bench (JS responsiveness)",
+    "description": "Stringify and re-parse 20,000 objects.",
+    "external": false
+  },
+  {
+    "id": "dom.rows-create-100",
+    "title": "Create 100 rows",
+    "kind": "dom",
+    "source": "uibench / js-framework-benchmark / million-rows",
+    "description": "Append 100 identical rows in one fragment, then force layout.",
+    "external": false
+  },
+  {
+    "id": "dom.rows-create-250",
+    "title": "Create 250 rows",
+    "kind": "dom",
+    "source": "uibench / js-framework-benchmark / million-rows",
+    "description": "Append 250 identical rows in one fragment, then force layout.",
+    "external": false
+  },
+  {
+    "id": "dom.rows-create-500",
+    "title": "Create 500 rows",
+    "kind": "dom",
+    "source": "uibench / js-framework-benchmark / million-rows",
+    "description": "Append 500 identical rows in one fragment, then force layout.",
+    "external": false
+  },
+  {
+    "id": "dom.rows-create-2k",
+    "title": "Create 2,000 rows",
+    "kind": "dom",
+    "source": "uibench / js-framework-benchmark / million-rows",
+    "description": "Append 2,000 identical rows in one fragment, then force layout.",
+    "external": false
+  },
+  {
+    "id": "dom.rows-create-5k",
+    "title": "Create 5,000 rows",
+    "kind": "dom",
+    "source": "uibench / js-framework-benchmark / million-rows",
+    "description": "Append 5,000 identical rows in one fragment, then force layout.",
+    "external": false
+  },
+  {
+    "id": "dom.rows-create-20k",
+    "title": "Create 20,000 rows",
+    "kind": "dom",
+    "source": "uibench / js-framework-benchmark / million-rows",
+    "description": "Append 20,000 identical rows in one fragment, then force layout.",
+    "external": false
+  },
+  {
+    "id": "dom.rows-create-50k",
+    "title": "Create 50,000 rows",
+    "kind": "dom",
+    "source": "uibench / js-framework-benchmark / million-rows",
+    "description": "Append 50,000 identical rows in one fragment, then force layout.",
+    "external": false
+  },
+  {
+    "id": "dom.rows-update-100",
+    "title": "Update every 10th of 100 rows",
+    "kind": "dom",
+    "source": "js-framework-benchmark (partial update)",
+    "description": "Create 100 rows during setup, then update every tenth row.",
+    "external": false
+  },
+  {
+    "id": "dom.rows-update-1k",
+    "title": "Update every 10th of 1,000 rows",
+    "kind": "dom",
+    "source": "js-framework-benchmark (partial update)",
+    "description": "Create 1,000 rows during setup, then update every tenth row.",
+    "external": false
+  },
+  {
+    "id": "dom.rows-update-5k",
+    "title": "Update every 10th of 5,000 rows",
+    "kind": "dom",
+    "source": "js-framework-benchmark (partial update)",
+    "description": "Create 5,000 rows during setup, then update every tenth row.",
+    "external": false
+  },
+  {
+    "id": "dom.rows-remove-100",
+    "title": "Remove 100 rows",
+    "kind": "dom",
+    "source": "js-framework-benchmark (remove all)",
+    "description": "Create 100 rows during setup, then remove all.",
+    "external": false
+  },
+  {
+    "id": "dom.rows-remove-1k",
+    "title": "Remove 1,000 rows",
+    "kind": "dom",
+    "source": "js-framework-benchmark (remove all)",
+    "description": "Create 1,000 rows during setup, then remove all.",
+    "external": false
+  },
+  {
+    "id": "dom.cards-create-1k",
+    "title": "Cards layout: 1,000 items",
+    "kind": "dom",
+    "source": "layout stress (cards)",
+    "description": "Build a cards layout with 1,000 items and force one layout pass.",
+    "external": false
+  },
+  {
+    "id": "dom.cards-create-5k",
+    "title": "Cards layout: 5,000 items",
+    "kind": "dom",
+    "source": "layout stress (cards)",
+    "description": "Build a cards layout with 5,000 items and force one layout pass.",
+    "external": false
+  },
+  {
+    "id": "dom.table-create-1k",
+    "title": "Table layout: 1,000 items",
+    "kind": "dom",
+    "source": "layout stress (table)",
+    "description": "Build a table layout with 1,000 items and force one layout pass.",
+    "external": false
+  },
+  {
+    "id": "dom.flex-create-1k",
+    "title": "Flex layout: 1,000 items",
+    "kind": "dom",
+    "source": "layout stress (flex)",
+    "description": "Build a flex layout with 1,000 items and force one layout pass.",
+    "external": false
+  },
+  {
+    "id": "dom.flex-create-5k",
+    "title": "Flex layout: 5,000 items",
+    "kind": "dom",
+    "source": "layout stress (flex)",
+    "description": "Build a flex layout with 5,000 items and force one layout pass.",
+    "external": false
+  },
+  {
+    "id": "dom.grid-create-1k",
+    "title": "Grid layout: 1,000 items",
+    "kind": "dom",
+    "source": "layout stress (grid)",
+    "description": "Build a grid layout with 1,000 items and force one layout pass.",
+    "external": false
+  },
+  {
+    "id": "dom.grid-create-5k",
+    "title": "Grid layout: 5,000 items",
+    "kind": "dom",
+    "source": "layout stress (grid)",
+    "description": "Build a grid layout with 5,000 items and force one layout pass.",
+    "external": false
+  },
+  {
+    "id": "dom.nested-create-1k",
+    "title": "Nested layout: 1,000 items",
+    "kind": "dom",
+    "source": "layout stress (nested)",
+    "description": "Build a nested layout with 1,000 items and force one layout pass.",
+    "external": false
+  },
+  {
+    "id": "form.inputs-1k",
+    "title": "Forms: 1,000 inputs",
+    "kind": "dom",
+    "source": "forms / controls stress",
+    "description": "Build 1,000 inputs controls and touch every control once.",
+    "external": false
+  },
+  {
+    "id": "dom.text-create-5k",
+    "title": "Text layout: 5,000 items",
+    "kind": "dom",
+    "source": "layout stress (text)",
+    "description": "Build a text layout with 5,000 items and force one layout pass.",
+    "external": false
+  },
+  {
+    "id": "dom.position-create-1k",
+    "title": "Position layout: 1,000 items",
+    "kind": "dom",
+    "source": "layout stress (position)",
+    "description": "Build a position layout with 1,000 items and force one layout pass.",
+    "external": false
+  },
+  {
+    "id": "scroll.rows-1k",
+    "title": "Scroll 1,000 rows",
+    "kind": "scroll",
+    "source": "PassMark 2D HTML Scroll / js-framework-benchmark",
+    "description": "Load 1000 items, then scroll 20 times and force layout on each step.",
+    "external": false
+  },
+  {
+    "id": "scroll.rows-5k",
+    "title": "Scroll 5,000 rows",
+    "kind": "scroll",
+    "source": "PassMark 2D HTML Scroll / js-framework-benchmark",
+    "description": "Load 5000 items, then scroll 20 times and force layout on each step.",
+    "external": false
+  },
+  {
+    "id": "scroll.rows-20k",
+    "title": "Scroll 20,000 rows",
+    "kind": "scroll",
+    "source": "PassMark 2D HTML Scroll / js-framework-benchmark",
+    "description": "Load 20000 items, then scroll 20 times and force layout on each step.",
+    "external": false
+  },
+  {
+    "id": "scroll.rows-50k",
+    "title": "Scroll 50,000 rows",
+    "kind": "scroll",
+    "source": "PassMark 2D HTML Scroll / js-framework-benchmark",
+    "description": "Load 50000 items, then scroll 20 times and force layout on each step.",
+    "external": false
+  },
+  {
+    "id": "scroll.2d-tiles-225",
+    "title": "2D scroll over 225 tiles",
+    "kind": "scroll",
+    "source": "PassMark 2D HTML Scroll / js-framework-benchmark",
+    "description": "Load 225 items, then scroll 20 times and force layout on each step.",
+    "external": false
+  },
+  {
+    "id": "scroll.2d-tiles-400",
+    "title": "2D scroll over 400 tiles",
+    "kind": "scroll",
+    "source": "PassMark 2D HTML Scroll / js-framework-benchmark",
+    "description": "Load 400 items, then scroll 20 times and force layout on each step.",
+    "external": false
+  },
+  {
+    "id": "scroll.2d-tiles-1600",
+    "title": "2D scroll over 1600 tiles",
+    "kind": "scroll",
+    "source": "PassMark 2D HTML Scroll / js-framework-benchmark",
+    "description": "Load 1600 items, then scroll 20 times and force layout on each step.",
+    "external": false
+  },
+  {
+    "id": "scroll.2d-tiles-2500",
+    "title": "2D scroll over 2500 tiles",
+    "kind": "scroll",
+    "source": "PassMark 2D HTML Scroll / js-framework-benchmark",
+    "description": "Load 2500 items, then scroll 20 times and force layout on each step.",
+    "external": false
+  },
+  {
+    "id": "scroll.horizontal-1k",
+    "title": "Horizontal scroll over 1,000 boxes",
+    "kind": "scroll",
+    "source": "PassMark 2D HTML Scroll / js-framework-benchmark",
+    "description": "Load 1000 items, then scroll 20 times and force layout on each step.",
+    "external": false
+  },
+  {
+    "id": "scroll.horizontal-5k",
+    "title": "Horizontal scroll over 5,000 boxes",
+    "kind": "scroll",
+    "source": "PassMark 2D HTML Scroll / js-framework-benchmark",
+    "description": "Load 5000 items, then scroll 20 times and force layout on each step.",
+    "external": false
+  },
+  {
+    "id": "scroll.table-1k",
+    "title": "Scroll a 1,000-row table",
+    "kind": "scroll",
+    "source": "PassMark 2D HTML Scroll / js-framework-benchmark",
+    "description": "Load 1000 items, then scroll 20 times and force layout on each step.",
+    "external": false
+  },
+  {
+    "id": "scroll.cards-2k",
+    "title": "Scroll 2,000 cards",
+    "kind": "scroll",
+    "source": "PassMark 2D HTML Scroll / js-framework-benchmark",
+    "description": "Load 2000 items, then scroll 20 times and force layout on each step.",
+    "external": false
+  },
+  {
+    "id": "scroll.forms-1k",
+    "title": "Scroll 1,000 form fields",
+    "kind": "scroll",
+    "source": "PassMark 2D HTML Scroll / js-framework-benchmark",
+    "description": "Load 1000 items, then scroll 20 times and force layout on each step.",
+    "external": false
+  },
+  {
+    "id": "scroll.text-5k",
+    "title": "Scroll 5,000 paragraphs",
+    "kind": "scroll",
+    "source": "PassMark 2D HTML Scroll / js-framework-benchmark",
+    "description": "Load 5000 items, then scroll 20 times and force layout on each step.",
+    "external": false
+  },
+  {
+    "id": "scroll.nested-1k",
+    "title": "Scroll 1,000 nested boxes",
+    "kind": "scroll",
+    "source": "PassMark 2D HTML Scroll / js-framework-benchmark",
+    "description": "Load 1000 items, then scroll 20 times and force layout on each step.",
+    "external": false
+  },
+  {
+    "id": "js.arrays-10k",
+    "title": "JS arrays: build, sort, sum (10000)",
+    "kind": "js",
+    "source": "Browser-Bench / V8-style JS workloads",
+    "description": "Sort 10000 numbers and sum them.",
+    "external": false
+  },
+  {
+    "id": "js.arrays-500k",
+    "title": "JS arrays: build, sort, sum (500000)",
+    "kind": "js",
+    "source": "Browser-Bench / V8-style JS workloads",
+    "description": "Sort 500000 numbers and sum them.",
+    "external": false
+  },
+  {
+    "id": "js.objects-5k",
+    "title": "JS objects: allocations (5000)",
+    "kind": "js",
+    "source": "Browser-Bench / V8-style JS workloads",
+    "description": "Allocate 5000 objects and read every property back.",
+    "external": false
+  },
+  {
+    "id": "js.objects-100k",
+    "title": "JS objects: allocations (100000)",
+    "kind": "js",
+    "source": "Browser-Bench / V8-style JS workloads",
+    "description": "Allocate 100000 objects and read every property back.",
+    "external": false
+  },
+  {
+    "id": "js.strings-5k",
+    "title": "JS strings: join and hash (5000)",
+    "kind": "js",
+    "source": "Browser-Bench / V8-style JS workloads",
+    "description": "Join 5000 chunks and hash the resulting string.",
+    "external": false
+  },
+  {
+    "id": "js.strings-100k",
+    "title": "JS strings: join and hash (100000)",
+    "kind": "js",
+    "source": "Browser-Bench / V8-style JS workloads",
+    "description": "Join 100000 chunks and hash the resulting string.",
+    "external": false
+  },
+  {
+    "id": "js.json-5k",
+    "title": "JS JSON: stringify + parse (5000)",
+    "kind": "js",
+    "source": "Browser-Bench / V8-style JS workloads",
+    "description": "Stringify and re-parse 5000 objects.",
+    "external": false
+  },
+  {
+    "id": "js.json-50k",
+    "title": "JS JSON: stringify + parse (50000)",
+    "kind": "js",
+    "source": "Browser-Bench / V8-style JS workloads",
+    "description": "Stringify and re-parse 50000 objects.",
+    "external": false
+  },
+  {
+    "id": "js.typed-arrays",
+    "title": "JS typed arrays (500000)",
+    "kind": "js",
+    "source": "Browser-Bench / V8-style JS workloads",
+    "description": "Fill and sum an Int32Array of 500,000 elements.",
+    "external": false
+  },
+  {
+    "id": "js.regex",
+    "title": "JS regular expressions (20000)",
+    "kind": "js",
+    "source": "Browser-Bench / V8-style JS workloads",
+    "description": "Build 20,000 matches with a global regular expression.",
+    "external": false
+  },
+  {
+    "id": "js.map-set",
+    "title": "JS Map and Set (100000)",
+    "kind": "js",
+    "source": "Browser-Bench / V8-style JS workloads",
+    "description": "Insert 100,000 keys into Map and Set and read them back.",
+    "external": false
+  },
+  {
+    "id": "js.sort-strings",
+    "title": "JS string sort (50000)",
+    "kind": "js",
+    "source": "Browser-Bench / V8-style JS workloads",
+    "description": "Sort 50,000 generated strings.",
+    "external": false
+  },
+  {
+    "id": "js.fib",
+    "title": "JS recursion: Fibonacci (27)",
+    "kind": "js",
+    "source": "Browser-Bench / V8-style JS workloads",
+    "description": "Recursive Fibonacci(27).",
+    "external": false
+  },
+  {
+    "id": "js.math",
+    "title": "JS Math loop (200000)",
+    "kind": "js",
+    "source": "Browser-Bench / V8-style JS workloads",
+    "description": "Run 200,000 sqrt/sin/cos operations.",
+    "external": false
+  },
+  {
+    "id": "js.dates",
+    "title": "JS Date parsing (20000)",
+    "kind": "js",
+    "source": "Browser-Bench / V8-style JS workloads",
+    "description": "Create and stringify 20,000 Date objects.",
+    "external": false
+  },
+  {
+    "id": "js.prototypes",
+    "title": "JS prototypes (100000)",
+    "kind": "js",
+    "source": "Browser-Bench / V8-style JS workloads",
+    "description": "Create 100,000 constructor instances and read their fields.",
+    "external": false
+  },
+  {
+    "id": "js.closures",
+    "title": "JS closures (50000)",
+    "kind": "js",
+    "source": "Browser-Bench / V8-style JS workloads",
+    "description": "Create 50,000 closures and invoke each one.",
+    "external": false
+  },
+  {
+    "id": "js.generators",
+    "title": "JS generators (100000)",
+    "kind": "js",
+    "source": "Browser-Bench / V8-style JS workloads",
+    "description": "Consume 100,000 values from a generator.",
+    "external": false
+  },
+  {
+    "id": "js.recursion-tree",
+    "title": "JS recursive tree (15)",
+    "kind": "js",
+    "source": "Browser-Bench / V8-style JS workloads",
+    "description": "Walk a recursive tree of depth 15.",
+    "external": false
+  },
+  {
+    "id": "js.json-deep",
+    "title": "JS deeply nested JSON (200)",
+    "kind": "js",
+    "source": "Browser-Bench / V8-style JS workloads",
+    "description": "Stringify and parse a 1,000-level nested JSON tree.",
+    "external": false
+  },
+  {
+    "id": "js.arraybuffer",
+    "title": "JS ArrayBuffer + DataView (500000)",
+    "kind": "js",
+    "source": "Browser-Bench / V8-style JS workloads",
+    "description": "Write and read 500,000 Int32 values through DataView.",
+    "external": false
+  },
+  {
+    "id": "layout.flex-create-100",
+    "title": "Flex layout: 100 items",
+    "kind": "dom",
+    "source": "layout stress (flex)",
+    "description": "Build a flex layout with 100 items and force one layout pass.",
+    "external": false
+  },
+  {
+    "id": "layout.flex-create-1k",
+    "title": "Flex layout: 1,000 items",
+    "kind": "dom",
+    "source": "layout stress (flex)",
+    "description": "Build a flex layout with 1,000 items and force one layout pass.",
+    "external": false
+  },
+  {
+    "id": "layout.flex-create-5k",
+    "title": "Flex layout: 5,000 items",
+    "kind": "dom",
+    "source": "layout stress (flex)",
+    "description": "Build a flex layout with 5,000 items and force one layout pass.",
+    "external": false
+  },
+  {
+    "id": "layout.grid-create-100",
+    "title": "Grid layout: 100 items",
+    "kind": "dom",
+    "source": "layout stress (grid)",
+    "description": "Build a grid layout with 100 items and force one layout pass.",
+    "external": false
+  },
+  {
+    "id": "layout.grid-create-1k",
+    "title": "Grid layout: 1,000 items",
+    "kind": "dom",
+    "source": "layout stress (grid)",
+    "description": "Build a grid layout with 1,000 items and force one layout pass.",
+    "external": false
+  },
+  {
+    "id": "layout.grid-create-5k",
+    "title": "Grid layout: 5,000 items",
+    "kind": "dom",
+    "source": "layout stress (grid)",
+    "description": "Build a grid layout with 5,000 items and force one layout pass.",
+    "external": false
+  },
+  {
+    "id": "layout.table-create-100",
+    "title": "Table layout: 100 items",
+    "kind": "dom",
+    "source": "layout stress (table)",
+    "description": "Build a table layout with 100 items and force one layout pass.",
+    "external": false
+  },
+  {
+    "id": "layout.table-create-1k",
+    "title": "Table layout: 1,000 items",
+    "kind": "dom",
+    "source": "layout stress (table)",
+    "description": "Build a table layout with 1,000 items and force one layout pass.",
+    "external": false
+  },
+  {
+    "id": "layout.mixed-create-1k",
+    "title": "Mixed layout: 1,000 items",
+    "kind": "dom",
+    "source": "layout stress (mixed)",
+    "description": "Build a mixed layout with 1,000 items and force one layout pass.",
+    "external": false
+  },
+  {
+    "id": "layout.text-create-1k",
+    "title": "Text layout: 1,000 items",
+    "kind": "dom",
+    "source": "layout stress (text)",
+    "description": "Build a text layout with 1,000 items and force one layout pass.",
+    "external": false
+  },
+  {
+    "id": "form.selects-500",
+    "title": "Forms: 500 selects",
+    "kind": "dom",
+    "source": "forms / controls stress",
+    "description": "Build 500 selects controls and touch every control once.",
+    "external": false
+  },
+  {
+    "id": "form.checkboxes-1k",
+    "title": "Forms: 1,000 checkboxes",
+    "kind": "dom",
+    "source": "forms / controls stress",
+    "description": "Build 1,000 checkboxes controls and touch every control once.",
+    "external": false
+  },
+  {
+    "id": "form.labels-1k",
+    "title": "Forms: 1,000 labels",
+    "kind": "dom",
+    "source": "forms / controls stress",
+    "description": "Build 1,000 labels controls and touch every control once.",
+    "external": false
+  },
+  {
+    "id": "form.validation-1k",
+    "title": "Forms: 1,000 validation",
+    "kind": "dom",
+    "source": "forms / controls stress",
+    "description": "Build 1,000 validation controls and touch every control once.",
+    "external": false
+  },
+  {
+    "id": "form.inputs-5k",
+    "title": "Forms: 5,000 inputs",
+    "kind": "dom",
+    "source": "forms / controls stress",
+    "description": "Build 5,000 inputs controls and touch every control once.",
+    "external": false
+  },
+  {
+    "id": "animation.keyframes-100",
+    "title": "Animation: keyframes with 100 boxes",
+    "kind": "dom",
+    "source": "CSS animation / paint stress",
+    "description": "Animate or mutate 100 boxes and force layout/paint work.",
+    "external": false
+  },
+  {
+    "id": "animation.keyframes-1k",
+    "title": "Animation: keyframes with 1,000 boxes",
+    "kind": "dom",
+    "source": "CSS animation / paint stress",
+    "description": "Animate or mutate 1,000 boxes and force layout/paint work.",
+    "external": false
+  },
+  {
+    "id": "animation.transitions-1k",
+    "title": "Animation: transitions with 1,000 boxes",
+    "kind": "dom",
+    "source": "CSS animation / paint stress",
+    "description": "Animate or mutate 1,000 boxes and force layout/paint work.",
+    "external": false
+  },
+  {
+    "id": "animation.transform-1k",
+    "title": "Animation: transform with 1,000 boxes",
+    "kind": "dom",
+    "source": "CSS animation / paint stress",
+    "description": "Animate or mutate 1,000 boxes and force layout/paint work.",
+    "external": false
+  },
+  {
+    "id": "animation.opacity-1k",
+    "title": "Animation: opacity with 1,000 boxes",
+    "kind": "dom",
+    "source": "CSS animation / paint stress",
+    "description": "Animate or mutate 1,000 boxes and force layout/paint work.",
+    "external": false
+  },
+  {
+    "id": "animation.raf-100",
+    "title": "Animation: raf with 100 boxes",
+    "kind": "dom",
+    "source": "CSS animation / paint stress",
+    "description": "Animate or mutate 100 boxes and force layout/paint work.",
+    "external": false
+  },
+  {
+    "id": "animation.canvas-100",
+    "title": "Canvas: draw 100 rectangles",
+    "kind": "dom",
+    "source": "Canvas 2D paint stress",
+    "description": "Clear an 800x900 canvas and draw 100 coloured rectangles.",
+    "external": false
+  },
+  {
+    "id": "animation.canvas-1k",
+    "title": "Canvas: draw 1,000 rectangles",
+    "kind": "dom",
+    "source": "Canvas 2D paint stress",
+    "description": "Clear an 800x900 canvas and draw 1,000 coloured rectangles.",
+    "external": false
+  },
+  {
+    "id": "animation.mixed-1k",
+    "title": "Animation: mixed with 1,000 boxes",
+    "kind": "dom",
+    "source": "CSS animation / paint stress",
+    "description": "Animate or mutate 1,000 boxes and force layout/paint work.",
+    "external": false
+  },
+  {
+    "id": "dom.rows-create-10",
+    "title": "Create 10 rows",
+    "kind": "dom",
+    "source": "uibench / js-framework-benchmark / million-rows",
+    "description": "Append 10 identical rows in one fragment, then force layout.",
+    "external": false
+  },
+  {
+    "id": "dom.rows-create-20",
+    "title": "Create 20 rows",
+    "kind": "dom",
+    "source": "uibench / js-framework-benchmark / million-rows",
+    "description": "Append 20 identical rows in one fragment, then force layout.",
+    "external": false
+  },
+  {
+    "id": "dom.rows-create-30",
+    "title": "Create 30 rows",
+    "kind": "dom",
+    "source": "uibench / js-framework-benchmark / million-rows",
+    "description": "Append 30 identical rows in one fragment, then force layout.",
+    "external": false
+  },
+  {
+    "id": "dom.rows-create-40",
+    "title": "Create 40 rows",
+    "kind": "dom",
+    "source": "uibench / js-framework-benchmark / million-rows",
+    "description": "Append 40 identical rows in one fragment, then force layout.",
+    "external": false
+  },
+  {
+    "id": "dom.rows-create-60",
+    "title": "Create 60 rows",
+    "kind": "dom",
+    "source": "uibench / js-framework-benchmark / million-rows",
+    "description": "Append 60 identical rows in one fragment, then force layout.",
+    "external": false
+  },
+  {
+    "id": "dom.rows-create-80",
+    "title": "Create 80 rows",
+    "kind": "dom",
+    "source": "uibench / js-framework-benchmark / million-rows",
+    "description": "Append 80 identical rows in one fragment, then force layout.",
+    "external": false
+  },
+  {
+    "id": "dom.rows-create-120",
+    "title": "Create 120 rows",
+    "kind": "dom",
+    "source": "uibench / js-framework-benchmark / million-rows",
+    "description": "Append 120 identical rows in one fragment, then force layout.",
+    "external": false
+  },
+  {
+    "id": "dom.rows-create-160",
+    "title": "Create 160 rows",
+    "kind": "dom",
+    "source": "uibench / js-framework-benchmark / million-rows",
+    "description": "Append 160 identical rows in one fragment, then force layout.",
+    "external": false
+  },
+  {
+    "id": "dom.rows-create-200",
+    "title": "Create 200 rows",
+    "kind": "dom",
+    "source": "uibench / js-framework-benchmark / million-rows",
+    "description": "Append 200 identical rows in one fragment, then force layout.",
+    "external": false
+  },
+  {
+    "id": "dom.rows-create-300",
+    "title": "Create 300 rows",
+    "kind": "dom",
+    "source": "uibench / js-framework-benchmark / million-rows",
+    "description": "Append 300 identical rows in one fragment, then force layout.",
+    "external": false
+  },
+  {
+    "id": "dom.rows-create-400",
+    "title": "Create 400 rows",
+    "kind": "dom",
+    "source": "uibench / js-framework-benchmark / million-rows",
+    "description": "Append 400 identical rows in one fragment, then force layout.",
+    "external": false
+  },
+  {
+    "id": "dom.rows-create-600",
+    "title": "Create 600 rows",
+    "kind": "dom",
+    "source": "uibench / js-framework-benchmark / million-rows",
+    "description": "Append 600 identical rows in one fragment, then force layout.",
+    "external": false
+  },
+  {
+    "id": "dom.rows-create-800",
+    "title": "Create 800 rows",
+    "kind": "dom",
+    "source": "uibench / js-framework-benchmark / million-rows",
+    "description": "Append 800 identical rows in one fragment, then force layout.",
+    "external": false
+  },
+  {
+    "id": "dom.rows-create-1200",
+    "title": "Create 1200 rows",
+    "kind": "dom",
+    "source": "uibench / js-framework-benchmark / million-rows",
+    "description": "Append 1200 identical rows in one fragment, then force layout.",
+    "external": false
+  },
+  {
+    "id": "dom.rows-create-1500",
+    "title": "Create 1500 rows",
+    "kind": "dom",
+    "source": "uibench / js-framework-benchmark / million-rows",
+    "description": "Append 1500 identical rows in one fragment, then force layout.",
+    "external": false
+  },
+  {
+    "id": "dom.rows-create-2500",
+    "title": "Create 2500 rows",
+    "kind": "dom",
+    "source": "uibench / js-framework-benchmark / million-rows",
+    "description": "Append 2500 identical rows in one fragment, then force layout.",
+    "external": false
+  },
+  {
+    "id": "dom.rows-create-3k",
+    "title": "Create 3,000 rows",
+    "kind": "dom",
+    "source": "uibench / js-framework-benchmark / million-rows",
+    "description": "Append 3,000 identical rows in one fragment, then force layout.",
+    "external": false
+  },
+  {
+    "id": "dom.rows-create-4k",
+    "title": "Create 4,000 rows",
+    "kind": "dom",
+    "source": "uibench / js-framework-benchmark / million-rows",
+    "description": "Append 4,000 identical rows in one fragment, then force layout.",
+    "external": false
+  },
+  {
+    "id": "dom.rows-create-6k",
+    "title": "Create 6,000 rows",
+    "kind": "dom",
+    "source": "uibench / js-framework-benchmark / million-rows",
+    "description": "Append 6,000 identical rows in one fragment, then force layout.",
+    "external": false
+  },
+  {
+    "id": "dom.rows-create-8k",
+    "title": "Create 8,000 rows",
+    "kind": "dom",
+    "source": "uibench / js-framework-benchmark / million-rows",
+    "description": "Append 8,000 identical rows in one fragment, then force layout.",
+    "external": false
+  },
+  {
+    "id": "dom.rows-create-12k",
+    "title": "Create 12,000 rows",
+    "kind": "dom",
+    "source": "uibench / js-framework-benchmark / million-rows",
+    "description": "Append 12,000 identical rows in one fragment, then force layout.",
+    "external": false
+  },
+  {
+    "id": "dom.rows-create-15k",
+    "title": "Create 15,000 rows",
+    "kind": "dom",
+    "source": "uibench / js-framework-benchmark / million-rows",
+    "description": "Append 15,000 identical rows in one fragment, then force layout.",
+    "external": false
+  },
+  {
+    "id": "dom.rows-create-25k",
+    "title": "Create 25,000 rows",
+    "kind": "dom",
+    "source": "uibench / js-framework-benchmark / million-rows",
+    "description": "Append 25,000 identical rows in one fragment, then force layout.",
+    "external": false
+  },
+  {
+    "id": "dom.rows-create-40k",
+    "title": "Create 40,000 rows",
+    "kind": "dom",
+    "source": "uibench / js-framework-benchmark / million-rows",
+    "description": "Append 40,000 identical rows in one fragment, then force layout.",
+    "external": false
+  },
+  {
+    "id": "dom.rows-update-10",
+    "title": "Update every 10th of 10 rows",
+    "kind": "dom",
+    "source": "js-framework-benchmark (partial update)",
+    "description": "Create 10 rows during setup, then update every tenth row.",
+    "external": false
+  },
+  {
+    "id": "dom.rows-update-20",
+    "title": "Update every 10th of 20 rows",
+    "kind": "dom",
+    "source": "js-framework-benchmark (partial update)",
+    "description": "Create 20 rows during setup, then update every tenth row.",
+    "external": false
+  },
+  {
+    "id": "dom.rows-update-30",
+    "title": "Update every 10th of 30 rows",
+    "kind": "dom",
+    "source": "js-framework-benchmark (partial update)",
+    "description": "Create 30 rows during setup, then update every tenth row.",
+    "external": false
+  },
+  {
+    "id": "dom.rows-update-40",
+    "title": "Update every 10th of 40 rows",
+    "kind": "dom",
+    "source": "js-framework-benchmark (partial update)",
+    "description": "Create 40 rows during setup, then update every tenth row.",
+    "external": false
+  },
+  {
+    "id": "dom.rows-update-60",
+    "title": "Update every 10th of 60 rows",
+    "kind": "dom",
+    "source": "js-framework-benchmark (partial update)",
+    "description": "Create 60 rows during setup, then update every tenth row.",
+    "external": false
+  },
+  {
+    "id": "dom.rows-update-80",
+    "title": "Update every 10th of 80 rows",
+    "kind": "dom",
+    "source": "js-framework-benchmark (partial update)",
+    "description": "Create 80 rows during setup, then update every tenth row.",
+    "external": false
+  },
+  {
+    "id": "dom.rows-update-120",
+    "title": "Update every 10th of 120 rows",
+    "kind": "dom",
+    "source": "js-framework-benchmark (partial update)",
+    "description": "Create 120 rows during setup, then update every tenth row.",
+    "external": false
+  },
+  {
+    "id": "dom.rows-update-160",
+    "title": "Update every 10th of 160 rows",
+    "kind": "dom",
+    "source": "js-framework-benchmark (partial update)",
+    "description": "Create 160 rows during setup, then update every tenth row.",
+    "external": false
+  },
+  {
+    "id": "dom.rows-update-200",
+    "title": "Update every 10th of 200 rows",
+    "kind": "dom",
+    "source": "js-framework-benchmark (partial update)",
+    "description": "Create 200 rows during setup, then update every tenth row.",
+    "external": false
+  },
+  {
+    "id": "dom.rows-update-300",
+    "title": "Update every 10th of 300 rows",
+    "kind": "dom",
+    "source": "js-framework-benchmark (partial update)",
+    "description": "Create 300 rows during setup, then update every tenth row.",
+    "external": false
+  },
+  {
+    "id": "dom.rows-update-400",
+    "title": "Update every 10th of 400 rows",
+    "kind": "dom",
+    "source": "js-framework-benchmark (partial update)",
+    "description": "Create 400 rows during setup, then update every tenth row.",
+    "external": false
+  },
+  {
+    "id": "dom.rows-update-600",
+    "title": "Update every 10th of 600 rows",
+    "kind": "dom",
+    "source": "js-framework-benchmark (partial update)",
+    "description": "Create 600 rows during setup, then update every tenth row.",
+    "external": false
+  },
+  {
+    "id": "dom.rows-update-800",
+    "title": "Update every 10th of 800 rows",
+    "kind": "dom",
+    "source": "js-framework-benchmark (partial update)",
+    "description": "Create 800 rows during setup, then update every tenth row.",
+    "external": false
+  },
+  {
+    "id": "dom.rows-update-1200",
+    "title": "Update every 10th of 1200 rows",
+    "kind": "dom",
+    "source": "js-framework-benchmark (partial update)",
+    "description": "Create 1200 rows during setup, then update every tenth row.",
+    "external": false
+  },
+  {
+    "id": "dom.rows-update-1500",
+    "title": "Update every 10th of 1500 rows",
+    "kind": "dom",
+    "source": "js-framework-benchmark (partial update)",
+    "description": "Create 1500 rows during setup, then update every tenth row.",
+    "external": false
+  },
+  {
+    "id": "dom.rows-update-2500",
+    "title": "Update every 10th of 2500 rows",
+    "kind": "dom",
+    "source": "js-framework-benchmark (partial update)",
+    "description": "Create 2500 rows during setup, then update every tenth row.",
+    "external": false
+  },
+  {
+    "id": "dom.rows-update-3k",
+    "title": "Update every 10th of 3,000 rows",
+    "kind": "dom",
+    "source": "js-framework-benchmark (partial update)",
+    "description": "Create 3,000 rows during setup, then update every tenth row.",
+    "external": false
+  },
+  {
+    "id": "dom.rows-update-4k",
+    "title": "Update every 10th of 4,000 rows",
+    "kind": "dom",
+    "source": "js-framework-benchmark (partial update)",
+    "description": "Create 4,000 rows during setup, then update every tenth row.",
+    "external": false
+  },
+  {
+    "id": "dom.rows-update-6k",
+    "title": "Update every 10th of 6,000 rows",
+    "kind": "dom",
+    "source": "js-framework-benchmark (partial update)",
+    "description": "Create 6,000 rows during setup, then update every tenth row.",
+    "external": false
+  },
+  {
+    "id": "dom.rows-update-8k",
+    "title": "Update every 10th of 8,000 rows",
+    "kind": "dom",
+    "source": "js-framework-benchmark (partial update)",
+    "description": "Create 8,000 rows during setup, then update every tenth row.",
+    "external": false
+  },
+  {
+    "id": "dom.rows-update-12k",
+    "title": "Update every 10th of 12,000 rows",
+    "kind": "dom",
+    "source": "js-framework-benchmark (partial update)",
+    "description": "Create 12,000 rows during setup, then update every tenth row.",
+    "external": false
+  },
+  {
+    "id": "dom.rows-update-15k",
+    "title": "Update every 10th of 15,000 rows",
+    "kind": "dom",
+    "source": "js-framework-benchmark (partial update)",
+    "description": "Create 15,000 rows during setup, then update every tenth row.",
+    "external": false
+  },
+  {
+    "id": "dom.rows-update-25k",
+    "title": "Update every 10th of 25,000 rows",
+    "kind": "dom",
+    "source": "js-framework-benchmark (partial update)",
+    "description": "Create 25,000 rows during setup, then update every tenth row.",
+    "external": false
+  },
+  {
+    "id": "dom.rows-update-40k",
+    "title": "Update every 10th of 40,000 rows",
+    "kind": "dom",
+    "source": "js-framework-benchmark (partial update)",
+    "description": "Create 40,000 rows during setup, then update every tenth row.",
+    "external": false
+  },
+  {
+    "id": "dom.rows-remove-10",
+    "title": "Remove 10 rows",
+    "kind": "dom",
+    "source": "js-framework-benchmark (remove all)",
+    "description": "Create 10 rows during setup, then remove all.",
+    "external": false
+  },
+  {
+    "id": "dom.rows-remove-20",
+    "title": "Remove 20 rows",
+    "kind": "dom",
+    "source": "js-framework-benchmark (remove all)",
+    "description": "Create 20 rows during setup, then remove all.",
+    "external": false
+  },
+  {
+    "id": "dom.rows-remove-30",
+    "title": "Remove 30 rows",
+    "kind": "dom",
+    "source": "js-framework-benchmark (remove all)",
+    "description": "Create 30 rows during setup, then remove all.",
+    "external": false
+  },
+  {
+    "id": "dom.rows-remove-40",
+    "title": "Remove 40 rows",
+    "kind": "dom",
+    "source": "js-framework-benchmark (remove all)",
+    "description": "Create 40 rows during setup, then remove all.",
+    "external": false
+  },
+  {
+    "id": "dom.rows-remove-60",
+    "title": "Remove 60 rows",
+    "kind": "dom",
+    "source": "js-framework-benchmark (remove all)",
+    "description": "Create 60 rows during setup, then remove all.",
+    "external": false
+  },
+  {
+    "id": "dom.rows-remove-80",
+    "title": "Remove 80 rows",
+    "kind": "dom",
+    "source": "js-framework-benchmark (remove all)",
+    "description": "Create 80 rows during setup, then remove all.",
+    "external": false
+  },
+  {
+    "id": "dom.rows-remove-120",
+    "title": "Remove 120 rows",
+    "kind": "dom",
+    "source": "js-framework-benchmark (remove all)",
+    "description": "Create 120 rows during setup, then remove all.",
+    "external": false
+  },
+  {
+    "id": "dom.rows-remove-160",
+    "title": "Remove 160 rows",
+    "kind": "dom",
+    "source": "js-framework-benchmark (remove all)",
+    "description": "Create 160 rows during setup, then remove all.",
+    "external": false
+  },
+  {
+    "id": "dom.rows-remove-200",
+    "title": "Remove 200 rows",
+    "kind": "dom",
+    "source": "js-framework-benchmark (remove all)",
+    "description": "Create 200 rows during setup, then remove all.",
+    "external": false
+  },
+  {
+    "id": "dom.rows-remove-300",
+    "title": "Remove 300 rows",
+    "kind": "dom",
+    "source": "js-framework-benchmark (remove all)",
+    "description": "Create 300 rows during setup, then remove all.",
+    "external": false
+  },
+  {
+    "id": "dom.rows-remove-400",
+    "title": "Remove 400 rows",
+    "kind": "dom",
+    "source": "js-framework-benchmark (remove all)",
+    "description": "Create 400 rows during setup, then remove all.",
+    "external": false
+  },
+  {
+    "id": "dom.rows-remove-600",
+    "title": "Remove 600 rows",
+    "kind": "dom",
+    "source": "js-framework-benchmark (remove all)",
+    "description": "Create 600 rows during setup, then remove all.",
+    "external": false
+  },
+  {
+    "id": "dom.rows-remove-800",
+    "title": "Remove 800 rows",
+    "kind": "dom",
+    "source": "js-framework-benchmark (remove all)",
+    "description": "Create 800 rows during setup, then remove all.",
+    "external": false
+  },
+  {
+    "id": "dom.rows-remove-1200",
+    "title": "Remove 1200 rows",
+    "kind": "dom",
+    "source": "js-framework-benchmark (remove all)",
+    "description": "Create 1200 rows during setup, then remove all.",
+    "external": false
+  },
+  {
+    "id": "dom.rows-remove-1500",
+    "title": "Remove 1500 rows",
+    "kind": "dom",
+    "source": "js-framework-benchmark (remove all)",
+    "description": "Create 1500 rows during setup, then remove all.",
+    "external": false
+  },
+  {
+    "id": "dom.rows-remove-2500",
+    "title": "Remove 2500 rows",
+    "kind": "dom",
+    "source": "js-framework-benchmark (remove all)",
+    "description": "Create 2500 rows during setup, then remove all.",
+    "external": false
+  },
+  {
+    "id": "dom.rows-remove-3k",
+    "title": "Remove 3,000 rows",
+    "kind": "dom",
+    "source": "js-framework-benchmark (remove all)",
+    "description": "Create 3,000 rows during setup, then remove all.",
+    "external": false
+  },
+  {
+    "id": "dom.rows-remove-4k",
+    "title": "Remove 4,000 rows",
+    "kind": "dom",
+    "source": "js-framework-benchmark (remove all)",
+    "description": "Create 4,000 rows during setup, then remove all.",
+    "external": false
+  },
+  {
+    "id": "dom.rows-remove-6k",
+    "title": "Remove 6,000 rows",
+    "kind": "dom",
+    "source": "js-framework-benchmark (remove all)",
+    "description": "Create 6,000 rows during setup, then remove all.",
+    "external": false
+  },
+  {
+    "id": "dom.rows-remove-8k",
+    "title": "Remove 8,000 rows",
+    "kind": "dom",
+    "source": "js-framework-benchmark (remove all)",
+    "description": "Create 8,000 rows during setup, then remove all.",
+    "external": false
+  },
+  {
+    "id": "dom.rows-remove-12k",
+    "title": "Remove 12,000 rows",
+    "kind": "dom",
+    "source": "js-framework-benchmark (remove all)",
+    "description": "Create 12,000 rows during setup, then remove all.",
+    "external": false
+  },
+  {
+    "id": "dom.rows-remove-15k",
+    "title": "Remove 15,000 rows",
+    "kind": "dom",
+    "source": "js-framework-benchmark (remove all)",
+    "description": "Create 15,000 rows during setup, then remove all.",
+    "external": false
+  },
+  {
+    "id": "dom.rows-remove-25k",
+    "title": "Remove 25,000 rows",
+    "kind": "dom",
+    "source": "js-framework-benchmark (remove all)",
+    "description": "Create 25,000 rows during setup, then remove all.",
+    "external": false
+  },
+  {
+    "id": "dom.rows-remove-40k",
+    "title": "Remove 40,000 rows",
+    "kind": "dom",
+    "source": "js-framework-benchmark (remove all)",
+    "description": "Create 40,000 rows during setup, then remove all.",
+    "external": false
+  },
+  {
+    "id": "scroll.rows-10",
+    "title": "Scroll 10 rows (matrix)",
+    "kind": "scroll",
+    "source": "PassMark 2D HTML Scroll / js-framework-benchmark",
+    "description": "Load 10 items, then scroll 20 times and force layout on each step.",
+    "external": false
+  },
+  {
+    "id": "scroll.rows-20",
+    "title": "Scroll 20 rows (matrix)",
+    "kind": "scroll",
+    "source": "PassMark 2D HTML Scroll / js-framework-benchmark",
+    "description": "Load 20 items, then scroll 20 times and force layout on each step.",
+    "external": false
+  },
+  {
+    "id": "scroll.rows-30",
+    "title": "Scroll 30 rows (matrix)",
+    "kind": "scroll",
+    "source": "PassMark 2D HTML Scroll / js-framework-benchmark",
+    "description": "Load 30 items, then scroll 20 times and force layout on each step.",
+    "external": false
+  },
+  {
+    "id": "scroll.rows-40",
+    "title": "Scroll 40 rows (matrix)",
+    "kind": "scroll",
+    "source": "PassMark 2D HTML Scroll / js-framework-benchmark",
+    "description": "Load 40 items, then scroll 20 times and force layout on each step.",
+    "external": false
+  },
+  {
+    "id": "scroll.rows-60",
+    "title": "Scroll 60 rows (matrix)",
+    "kind": "scroll",
+    "source": "PassMark 2D HTML Scroll / js-framework-benchmark",
+    "description": "Load 60 items, then scroll 20 times and force layout on each step.",
+    "external": false
+  },
+  {
+    "id": "scroll.rows-80",
+    "title": "Scroll 80 rows (matrix)",
+    "kind": "scroll",
+    "source": "PassMark 2D HTML Scroll / js-framework-benchmark",
+    "description": "Load 80 items, then scroll 20 times and force layout on each step.",
+    "external": false
+  },
+  {
+    "id": "scroll.rows-120",
+    "title": "Scroll 120 rows (matrix)",
+    "kind": "scroll",
+    "source": "PassMark 2D HTML Scroll / js-framework-benchmark",
+    "description": "Load 120 items, then scroll 20 times and force layout on each step.",
+    "external": false
+  },
+  {
+    "id": "scroll.rows-160",
+    "title": "Scroll 160 rows (matrix)",
+    "kind": "scroll",
+    "source": "PassMark 2D HTML Scroll / js-framework-benchmark",
+    "description": "Load 160 items, then scroll 20 times and force layout on each step.",
+    "external": false
+  },
+  {
+    "id": "scroll.rows-200",
+    "title": "Scroll 200 rows (matrix)",
+    "kind": "scroll",
+    "source": "PassMark 2D HTML Scroll / js-framework-benchmark",
+    "description": "Load 200 items, then scroll 20 times and force layout on each step.",
+    "external": false
+  },
+  {
+    "id": "scroll.rows-300",
+    "title": "Scroll 300 rows (matrix)",
+    "kind": "scroll",
+    "source": "PassMark 2D HTML Scroll / js-framework-benchmark",
+    "description": "Load 300 items, then scroll 20 times and force layout on each step.",
+    "external": false
+  },
+  {
+    "id": "scroll.rows-400",
+    "title": "Scroll 400 rows (matrix)",
+    "kind": "scroll",
+    "source": "PassMark 2D HTML Scroll / js-framework-benchmark",
+    "description": "Load 400 items, then scroll 20 times and force layout on each step.",
+    "external": false
+  },
+  {
+    "id": "scroll.rows-600",
+    "title": "Scroll 600 rows (matrix)",
+    "kind": "scroll",
+    "source": "PassMark 2D HTML Scroll / js-framework-benchmark",
+    "description": "Load 600 items, then scroll 20 times and force layout on each step.",
+    "external": false
+  },
+  {
+    "id": "scroll.rows-800",
+    "title": "Scroll 800 rows (matrix)",
+    "kind": "scroll",
+    "source": "PassMark 2D HTML Scroll / js-framework-benchmark",
+    "description": "Load 800 items, then scroll 20 times and force layout on each step.",
+    "external": false
+  },
+  {
+    "id": "scroll.rows-1200",
+    "title": "Scroll 1200 rows (matrix)",
+    "kind": "scroll",
+    "source": "PassMark 2D HTML Scroll / js-framework-benchmark",
+    "description": "Load 1200 items, then scroll 20 times and force layout on each step.",
+    "external": false
+  },
+  {
+    "id": "scroll.rows-1500",
+    "title": "Scroll 1500 rows (matrix)",
+    "kind": "scroll",
+    "source": "PassMark 2D HTML Scroll / js-framework-benchmark",
+    "description": "Load 1500 items, then scroll 20 times and force layout on each step.",
+    "external": false
+  },
+  {
+    "id": "scroll.rows-2500",
+    "title": "Scroll 2500 rows (matrix)",
+    "kind": "scroll",
+    "source": "PassMark 2D HTML Scroll / js-framework-benchmark",
+    "description": "Load 2500 items, then scroll 20 times and force layout on each step.",
+    "external": false
+  },
+  {
+    "id": "scroll.rows-3k",
+    "title": "Scroll 3,000 rows (matrix)",
+    "kind": "scroll",
+    "source": "PassMark 2D HTML Scroll / js-framework-benchmark",
+    "description": "Load 3000 items, then scroll 20 times and force layout on each step.",
+    "external": false
+  },
+  {
+    "id": "scroll.rows-4k",
+    "title": "Scroll 4,000 rows (matrix)",
+    "kind": "scroll",
+    "source": "PassMark 2D HTML Scroll / js-framework-benchmark",
+    "description": "Load 4000 items, then scroll 20 times and force layout on each step.",
+    "external": false
+  },
+  {
+    "id": "scroll.rows-6k",
+    "title": "Scroll 6,000 rows (matrix)",
+    "kind": "scroll",
+    "source": "PassMark 2D HTML Scroll / js-framework-benchmark",
+    "description": "Load 6000 items, then scroll 20 times and force layout on each step.",
+    "external": false
+  },
+  {
+    "id": "scroll.rows-8k",
+    "title": "Scroll 8,000 rows (matrix)",
+    "kind": "scroll",
+    "source": "PassMark 2D HTML Scroll / js-framework-benchmark",
+    "description": "Load 8000 items, then scroll 20 times and force layout on each step.",
+    "external": false
+  },
+  {
+    "id": "scroll.rows-12k",
+    "title": "Scroll 12,000 rows (matrix)",
+    "kind": "scroll",
+    "source": "PassMark 2D HTML Scroll / js-framework-benchmark",
+    "description": "Load 12000 items, then scroll 20 times and force layout on each step.",
+    "external": false
+  },
+  {
+    "id": "scroll.rows-15k",
+    "title": "Scroll 15,000 rows (matrix)",
+    "kind": "scroll",
+    "source": "PassMark 2D HTML Scroll / js-framework-benchmark",
+    "description": "Load 15000 items, then scroll 20 times and force layout on each step.",
+    "external": false
+  },
+  {
+    "id": "scroll.rows-25k",
+    "title": "Scroll 25,000 rows (matrix)",
+    "kind": "scroll",
+    "source": "PassMark 2D HTML Scroll / js-framework-benchmark",
+    "description": "Load 25000 items, then scroll 20 times and force layout on each step.",
+    "external": false
+  },
+  {
+    "id": "scroll.rows-40k",
+    "title": "Scroll 40,000 rows (matrix)",
+    "kind": "scroll",
+    "source": "PassMark 2D HTML Scroll / js-framework-benchmark",
+    "description": "Load 40000 items, then scroll 20 times and force layout on each step.",
+    "external": false
+  },
+  {
+    "id": "matrix.flex-create-10",
+    "title": "Flex layout: 10 items",
+    "kind": "dom",
+    "source": "layout stress (flex)",
+    "description": "Build a flex layout with 10 items and force one layout pass.",
+    "external": false
+  },
+  {
+    "id": "matrix.flex-create-20",
+    "title": "Flex layout: 20 items",
+    "kind": "dom",
+    "source": "layout stress (flex)",
+    "description": "Build a flex layout with 20 items and force one layout pass.",
+    "external": false
+  },
+  {
+    "id": "matrix.flex-create-50",
+    "title": "Flex layout: 50 items",
+    "kind": "dom",
+    "source": "layout stress (flex)",
+    "description": "Build a flex layout with 50 items and force one layout pass.",
+    "external": false
+  },
+  {
+    "id": "matrix.flex-create-200",
+    "title": "Flex layout: 200 items",
+    "kind": "dom",
+    "source": "layout stress (flex)",
+    "description": "Build a flex layout with 200 items and force one layout pass.",
+    "external": false
+  },
+  {
+    "id": "matrix.flex-create-400",
+    "title": "Flex layout: 400 items",
+    "kind": "dom",
+    "source": "layout stress (flex)",
+    "description": "Build a flex layout with 400 items and force one layout pass.",
+    "external": false
+  },
+  {
+    "id": "matrix.flex-create-800",
+    "title": "Flex layout: 800 items",
+    "kind": "dom",
+    "source": "layout stress (flex)",
+    "description": "Build a flex layout with 800 items and force one layout pass.",
+    "external": false
+  },
+  {
+    "id": "matrix.flex-create-1200",
+    "title": "Flex layout: 1200 items",
+    "kind": "dom",
+    "source": "layout stress (flex)",
+    "description": "Build a flex layout with 1200 items and force one layout pass.",
+    "external": false
+  },
+  {
+    "id": "matrix.flex-create-2k",
+    "title": "Flex layout: 2,000 items",
+    "kind": "dom",
+    "source": "layout stress (flex)",
+    "description": "Build a flex layout with 2,000 items and force one layout pass.",
+    "external": false
+  },
+  {
+    "id": "matrix.flex-create-3k",
+    "title": "Flex layout: 3,000 items",
+    "kind": "dom",
+    "source": "layout stress (flex)",
+    "description": "Build a flex layout with 3,000 items and force one layout pass.",
+    "external": false
+  },
+  {
+    "id": "matrix.flex-create-4k",
+    "title": "Flex layout: 4,000 items",
+    "kind": "dom",
+    "source": "layout stress (flex)",
+    "description": "Build a flex layout with 4,000 items and force one layout pass.",
+    "external": false
+  },
+  {
+    "id": "matrix.flex-create-8k",
+    "title": "Flex layout: 8,000 items",
+    "kind": "dom",
+    "source": "layout stress (flex)",
+    "description": "Build a flex layout with 8,000 items and force one layout pass.",
+    "external": false
+  },
+  {
+    "id": "matrix.flex-create-12k",
+    "title": "Flex layout: 12,000 items",
+    "kind": "dom",
+    "source": "layout stress (flex)",
+    "description": "Build a flex layout with 12,000 items and force one layout pass.",
+    "external": false
+  },
+  {
+    "id": "matrix.grid-create-10",
+    "title": "Grid layout: 10 items",
+    "kind": "dom",
+    "source": "layout stress (grid)",
+    "description": "Build a grid layout with 10 items and force one layout pass.",
+    "external": false
+  },
+  {
+    "id": "matrix.grid-create-25",
+    "title": "Grid layout: 25 items",
+    "kind": "dom",
+    "source": "layout stress (grid)",
+    "description": "Build a grid layout with 25 items and force one layout pass.",
+    "external": false
+  },
+  {
+    "id": "matrix.grid-create-50",
+    "title": "Grid layout: 50 items",
+    "kind": "dom",
+    "source": "layout stress (grid)",
+    "description": "Build a grid layout with 50 items and force one layout pass.",
+    "external": false
+  },
+  {
+    "id": "matrix.grid-create-200",
+    "title": "Grid layout: 200 items",
+    "kind": "dom",
+    "source": "layout stress (grid)",
+    "description": "Build a grid layout with 200 items and force one layout pass.",
+    "external": false
+  },
+  {
+    "id": "matrix.grid-create-500",
+    "title": "Grid layout: 500 items",
+    "kind": "dom",
+    "source": "layout stress (grid)",
+    "description": "Build a grid layout with 500 items and force one layout pass.",
+    "external": false
+  },
+  {
+    "id": "matrix.grid-create-1200",
+    "title": "Grid layout: 1200 items",
+    "kind": "dom",
+    "source": "layout stress (grid)",
+    "description": "Build a grid layout with 1200 items and force one layout pass.",
+    "external": false
+  },
+  {
+    "id": "matrix.grid-create-2500",
+    "title": "Grid layout: 2500 items",
+    "kind": "dom",
+    "source": "layout stress (grid)",
+    "description": "Build a grid layout with 2500 items and force one layout pass.",
+    "external": false
+  },
+  {
+    "id": "matrix.grid-create-5k",
+    "title": "Grid layout: 5,000 items",
+    "kind": "dom",
+    "source": "layout stress (grid)",
+    "description": "Build a grid layout with 5,000 items and force one layout pass.",
+    "external": false
+  },
+  {
+    "id": "matrix.grid-create-8k",
+    "title": "Grid layout: 8,000 items",
+    "kind": "dom",
+    "source": "layout stress (grid)",
+    "description": "Build a grid layout with 8,000 items and force one layout pass.",
+    "external": false
+  },
+  {
+    "id": "matrix.grid-create-12k",
+    "title": "Grid layout: 12,000 items",
+    "kind": "dom",
+    "source": "layout stress (grid)",
+    "description": "Build a grid layout with 12,000 items and force one layout pass.",
+    "external": false
+  },
+  {
+    "id": "matrix.table-create-500",
+    "title": "Table layout: 500 items",
+    "kind": "dom",
+    "source": "layout stress (table)",
+    "description": "Build a table layout with 500 items and force one layout pass.",
+    "external": false
+  },
+  {
+    "id": "matrix.mixed-create-500",
+    "title": "Mixed layout: 500 items",
+    "kind": "dom",
+    "source": "layout stress (mixed)",
+    "description": "Build a mixed layout with 500 items and force one layout pass.",
+    "external": false
+  },
+  {
+    "id": "game.quality-640x360-p100",
+    "title": "Game quality 640x360 \u00b7 100 particles",
+    "kind": "dom",
+    "source": "game-player quality profiles",
+    "description": "Canvas 2D game frame at 640x360 with 100 particles.",
+    "external": false
+  },
+  {
+    "id": "game.quality-640x360-p500",
+    "title": "Game quality 640x360 \u00b7 500 particles",
+    "kind": "dom",
+    "source": "game-player quality profiles",
+    "description": "Canvas 2D game frame at 640x360 with 500 particles.",
+    "external": false
+  },
+  {
+    "id": "game.quality-640x360-p1000",
+    "title": "Game quality 640x360 \u00b7 1000 particles",
+    "kind": "dom",
+    "source": "game-player quality profiles",
+    "description": "Canvas 2D game frame at 640x360 with 1000 particles.",
+    "external": false
+  },
+  {
+    "id": "game.quality-640x360-p2500",
+    "title": "Game quality 640x360 \u00b7 2500 particles",
+    "kind": "dom",
+    "source": "game-player quality profiles",
+    "description": "Canvas 2D game frame at 640x360 with 2500 particles.",
+    "external": false
+  },
+  {
+    "id": "game.quality-640x360-p5000",
+    "title": "Game quality 640x360 \u00b7 5000 particles",
+    "kind": "dom",
+    "source": "game-player quality profiles",
+    "description": "Canvas 2D game frame at 640x360 with 5000 particles.",
+    "external": false
+  },
+  {
+    "id": "game.quality-854x480-p100",
+    "title": "Game quality 854x480 \u00b7 100 particles",
+    "kind": "dom",
+    "source": "game-player quality profiles",
+    "description": "Canvas 2D game frame at 854x480 with 100 particles.",
+    "external": false
+  },
+  {
+    "id": "game.quality-854x480-p500",
+    "title": "Game quality 854x480 \u00b7 500 particles",
+    "kind": "dom",
+    "source": "game-player quality profiles",
+    "description": "Canvas 2D game frame at 854x480 with 500 particles.",
+    "external": false
+  },
+  {
+    "id": "game.quality-854x480-p1000",
+    "title": "Game quality 854x480 \u00b7 1000 particles",
+    "kind": "dom",
+    "source": "game-player quality profiles",
+    "description": "Canvas 2D game frame at 854x480 with 1000 particles.",
+    "external": false
+  },
+  {
+    "id": "game.quality-854x480-p2500",
+    "title": "Game quality 854x480 \u00b7 2500 particles",
+    "kind": "dom",
+    "source": "game-player quality profiles",
+    "description": "Canvas 2D game frame at 854x480 with 2500 particles.",
+    "external": false
+  },
+  {
+    "id": "game.quality-854x480-p5000",
+    "title": "Game quality 854x480 \u00b7 5000 particles",
+    "kind": "dom",
+    "source": "game-player quality profiles",
+    "description": "Canvas 2D game frame at 854x480 with 5000 particles.",
+    "external": false
+  },
+  {
+    "id": "game.quality-1280x720-p100",
+    "title": "Game quality 1280x720 \u00b7 100 particles",
+    "kind": "dom",
+    "source": "game-player quality profiles",
+    "description": "Canvas 2D game frame at 1280x720 with 100 particles.",
+    "external": false
+  },
+  {
+    "id": "game.quality-1280x720-p500",
+    "title": "Game quality 1280x720 \u00b7 500 particles",
+    "kind": "dom",
+    "source": "game-player quality profiles",
+    "description": "Canvas 2D game frame at 1280x720 with 500 particles.",
+    "external": false
+  },
+  {
+    "id": "game.quality-1280x720-p1000",
+    "title": "Game quality 1280x720 \u00b7 1000 particles",
+    "kind": "dom",
+    "source": "game-player quality profiles",
+    "description": "Canvas 2D game frame at 1280x720 with 1000 particles.",
+    "external": false
+  },
+  {
+    "id": "game.quality-1280x720-p2500",
+    "title": "Game quality 1280x720 \u00b7 2500 particles",
+    "kind": "dom",
+    "source": "game-player quality profiles",
+    "description": "Canvas 2D game frame at 1280x720 with 2500 particles.",
+    "external": false
+  },
+  {
+    "id": "game.quality-1280x720-p5000",
+    "title": "Game quality 1280x720 \u00b7 5000 particles",
+    "kind": "dom",
+    "source": "game-player quality profiles",
+    "description": "Canvas 2D game frame at 1280x720 with 5000 particles.",
+    "external": false
+  },
+  {
+    "id": "game.quality-1920x1080-p100",
+    "title": "Game quality 1920x1080 \u00b7 100 particles",
+    "kind": "dom",
+    "source": "game-player quality profiles",
+    "description": "Canvas 2D game frame at 1920x1080 with 100 particles.",
+    "external": false
+  },
+  {
+    "id": "game.quality-1920x1080-p500",
+    "title": "Game quality 1920x1080 \u00b7 500 particles",
+    "kind": "dom",
+    "source": "game-player quality profiles",
+    "description": "Canvas 2D game frame at 1920x1080 with 500 particles.",
+    "external": false
+  },
+  {
+    "id": "game.quality-1920x1080-p1000",
+    "title": "Game quality 1920x1080 \u00b7 1000 particles",
+    "kind": "dom",
+    "source": "game-player quality profiles",
+    "description": "Canvas 2D game frame at 1920x1080 with 1000 particles.",
+    "external": false
+  },
+  {
+    "id": "game.quality-1920x1080-p2500",
+    "title": "Game quality 1920x1080 \u00b7 2500 particles",
+    "kind": "dom",
+    "source": "game-player quality profiles",
+    "description": "Canvas 2D game frame at 1920x1080 with 2500 particles.",
+    "external": false
+  },
+  {
+    "id": "game.quality-1920x1080-p5000",
+    "title": "Game quality 1920x1080 \u00b7 5000 particles",
+    "kind": "dom",
+    "source": "game-player quality profiles",
+    "description": "Canvas 2D game frame at 1920x1080 with 5000 particles.",
+    "external": false
+  },
+  {
+    "id": "game.quality-2560x1440-p100",
+    "title": "Game quality 2560x1440 \u00b7 100 particles",
+    "kind": "dom",
+    "source": "game-player quality profiles",
+    "description": "Canvas 2D game frame at 2560x1440 with 100 particles.",
+    "external": false
+  },
+  {
+    "id": "game.quality-2560x1440-p500",
+    "title": "Game quality 2560x1440 \u00b7 500 particles",
+    "kind": "dom",
+    "source": "game-player quality profiles",
+    "description": "Canvas 2D game frame at 2560x1440 with 500 particles.",
+    "external": false
+  },
+  {
+    "id": "game.quality-2560x1440-p1000",
+    "title": "Game quality 2560x1440 \u00b7 1000 particles",
+    "kind": "dom",
+    "source": "game-player quality profiles",
+    "description": "Canvas 2D game frame at 2560x1440 with 1000 particles.",
+    "external": false
+  },
+  {
+    "id": "game.quality-2560x1440-p2500",
+    "title": "Game quality 2560x1440 \u00b7 2500 particles",
+    "kind": "dom",
+    "source": "game-player quality profiles",
+    "description": "Canvas 2D game frame at 2560x1440 with 2500 particles.",
+    "external": false
+  },
+  {
+    "id": "game.quality-2560x1440-p5000",
+    "title": "Game quality 2560x1440 \u00b7 5000 particles",
+    "kind": "dom",
+    "source": "game-player quality profiles",
+    "description": "Canvas 2D game frame at 2560x1440 with 5000 particles.",
+    "external": false
+  },
+  {
+    "id": "game3d.quality-640x360-c100",
+    "title": "3D game 640x360 \u00b7 100 cubes",
+    "kind": "dom",
+    "source": "game-player 3D quality profiles",
+    "description": "WebGL cube scene at 640x360 with 100 cubes and perspective.",
+    "external": false
+  },
+  {
+    "id": "game3d.quality-640x360-c500",
+    "title": "3D game 640x360 \u00b7 500 cubes",
+    "kind": "dom",
+    "source": "game-player 3D quality profiles",
+    "description": "WebGL cube scene at 640x360 with 500 cubes and perspective.",
+    "external": false
+  },
+  {
+    "id": "game3d.quality-640x360-c1000",
+    "title": "3D game 640x360 \u00b7 1000 cubes",
+    "kind": "dom",
+    "source": "game-player 3D quality profiles",
+    "description": "WebGL cube scene at 640x360 with 1000 cubes and perspective.",
+    "external": false
+  },
+  {
+    "id": "game3d.quality-640x360-c2500",
+    "title": "3D game 640x360 \u00b7 2500 cubes",
+    "kind": "dom",
+    "source": "game-player 3D quality profiles",
+    "description": "WebGL cube scene at 640x360 with 2500 cubes and perspective.",
+    "external": false
+  },
+  {
+    "id": "game3d.quality-640x360-c5000",
+    "title": "3D game 640x360 \u00b7 5000 cubes",
+    "kind": "dom",
+    "source": "game-player 3D quality profiles",
+    "description": "WebGL cube scene at 640x360 with 5000 cubes and perspective.",
+    "external": false
+  },
+  {
+    "id": "game3d.quality-854x480-c100",
+    "title": "3D game 854x480 \u00b7 100 cubes",
+    "kind": "dom",
+    "source": "game-player 3D quality profiles",
+    "description": "WebGL cube scene at 854x480 with 100 cubes and perspective.",
+    "external": false
+  },
+  {
+    "id": "game3d.quality-854x480-c500",
+    "title": "3D game 854x480 \u00b7 500 cubes",
+    "kind": "dom",
+    "source": "game-player 3D quality profiles",
+    "description": "WebGL cube scene at 854x480 with 500 cubes and perspective.",
+    "external": false
+  },
+  {
+    "id": "game3d.quality-854x480-c1000",
+    "title": "3D game 854x480 \u00b7 1000 cubes",
+    "kind": "dom",
+    "source": "game-player 3D quality profiles",
+    "description": "WebGL cube scene at 854x480 with 1000 cubes and perspective.",
+    "external": false
+  },
+  {
+    "id": "game3d.quality-854x480-c2500",
+    "title": "3D game 854x480 \u00b7 2500 cubes",
+    "kind": "dom",
+    "source": "game-player 3D quality profiles",
+    "description": "WebGL cube scene at 854x480 with 2500 cubes and perspective.",
+    "external": false
+  },
+  {
+    "id": "game3d.quality-854x480-c5000",
+    "title": "3D game 854x480 \u00b7 5000 cubes",
+    "kind": "dom",
+    "source": "game-player 3D quality profiles",
+    "description": "WebGL cube scene at 854x480 with 5000 cubes and perspective.",
+    "external": false
+  },
+  {
+    "id": "game3d.quality-1280x720-c100",
+    "title": "3D game 1280x720 \u00b7 100 cubes",
+    "kind": "dom",
+    "source": "game-player 3D quality profiles",
+    "description": "WebGL cube scene at 1280x720 with 100 cubes and perspective.",
+    "external": false
+  },
+  {
+    "id": "game3d.quality-1280x720-c500",
+    "title": "3D game 1280x720 \u00b7 500 cubes",
+    "kind": "dom",
+    "source": "game-player 3D quality profiles",
+    "description": "WebGL cube scene at 1280x720 with 500 cubes and perspective.",
+    "external": false
+  },
+  {
+    "id": "game3d.quality-1280x720-c1000",
+    "title": "3D game 1280x720 \u00b7 1000 cubes",
+    "kind": "dom",
+    "source": "game-player 3D quality profiles",
+    "description": "WebGL cube scene at 1280x720 with 1000 cubes and perspective.",
+    "external": false
+  },
+  {
+    "id": "game3d.quality-1280x720-c2500",
+    "title": "3D game 1280x720 \u00b7 2500 cubes",
+    "kind": "dom",
+    "source": "game-player 3D quality profiles",
+    "description": "WebGL cube scene at 1280x720 with 2500 cubes and perspective.",
+    "external": false
+  },
+  {
+    "id": "game3d.quality-1280x720-c5000",
+    "title": "3D game 1280x720 \u00b7 5000 cubes",
+    "kind": "dom",
+    "source": "game-player 3D quality profiles",
+    "description": "WebGL cube scene at 1280x720 with 5000 cubes and perspective.",
+    "external": false
+  },
+  {
+    "id": "game3d.quality-1920x1080-c100",
+    "title": "3D game 1920x1080 \u00b7 100 cubes",
+    "kind": "dom",
+    "source": "game-player 3D quality profiles",
+    "description": "WebGL cube scene at 1920x1080 with 100 cubes and perspective.",
+    "external": false
+  },
+  {
+    "id": "game3d.quality-1920x1080-c500",
+    "title": "3D game 1920x1080 \u00b7 500 cubes",
+    "kind": "dom",
+    "source": "game-player 3D quality profiles",
+    "description": "WebGL cube scene at 1920x1080 with 500 cubes and perspective.",
+    "external": false
+  },
+  {
+    "id": "game3d.quality-1920x1080-c1000",
+    "title": "3D game 1920x1080 \u00b7 1000 cubes",
+    "kind": "dom",
+    "source": "game-player 3D quality profiles",
+    "description": "WebGL cube scene at 1920x1080 with 1000 cubes and perspective.",
+    "external": false
+  },
+  {
+    "id": "game3d.quality-1920x1080-c2500",
+    "title": "3D game 1920x1080 \u00b7 2500 cubes",
+    "kind": "dom",
+    "source": "game-player 3D quality profiles",
+    "description": "WebGL cube scene at 1920x1080 with 2500 cubes and perspective.",
+    "external": false
+  },
+  {
+    "id": "game3d.quality-1920x1080-c5000",
+    "title": "3D game 1920x1080 \u00b7 5000 cubes",
+    "kind": "dom",
+    "source": "game-player 3D quality profiles",
+    "description": "WebGL cube scene at 1920x1080 with 5000 cubes and perspective.",
+    "external": false
+  },
+  {
+    "id": "game3d.quality-2560x1440-c100",
+    "title": "3D game 2560x1440 \u00b7 100 cubes",
+    "kind": "dom",
+    "source": "game-player 3D quality profiles",
+    "description": "WebGL cube scene at 2560x1440 with 100 cubes and perspective.",
+    "external": false
+  },
+  {
+    "id": "game3d.quality-2560x1440-c500",
+    "title": "3D game 2560x1440 \u00b7 500 cubes",
+    "kind": "dom",
+    "source": "game-player 3D quality profiles",
+    "description": "WebGL cube scene at 2560x1440 with 500 cubes and perspective.",
+    "external": false
+  },
+  {
+    "id": "game3d.quality-2560x1440-c1000",
+    "title": "3D game 2560x1440 \u00b7 1000 cubes",
+    "kind": "dom",
+    "source": "game-player 3D quality profiles",
+    "description": "WebGL cube scene at 2560x1440 with 1000 cubes and perspective.",
+    "external": false
+  },
+  {
+    "id": "game3d.quality-2560x1440-c2500",
+    "title": "3D game 2560x1440 \u00b7 2500 cubes",
+    "kind": "dom",
+    "source": "game-player 3D quality profiles",
+    "description": "WebGL cube scene at 2560x1440 with 2500 cubes and perspective.",
+    "external": false
+  },
+  {
+    "id": "game3d.quality-2560x1440-c5000",
+    "title": "3D game 2560x1440 \u00b7 5000 cubes",
+    "kind": "dom",
+    "source": "game-player 3D quality profiles",
+    "description": "WebGL cube scene at 2560x1440 with 5000 cubes and perspective.",
+    "external": false
+  },
+  {
+    "id": "external.browserbench-quick",
+    "title": "Browser-Bench quick run",
+    "kind": "external",
+    "source": "https://dinithaw.github.io/Browser-Bench/",
+    "description": "Runs the page's own Quick Run (600 ms per workload, 1 rep) and reads window.__lastRun.",
+    "external": true
+  },
+  {
+    "id": "external.jsfb-create-1k",
+    "title": "js-framework-benchmark: create 1,000 rows",
+    "kind": "external",
+    "source": "https://github.com/krausest/js-framework-benchmark",
+    "description": "Clicks \"Create 1,000 rows\" in the official vanilla keyed implementation.",
+    "external": true
+  },
+  {
+    "id": "external.jsfb-create-10k",
+    "title": "js-framework-benchmark: create 10,000 rows",
+    "kind": "external",
+    "source": "https://github.com/krausest/js-framework-benchmark",
+    "description": "Clicks \"Create 10,000 rows\" in the official vanilla keyed implementation.",
+    "external": true
+  },
+  {
+    "id": "external.jsfb-clear",
+    "title": "js-framework-benchmark: clear 10,000 rows",
+    "kind": "external",
+    "source": "https://github.com/krausest/js-framework-benchmark",
+    "description": "Creates 10,000 rows during setup, then clicks Clear.",
+    "external": true
+  },
+  {
+    "id": "external.cerious-load-scroll",
+    "title": "Cerious-Scroll benchmark: load + scroll",
+    "kind": "external",
+    "source": "https://ceriousdevtech.github.io/cerious-scroll/benchmark.html",
+    "description": "Loads the real benchmark page, counts nodes and scrolls through it 15 times.",
+    "external": true
+  },
+  {
+    "id": "external.uibench-load-scroll",
+    "title": "UI Benchmark (localvoid): load + scroll",
+    "kind": "external",
+    "source": "https://localvoid.github.io/uibench/",
+    "description": "Loads the real benchmark page, counts nodes and scrolls through it 15 times.",
+    "external": true
+  }
+]

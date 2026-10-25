@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:nativax/nativax.dart';
@@ -22,6 +24,23 @@ class _AssetLoader extends NativaXResourceLoader {
     } catch (_) {
       return null;
     }
+  }
+}
+
+/// Test hook used by `tools/perf` for app-level idle measurements. When
+/// NATIVAX_PERF_PAGE points to a directory, the app loads that page and its
+/// relative files instead of the bundled demo. It is inactive by default.
+class _FileLoader extends NativaXResourceLoader {
+  const _FileLoader(this.dir);
+  final String dir;
+
+  @override
+  Future<String?> load(String url) async {
+    if (url.startsWith('http://') || url.startsWith('https://')) return null;
+    var path = url.split('?').first.split('#').first;
+    if (path.startsWith('/')) path = path.substring(1);
+    final file = File('$dir/$path');
+    return file.existsSync() ? file.readAsStringSync() : null;
   }
 }
 
@@ -56,10 +75,20 @@ class WebChallengeApp extends StatelessWidget {
       home: Scaffold(
         body: SafeArea(
           child: FutureBuilder<String>(
-            future: rootBundle.loadString('assets/index.html'),
+            future: Platform.environment['NATIVAX_PERF_PAGE'] == null
+                ? rootBundle.loadString('assets/index.html')
+                : Future<String>.value(
+                    File(
+                      '${Platform.environment['NATIVAX_PERF_PAGE']}/index.html',
+                    ).readAsStringSync(),
+                  ),
             builder: (context, snapshot) {
               if (snapshot.hasError) {
-                return Center(child: Text('No se pudo cargar el ejemplo: ${snapshot.error}'));
+                return Center(
+                  child: Text(
+                    'No se pudo cargar el ejemplo: ${snapshot.error}',
+                  ),
+                );
               }
               if (!snapshot.hasData) {
                 return const Center(child: CircularProgressIndicator());
@@ -69,7 +98,9 @@ class WebChallengeApp extends StatelessWidget {
                 padding: EdgeInsets.zero,
                 imageResolver: _images,
                 config: NativaXRuntimeConfig(
-                  resources: const _AssetLoader(),
+                  resources: Platform.environment['NATIVAX_PERF_PAGE'] == null
+                      ? const _AssetLoader()
+                      : _FileLoader(Platform.environment['NATIVAX_PERF_PAGE']!),
                   documentUrl: 'app://web-challenge/index.html',
                   network: _network,
                 ),
