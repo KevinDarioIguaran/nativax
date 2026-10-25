@@ -258,6 +258,11 @@ Object? _parseNode(String text) {
   if (text.startsWith('<') && text.endsWith('>')) {
     var inner = text.substring(1, text.length - 1).trim();
     if (inner.endsWith('/')) inner = inner.substring(0, inner.length - 1).trim();
+    // Foreign elements are written `<svg foreignObject>` / `<math mi>`.
+    final foreign = RegExp(r'^(svg|math) (\S+)$').firstMatch(inner);
+    if (foreign != null) {
+      return _Element(foreign.group(2)!, {}, foreign.group(1)!);
+    }
     final space = inner.indexOf(RegExp(r'\s'));
     final name = (space < 0 ? inner : inner.substring(0, space)).toLowerCase();
     final attrs = <String, String>{};
@@ -273,8 +278,11 @@ Object? _parseNode(String text) {
 }
 
 class _Element {
-  _Element(this.name, this.attributes);
+  _Element(this.name, this.attributes, [this.namespace = '']);
   final String name;
+
+  /// `svg`, `math`, or empty for the HTML namespace (the .dat prefixes).
+  final String namespace;
   final Map<String, String> attributes;
   final List<Object> children = [];
   bool selfClosing = false;
@@ -313,13 +321,23 @@ List<Object> _normalize(List<dom.Node> nodes) {
     } else if (node is dom.DocumentType) {
       out.add(_Doctype(node.name, node.publicId, node.systemId));
     } else if (node is dom.Element) {
-      final element = _Element(node.localName, Map.of(node.attributes));
+      final element = _Element(
+        node.localName,
+        Map.of(node.attributes),
+        _namespacePrefix(node.namespaceUri),
+      );
       element.children.addAll(_normalize(node.childNodes.toList()));
       out.add(element);
     }
   }
   return out;
 }
+
+String _namespacePrefix(String? uri) => switch (uri) {
+      'http://www.w3.org/2000/svg' => 'svg',
+      'http://www.w3.org/1998/Math/MathML' => 'math',
+      _ => '',
+    };
 
 bool _looksLikeProcessingInstruction(String text) =>
     text.startsWith('?') || text.endsWith('?') || text.endsWith(' ?');
@@ -362,7 +380,9 @@ bool _same(Object? a, Object? b) {
         a.systemId == b.systemId;
   }
   if (a is _Element && b is _Element) {
-    if (a.name != b.name || a.attributes.length != b.attributes.length) {
+    if (a.name != b.name ||
+        a.namespace != b.namespace ||
+        a.attributes.length != b.attributes.length) {
       return false;
     }
     for (final e in a.attributes.entries) {
@@ -389,8 +409,14 @@ String _render(List<Object> nodes, [String indent = '']) {
         out.writeln('$indent<!DOCTYPE $name'
             '${publicId.isEmpty && systemId.isEmpty ? '' : ' "$publicId" "$systemId"'}'
             '>');
-      case _Element(:final name, :final attributes, :final children):
-        out.writeln('$indent<$name${attributes.isEmpty ? '' : ' $attributes'}>');
+      case _Element(
+          :final name,
+          :final namespace,
+          :final attributes,
+          :final children,
+        ):
+        final tag = namespace.isEmpty ? name : '$namespace $name';
+        out.writeln('$indent<$tag${attributes.isEmpty ? '' : ' $attributes'}>');
         out.write(_render(children, '$indent  '));
       default:
         out.writeln('$indent$node');

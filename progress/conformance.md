@@ -13,7 +13,7 @@ checkouts están pinneados y no se versionan (`.conformance/` está ignorado).
 | WPT `css/selectors` | 528 archivos | 127 | 53 | 348 | 0 | **70,56 %** | `e7d77cd` |
 | WPT URL | 896 casos del fixture | 665 | 231 | 0 | 0 | **74,22 %** | `e7d77cd` |
 | WPT `dom/events` | 176 archivos | 52 | 21 | 103 | 0 | **71,23 %** | `e7d77cd` |
-| WPT tree construction | 1.973 casos `.dat` | 1.451 | 421 | 99 | 2 | **77,43 %** | `e7d77cd` |
+| WPT tree construction | 1.973 casos `.dat` | 1.556 | 316 | 99 | 2 | **83,03 %** | `e7d77cd` |
 
 La tasa excluye `SKIP`. Un `SKIP` **no** cuenta como compatibilidad.
 
@@ -32,7 +32,7 @@ corregir la caché de `classList`.
 | WPT URL | 70 % | 74,22 % | ✅ |
 | WPT `dom/nodes` | 70 % | 70,00 % | ✅ |
 | WPT `css/selectors` | 70 % | 70,56 % | ✅ |
-| WPT tree construction | 70 % | 77,43 % | ✅ |
+| WPT tree construction | 70 % | 83,03 % | ✅ |
 
 El 70 % se alcanzó sin tocar el denominador ni convertir SKIP en PASS. Los
 reftests visuales y testdriver siguen excluidos.
@@ -160,10 +160,10 @@ CSS selectors. Los 345 SKIP de CSS son reftests visuales.
 IDN, IPv6 canónico, file URLs y detalles de normalización de WHATWG. Ver
 `docs/javascript-supported.md`.
 
-### WPT tree construction (77,43 %)
+### WPT tree construction (83,03 %)
 
 - La construcción del árbol usa el algoritmo HTML5 (`package:html`), con adoption agency, foster parenting, foreign content y template.
-- El tokenizer propio sigue aportando errores y límites; quedan 421 fallos y 2 errores del runner.
+- El tokenizer propio sigue aportando errores y límites; quedan 316 fallos y 2 errores del runner. El mayor bloque real son 112 casos de `template.dat`: `package:html` 0.15.7 no implementa `<template>` (lo coloca en `body` en vez de `head` y no aplica sus modos de inserción).
 
 **Corrección del runner (2026-10-25), no ganancia de producto.** El lector de
 `.dat` descartaba las líneas de atributos (`|       id="A"`), así que todo caso
@@ -173,6 +173,13 @@ FAIL → PASS, 1 ERROR → PASS, 0 regresiones. 1.334 → 1.451 PASS
 (71,18 % → 77,43 %), mismo denominador (1.874 ejecutados). Comando:
 `cd tools/conformance && dart run bin/run_html_tree.dart`. Test:
 `tools/conformance/test/html_tree_runner_test.dart`.
+
+**Segunda corrección del runner (2026-10-25), tampoco es ganancia de
+producto.** Los elementos extranjeros se escriben `<svg foreignObject>` /
+`<math mi>`; el lector tomaba sólo el prefijo como nombre y no comparaba el
+namespace. Ahora compara namespace y nombre local. Contra la corrida
+`2026-10-25T091944`: 105 FAIL → PASS, 0 regresiones. 1.451 → 1.556 PASS
+(77,43 % → 83,03 %), mismo denominador.
 
 ## Cómo mejorar la línea base
 
