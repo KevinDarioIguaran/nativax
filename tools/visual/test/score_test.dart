@@ -202,6 +202,19 @@ void main() {
       expect(evaluation.verdict, Verdict.pass);
     });
 
+    test('the pass target is 99.99 %: a near match only warns', () {
+      final evaluation = evaluate(
+        chromeProbe: snapshot(page(dx: 1)),
+        chromeImage: solid(40, 40, 255, 255, 255),
+        nativaProbe: snapshot(page()),
+        nativaImage: solid(40, 40, 255, 255, 255),
+        checks: const [],
+      );
+      expect(passOverall, 0.9999);
+      expect(evaluation.overall, lessThan(passOverall));
+      expect(evaluation.verdict, isNot(Verdict.pass));
+    });
+
     test('small shifts keep colour measurable on the overlap', () {
       final evaluation = evaluate(
         chromeProbe: snapshot(page(dx: 3)),

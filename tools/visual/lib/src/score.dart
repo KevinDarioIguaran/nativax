@@ -100,6 +100,10 @@ class Evaluation {
   double get mismatchedPixelPct => pixels.totals.mismatchedPct;
 }
 
+/// Fidelity target: a page passes only when its overall score reaches
+/// 99.99 % (an error margin of 0.01 %).
+const double passOverall = 0.9999;
+
 Evaluation evaluate({
   required ProbeSnapshot chromeProbe,
   required RasterImage chromeImage,
@@ -220,9 +224,10 @@ Evaluation evaluate({
   } else if (overall < 0.70) {
     verdict = Verdict.fail;
     reason = 'overall ${(overall * 100).toStringAsFixed(1)} % below 70 %';
-  } else if (overall < 0.90) {
+  } else if (overall < passOverall) {
     verdict = Verdict.warn;
-    reason = 'overall ${(overall * 100).toStringAsFixed(1)} % below 90 %';
+    reason = 'overall ${(overall * 100).toStringAsFixed(3)} % below '
+        '${(passOverall * 100).toStringAsFixed(2)} %';
   } else if (someInk) {
     verdict = Verdict.warn;
     reason =
