@@ -690,9 +690,14 @@ class _Builder {
       );
     }
     final legend = element.localName == 'fieldset' ? _legendOf(element) : null;
-    final Widget box = legend != null
+    Widget box = legend != null
         ? _fieldset(element, style, spec, legend, content)
         : CssBox(spec: spec, child: content);
+    // Apply an author-supplied aspect ratio when the height is auto, so
+    // `aspect-ratio` is honoured for ordinary boxes, not only for images.
+    if (style.height == null && style.aspectRatio != null && style.aspectRatio! > 0) {
+      box = AspectRatio(aspectRatio: style.aspectRatio!, child: box);
+    }
     final perspective = style.perspective;
     if (perspective == null) return box;
     return CssPerspective(
