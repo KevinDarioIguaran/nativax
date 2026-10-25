@@ -208,6 +208,24 @@ void main() {
       expect(styleOf(s, 'p').fontFamily, ['Times New Roman']);
     });
 
+    test('later declarations in a rule win with many matched declarations',
+        () {
+      // Dart's sort is unstable above 32 elements and declarations of one
+      // rule shared the rule order, so `border` overrode a later
+      // `border-bottom-color` (50projects50days/kinetic-loader).
+      final s = styled(
+        '<div class="k"></div>',
+        '*, *::before, *::after { animation: none !important; '
+            'transition: none !important; }'
+            ".k::after { content: ''; position: absolute; top: 0; left: 0; "
+            'width: 0; height: 0; border: 50px solid transparent; '
+            'border-bottom-color: #fff; animation: spin 2s; }',
+      );
+      final after = s.$2.pseudoStyleOf(s.$1.querySelector('.k')!, 'after')!;
+      expect(after.borderColorOf('bottom'), const CssColor(0xffffffff));
+      expect(after.borderColorOf('top'), const CssColor(0x00000000));
+    });
+
     test('inheritance of inherited properties only', () {
       final s = styled('<div><p><span>x</span></p></div>',
           'div { color: #123456; padding: 5px; font-family: Inter; text-align: center }');

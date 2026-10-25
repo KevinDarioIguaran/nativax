@@ -47,6 +47,9 @@ class _Match {
   final Specificity specificity;
   final int order;
   final Declaration declaration;
+
+  /// Insertion index; breaks ties between declarations of one rule.
+  int index = 0;
 }
 
 /// Indexed candidate rules for one pseudo-element kind. The subject is the
@@ -1183,12 +1186,19 @@ class StyleEngine {
         );
       }
     }
+    // Dart's sort is not stable; the insertion index keeps declarations of
+    // one rule (which share its order) in source order.
+    for (var i = 0; i < matches.length; i++) {
+      matches[i].index = i;
+    }
     matches.sort((a, b) {
       final l = a.layer.index - b.layer.index;
       if (l != 0) return l;
       final s = a.specificity.compareTo(b.specificity);
       if (s != 0) return s;
-      return a.order - b.order;
+      final o = a.order - b.order;
+      if (o != 0) return o;
+      return a.index - b.index;
     });
     final result = [for (final m in matches) m.declaration];
     if (useStyleCaches) {
