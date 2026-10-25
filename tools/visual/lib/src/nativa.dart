@@ -17,7 +17,11 @@ class NativaOutcome {
     required this.scriptErrors,
     required this.screenshotPath,
     required this.probeJsonPath,
+    this.engine = 'unknown',
   });
+
+  /// JavaScript engine the page ran on (`v8`, `quickjs`).
+  final String engine;
 
   final ProbeSnapshot probe;
   final RasterImage screenshot;
@@ -51,6 +55,14 @@ Future<NativaOutcome> renderWithNativa({
     throw VisualException('harness not found: $harnessDirectory');
   }
 
+  // Pages run on V8 by default on desktop: point the harness at the cdylib
+  // built in tools/v8-spike unless the caller chose one.
+  final v8 = '$repoRoot/tools/v8-spike/target/release/libnx_v8.so';
+  final v8Env = Platform.environment['NATIVAX_V8_LIB'] == null &&
+          File(v8).existsSync()
+      ? {'NATIVAX_V8_LIB': v8}
+      : const <String, String>{};
+
   Future<ProcResult> attempt() => runProcess(
     'flutter',
     ['test', 'test/screenshot_test.dart', '--reporter=compact', '--no-pub'],
@@ -65,6 +77,7 @@ Future<NativaOutcome> renderWithNativa({
       'NATIVAX_SHOT_WAIT': waitMs.toString(),
       'NATIVAX_SHOT_JS': '$probeSource\n${setupJs.trim()}',
       'NATIVAX_SHOT_DUMP': '__visualProbe()',
+      ...v8Env,
     },
   );
 
@@ -103,6 +116,10 @@ Future<NativaOutcome> renderWithNativa({
       'stdout: ${_tail(finished.stdout)} stderr: ${_tail(finished.stderr)}',
     );
   }
+  final engine = RegExp(r'^ENGINE: (\w+)', multiLine: true)
+          .firstMatch(finished.stdout)
+          ?.group(1) ??
+      'unknown';
   final ProbeSnapshot probe;
   try {
     probe = ProbeSnapshot.fromJson(
@@ -156,6 +173,7 @@ Future<NativaOutcome> renderWithNativa({
     scriptErrors: errors,
     screenshotPath: screenshot.path,
     probeJsonPath: probeJson.path,
+    engine: engine,
   );
 }
 

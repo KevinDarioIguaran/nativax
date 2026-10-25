@@ -167,6 +167,13 @@ Future<PageJudgeResult> judgePage(
 
     checks.add(
       EnvCheck(
+        name: 'js-engine',
+        ok: true,
+        detail: 'NativaX ran on ${nativa.engine}',
+      ),
+    );
+    checks.add(
+      EnvCheck(
         name: 'viewport',
         ok:
             chrome.probe.viewportWidth == nativa.probe.viewportWidth &&

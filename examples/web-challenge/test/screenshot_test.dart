@@ -165,6 +165,10 @@ void main() {
       await tester.runAsync(() => Future<void>.delayed(const Duration(milliseconds: 20)));
       await tester.pump(const Duration(milliseconds: 50));
     }
+    if (runtime != null) {
+      // ignore: avoid_print
+      print('ENGINE: ${runtime!.engineName}');
+    }
     final js = env['NATIVAX_SHOT_JS'];
     if (js != null && runtime != null) {
       try {
