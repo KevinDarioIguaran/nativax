@@ -1,5 +1,17 @@
 # Histórico
 
+## 2026-10-24 — Correcciones de rendering medidas
+
+- Correcciones aplicadas: `position: fixed` con porcentajes, porcentajes en
+  `position: absolute`, centrado flex en `Stack`, recorte por `overflow`, orden
+  por `z-index` y `aspect-ratio` en cajas genéricas.
+- Línea base de las 51 páginas: overall medio **52,59 % → 78,53 %**; PASS
+  **6 → 1**, WARN **5 → 7**, FAIL **40 → 43**.
+- `animated-countdown`: posición **0,00 % → 93,26 %**, tinta **100,00 % → 93,98 %**.
+- `background-slider`: contenedor centrado, posición **0,00 % → 80,00 %**.
+- Tests: `fixed_position_test`, `absolute_percent_test`, `bg_slider_test`,
+  `aspect_ratio_test` y `animated_countdown_test` en verde.
+
 ## 2026-10-24 — Tests añadidos, no solo listados
 
 - Se añadieron 90 tests de fuzzing determinista: 30 en `nativa_html`,

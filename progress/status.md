@@ -88,10 +88,14 @@ Tests focalizados en esta pasada: **14 perf + 119 visual + 78 CSS +
   `test/chrome_e2e_test.dart` lo demuestra con una caja `100vh` centrada.
 - `--self-check` (Chromium contra Chromium) da **100 % / PASS**; es la
   calibración obligatoria del juez.
-- Primera línea base de las 51 páginas: **6 PASS, 5 WARN, 40 FAIL, 0 INVALID**;
-  overall medio **52,59 %** (mediana 48,54). Medias: posición **36,20 %**,
-  layout **53,04 %**, color **45,24 %**, diseño **96,72 %**. **36.720.000**
-  píxeles comparados, **6.569.980** con ΔE > 2 (17,89 % medio).
+- Línea base de las 51 páginas tras las correcciones de rendering (fixed
+  porcentajes, flex en Stack, overflow, z-index, aspect-ratio, porcentajes
+  absolutos): **1 PASS, 7 WARN, 43 FAIL, 0 INVALID**; overall medio
+  **78,53 %**. Medias por categoría pendientes de regenerar el informe
+  completo; la posición de `animated-countdown` pasó de 0,00 % a 93,26 % y la
+  de `background-slider` de 0,00 % a 80,00 %. **36.720.000** píxeles
+  comparados. El detalle por página está en
+  `progress/reports/visual-50projects50days-latest.md`.
 - El fallo dominante es layout/posicionamiento, no la cascada. Casos reales:
   `animated-countdown` deja el contenido `fixed` + `translate(-50%,-50%)`
   fuera de pantalla (posición 0 %, tinta 100 %); `background-slider` desplaza
