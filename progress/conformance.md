@@ -13,7 +13,7 @@ checkouts están pinneados y no se versionan (`.conformance/` está ignorado).
 | WPT `css/selectors` | 528 archivos | 127 | 53 | 348 | 0 | **70,56 %** | `e7d77cd` |
 | WPT URL | 896 casos del fixture | 665 | 231 | 0 | 0 | **74,22 %** | `e7d77cd` |
 | WPT `dom/events` | 176 archivos | 52 | 21 | 103 | 0 | **71,23 %** | `e7d77cd` |
-| WPT tree construction | 1.973 casos `.dat` | 1.334 | 537 | 99 | 3 | **71,18 %** | `e7d77cd` |
+| WPT tree construction | 1.973 casos `.dat` | 1.451 | 421 | 99 | 2 | **77,43 %** | `e7d77cd` |
 
 La tasa excluye `SKIP`. Un `SKIP` **no** cuenta como compatibilidad.
 
@@ -32,7 +32,7 @@ corregir la caché de `classList`.
 | WPT URL | 70 % | 74,22 % | ✅ |
 | WPT `dom/nodes` | 70 % | 70,00 % | ✅ |
 | WPT `css/selectors` | 70 % | 70,56 % | ✅ |
-| WPT tree construction | 70 % | 71,18 % | ✅ |
+| WPT tree construction | 70 % | 77,43 % | ✅ |
 
 El 70 % se alcanzó sin tocar el denominador ni convertir SKIP en PASS. Los
 reftests visuales y testdriver siguen excluidos.
@@ -160,10 +160,19 @@ CSS selectors. Los 345 SKIP de CSS son reftests visuales.
 IDN, IPv6 canónico, file URLs y detalles de normalización de WHATWG. Ver
 `docs/javascript-supported.md`.
 
-### WPT tree construction (71,18 %)
+### WPT tree construction (77,43 %)
 
 - La construcción del árbol usa el algoritmo HTML5 (`package:html`), con adoption agency, foster parenting, foreign content y template.
-- El tokenizer propio sigue aportando errores y límites; quedan 537 fallos de serialización/errores y 3 errores del runner.
+- El tokenizer propio sigue aportando errores y límites; quedan 421 fallos y 2 errores del runner.
+
+**Corrección del runner (2026-10-25), no ganancia de producto.** El lector de
+`.dat` descartaba las líneas de atributos (`|       id="A"`), así que todo caso
+esperado con atributos fallaba aunque el parser fuera correcto. Ahora se
+comparan. Comparación por test contra la corrida `2026-10-24T064649`: 116
+FAIL → PASS, 1 ERROR → PASS, 0 regresiones. 1.334 → 1.451 PASS
+(71,18 % → 77,43 %), mismo denominador (1.874 ejecutados). Comando:
+`cd tools/conformance && dart run bin/run_html_tree.dart`. Test:
+`tools/conformance/test/html_tree_runner_test.dart`.
 
 ## Cómo mejorar la línea base
 

@@ -192,7 +192,7 @@ List<_Case> _parse(String source) {
 
 List<Object> _parseTree(List<String> lines) {
   final root = <Object>[];
-  final stack = <(int, List<Object>)>[(0, root)];
+  final stack = <(int, List<Object>, _Element?)>[(0, root, null)];
   for (final line in lines) {
     final content = line.substring(2); // skip "| "
     final indent = content.length - content.trimLeft().length;
@@ -201,15 +201,24 @@ List<Object> _parseTree(List<String> lines) {
       stack.removeLast();
     }
     final parent = stack.last.$2;
+    // Attributes are written one per line, indented like children:
+    // `|       id="A"`. Attach them to the element that owns this level.
+    final attribute = _attributeLine.firstMatch(text);
+    if (attribute != null && stack.last.$3 != null) {
+      stack.last.$3!.attributes[attribute.group(1)!] = attribute.group(2)!;
+      continue;
+    }
     final node = _parseNode(text);
     if (node == null) continue;
     parent.add(node);
     if (node is _Element && !node.selfClosing) {
-      stack.add((indent + 1, node.children));
+      stack.add((indent + 1, node.children, node));
     }
   }
   return root;
 }
+
+final _attributeLine = RegExp(r'^([^<"][^"]*?)="(.*)"$');
 
 Object? _parseNode(String text) {
   if (text.startsWith('"') && text.length >= 2) {

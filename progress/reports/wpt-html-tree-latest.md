@@ -1,23 +1,23 @@
 # Conformidad: wpt-html-tree
 
-- Fecha: 2026-10-24T11:46:49.334618Z
-- Duración: 0.4 s
+- Fecha: 2026-10-25T14:19:44.901100Z
+- Duración: 0.5 s
 - Comando: `run_html_tree`
 - Total: **1973** tests
-- Tasa de éxito (sin SKIP): **71.18 %**
+- Tasa de éxito (sin SKIP): **77.43 %**
 
 | Estado | Tests |
 |---|---:|
-| PASS | 1334 |
-| FAIL | 537 |
+| PASS | 1451 |
+| FAIL | 421 |
 | SKIP | 99 |
-| ERROR | 3 |
+| ERROR | 2 |
 
 ## Delta contra la línea base
 
-- Corregidos: **481**
-- Regresiones: **101**
-- Siguen fallando: **437**
+- Corregidos: **117**
+- Regresiones: **0**
+- Siguen fallando: **421**
 - Nuevos en esta ejecución: **0**
 - Ausentes respecto a la base: **0**
 
@@ -25,7 +25,7 @@
 
 | Grupo | PASS | FAIL | SKIP | ERROR | Éxito |
 |---|---:|---:|---:|---:|---:|
-| `html-parser` | 1334 | 537 | 99 | 3 | 71.2 % |
+| `html-parser` | 1451 | 421 | 99 | 2 | 77.4 % |
 
 ## Por directorio
 
@@ -40,7 +40,7 @@
 | `adoption01.dat#6` | 1 | 0 | 0 | 0 | 100.0 % |
 | `adoption01.dat#7` | 1 | 0 | 0 | 0 | 100.0 % |
 | `adoption01.dat#8` | 1 | 0 | 0 | 0 | 100.0 % |
-| `adoption01.dat#9` | 0 | 1 | 0 | 0 | 0.0 % |
+| `adoption01.dat#9` | 1 | 0 | 0 | 0 | 100.0 % |
 | `adoption01.dat#10` | 1 | 0 | 0 | 0 | 100.0 % |
 | `adoption01.dat#11` | 1 | 0 | 0 | 0 | 100.0 % |
 | `adoption01.dat#12` | 0 | 1 | 0 | 0 | 0.0 % |
@@ -113,45 +113,7 @@
 | `comments01.dat#9` | 1 | 0 | 0 | 0 | 100.0 % |
 | _(+1893 grupos)_ | | | | | |
 
-## Fallos (537)
-
-### `adoption01.dat#9`
-
-- Características: html-parser
-- Motivo: DOM tree differs from the fixture
-
-```text
-input: "<p>1<s id=\"A\">2<b id=\"B\">3</p>4</s>5</b>"
-expected: <html>
-  <head>
-  <body>
-    <p>
-      "1"
-      <s>
-        "2"
-        <b>
-          "3"
-    <s>
-      <b>
-        "4"
-    <b>
-      "5"
-
-actual:   <html>
-  <head>
-  <body>
-    <p>
-      "1"
-      <s {id: A}>
-        "2"
-        <b {id: B}>
-          "3"
-    <s {id: A}>
-      <b {id: B}>
-        "4"
-    <b {id: B}>
-      "5"
-```
+## Fallos (421)
 
 ### `adoption01.dat#12`
 
@@ -409,446 +371,6 @@ actual:   <html>
       "foo\nbar"
 ```
 
-### `domjs-unsafe.dat#4`
-
-- Características: html-parser
-- Motivo: DOM tree differs from the fixture
-
-```text
-input: "<script type=\"data\"><!--\u0000</script>"
-expected: <html>
-  <head>
-    <script>
-      "<!--�"
-  <body>
-
-actual:   <html>
-  <head>
-    <script {type: data}>
-      "<!--�"
-  <body>
-```
-
-### `domjs-unsafe.dat#5`
-
-- Características: html-parser
-- Motivo: DOM tree differs from the fixture
-
-```text
-input: "<script type=\"data\"><!--foo\u0000</script>"
-expected: <html>
-  <head>
-    <script>
-      "<!--foo�"
-  <body>
-
-actual:   <html>
-  <head>
-    <script {type: data}>
-      "<!--foo�"
-  <body>
-```
-
-### `domjs-unsafe.dat#6`
-
-- Características: html-parser
-- Motivo: DOM tree differs from the fixture
-
-```text
-input: "<script type=\"data\"><!-- foo-\u0000</script>"
-expected: <html>
-  <head>
-    <script>
-      "<!-- foo-�"
-  <body>
-
-actual:   <html>
-  <head>
-    <script {type: data}>
-      "<!-- foo-�"
-  <body>
-```
-
-### `domjs-unsafe.dat#7`
-
-- Características: html-parser
-- Motivo: DOM tree differs from the fixture
-
-```text
-input: "<script type=\"data\"><!-- foo--\u0000</script>"
-expected: <html>
-  <head>
-    <script>
-      "<!-- foo--�"
-  <body>
-
-actual:   <html>
-  <head>
-    <script {type: data}>
-      "<!-- foo--�"
-  <body>
-```
-
-### `domjs-unsafe.dat#8`
-
-- Características: html-parser
-- Motivo: DOM tree differs from the fixture
-
-```text
-input: "<script type=\"data\"><!-- foo-"
-expected: <html>
-  <head>
-    <script>
-      "<!-- foo-"
-  <body>
-
-actual:   <html>
-  <head>
-    <script {type: data}>
-      "<!-- foo-"
-  <body>
-```
-
-### `domjs-unsafe.dat#9`
-
-- Características: html-parser
-- Motivo: DOM tree differs from the fixture
-
-```text
-input: "<script type=\"data\"><!-- foo-<</script>"
-expected: <html>
-  <head>
-    <script>
-      "<!-- foo-<"
-  <body>
-
-actual:   <html>
-  <head>
-    <script {type: data}>
-      "<!-- foo-<"
-  <body>
-```
-
-### `domjs-unsafe.dat#10`
-
-- Características: html-parser
-- Motivo: DOM tree differs from the fixture
-
-```text
-input: "<script type=\"data\"><!-- foo-<S"
-expected: <html>
-  <head>
-    <script>
-      "<!-- foo-<S"
-  <body>
-
-actual:   <html>
-  <head>
-    <script {type: data}>
-      "<!-- foo-<S"
-  <body>
-```
-
-### `domjs-unsafe.dat#11`
-
-- Características: html-parser
-- Motivo: DOM tree differs from the fixture
-
-```text
-input: "<script type=\"data\"><!-- foo-</SCRIPT>"
-expected: <html>
-  <head>
-    <script>
-      "<!-- foo-"
-  <body>
-
-actual:   <html>
-  <head>
-    <script {type: data}>
-      "<!-- foo-"
-  <body>
-```
-
-### `domjs-unsafe.dat#12`
-
-- Características: html-parser
-- Motivo: DOM tree differs from the fixture
-
-```text
-input: "<script type=\"data\"><!--<p></script>"
-expected: <html>
-  <head>
-    <script>
-      "<!--<p>"
-  <body>
-
-actual:   <html>
-  <head>
-    <script {type: data}>
-      "<!--<p>"
-  <body>
-```
-
-### `domjs-unsafe.dat#13`
-
-- Características: html-parser
-- Motivo: DOM tree differs from the fixture
-
-```text
-input: "<script type=\"data\"><!--<script></script></script>"
-expected: <html>
-  <head>
-    <script>
-      "<!--<script></script>"
-  <body>
-
-actual:   <html>
-  <head>
-    <script {type: data}>
-      "<!--<script></script>"
-  <body>
-```
-
-### `domjs-unsafe.dat#14`
-
-- Características: html-parser
-- Motivo: DOM tree differs from the fixture
-
-```text
-input: "<script type=\"data\"><!--<script>\u0000</script></script>"
-expected: <html>
-  <head>
-    <script>
-      "<!--<script>�</script>"
-  <body>
-
-actual:   <html>
-  <head>
-    <script {type: data}>
-      "<!--<script>�</script>"
-  <body>
-```
-
-### `domjs-unsafe.dat#15`
-
-- Características: html-parser
-- Motivo: DOM tree differs from the fixture
-
-```text
-input: "<script type=\"data\"><!--<script>-\u0000</script></script>"
-expected: <html>
-  <head>
-    <script>
-      "<!--<script>-�</script>"
-  <body>
-
-actual:   <html>
-  <head>
-    <script {type: data}>
-      "<!--<script>-�</script>"
-  <body>
-```
-
-### `domjs-unsafe.dat#16`
-
-- Características: html-parser
-- Motivo: DOM tree differs from the fixture
-
-```text
-input: "<script type=\"data\"><!--<script>--\u0000</script></script>"
-expected: <html>
-  <head>
-    <script>
-      "<!--<script>--�</script>"
-  <body>
-
-actual:   <html>
-  <head>
-    <script {type: data}>
-      "<!--<script>--�</script>"
-  <body>
-```
-
-### `domjs-unsafe.dat#17`
-
-- Características: html-parser
-- Motivo: DOM tree differs from the fixture
-
-```text
-input: "<script type=\"data\"><!--<script>---</script></script>"
-expected: <html>
-  <head>
-    <script>
-      "<!--<script>---</script>"
-  <body>
-
-actual:   <html>
-  <head>
-    <script {type: data}>
-      "<!--<script>---</script>"
-  <body>
-```
-
-### `domjs-unsafe.dat#18`
-
-- Características: html-parser
-- Motivo: DOM tree differs from the fixture
-
-```text
-input: "<script type=\"data\"><!--<script></scrip></SCRIPT></script>"
-expected: <html>
-  <head>
-    <script>
-      "<!--<script></scrip></SCRIPT>"
-  <body>
-
-actual:   <html>
-  <head>
-    <script {type: data}>
-      "<!--<script></scrip></SCRIPT>"
-  <body>
-```
-
-### `domjs-unsafe.dat#19`
-
-- Características: html-parser
-- Motivo: DOM tree differs from the fixture
-
-```text
-input: "<script type=\"data\"><!--<script></scrip </SCRIPT></script>"
-expected: <html>
-  <head>
-    <script>
-      "<!--<script></scrip </SCRIPT>"
-  <body>
-
-actual:   <html>
-  <head>
-    <script {type: data}>
-      "<!--<script></scrip </SCRIPT>"
-  <body>
-```
-
-### `domjs-unsafe.dat#20`
-
-- Características: html-parser
-- Motivo: DOM tree differs from the fixture
-
-```text
-input: "<script type=\"data\"><!--<script></scrip/</SCRIPT></script>"
-expected: <html>
-  <head>
-    <script>
-      "<!--<script></scrip/</SCRIPT>"
-  <body>
-
-actual:   <html>
-  <head>
-    <script {type: data}>
-      "<!--<script></scrip/</SCRIPT>"
-  <body>
-```
-
-### `domjs-unsafe.dat#21`
-
-- Características: html-parser
-- Motivo: DOM tree differs from the fixture
-
-```text
-input: "<script type=\"data\"></scrip/></script>"
-expected: <html>
-  <head>
-    <script>
-      "</scrip/>"
-  <body>
-
-actual:   <html>
-  <head>
-    <script {type: data}>
-      "</scrip/>"
-  <body>
-```
-
-### `domjs-unsafe.dat#22`
-
-- Características: html-parser
-- Motivo: DOM tree differs from the fixture
-
-```text
-input: "<script type=\"data\"></scrip ></script>"
-expected: <html>
-  <head>
-    <script>
-      "</scrip >"
-  <body>
-
-actual:   <html>
-  <head>
-    <script {type: data}>
-      "</scrip >"
-  <body>
-```
-
-### `domjs-unsafe.dat#23`
-
-- Características: html-parser
-- Motivo: DOM tree differs from the fixture
-
-```text
-input: "<script type=\"data\"><!--</scrip></script>"
-expected: <html>
-  <head>
-    <script>
-      "<!--</scrip>"
-  <body>
-
-actual:   <html>
-  <head>
-    <script {type: data}>
-      "<!--</scrip>"
-  <body>
-```
-
-### `domjs-unsafe.dat#24`
-
-- Características: html-parser
-- Motivo: DOM tree differs from the fixture
-
-```text
-input: "<script type=\"data\"><!--</scrip </script>"
-expected: <html>
-  <head>
-    <script>
-      "<!--</scrip "
-  <body>
-
-actual:   <html>
-  <head>
-    <script {type: data}>
-      "<!--</scrip "
-  <body>
-```
-
-### `domjs-unsafe.dat#25`
-
-- Características: html-parser
-- Motivo: DOM tree differs from the fixture
-
-```text
-input: "<script type=\"data\"><!--</scrip/</script>"
-expected: <html>
-  <head>
-    <script>
-      "<!--</scrip/"
-  <body>
-
-actual:   <html>
-  <head>
-    <script {type: data}>
-      "<!--</scrip/"
-  <body>
-```
-
 ### `domjs-unsafe.dat#44`
 
 - Características: html-parser
@@ -880,53 +402,13 @@ expected: <html>
   <head>
   <body>
     <svg>
-      <svg>
+      <svg {id: foo}>
 
 actual:   <html>
   <head>
   <body>
     <svg>
       <font {id: foo}>
-```
-
-### `domjs-unsafe.dat#46`
-
-- Características: html-parser
-- Motivo: DOM tree differs from the fixture
-
-```text
-input: "<svg><font size=4></font></svg>"
-expected: <html>
-  <head>
-  <body>
-    <svg>
-    <font>
-
-actual:   <html>
-  <head>
-  <body>
-    <svg>
-    <font {size: 4}>
-```
-
-### `domjs-unsafe.dat#47`
-
-- Características: html-parser
-- Motivo: DOM tree differs from the fixture
-
-```text
-input: "<svg><font color=red></font></svg>"
-expected: <html>
-  <head>
-  <body>
-    <svg>
-    <font>
-
-actual:   <html>
-  <head>
-  <body>
-    <svg>
-    <font {color: red}>
 ```
 
 ### `domjs-unsafe.dat#48`
@@ -940,355 +422,13 @@ expected: <html>
   <head>
   <body>
     <svg>
-      <svg>
+      <svg {font: sans}>
 
 actual:   <html>
   <head>
   <body>
     <svg>
       <font {font: sans}>
-```
-
-### `entities02.dat#0`
-
-- Características: html-parser
-- Motivo: DOM tree differs from the fixture
-
-```text
-input: "<div bar=\"ZZ&gt;YY\"></div>"
-expected: <html>
-  <head>
-  <body>
-    <div>
-
-actual:   <html>
-  <head>
-  <body>
-    <div {bar: ZZ>YY}>
-```
-
-### `entities02.dat#1`
-
-- Características: html-parser
-- Motivo: DOM tree differs from the fixture
-
-```text
-input: "<div bar=\"ZZ&\"></div>"
-expected: <html>
-  <head>
-  <body>
-    <div>
-
-actual:   <html>
-  <head>
-  <body>
-    <div {bar: ZZ&}>
-```
-
-### `entities02.dat#2`
-
-- Características: html-parser
-- Motivo: DOM tree differs from the fixture
-
-```text
-input: "<div bar='ZZ&'></div>"
-expected: <html>
-  <head>
-  <body>
-    <div>
-
-actual:   <html>
-  <head>
-  <body>
-    <div {bar: ZZ&}>
-```
-
-### `entities02.dat#3`
-
-- Características: html-parser
-- Motivo: DOM tree differs from the fixture
-
-```text
-input: "<div bar=ZZ&></div>"
-expected: <html>
-  <head>
-  <body>
-    <div>
-
-actual:   <html>
-  <head>
-  <body>
-    <div {bar: ZZ&}>
-```
-
-### `entities02.dat#4`
-
-- Características: html-parser
-- Motivo: DOM tree differs from the fixture
-
-```text
-input: "<div bar=\"ZZ&gt=YY\"></div>"
-expected: <html>
-  <head>
-  <body>
-    <div>
-
-actual:   <html>
-  <head>
-  <body>
-    <div {bar: ZZ&gt=YY}>
-```
-
-### `entities02.dat#5`
-
-- Características: html-parser
-- Motivo: DOM tree differs from the fixture
-
-```text
-input: "<div bar=\"ZZ&gt0YY\"></div>"
-expected: <html>
-  <head>
-  <body>
-    <div>
-
-actual:   <html>
-  <head>
-  <body>
-    <div {bar: ZZ&gt0YY}>
-```
-
-### `entities02.dat#6`
-
-- Características: html-parser
-- Motivo: DOM tree differs from the fixture
-
-```text
-input: "<div bar=\"ZZ&gt9YY\"></div>"
-expected: <html>
-  <head>
-  <body>
-    <div>
-
-actual:   <html>
-  <head>
-  <body>
-    <div {bar: ZZ&gt9YY}>
-```
-
-### `entities02.dat#7`
-
-- Características: html-parser
-- Motivo: DOM tree differs from the fixture
-
-```text
-input: "<div bar=\"ZZ&gtaYY\"></div>"
-expected: <html>
-  <head>
-  <body>
-    <div>
-
-actual:   <html>
-  <head>
-  <body>
-    <div {bar: ZZ&gtaYY}>
-```
-
-### `entities02.dat#8`
-
-- Características: html-parser
-- Motivo: DOM tree differs from the fixture
-
-```text
-input: "<div bar=\"ZZ&gtZYY\"></div>"
-expected: <html>
-  <head>
-  <body>
-    <div>
-
-actual:   <html>
-  <head>
-  <body>
-    <div {bar: ZZ&gtZYY}>
-```
-
-### `entities02.dat#9`
-
-- Características: html-parser
-- Motivo: DOM tree differs from the fixture
-
-```text
-input: "<div bar=\"ZZ&gt YY\"></div>"
-expected: <html>
-  <head>
-  <body>
-    <div>
-
-actual:   <html>
-  <head>
-  <body>
-    <div {bar: ZZ> YY}>
-```
-
-### `entities02.dat#10`
-
-- Características: html-parser
-- Motivo: DOM tree differs from the fixture
-
-```text
-input: "<div bar=\"ZZ&gt\"></div>"
-expected: <html>
-  <head>
-  <body>
-    <div>
-
-actual:   <html>
-  <head>
-  <body>
-    <div {bar: ZZ>}>
-```
-
-### `entities02.dat#11`
-
-- Características: html-parser
-- Motivo: DOM tree differs from the fixture
-
-```text
-input: "<div bar='ZZ&gt'></div>"
-expected: <html>
-  <head>
-  <body>
-    <div>
-
-actual:   <html>
-  <head>
-  <body>
-    <div {bar: ZZ>}>
-```
-
-### `entities02.dat#12`
-
-- Características: html-parser
-- Motivo: DOM tree differs from the fixture
-
-```text
-input: "<div bar=ZZ&gt></div>"
-expected: <html>
-  <head>
-  <body>
-    <div>
-
-actual:   <html>
-  <head>
-  <body>
-    <div {bar: ZZ>}>
-```
-
-### `entities02.dat#13`
-
-- Características: html-parser
-- Motivo: DOM tree differs from the fixture
-
-```text
-input: "<div bar=\"ZZ&pound_id=23\"></div>"
-expected: <html>
-  <head>
-  <body>
-    <div>
-
-actual:   <html>
-  <head>
-  <body>
-    <div {bar: ZZ£_id=23}>
-```
-
-### `entities02.dat#14`
-
-- Características: html-parser
-- Motivo: DOM tree differs from the fixture
-
-```text
-input: "<div bar=\"ZZ&prod_id=23\"></div>"
-expected: <html>
-  <head>
-  <body>
-    <div>
-
-actual:   <html>
-  <head>
-  <body>
-    <div {bar: ZZ&prod_id=23}>
-```
-
-### `entities02.dat#15`
-
-- Características: html-parser
-- Motivo: DOM tree differs from the fixture
-
-```text
-input: "<div bar=\"ZZ&pound;_id=23\"></div>"
-expected: <html>
-  <head>
-  <body>
-    <div>
-
-actual:   <html>
-  <head>
-  <body>
-    <div {bar: ZZ£_id=23}>
-```
-
-### `entities02.dat#16`
-
-- Características: html-parser
-- Motivo: DOM tree differs from the fixture
-
-```text
-input: "<div bar=\"ZZ&prod;_id=23\"></div>"
-expected: <html>
-  <head>
-  <body>
-    <div>
-
-actual:   <html>
-  <head>
-  <body>
-    <div {bar: ZZ∏_id=23}>
-```
-
-### `entities02.dat#17`
-
-- Características: html-parser
-- Motivo: DOM tree differs from the fixture
-
-```text
-input: "<div bar=\"ZZ&pound=23\"></div>"
-expected: <html>
-  <head>
-  <body>
-    <div>
-
-actual:   <html>
-  <head>
-  <body>
-    <div {bar: ZZ&pound=23}>
-```
-
-### `entities02.dat#18`
-
-- Características: html-parser
-- Motivo: DOM tree differs from the fixture
-
-```text
-input: "<div bar=\"ZZ&prod=23\"></div>"
-expected: <html>
-  <head>
-  <body>
-    <div>
-
-actual:   <html>
-  <head>
-  <body>
-    <div {bar: ZZ&prod=23}>
 ```
 
 ### `foreign-fragment.dat#59`
@@ -1323,42 +463,6 @@ actual:   <svg>
   <foo>
 ```
 
-### `html5test-com.dat#1`
-
-- Características: html-parser
-- Motivo: DOM tree differs from the fixture
-
-```text
-input: "<div foo<bar=''>"
-expected: <html>
-  <head>
-  <body>
-    <div>
-
-actual:   <html>
-  <head>
-  <body>
-    <div {foo<bar: }>
-```
-
-### `html5test-com.dat#2`
-
-- Características: html-parser
-- Motivo: DOM tree differs from the fixture
-
-```text
-input: "<div foo=`bar`>"
-expected: <html>
-  <head>
-  <body>
-    <div>
-
-actual:   <html>
-  <head>
-  <body>
-    <div {foo: `bar`}>
-```
-
 ### `html5test-com.dat#3`
 
 - Características: html-parser
@@ -1375,24 +479,6 @@ actual:   <html>
   <head>
   <body>
     <div {\"foo: }>
-```
-
-### `html5test-com.dat#4`
-
-- Características: html-parser
-- Motivo: DOM tree differs from the fixture
-
-```text
-input: "<a href='\\nbar'></a>"
-expected: <html>
-  <head>
-  <body>
-    <a>
-
-actual:   <html>
-  <head>
-  <body>
-    <a {href: \nbar}>
 ```
 
 ### `html5test-com.dat#13`
@@ -1509,32 +595,6 @@ actual:   <html>
           <!-- [CDATA[x]] -->
 ```
 
-### `html5test-com.dat#25`
-
-- Características: html-parser
-- Motivo: DOM tree differs from the fixture
-
-```text
-input: "<table><form><input type=hidden><input></form><div></div></table>"
-expected: <html>
-  <head>
-  <body>
-    <input>
-    <div>
-    <table>
-      <form>
-      <input>
-
-actual:   <html>
-  <head>
-  <body>
-    <input>
-    <div>
-    <table>
-      <form>
-      <input {type: hidden}>
-```
-
 ### `isindex.dat#0`
 
 - Características: html-parser
@@ -1568,7 +628,7 @@ input: "<isindex name=\"A\" action=\"B\" prompt=\"C\" foo=\"D\">"
 expected: <html>
   <head>
   <body>
-    <isindex>
+    <isindex {action: B, foo: D, name: A, prompt: C}>
 
 actual:   <html>
   <head>
@@ -2344,7 +1404,7 @@ expected: <html>
   <head>
   <body>
     <math>
-      <math>
+      <math {encoding: text/html}>
         "x"
 
 actual:   <html>
@@ -2596,7 +1656,1156 @@ actual:   <html>
     <!-- ?start  -->
 ```
 
-_… y 417 fallos más (ver el JSONL)._
+### `processing-instructions.dat#103`
+
+- Características: html-parser
+- Motivo: DOM tree differs from the fixture
+
+```text
+input: "<body><?start data"
+expected: <html>
+  <head>
+  <body>
+
+actual:   <html>
+  <head>
+  <body>
+    <!-- ?start data -->
+```
+
+### `processing-instructions.dat#104`
+
+- Características: html-parser
+- Motivo: DOM tree differs from the fixture
+
+```text
+input: "<body><?start ? ?"
+expected: <html>
+  <head>
+  <body>
+
+actual:   <html>
+  <head>
+  <body>
+    <!-- ?start ? ? -->
+```
+
+### `processing-instructions.dat#105`
+
+- Características: html-parser
+- Motivo: DOM tree differs from the fixture
+
+```text
+input: "<body><?"
+expected: <html>
+  <head>
+  <body>
+
+actual:   <html>
+  <head>
+  <body>
+    <!-- ? -->
+```
+
+### `processing-instructions.dat#123`
+
+- Características: html-parser
+- Motivo: DOM tree differs from the fixture
+
+```text
+input: "<template><?pi>"
+expected: <html>
+  <head>
+    <template>
+      <!-- pi ? -->
+  <body>
+
+actual:   <html>
+  <head>
+  <body>
+    <template>
+      <!-- ?pi -->
+```
+
+### `ruby.dat#0`
+
+- Características: html-parser
+- Motivo: DOM tree differs from the fixture
+
+```text
+input: "<html><ruby>a<rb>b<rb></ruby></html>"
+expected: <html>
+  <head>
+  <body>
+    <ruby>
+      "a"
+      <rb>
+        "b"
+      <rb>
+
+actual:   <html>
+  <head>
+  <body>
+    <ruby>
+      "a"
+      <rb>
+        "b"
+        <rb>
+```
+
+### `ruby.dat#1`
+
+- Características: html-parser
+- Motivo: DOM tree differs from the fixture
+
+```text
+input: "<html><ruby>a<rb>b<rt></ruby></html>"
+expected: <html>
+  <head>
+  <body>
+    <ruby>
+      "a"
+      <rb>
+        "b"
+      <rt>
+
+actual:   <html>
+  <head>
+  <body>
+    <ruby>
+      "a"
+      <rb>
+        "b"
+        <rt>
+```
+
+### `ruby.dat#2`
+
+- Características: html-parser
+- Motivo: DOM tree differs from the fixture
+
+```text
+input: "<html><ruby>a<rb>b<rtc></ruby></html>"
+expected: <html>
+  <head>
+  <body>
+    <ruby>
+      "a"
+      <rb>
+        "b"
+      <rtc>
+
+actual:   <html>
+  <head>
+  <body>
+    <ruby>
+      "a"
+      <rb>
+        "b"
+        <rtc>
+```
+
+### `ruby.dat#3`
+
+- Características: html-parser
+- Motivo: DOM tree differs from the fixture
+
+```text
+input: "<html><ruby>a<rb>b<rp></ruby></html>"
+expected: <html>
+  <head>
+  <body>
+    <ruby>
+      "a"
+      <rb>
+        "b"
+      <rp>
+
+actual:   <html>
+  <head>
+  <body>
+    <ruby>
+      "a"
+      <rb>
+        "b"
+        <rp>
+```
+
+### `ruby.dat#5`
+
+- Características: html-parser
+- Motivo: DOM tree differs from the fixture
+
+```text
+input: "<html><ruby>a<rt>b<rb></ruby></html>"
+expected: <html>
+  <head>
+  <body>
+    <ruby>
+      "a"
+      <rt>
+        "b"
+      <rb>
+
+actual:   <html>
+  <head>
+  <body>
+    <ruby>
+      "a"
+      <rt>
+        "b"
+        <rb>
+```
+
+### `ruby.dat#7`
+
+- Características: html-parser
+- Motivo: DOM tree differs from the fixture
+
+```text
+input: "<html><ruby>a<rt>b<rtc></ruby></html>"
+expected: <html>
+  <head>
+  <body>
+    <ruby>
+      "a"
+      <rt>
+        "b"
+      <rtc>
+
+actual:   <html>
+  <head>
+  <body>
+    <ruby>
+      "a"
+      <rt>
+        "b"
+        <rtc>
+```
+
+### `ruby.dat#10`
+
+- Características: html-parser
+- Motivo: DOM tree differs from the fixture
+
+```text
+input: "<html><ruby>a<rtc>b<rb></ruby></html>"
+expected: <html>
+  <head>
+  <body>
+    <ruby>
+      "a"
+      <rtc>
+        "b"
+      <rb>
+
+actual:   <html>
+  <head>
+  <body>
+    <ruby>
+      "a"
+      <rtc>
+        "b"
+        <rb>
+```
+
+### `ruby.dat#12`
+
+- Características: html-parser
+- Motivo: DOM tree differs from the fixture
+
+```text
+input: "<html><ruby>a<rtc>b<rtc></ruby></html>"
+expected: <html>
+  <head>
+  <body>
+    <ruby>
+      "a"
+      <rtc>
+        "b"
+      <rtc>
+
+actual:   <html>
+  <head>
+  <body>
+    <ruby>
+      "a"
+      <rtc>
+        "b"
+        <rtc>
+```
+
+### `ruby.dat#15`
+
+- Características: html-parser
+- Motivo: DOM tree differs from the fixture
+
+```text
+input: "<html><ruby>a<rp>b<rb></ruby></html>"
+expected: <html>
+  <head>
+  <body>
+    <ruby>
+      "a"
+      <rp>
+        "b"
+      <rb>
+
+actual:   <html>
+  <head>
+  <body>
+    <ruby>
+      "a"
+      <rp>
+        "b"
+        <rb>
+```
+
+### `ruby.dat#17`
+
+- Características: html-parser
+- Motivo: DOM tree differs from the fixture
+
+```text
+input: "<html><ruby>a<rp>b<rtc></ruby></html>"
+expected: <html>
+  <head>
+  <body>
+    <ruby>
+      "a"
+      <rp>
+        "b"
+      <rtc>
+
+actual:   <html>
+  <head>
+  <body>
+    <ruby>
+      "a"
+      <rp>
+        "b"
+        <rtc>
+```
+
+### `ruby.dat#20`
+
+- Características: html-parser
+- Motivo: DOM tree differs from the fixture
+
+```text
+input: "<html><ruby><rtc><ruby>a<rb>b<rt></ruby></ruby></html>"
+expected: <html>
+  <head>
+  <body>
+    <ruby>
+      <rtc>
+        <ruby>
+          "a"
+          <rb>
+            "b"
+          <rt>
+
+actual:   <html>
+  <head>
+  <body>
+    <ruby>
+      <rtc>
+        <ruby>
+          "a"
+          <rb>
+            "b"
+            <rt>
+```
+
+### `scripted_adoption01.dat#0`
+
+- Características: html-parser
+- Motivo: DOM tree differs from the fixture
+
+```text
+input: "<p><b id=\"A\"><script>document.getElementById(\"A\").id = \"B\"</script></p>TEXT</b>"
+expected: <html>
+  <head>
+  <body>
+    <p>
+      <b {id: B}>
+        <script>
+          "document.getElementById("A").id = "B""
+    <b {id: A}>
+      "TEXT"
+
+actual:   <html>
+  <head>
+  <body>
+    <p>
+      <b {id: A}>
+        <script>
+          "document.getElementById("A").id = "B""
+    <b {id: A}>
+      "TEXT"
+```
+
+### `scripted_ark.dat#0`
+
+- Características: html-parser
+- Motivo: DOM tree differs from the fixture
+
+```text
+input: "<p><font size=4><font size=4><font size=4><script>document.getElementsByTagName(\"font\")[2].setAttribute(\"size\", \"5\");</script><font size=4><p>X"
+expected: <html>
+  <head>
+  <body>
+    <p>
+      <font {size: 4}>
+        <font {size: 4}>
+          <font {size: 5}>
+            <script>
+              "document.getElementsByTagName("font")[2].setAttribute("size", "5");"
+            <font {size: 4}>
+    <p>
+      <font {size: 4}>
+        <font {size: 4}>
+          <font {size: 4}>
+            "X"
+
+actual:   <html>
+  <head>
+  <body>
+    <p>
+      <font {size: 4}>
+        <font {size: 4}>
+          <font {size: 4}>
+            <script>
+              "document.getElementsByTagName("font")[2].setAttribute("size", "5");"
+            <font {size: 4}>
+    <p>
+      <font {size: 4}>
+        <font {size: 4}>
+          <font {size: 4}>
+            "X"
+```
+
+### `scripted_foster01.dat#0`
+
+- Características: html-parser
+- Motivo: DOM tree differs from the fixture
+
+```text
+input: "<table><tr><script>var t=document.querySelector('table');document.documentElement.remove();document.appendChild(t)</script><b>"
+expected: <table>
+  <tbody>
+    <tr>
+      <script>
+        "var t=document.querySelector('table');document.documentElement.remove();document.appendChild(t)"
+
+actual:   <html>
+  <head>
+  <body>
+    <b>
+    <table>
+      <tbody>
+        <tr>
+          <script>
+            "var t=document.querySelector('table');document.documentElement.remove();document.appendChild(t)"
+```
+
+### `scripted_foster01.dat#1`
+
+- Características: html-parser
+- Motivo: DOM tree differs from the fixture
+
+```text
+input: "<table><tr><script>var t=document.querySelector('table');document.documentElement.remove();document.appendChild(t)</script>FOSTERTEXT"
+expected: <table>
+  <tbody>
+    <tr>
+      <script>
+        "var t=document.querySelector('table');document.documentElement.remove();document.appendChild(t)"
+
+actual:   <html>
+  <head>
+  <body>
+    "FOSTERTEXT"
+    <table>
+      <tbody>
+        <tr>
+          <script>
+            "var t=document.querySelector('table');document.documentElement.remove();document.appendChild(t)"
+```
+
+### `scripted_webkit01.dat#0`
+
+- Características: html-parser
+- Motivo: DOM tree differs from the fixture
+
+```text
+input: "1<script>document.write(\"2\")</script>3"
+expected: <html>
+  <head>
+  <body>
+    "1"
+    <script>
+      "document.write("2")"
+    "23"
+
+actual:   <html>
+  <head>
+  <body>
+    "1"
+    <script>
+      "document.write("2")"
+    "3"
+```
+
+### `scripted_webkit01.dat#1`
+
+- Características: html-parser
+- Motivo: DOM tree differs from the fixture
+
+```text
+input: "1<script>document.write(\"<script>document.write('2')</scr\"+ \"ipt><script>document.write('3')</scr\" + \"ipt>\")</script>4"
+expected: <html>
+  <head>
+  <body>
+    "1"
+    <script>
+      "document.write("<script>document.write('2')</scr"+ "ipt><script>document.write('3')</scr" + "ipt>")"
+    <script>
+      "document.write('2')"
+    "2"
+    <script>
+      "document.write('3')"
+    "34"
+
+actual:   <html>
+  <head>
+  <body>
+    "1"
+    <script>
+      "document.write("<script>document.write('2')</scr"+ "ipt><script>document.write('3')</scr" + "ipt>")"
+    "4"
+```
+
+### `search-element.dat#0`
+
+- Características: html-parser
+- Motivo: DOM tree differs from the fixture
+
+```text
+input: "<!doctype html><p>foo<search>bar<p>baz"
+expected: <!DOCTYPE html>
+<html>
+  <head>
+  <body>
+    <p>
+      "foo"
+    <search>
+      "bar"
+      <p>
+        "baz"
+
+actual:   <!DOCTYPE html>
+<html>
+  <head>
+  <body>
+    <p>
+      "foo"
+      <search>
+        "bar"
+    <p>
+      "baz"
+```
+
+### `search-element.dat#1`
+
+- Características: html-parser
+- Motivo: DOM tree differs from the fixture
+
+```text
+input: "<!doctype html><search><p>foo</search>bar"
+expected: <!DOCTYPE html>
+<html>
+  <head>
+  <body>
+    <search>
+      <p>
+        "foo"
+    "bar"
+
+actual:   <!DOCTYPE html>
+<html>
+  <head>
+  <body>
+    <search>
+      <p>
+        "foobar"
+```
+
+### `search-element.dat#2`
+
+- Características: html-parser
+- Motivo: DOM tree differs from the fixture
+
+```text
+input: "<!DOCTYPE html>xxx<svg><x><g><a><search><b>"
+expected: <!DOCTYPE html>
+<html>
+  <head>
+  <body>
+    "xxx"
+    <svg>
+      <svg>
+        <svg>
+          <svg>
+            <svg>
+    <b>
+
+actual:   <!DOCTYPE html>
+<html>
+  <head>
+  <body>
+    "xxx"
+    <svg>
+      <x>
+        <g>
+          <a>
+            <search>
+    <b>
+```
+
+### `search-element.dat#3`
+
+- Características: html-parser
+- Motivo: DOM tree differs from the fixture
+
+```text
+input: "<!doctype html><a><search>x</a>y"
+expected: <!DOCTYPE html>
+<html>
+  <head>
+  <body>
+    <a>
+    <search>
+      <a>
+        "x"
+      "y"
+
+actual:   <!DOCTYPE html>
+<html>
+  <head>
+  <body>
+    <a>
+      <search>
+        "x"
+    "y"
+```
+
+### `search-element.dat#4`
+
+- Características: html-parser
+- Motivo: DOM tree differs from the fixture
+
+```text
+input: "<!doctype html><a><search>x<p>y<a>z"
+expected: <!DOCTYPE html>
+<html>
+  <head>
+  <body>
+    <a>
+    <search>
+      <a>
+        "x"
+      <p>
+        <a>
+          "y"
+        <a>
+          "z"
+
+actual:   <!DOCTYPE html>
+<html>
+  <head>
+  <body>
+    <a>
+      <search>
+        "x"
+    <p>
+      <a>
+        "y"
+      <a>
+        "z"
+```
+
+### `search-element.dat#5`
+
+- Características: html-parser
+- Motivo: DOM tree differs from the fixture
+
+```text
+input: "<!doctype html><li>a<search><li>b"
+expected: <!DOCTYPE html>
+<html>
+  <head>
+  <body>
+    <li>
+      "a"
+      <search>
+        <li>
+          "b"
+
+actual:   <!DOCTYPE html>
+<html>
+  <head>
+  <body>
+    <li>
+      "a"
+      <search>
+    <li>
+      "b"
+```
+
+### `search-element.dat#6`
+
+- Características: html-parser
+- Motivo: DOM tree differs from the fixture
+
+```text
+input: "<!doctype html><dd>a<search><dt>b"
+expected: <!DOCTYPE html>
+<html>
+  <head>
+  <body>
+    <dd>
+      "a"
+      <search>
+        <dt>
+          "b"
+
+actual:   <!DOCTYPE html>
+<html>
+  <head>
+  <body>
+    <dd>
+      "a"
+      <search>
+    <dt>
+      "b"
+```
+
+### `search-element.dat#7`
+
+- Características: html-parser
+- Motivo: DOM tree differs from the fixture
+
+```text
+input: "<!doctype html><x><search></x>y"
+expected: <!DOCTYPE html>
+<html>
+  <head>
+  <body>
+    <x>
+      <search>
+        "y"
+
+actual:   <!DOCTYPE html>
+<html>
+  <head>
+  <body>
+    <x>
+      <search>
+    "y"
+```
+
+### `svg.dat#1`
+
+- Características: html-parser
+- Motivo: DOM tree differs from the fixture
+
+```text
+input: "<svg><tr><td><title><tr>"
+expected: <svg>
+  <svg>
+    <svg>
+      <svg>
+
+actual:   <svg>
+  <tr>
+    <td>
+      <title>
+  <tr>
+```
+
+### `svg.dat#2`
+
+- Características: html-parser
+- Motivo: DOM tree differs from the fixture
+
+```text
+input: "<svg><thead><title><tbody>"
+expected: <svg>
+  <svg>
+    <svg>
+
+actual:   <svg>
+  <thead>
+    <title>
+  <tbody>
+```
+
+### `svg.dat#3`
+
+- Características: html-parser
+- Motivo: DOM tree differs from the fixture
+
+```text
+input: "<svg><tfoot><title><tbody>"
+expected: <svg>
+  <svg>
+    <svg>
+
+actual:   <svg>
+  <tfoot>
+    <title>
+  <tbody>
+```
+
+### `svg.dat#4`
+
+- Características: html-parser
+- Motivo: DOM tree differs from the fixture
+
+```text
+input: "<svg><tbody><title><tfoot>"
+expected: <svg>
+  <svg>
+    <svg>
+
+actual:   <svg>
+  <tbody>
+    <title>
+  <tfoot>
+```
+
+### `svg.dat#5`
+
+- Características: html-parser
+- Motivo: DOM tree differs from the fixture
+
+```text
+input: "<svg><tbody><title></table>"
+expected: <svg>
+  <svg>
+    <svg>
+
+actual:   <svg>
+  <tbody>
+    <title>
+```
+
+### `svg.dat#6`
+
+- Características: html-parser
+- Motivo: DOM tree differs from the fixture
+
+```text
+input: "<svg><thead><title></table>"
+expected: <svg>
+  <svg>
+    <svg>
+
+actual:   <svg>
+  <thead>
+    <title>
+```
+
+### `svg.dat#7`
+
+- Características: html-parser
+- Motivo: DOM tree differs from the fixture
+
+```text
+input: "<svg><tfoot><title></table>"
+expected: <svg>
+  <svg>
+    <svg>
+
+actual:   <svg>
+  <tfoot>
+    <title>
+```
+
+### `tables01.dat#16`
+
+- Características: html-parser
+- Motivo: DOM tree differs from the fixture
+
+```text
+input: "<table><tr><td><svg><desc><td>"
+expected: <html>
+  <head>
+  <body>
+    <table>
+      <tbody>
+        <tr>
+          <td>
+            <svg>
+              <svg>
+          <td>
+
+actual:   <html>
+  <head>
+  <body>
+    <table>
+      <tbody>
+        <tr>
+          <td>
+            <svg>
+              <desc>
+          <td>
+```
+
+### `tables01.dat#17`
+
+- Características: html-parser
+- Motivo: DOM tree differs from the fixture
+
+```text
+input: "<div><table><svg><foreignObject><select><table><s>"
+expected: <html>
+  <head>
+  <body>
+    <div>
+      <svg>
+        <svg>
+          <select>
+      <table>
+      <s>
+      <table>
+
+actual:   <html>
+  <head>
+  <body>
+    <div>
+      <svg>
+        <foreignobject>
+          <select>
+      <table>
+      <s>
+      <table>
+```
+
+### `template.dat#1`
+
+- Características: html-parser
+- Motivo: DOM tree differs from the fixture
+
+```text
+input: "<template>Hello</template>"
+expected: <html>
+  <head>
+    <template>
+      "Hello"
+  <body>
+
+actual:   <html>
+  <head>
+  <body>
+    <template>
+      "Hello"
+```
+
+### `template.dat#2`
+
+- Características: html-parser
+- Motivo: DOM tree differs from the fixture
+
+```text
+input: "<template></template><div></div>"
+expected: <html>
+  <head>
+    <template>
+  <body>
+    <div>
+
+actual:   <html>
+  <head>
+  <body>
+    <template>
+    <div>
+```
+
+### `template.dat#3`
+
+- Características: html-parser
+- Motivo: DOM tree differs from the fixture
+
+```text
+input: "<html><template>Hello</template>"
+expected: <html>
+  <head>
+    <template>
+      "Hello"
+  <body>
+
+actual:   <html>
+  <head>
+  <body>
+    <template>
+      "Hello"
+```
+
+### `template.dat#4`
+
+- Características: html-parser
+- Motivo: DOM tree differs from the fixture
+
+```text
+input: "<head><template><div></div></template></head>"
+expected: <html>
+  <head>
+    <template>
+      <div>
+  <body>
+
+actual:   <html>
+  <head>
+  <body>
+    <template>
+      <div>
+```
+
+### `template.dat#5`
+
+- Características: html-parser
+- Motivo: DOM tree differs from the fixture
+
+```text
+input: "<div><template><div><span></template><b>"
+expected: <html>
+  <head>
+  <body>
+    <div>
+      <template>
+        <div>
+          <span>
+      <b>
+
+actual:   <html>
+  <head>
+  <body>
+    <div>
+      <template>
+        <div>
+          <span>
+            <b>
+```
+
+### `template.dat#6`
+
+- Características: html-parser
+- Motivo: DOM tree differs from the fixture
+
+```text
+input: "<div><template></div>Hello"
+expected: <html>
+  <head>
+  <body>
+    <div>
+      <template>
+        "Hello"
+
+actual:   <html>
+  <head>
+  <body>
+    <div>
+      <template>
+    "Hello"
+```
+
+### `template.dat#8`
+
+- Características: html-parser
+- Motivo: DOM tree differs from the fixture
+
+```text
+input: "<table><template></template></table>"
+expected: <html>
+  <head>
+  <body>
+    <table>
+      <template>
+
+actual:   <html>
+  <head>
+  <body>
+    <template>
+    <table>
+```
+
+### `template.dat#9`
+
+- Características: html-parser
+- Motivo: DOM tree differs from the fixture
+
+```text
+input: "<table><template></template></div>"
+expected: <html>
+  <head>
+  <body>
+    <table>
+      <template>
+
+actual:   <html>
+  <head>
+  <body>
+    <template>
+    <table>
+```
+
+### `template.dat#11`
+
+- Características: html-parser
+- Motivo: DOM tree differs from the fixture
+
+```text
+input: "<table><template></template><div></div>"
+expected: <html>
+  <head>
+  <body>
+    <div>
+    <table>
+      <template>
+
+actual:   <html>
+  <head>
+  <body>
+    <template>
+    <div>
+    <table>
+```
+
+### `template.dat#12`
+
+- Características: html-parser
+- Motivo: DOM tree differs from the fixture
+
+```text
+input: "<table>   <template></template></table>"
+expected: <html>
+  <head>
+  <body>
+    <table>
+      "   "
+      <template>
+
+actual:   <html>
+  <head>
+  <body>
+    <template>
+    <table>
+      "   "
+```
+
+_… y 301 fallos más (ver el JSONL)._
 
 ## SKIP agrupados por motivo
 
@@ -2619,9 +2828,8 @@ _… y 417 fallos más (ver el JSONL)._
 | fragment context "math mfenced" needs foreign content or template support | 1 |
 | fragment context "math malignmark" needs foreign content or template support | 1 |
 
-## Errores del runner (3)
+## Errores del runner (2)
 
-- `html5test-com.dat#0`: runner/parser failure: InvalidCharacterError: invalid name "div<div"
 - `math.dat#0`: runner/parser failure: Bad state: No element
 - `svg.dat#0`: runner/parser failure: Bad state: No element
 
