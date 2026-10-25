@@ -7,7 +7,7 @@
 //   NATIVAX_SHOT_SCHEME=dark             # optional: platform brightness
 //   flutter test test/screenshot_test.dart
 //
-// System fonts (Noto Sans) replace the test font so text is readable.
+// Installed system fonts replace the test font so text is readable.
 import 'dart:io';
 import 'dart:ui' as ui;
 
@@ -40,41 +40,61 @@ class _Loader extends NativaXResourceLoader {
 }
 
 Future<void> _loadFonts() async {
-  const dir = '/usr/share/fonts/truetype/noto';
-  final regular = File('$dir/NotoSans-Regular.ttf');
-  if (!regular.existsSync()) return;
-  final bold = File('$dir/NotoSans-Bold.ttf');
-  // Chrome resolves `monospace` to DejaVu Sans Mono through fontconfig here;
-  // use the same face so the comparison measures layout, not fonts.
-  final dejavu = File('/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf');
-  final mono = dejavu.existsSync() ? dejavu : File('$dir/NotoSansMono-Regular.ttf');
-  final emoji = File('$dir/NotoColorEmoji.ttf');
+  // flutter_tester has no fontconfig, so load the installed faces under the
+  // names fontconfig resolves for the reference Chrome on this machine
+  // (verified pixel-identical with headless Chrome screenshots):
+  //   serif, Times New Roman, Times -> Liberation Serif (also the default)
+  //   sans-serif, Arial, Helvetica   -> Liberation Sans
+  //   system-ui                      -> Noto Sans
+  //   monospace                      -> DejaVu Sans Mono
+  //   Courier New, Courier           -> Liberation Mono
+  // Families that are not installed are not aliased: Chrome skips them.
+  const noto = '/usr/share/fonts/truetype/noto';
+  const liberation = '/usr/share/fonts/truetype/liberation';
+  const dejavu = '/usr/share/fonts/truetype/dejavu';
   ByteData bytes(File f) => ByteData.view(f.readAsBytesSync().buffer);
-  for (final family in ['Noto Sans', 'Roboto', 'ui-rounded', 'Segoe UI', 'sans-serif', 'system-ui', 'Arial']) {
-    final loader = FontLoader(family)..addFont(Future.value(bytes(regular)));
-    if (bold.existsSync()) loader.addFont(Future.value(bytes(bold)));
-    await loader.load();
+  Future<void> load(List<String> families, List<String> files) async {
+    final faces = files.map(File.new).where((f) => f.existsSync()).toList();
+    if (faces.isEmpty) return;
+    for (final family in families) {
+      final loader = FontLoader(family);
+      for (final face in faces) {
+        loader.addFont(Future.value(bytes(face)));
+      }
+      await loader.load();
+    }
   }
+
+  List<String> styles(String dir, String stem) => [
+        for (final style in ['Regular', 'Bold', 'Italic', 'BoldItalic'])
+          '$dir/$stem-$style.ttf',
+      ];
+  await load(['Noto Sans', 'system-ui'], styles(noto, 'NotoSans'));
+  await load(['Noto Serif'], styles(noto, 'NotoSerif'));
+  await load(['Liberation Sans', 'Arial', 'Helvetica'],
+      styles(liberation, 'LiberationSans'));
+  await load(['Liberation Serif', 'Times New Roman', 'Times'],
+      styles(liberation, 'LiberationSerif'));
+  await load(['Liberation Mono', 'Courier New', 'Courier'],
+      styles(liberation, 'LiberationMono'));
+  await load(['DejaVu Sans Mono', 'monospace'], [
+    '$dejavu/DejaVuSansMono.ttf',
+    '$dejavu/DejaVuSansMono-Bold.ttf',
+  ]);
   // Same fallback order fontconfig gives Chrome: text symbols from DejaVu
   // Sans before the colour emoji font.
   final fallback = <String>[];
-  final symbols = File('/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf');
-  if (symbols.existsSync()) {
-    await (FontLoader('DejaVu Sans')..addFont(Future.value(bytes(symbols)))).load();
+  if (File('$dejavu/DejaVuSans.ttf').existsSync()) {
+    await load(['DejaVu Sans'], ['$dejavu/DejaVuSans.ttf']);
     fallback.add('DejaVu Sans');
   }
-  if (emoji.existsSync()) {
-    await (FontLoader('Noto Color Emoji')..addFont(Future.value(bytes(emoji)))).load();
+  if (File('$noto/NotoColorEmoji.ttf').existsSync()) {
+    await load(['Noto Color Emoji'], ['$noto/NotoColorEmoji.ttf']);
     fallback.add('Noto Color Emoji');
   }
   nativaxFontFallback = fallback;
-  // fontconfig resolves sans-serif/system-ui to Noto Sans for Chrome here.
+  // system-ui (the platform default in mapFontFamily) is Noto Sans here.
   nativaxDefaultFontFamily = 'Noto Sans';
-  if (mono.existsSync()) {
-    for (final family in ['monospace', 'ui-monospace', 'Menlo', 'Consolas', 'Roboto Mono']) {
-      await (FontLoader(family)..addFont(Future.value(bytes(mono)))).load();
-    }
-  }
 }
 
 void main() {
