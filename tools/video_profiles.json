@@ -1,0 +1,220 @@
+{
+  "generated": "2026-10-24",
+  "capability": {
+    "playback": false,
+    "decoder": "none",
+    "media_error": "MEDIA_ERR_SRC_NOT_SUPPORTED",
+    "note": "El renderer conserva la caja y muestra un placeholder; no hay pipeline multimedia."
+  },
+  "test_file": "packages/nativa_render/test/video_quality_test.dart",
+  "runner": "tools/run_video_contract.py",
+  "last_run": {
+    "status": "PASS",
+    "tests": 25,
+    "date": "2026-10-24T19:36:18",
+    "command": "cd packages/nativa_render && flutter test test/video_quality_test.dart",
+    "exit_code": 0
+  },
+  "profiles": [
+    {
+      "id": "360p",
+      "box": "640x360",
+      "attributes": "width=\"640\" height=\"360\"",
+      "contract": "placeholder + MEDIA_ERR_SRC_NOT_SUPPORTED",
+      "test": "video quality contract 360p",
+      "status": "CONTRATO"
+    },
+    {
+      "id": "480p",
+      "box": "768x432",
+      "attributes": "width=\"854\" height=\"480\"",
+      "contract": "placeholder + MEDIA_ERR_SRC_NOT_SUPPORTED",
+      "test": "video quality contract 480p",
+      "status": "CONTRATO"
+    },
+    {
+      "id": "720p",
+      "box": "768x432",
+      "attributes": "width=\"1280\" height=\"720\"",
+      "contract": "placeholder + MEDIA_ERR_SRC_NOT_SUPPORTED",
+      "test": "video quality contract 720p",
+      "status": "CONTRATO"
+    },
+    {
+      "id": "1080p",
+      "box": "768x432",
+      "attributes": "width=\"1920\" height=\"1080\"",
+      "contract": "placeholder + MEDIA_ERR_SRC_NOT_SUPPORTED",
+      "test": "video quality contract 1080p",
+      "status": "CONTRATO"
+    },
+    {
+      "id": "1440p",
+      "box": "768x432",
+      "attributes": "width=\"2560\" height=\"1440\"",
+      "contract": "placeholder + MEDIA_ERR_SRC_NOT_SUPPORTED",
+      "test": "video quality contract 1440p",
+      "status": "CONTRATO"
+    },
+    {
+      "id": "2160p",
+      "box": "768x432",
+      "attributes": "width=\"3840\" height=\"2160\"",
+      "contract": "placeholder + MEDIA_ERR_SRC_NOT_SUPPORTED",
+      "test": "video quality contract 2160p",
+      "status": "CONTRATO"
+    },
+    {
+      "id": "portrait",
+      "box": "720x1280",
+      "attributes": "width=\"720\" height=\"1280\"",
+      "contract": "placeholder + MEDIA_ERR_SRC_NOT_SUPPORTED",
+      "test": "video quality contract portrait",
+      "status": "CONTRATO"
+    },
+    {
+      "id": "square",
+      "box": "768x768",
+      "attributes": "width=\"1080\" height=\"1080\"",
+      "contract": "placeholder + MEDIA_ERR_SRC_NOT_SUPPORTED",
+      "test": "video quality contract square",
+      "status": "CONTRATO"
+    },
+    {
+      "id": "ultrawide",
+      "box": "768x324",
+      "attributes": "width=\"2560\" height=\"1080\"",
+      "contract": "placeholder + MEDIA_ERR_SRC_NOT_SUPPORTED",
+      "test": "video quality contract ultrawide",
+      "status": "CONTRATO"
+    },
+    {
+      "id": "controls",
+      "box": "640x360",
+      "attributes": "width=\"640\" height=\"360\" controls",
+      "contract": "placeholder + MEDIA_ERR_SRC_NOT_SUPPORTED",
+      "test": "video quality contract controls",
+      "status": "CONTRATO"
+    },
+    {
+      "id": "autoplay-muted",
+      "box": "640x360",
+      "attributes": "width=\"640\" height=\"360\" autoplay muted",
+      "contract": "placeholder + MEDIA_ERR_SRC_NOT_SUPPORTED",
+      "test": "video quality contract autoplay-muted",
+      "status": "CONTRATO"
+    },
+    {
+      "id": "loop",
+      "box": "640x360",
+      "attributes": "width=\"640\" height=\"360\" loop",
+      "contract": "placeholder + MEDIA_ERR_SRC_NOT_SUPPORTED",
+      "test": "video quality contract loop",
+      "status": "CONTRATO"
+    },
+    {
+      "id": "preload-none",
+      "box": "640x360",
+      "attributes": "width=\"640\" height=\"360\" preload=\"none\"",
+      "contract": "placeholder + MEDIA_ERR_SRC_NOT_SUPPORTED",
+      "test": "video quality contract preload-none",
+      "status": "CONTRATO"
+    },
+    {
+      "id": "poster",
+      "box": "640x360",
+      "attributes": "width=\"640\" height=\"360\" poster=\"poster.png\"",
+      "contract": "placeholder + MEDIA_ERR_SRC_NOT_SUPPORTED",
+      "test": "video quality contract poster",
+      "status": "CONTRATO"
+    },
+    {
+      "id": "playsinline",
+      "box": "640x360",
+      "attributes": "width=\"640\" height=\"360\" playsinline",
+      "contract": "placeholder + MEDIA_ERR_SRC_NOT_SUPPORTED",
+      "test": "video quality contract playsinline",
+      "status": "CONTRATO"
+    },
+    {
+      "id": "crossorigin",
+      "box": "640x360",
+      "attributes": "width=\"640\" height=\"360\" crossorigin=\"anonymous\"",
+      "contract": "placeholder + MEDIA_ERR_SRC_NOT_SUPPORTED",
+      "test": "video quality contract crossorigin",
+      "status": "CONTRATO"
+    },
+    {
+      "id": "source-child",
+      "box": "640x360",
+      "attributes": "width=\"640\" height=\"360\" + <source>",
+      "contract": "placeholder + MEDIA_ERR_SRC_NOT_SUPPORTED",
+      "test": "video quality contract source-child",
+      "status": "CONTRATO"
+    },
+    {
+      "id": "css-size",
+      "box": "320x180",
+      "attributes": "style width:320px;height:180px",
+      "contract": "placeholder + MEDIA_ERR_SRC_NOT_SUPPORTED",
+      "test": "video quality contract css-size",
+      "status": "CONTRATO"
+    },
+    {
+      "id": "css-half-width",
+      "box": "384x180",
+      "attributes": "style width:50%;height:180px",
+      "contract": "placeholder + MEDIA_ERR_SRC_NOT_SUPPORTED",
+      "test": "video quality contract css-half-width",
+      "status": "CONTRATO"
+    },
+    {
+      "id": "width-only",
+      "box": "640x320",
+      "attributes": "width=\"640\"",
+      "contract": "placeholder + MEDIA_ERR_SRC_NOT_SUPPORTED",
+      "test": "video quality contract width-only",
+      "status": "CONTRATO"
+    },
+    {
+      "id": "muted-controls-720p",
+      "box": "768x432",
+      "attributes": "width=\"1280\" height=\"720\" controls muted",
+      "contract": "placeholder + MEDIA_ERR_SRC_NOT_SUPPORTED",
+      "test": "video quality contract muted-controls-720p",
+      "status": "CONTRATO"
+    },
+    {
+      "id": "autoplay-loop-1080p",
+      "box": "768x432",
+      "attributes": "width=\"1920\" height=\"1080\" autoplay loop muted",
+      "contract": "placeholder + MEDIA_ERR_SRC_NOT_SUPPORTED",
+      "test": "video quality contract autoplay-loop-1080p",
+      "status": "CONTRATO"
+    },
+    {
+      "id": "css-object-fit",
+      "box": "320x180",
+      "attributes": "style width:320px;height:180px;object-fit:cover",
+      "contract": "placeholder + MEDIA_ERR_SRC_NOT_SUPPORTED",
+      "test": "video quality contract css-object-fit",
+      "status": "CONTRATO"
+    },
+    {
+      "id": "css-max-width",
+      "box": "640x360",
+      "attributes": "width=\"1920\" height=\"1080\" style=max-width:640px",
+      "contract": "placeholder + MEDIA_ERR_SRC_NOT_SUPPORTED",
+      "test": "video quality contract css-max-width",
+      "status": "CONTRATO"
+    },
+    {
+      "id": "default",
+      "box": "300x150",
+      "attributes": "(sin atributos; caja UA 300x150)",
+      "contract": "placeholder + MEDIA_ERR_SRC_NOT_SUPPORTED",
+      "test": "video quality contract default",
+      "status": "CONTRATO"
+    }
+  ]
+}
