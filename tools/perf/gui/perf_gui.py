@@ -9,6 +9,7 @@ screenshots and reports. No terminal needed after launching it.
 """
 from __future__ import annotations
 
+import codecs
 import json
 import math
 import os
@@ -50,6 +51,8 @@ CONFORMANCE_RESULTS = CONFORMANCE_DIR / "results"
 CONFORMANCE_REPORT = ROOT / "progress" / "reports" / "conformance-latest.md"
 VISUAL_CATALOG = ROOT / ".visual" / "catalog.json"
 LIVE_REPORT = ROOT / ".perf" / "live" / "report-live.md"
+VISUAL_HISTORY_DIR = ROOT / ".visual" / "history"
+PERF_HISTORY_DIR = ROOT / ".perf" / "history"
 PERF_CATALOG_SOURCES = [
     ROOT / "tools" / "perf" / "lib" / "src" / "scenarios.dart",
     ROOT / "tools" / "perf" / "lib" / "src" / "externals.dart",
@@ -76,6 +79,10 @@ MONO = "DejaVu Sans Mono"
 SUBTLE = "#0f151d"
 
 sys.path.insert(0, str(ROOT / "tools"))
+try:
+    import history as history_engine
+except Exception:  # pragma: no cover - optional history engine
+    history_engine = None
 try:
     import recommend as recommendation_engine
 except Exception:  # pragma: no cover - optional report engine
@@ -141,10 +148,14 @@ class DataStore:
         self.game3d = None
         self.conformance = None
         self.loaded_at = None
+        # Once a live visual run has cleared .visual/latest, never fall back
+        # to older suite results: the table must start empty.
+        self.visual_latest_only = False
 
     def load(self):
         self.visual = None
-        for candidate in VISUAL_CANDIDATES:
+        candidates = VISUAL_CANDIDATES[:1] if self.visual_latest_only else VISUAL_CANDIDATES
+        for candidate in candidates:
             self.visual = _load_json(candidate)
             if self.visual:
                 break
@@ -161,6 +172,8 @@ class DataStore:
         self.game = _load_json(PERF_GAME_RESULTS)
         self.game3d = _load_json(PERF_GAME3D_RESULTS)
         self.loaded_at = datetime.now()
+        self.visual_history = []
+        self.perf_history = []
 
     @property
     def visual_rows(self):
@@ -692,6 +705,9 @@ class Dashboard(ChartMixin):
         self.selected_visual: dict | None = None
         self.selected_perf: dict | None = None
         self.selected_perf_pending: dict | None = None
+        self.visual_live = False
+        self.visual_live_current: str | None = None
+        self._live_buffer = ""
         self.thumb_refs = []
         self.visual_report_cache = {}
         self.preview_jobs = set()
@@ -704,6 +720,8 @@ class Dashboard(ChartMixin):
         self._report_sig = None
         self._run_done = 0
         self._run_total = 0
+        self._last_visual_history_mtime = None
+        self._last_perf_history_mtime = None
         self.leak_run = None
         self.security_run = None
         if recommendation_engine is not None:
@@ -719,6 +737,14 @@ class Dashboard(ChartMixin):
         self._last_data_sig = self._data_signature()
         self.root.after(150, self._drain_log)
         self.root.after(1000, self._auto_refresh)
+
+    def _load_history(self):
+        if history_engine is None:
+            return {"visual": [], "perf": []}
+        return {
+            "visual": history_engine.list_runs("visual", VISUAL_HISTORY_DIR),
+            "perf": history_engine.list_runs("perf", PERF_HISTORY_DIR),
+        }
 
     def _load_conformance(self):
         if not CONFORMANCE_RESULTS.exists():
@@ -780,6 +806,7 @@ class Dashboard(ChartMixin):
             ("idle", "◷", "Idle"),
             ("container", "❏", "Contenedores"),
             ("reports", "▥", "Informes"),
+            ("history", "▨", "Historial"),
         ]
         for key, icon, label in nav_items:
             row = tk.Frame(sidebar, bg=SIDEBAR)
@@ -821,7 +848,7 @@ class Dashboard(ChartMixin):
         bar.pack(fill="x")
         self.buttons = []
         self._button(bar, "▶ Ejecutar todo", self.run_all, ACCENT, "#07101f")
-        self._button(bar, "Solo visual", self.run_visual, PANEL2, FG)
+        self._button(bar, "▶ Tests visuales", self.run_visual_live, PANEL2, FG)
         self._button(bar, "Visual 300", self.run_visual_all, PANEL2, FG)
         self._button(bar, "Solo rendimiento", self.run_perf, PANEL2, FG)
         self._button(bar, "Idle app", self.run_idle, PANEL2, FG)
@@ -838,7 +865,7 @@ class Dashboard(ChartMixin):
         self.page_host.pack(fill="both", expand=True, padx=18, pady=(2, 4))
         self.pages = {}
         for key in ("summary", "perf", "visual", "conformance", "video", "games",
-                    "idle", "container", "reports"):
+                    "history", "idle", "container", "reports"):
             frame = tk.Frame(self.page_host, bg=BG)
             self.pages[key] = frame
         self.tab_summary = self.pages["summary"]
@@ -850,6 +877,7 @@ class Dashboard(ChartMixin):
         self.tab_idle = self.pages["idle"]
         self.tab_container = self.pages["container"]
         self.tab_reports = self.pages["reports"]
+        self.tab_history = self.pages["history"]
 
         self._build_summary()
         self._build_perf()
@@ -860,6 +888,7 @@ class Dashboard(ChartMixin):
         self._build_idle()
         self._build_container()
         self._build_reports()
+        self._build_history()
 
         log_frame = tk.Frame(main, bg=BG)
         log_frame.pack(fill="x", padx=22, pady=(0, 10))
@@ -893,6 +922,8 @@ class Dashboard(ChartMixin):
             PERF_GAME3D_RESULTS,
             CONFORMANCE_DIR,
             CONFORMANCE_REPORT,
+            VISUAL_HISTORY_DIR,
+            PERF_HISTORY_DIR,
             *sorted((ROOT / "progress" / "reports").glob("*-latest.md")),
         ]
         state = []
@@ -1259,6 +1290,8 @@ class Dashboard(ChartMixin):
         for verdict, color in VERDICT_COLORS.items():
             self.visual_tree.tag_configure(verdict, foreground=color)
         self.visual_tree.tag_configure("pending", foreground=MUTED)
+        self.visual_tree.tag_configure("running", foreground=ACCENT,
+                                       background="#1a2740")
         self.visual_tree.tag_configure("odd", background=SUBTLE)
 
         right = tk.Frame(panes, bg=PANEL, width=620)
@@ -1437,6 +1470,214 @@ class Dashboard(ChartMixin):
         tmp = CONFORMANCE_REPORT.with_suffix(".md.tmp")
         tmp.write_text("\n".join(lines))
         tmp.replace(CONFORMANCE_REPORT)
+
+    # --------------------------------------------------------------- history
+    def _build_history(self):
+        tab = self.tab_history
+        self._page_header(
+            tab, "Historial",
+            "Corridas guardadas con datos detallados en JSON y comparación.",
+        )
+        top = tk.Frame(tab, bg=BG)
+        top.pack(fill="x", pady=(4, 6))
+        tk.Label(top, text="Historial", bg=BG, fg=FG,
+                 font=(FONT, 11, "bold")).pack(side="left")
+        self.history_summary = tk.Label(top, text="", bg=BG, fg=MUTED,
+                                       font=(FONT, 9))
+        self.history_summary.pack(side="left", padx=10)
+        for label, command in (
+            ("Registrar visual", lambda: self._record_history("visual")),
+            ("Registrar perf", lambda: self._record_history("perf")),
+            ("Comparar visual", lambda: self._compare_history("visual")),
+            ("Comparar perf", lambda: self._compare_history("perf")),
+        ):
+            tk.Button(
+                top, text=label, command=command, bg=PANEL2, fg=FG,
+                activebackground=HOVER, relief="flat", bd=0,
+                highlightthickness=0, padx=8, pady=3, font=(FONT, 9, "bold"),
+            ).pack(side="right", padx=2)
+
+        visual_frame = tk.Frame(tab, bg=BG)
+        visual_frame.pack(fill="x", pady=(4, 8))
+        tk.Label(visual_frame, text="Visual", bg=BG, fg=FG,
+                 font=(FONT, 10, "bold")).pack(anchor="w")
+        columns = ("date", "commit", "pages", "pass", "fail", "overall", "delta")
+        self.history_visual_tree = ttk.Treeview(
+            visual_frame, columns=columns, show="headings", selectmode="browse",
+            height=6,
+        )
+        for column, label, width, anchor in [
+            ("date", "Fecha", 150, "w"),
+            ("commit", "Commit", 90, "w"),
+            ("pages", "Páginas", 80, "e"),
+            ("pass", "PASS", 70, "e"),
+            ("fail", "FAIL", 70, "e"),
+            ("overall", "Overall", 80, "e"),
+            ("delta", "Δ overall", 90, "e"),
+        ]:
+            self.history_visual_tree.heading(column, text=label)
+            self.history_visual_tree.column(column, width=width, anchor=anchor)
+        self.history_visual_tree.pack(fill="x")
+
+        perf_frame = tk.Frame(tab, bg=BG)
+        perf_frame.pack(fill="x", pady=(4, 8))
+        tk.Label(perf_frame, text="Rendimiento", bg=BG, fg=FG,
+                 font=(FONT, 10, "bold")).pack(anchor="w")
+        columns = ("date", "commit", "scenarios", "pass", "warn", "fail", "ratio", "delta")
+        self.history_perf_tree = ttk.Treeview(
+            perf_frame, columns=columns, show="headings", selectmode="browse",
+            height=6,
+        )
+        for column, label, width, anchor in [
+            ("date", "Fecha", 150, "w"),
+            ("commit", "Commit", 90, "w"),
+            ("scenarios", "Escenarios", 90, "e"),
+            ("pass", "PASS", 70, "e"),
+            ("warn", "WARN", 70, "e"),
+            ("fail", "FAIL", 70, "e"),
+            ("ratio", "Ratio", 80, "e"),
+            ("delta", "Δ ratio", 90, "e"),
+        ]:
+            self.history_perf_tree.heading(column, text=label)
+            self.history_perf_tree.column(column, width=width, anchor=anchor)
+        self.history_perf_tree.pack(fill="x")
+
+        self.history_detail = tk.Text(
+            tab, height=12, bg=PANEL, fg=FG, relief="flat", wrap="word",
+            padx=10, pady=8, font=(MONO, 9),
+        )
+        self.history_detail.pack(fill="both", expand=True, pady=(4, 0))
+        self.history_detail.configure(state="disabled")
+        self.history_note = tk.Label(
+            tab, text="Cada corrida se guarda como JSON detallado en "
+                     ".visual/history y .perf/history. Comparar muestra los casos "
+                     "que empeoraron o mejoraron.",
+            bg=BG, fg=MUTED, anchor="w", font=(FONT, 9), wraplength=1100,
+        )
+        self.history_note.pack(fill="x", pady=(6, 0))
+
+    def _fill_history(self):
+        if not hasattr(self, "history_visual_tree"):
+            return
+        visual = (self.history or {}).get("visual", [])
+        perf = (self.history or {}).get("perf", [])
+        for tree in (self.history_visual_tree, self.history_perf_tree):
+            for item in tree.get_children():
+                tree.delete(item)
+        previous_overall = None
+        for index, run in enumerate(visual):
+            summary = run.get("summary") or {}
+            overall = summary.get("mean_overall")
+            delta = None
+            if previous_overall is not None and isinstance(overall, (int, float)):
+                delta = overall - previous_overall
+            previous_overall = overall if isinstance(overall, (int, float)) else previous_overall
+            self.history_visual_tree.insert("", "end", values=(
+                run.get("recorded_at", "—"),
+                run.get("git_commit", "—"),
+                summary.get("pages", "—"),
+                summary.get("pass", "—"),
+                summary.get("fail", "—"),
+                _num(overall, 2),
+                _num(delta, 3) if delta is not None else "—",
+            ))
+        previous_ratio = None
+        for index, run in enumerate(perf):
+            summary = run.get("summary") or {}
+            ratio = summary.get("mean_work_ratio")
+            delta = None
+            if previous_ratio is not None and isinstance(ratio, (int, float)):
+                delta = ratio - previous_ratio
+            previous_ratio = ratio if isinstance(ratio, (int, float)) else previous_ratio
+            self.history_perf_tree.insert("", "end", values=(
+                run.get("recorded_at", "—"),
+                run.get("git_commit", "—"),
+                summary.get("scenarios", "—"),
+                summary.get("pass", "—"),
+                summary.get("warn", "—"),
+                summary.get("fail", "—"),
+                _num(ratio, 3),
+                _num(delta, 3) if delta is not None else "—",
+            ))
+        self.history_summary.configure(
+            text=f"{len(visual)} corridas visuales · {len(perf)} de rendimiento"
+        )
+
+    def _record_history(self, area):
+        if history_engine is None:
+            messagebox.showinfo("Historial", "tools/history.py no está disponible.")
+            return
+        source = (
+            VISUAL_DIR / "latest" / "results.json"
+            if area == "visual"
+            else PERF_DIR / "results.json"
+        )
+        if not source.exists():
+            messagebox.showinfo("Historial", f"No hay resultados en {source}.")
+            return
+        try:
+            destination = history_engine.record(area, source)
+            self._append_log(f"[historial {area}: {destination.name}]\n")
+        except Exception as error:
+            self._append_log(f"historial: {error}\n")
+        self.history = self._load_history()
+        self._fill_history()
+
+    def _compare_history(self, area):
+        if history_engine is None:
+            messagebox.showinfo("Historial", "tools/history.py no está disponible.")
+            return
+        try:
+            result = history_engine.compare(area)
+        except Exception as error:
+            self._append_log(f"historial: {error}\n")
+            return
+        lines = [
+            f"Área: {result['area']}",
+            f"Anterior: {result['previous']} ({result['previous_commit']})",
+            f"Actual:   {result['current']} ({result['current_commit']})",
+            "",
+            "Resumen:",
+        ]
+        lines.extend(history_engine._summary_delta_text(
+            result["summary_previous"], result["summary_current"]
+        ))
+        lines.extend(["", f"Casos cambiados: {len(result['deltas'])}", ""])
+        for delta in result["deltas"][:40]:
+            lines.append(json.dumps(delta, ensure_ascii=False))
+        if len(result["deltas"]) > 40:
+            lines.append(f"... y {len(result['deltas']) - 40} más")
+        self.history_detail.configure(state="normal")
+        self.history_detail.delete("1.0", "end")
+        self.history_detail.insert("1.0", "\n".join(lines))
+        self.history_detail.configure(state="disabled")
+
+    def _record_history_if_needed(self):
+        if history_engine is None:
+            return
+        sources = {
+            "visual": VISUAL_DIR / "latest" / "results.json",
+            "perf": PERF_DIR / "results.json",
+        }
+        attrs = {
+            "visual": "_last_visual_history_mtime",
+            "perf": "_last_perf_history_mtime",
+        }
+        for area, source in sources.items():
+            try:
+                mtime = source.stat().st_mtime_ns
+            except OSError:
+                continue
+            if getattr(self, attrs[area], None) == mtime:
+                continue
+            try:
+                destination = history_engine.record(area, source)
+                self._append_log(f"[historial {area}: {destination.name}]\n")
+            except Exception as error:
+                self._append_log(f"historial: {error}\n")
+            setattr(self, attrs[area], mtime)
+            self.history = self._load_history()
+            self._fill_history()
 
     # ----------------------------------------------------------------- video
     def _build_video(self):
@@ -2058,10 +2299,12 @@ class Dashboard(ChartMixin):
         self._fill_summary()
         self._fill_perf_table()
         self.conformance = self._load_conformance()
+        self.history = self._load_history()
         self._fill_visual_table()
         self._fill_conformance()
         self._fill_video()
         self._fill_games()
+        self._fill_history()
         self._fill_idle()
         self._fill_container()
         if hasattr(self, "report_choice"):
@@ -2085,10 +2328,12 @@ class Dashboard(ChartMixin):
         self._fill_summary()
         self._fill_perf_table()
         self.conformance = self._load_conformance()
+        self.history = self._load_history()
         self._fill_visual_table()
         self._fill_conformance()
         self._fill_video()
         self._fill_games()
+        self._fill_history()
         self._fill_idle()
         self._fill_container()
         self._draw_summary()
@@ -2346,6 +2591,9 @@ class Dashboard(ChartMixin):
             self.visual_tree.selection_set(children[0])
         if view:
             self.visual_tree.yview_moveto(view[0])
+        if self.visual_live and self.visual_live_current:
+            self._live_focus(self.visual_live_current, force=True)
+            return
         self._on_visual_select()
 
     def _selected_row(self, tree, rows, key):
@@ -3336,7 +3584,7 @@ class Dashboard(ChartMixin):
             self.progress.stop()
             self.status.configure(text="listo")
 
-    def _start(self, command, label, action=None):
+    def _start(self, command, label, action=None, raw=False):
         if self.process is not None:
             messagebox.showinfo("En curso", "Ya hay una ejecución en marcha.")
             return
@@ -3364,8 +3612,20 @@ class Dashboard(ChartMixin):
 
         def reader(proc):
             assert proc.stdout is not None
-            for line in proc.stdout:
-                self.log_queue.put(line)
+            if raw:
+                # Unbuffered chunks: the visual judge writes "[i/N] id ... "
+                # before measuring, without a newline, and the live view
+                # needs it at that moment.
+                decoder = codecs.getincrementaldecoder("utf-8")("replace")
+                fd = proc.stdout.fileno()
+                while True:
+                    chunk = os.read(fd, 4096)
+                    if not chunk:
+                        break
+                    self.log_queue.put(decoder.decode(chunk))
+            else:
+                for line in proc.stdout:
+                    self.log_queue.put(line)
             proc.wait()
 
         threading.Thread(target=reader, args=(self.process,), daemon=True).start()
@@ -3381,6 +3641,17 @@ class Dashboard(ChartMixin):
             self._run_done = int(done)
             self._run_total = int(total)
             self.status.configure(text=f"{done}/{total} · ejecutando…")
+        if self.visual_live:
+            self._live_buffer = (self._live_buffer + text)[-4000:]
+            starts = re.findall(
+                r"\[\s*(\d+)\s*/\s*(\d+)\s*\]\s+(\S+)\s+\.\.\. ",
+                self._live_buffer,
+            )
+            if starts:
+                done, total, page_id = starts[-1]
+                self.status.configure(text=f"{done}/{total} · {page_id}")
+                if page_id != self.visual_live_current:
+                    self._live_focus(page_id)
 
     def _drain_log(self):
         try:
@@ -3414,11 +3685,15 @@ class Dashboard(ChartMixin):
             self._set_running(False)
             action = self.pending_action
             self.pending_action = None
+            if action and action.get("kind") == "visual_live":
+                self._finish_visual_live()
+                action = None
             if action:
                 try:
                     self._merge_single(action)
                 except Exception as error:
                     self._append_log(f"[single] error al fusionar: {error}\n")
+            self._record_history_if_needed()
             self.reload()
             if action and action.get("open_detail"):
                 try:
@@ -3444,6 +3719,80 @@ class Dashboard(ChartMixin):
              "--out", str(VISUAL_DIR)],
             "juicio visual completo (300 páginas)",
         )
+
+    def run_visual_live(self):
+        """Runs every visual page while the table follows the judge live.
+
+        Previous results are archived to .visual/previous (not deleted), the
+        table restarts as all pending, each page is selected and scrolled to
+        as it is measured, and the live report opens when the run ends.
+        """
+        if self.process is not None:
+            messagebox.showinfo("En curso", "Ya hay una ejecución en marcha.")
+            return
+        previous = VISUAL_DIR.parent / "previous"
+        try:
+            if previous.exists():
+                shutil.rmtree(previous)
+            if VISUAL_DIR.exists():
+                VISUAL_DIR.rename(previous)
+        except OSError as error:
+            messagebox.showerror("Tests visuales", f"No se pudo limpiar: {error}")
+            return
+        self._append_log(f"[visual] resultados anteriores archivados en {previous}\n")
+        self.store.visual_latest_only = True
+        self.visual_live = True
+        self.visual_live_current = None
+        self._live_buffer = ""
+        self.visual_report_cache = {}
+        if hasattr(self, "visual_filter"):
+            self.visual_filter.delete(0, "end")
+        self.reload()
+        self._show_page("visual")
+        children = self.visual_tree.get_children()
+        if children:
+            self.visual_tree.selection_set(children[0])
+            self.visual_tree.see(children[0])
+        self._start(
+            ["dart", "run", "tools/visual/bin/visual_check.dart",
+             "--all", "--catalog", str(VISUAL_CATALOG),
+             "--out", str(VISUAL_DIR)],
+            "tests visuales en vivo (todas las páginas)",
+            action={"kind": "visual_live"},
+            raw=True,
+        )
+        if self.process is None:
+            self.visual_live = False
+
+    def _live_focus(self, page_id, force=False):
+        tree = self.visual_tree
+        if not tree.exists(page_id):
+            return
+        previous = self.visual_live_current
+        if previous and previous != page_id and tree.exists(previous):
+            tree.item(previous, tags=tuple(
+                t for t in tree.item(previous, "tags") if t != "running"
+            ))
+        self.visual_live_current = page_id
+        measured = any(r.get("page") == page_id for r in self.store.visual_rows)
+        if not measured:
+            tree.item(page_id, tags=("running",))
+            tree.set(page_id, "verdict", "midiendo…")
+        if force or tuple(tree.selection()) != (page_id,):
+            tree.selection_set(page_id)
+        tree.focus(page_id)
+        tree.see(page_id)
+
+    def _finish_visual_live(self):
+        current = self.visual_live_current
+        self.visual_live = False
+        self.visual_live_current = None
+        self._live_buffer = ""
+        if current and self.visual_tree.exists(current):
+            self.visual_tree.item(current, tags=())
+        self._append_log("[visual] terminado; abriendo el informe\n")
+        self.report_choice.set("En vivo")
+        self._show_page("reports")
 
     def run_perf(self):
         self._start(
