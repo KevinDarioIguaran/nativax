@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
@@ -118,6 +119,78 @@ body { font-family: 'Font Awesome 6 Free', sans-serif; }
     expect(style.fontSize, isNot(33));
     expect(style.height?.value, 9);
     runtime.dispose();
+  });
+
+  group('V8 default engine', () {
+    final library = Platform.environment['NATIVAX_V8_LIB'];
+    final skip = library != null && File(library).existsSync()
+        ? false
+        : 'set NATIVAX_V8_LIB to run V8 runtime tests';
+    const small = NativaXRuntimeConfig(
+      engine: JavaScriptEngineConfig(memoryLimitBytes: 32 * 1024 * 1024),
+    );
+    const exhaust =
+        'const keep = []; for (;;) keep.push(new Array(1e5).fill(1));';
+
+    test('pages run on V8 by default on desktop', () async {
+      final runtime = await NativaXRuntime.create(
+        source: '<p>x</p><script>globalThis.v = 1 + 1</script>',
+      );
+      addTearDown(runtime.dispose);
+      expect(runtime.engineName, 'v8');
+      expect(runtime.engine.evaluate('v'), 2);
+    }, skip: skip);
+
+    test('a startup over the V8 heap reloads the page on QuickJS', () async {
+      final diagnostics = <String>[];
+      final runtime = await NativaXRuntime.create(
+        source: '<p id="x">ok</p><script>$exhaust</script>',
+        config: NativaXRuntimeConfig(
+          engine: small.engine,
+          onDiagnostic: diagnostics.add,
+        ),
+      );
+      addTearDown(runtime.dispose);
+      expect(runtime.engineName, 'quickjs');
+      expect(runtime.document.getElementById('x'), isNotNull);
+      expect(diagnostics.any((d) => d.contains('QuickJS')), isTrue);
+    }, skip: skip);
+
+    test('an over-budget page after startup is reported once', () async {
+      final runtime = await NativaXRuntime.create(
+        source: '<button id="b">b</button><script>'
+            'document.getElementById("b").addEventListener("click", () => { $exhaust });</script>',
+        config: small,
+      );
+      addTearDown(runtime.dispose);
+      expect(runtime.engineName, 'v8');
+      var reports = 0;
+      runtime.onEngineOverBudget = () => reports++;
+      final button = runtime.document.getElementById('b')!;
+      button.dispatchEvent(Event('click'));
+      button.dispatchEvent(Event('click'));
+      await Future<void>.delayed(Duration.zero);
+      expect(reports, 1);
+    }, skip: skip);
+
+    test('pages with ES modules stay on QuickJS (V8 has no modules yet)',
+        () async {
+      final runtime = await NativaXRuntime.create(
+        source: '<script type="module">globalThis.m = 1</script>',
+      );
+      addTearDown(runtime.dispose);
+      expect(runtime.engineName, 'quickjs');
+      expect(runtime.engine.evaluate('m'), 1);
+    }, skip: skip);
+
+    test('forceQuickJs keeps QuickJS on desktop', () async {
+      final runtime = await NativaXRuntime.create(
+        source: '<p>x</p>',
+        forceQuickJs: true,
+      );
+      addTearDown(runtime.dispose);
+      expect(runtime.engineName, 'quickjs');
+    });
   });
 
   testWidgets('NativaXView loads and renders a document', (tester) async {

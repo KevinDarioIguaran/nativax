@@ -74,11 +74,23 @@ class _NativaXViewState extends State<NativaXView> {
     super.dispose();
   }
 
+  /// Set once V8 ran out of memory; later loads stay on QuickJS.
+  bool _forceQuickJs = false;
+
   void _reload() {
     _runtime?.dispose();
     _runtime = null;
     _error = null;
     _load();
+  }
+
+  void _overBudget() {
+    if (!mounted) return;
+    widget.config.onDiagnostic?.call(
+      'V8 reached the memory limit; reloading the page on QuickJS',
+    );
+    _forceQuickJs = true;
+    _reload();
   }
 
   Future<void> _load() async {
@@ -89,11 +101,13 @@ class _NativaXViewState extends State<NativaXView> {
         config: widget.config,
         environment: _environment,
         platformServices: widget.config.services ?? _defaultServices(),
+        forceQuickJs: _forceQuickJs,
       );
       if (!mounted || generation != _generation) {
         runtime.dispose();
         return;
       }
+      runtime.onEngineOverBudget = _overBudget;
       setState(() => _runtime = runtime);
       widget.onRuntimeReady?.call(runtime);
     } catch (error) {

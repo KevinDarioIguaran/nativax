@@ -25,7 +25,10 @@ export 'package:nativa_js/nativa_js.dart'
         ConsoleMessage,
         JavaScriptEngineConfig,
         JavaScriptException,
+        JavaScriptMemoryLimitException,
         JavaScriptTimeoutException,
+        QuickJsEngine,
+        createDefaultJavaScriptEngine,
         TimerLimits,
         V8Engine;
 export 'package:nativa_dom/nativa_dom.dart' show Document, Element, Event;
