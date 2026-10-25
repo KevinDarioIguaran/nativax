@@ -84,8 +84,8 @@ void main() {
     await tester.pumpWidget(_app(ctx.document, ctx.engine));
     await tester.pump();
 
-    expect(find.text('•'), findsNWidgets(2));
-    expect(find.text('3.'), findsOneWidget);
+    expect(find.text('•\u00a0'), findsNWidgets(2));
+    expect(find.text('3.\u00a0'), findsOneWidget);
     expect(find.text('one'), findsOneWidget);
   });
 

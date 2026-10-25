@@ -1586,18 +1586,33 @@ class _Builder {
   Widget _withMarker(dom.Element element, ComputedStyle style, Widget child) {
     final marker = _markerText(element, style);
     if (marker == null) return child;
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
+    // An outside marker hangs in front of the content edge, followed by a
+    // space, without taking width from the list item (CSS Lists 3 §3.1).
+    const width = 200.0;
+    double side(String name) {
+      final padding = style.paddingOf(name);
+      return (padding.isPercent ? 0 : padding.value) +
+          style.borderWidthOf(name);
+    }
+
+    return Stack(
+      clipBehavior: Clip.none,
       children: [
-        SizedBox(
-          width: 24,
-          child: Text(
-            marker,
-            style: textStyleFor(style),
-            textAlign: TextAlign.right,
+        child,
+        Positioned(
+          left: side('left') - width,
+          top: side('top'),
+          width: width,
+          child: IgnorePointer(
+            child: Text(
+              '$marker\u00a0',
+              style: textStyleFor(style),
+              textAlign: TextAlign.right,
+              maxLines: 1,
+              softWrap: false,
+            ),
           ),
         ),
-        Expanded(child: child),
       ],
     );
   }
