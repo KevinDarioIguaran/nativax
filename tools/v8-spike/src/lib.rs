@@ -49,6 +49,43 @@ unsafe extern "C" fn near_heap_limit(
     current_heap_limit + HEAP_HEADROOM
 }
 
+/// Asks the kernel to drop this library's clean, file-backed pages from the
+/// resident set. Startup (snapshot deserialisation) touches most of the
+/// ~26 MB of builtins once; only the hot pages fault back in afterwards.
+/// No effect on behaviour: the pages are re-read from the file on demand.
+fn release_cold_code_pages() {
+    const MADV_PAGEOUT: libc::c_int = 21;
+    let mut info: libc::Dl_info = unsafe { std::mem::zeroed() };
+    let anchor = release_cold_code_pages as *const c_void;
+    if unsafe { libc::dladdr(anchor, &mut info) } == 0 || info.dli_fname.is_null() {
+        return;
+    }
+    let path = unsafe { CStr::from_ptr(info.dli_fname) }.to_string_lossy().to_string();
+    let Ok(maps) = std::fs::read_to_string("/proc/self/maps") else {
+        return;
+    };
+    for line in maps.lines() {
+        let mut fields = line.split_whitespace();
+        let (Some(range), Some(perms)) = (fields.next(), fields.next()) else {
+            continue;
+        };
+        // Only read-only/executable mappings: never touch writable data.
+        if perms.contains('w') || !line.ends_with(path.as_str()) {
+            continue;
+        }
+        let Some((start, end)) = range.split_once('-') else {
+            continue;
+        };
+        let (Ok(start), Ok(end)) = (
+            usize::from_str_radix(start, 16),
+            usize::from_str_radix(end, 16),
+        ) else {
+            continue;
+        };
+        unsafe { libc::madvise(start as *mut c_void, end - start, MADV_PAGEOUT) };
+    }
+}
+
 const MEMORY_ERROR: &str = r#"{"__nativax_error":"heap limit reached","kind":"memory"}"#;
 
 /// After script ran: when the heap callback terminated it, clear the
@@ -73,6 +110,10 @@ thread_local! {
 
 fn init_v8() {
     INIT.call_once(|| {
+        // Extra V8 flags for memory experiments (e.g. "--lite-mode").
+        if let Ok(flags) = std::env::var("NATIVAX_V8_FLAGS") {
+            v8::V8::set_flags_from_string(&flags);
+        }
         let platform = v8::new_default_platform(1, false).make_shared();
         v8::V8::initialize_platform(platform.clone());
         v8::V8::initialize();
@@ -281,6 +322,9 @@ globalThis.__nx_gl_native = null;
     });
     let ptr = Box::into_raw(state);
     STATE.with(|s| s.set(ptr));
+    if std::env::var("NATIVAX_V8_KEEP_CODE").is_err() {
+        release_cold_code_pages();
+    }
     ptr as *mut c_void
 }
 
