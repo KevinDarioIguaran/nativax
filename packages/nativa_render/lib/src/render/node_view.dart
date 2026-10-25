@@ -1411,12 +1411,23 @@ class _Builder {
     // The Stack is the parent's content box, but offsets are relative to its
     // padding box (CSS 2.1 §10.1).
     final ps = styleEngine.styleOf(parent);
-    final containerWidth = _px(ps.width) ?? _availableWidth(parent);
-    final containerHeight = _px(ps.height);
     double pad(String side) {
       final p = ps.paddingOf(side);
       return p.isPercent ? 0 : p.value;
     }
+
+    // The containing block is the parent's padding box.
+    double? paddingBox(ResolvedLength? declared, String a, String b) {
+      final size = _px(declared);
+      if (size == null) return null;
+      return ps.borderBox
+          ? size - ps.borderWidthOf(a) - ps.borderWidthOf(b)
+          : size + pad(a) + pad(b);
+    }
+
+    final containerWidth = paddingBox(ps.width, 'left', 'right') ??
+        _availableWidth(parent) + pad('left') + pad('right');
+    final containerHeight = paddingBox(ps.height, 'top', 'bottom');
 
     final padding = EdgeInsets.fromLTRB(
       pad('left'),
@@ -1512,6 +1523,11 @@ class _Builder {
       left: math.max(0, marginLeft),
     );
     if (margins != EdgeInsets.zero) box = Padding(padding: margins, child: box);
+    box = CssContainingBlock(
+      width: basisWidth,
+      height: isFixed ? basisHeight : containerHeight,
+      child: box,
+    );
     final shiftTop = math.min(0.0, marginTop);
     final shiftRight = math.min(0.0, marginRight);
     final shiftBottom = math.min(0.0, marginBottom);

@@ -181,6 +181,40 @@ List<double> _stopPositions(List<GradientStop> stops) {
   return [for (final v in out) v!];
 }
 
+/// Reports the containing block (padding box of the positioned ancestor) to
+/// the [CssBox] of an absolutely positioned element. A `Stack` gives such
+/// children unbounded constraints, so percentages would not resolve.
+class CssContainingBlock extends SingleChildRenderObjectWidget {
+  const CssContainingBlock({super.key, this.width, this.height, super.child});
+  final double? width;
+  final double? height;
+
+  @override
+  RenderCssContainingBlock createRenderObject(BuildContext context) =>
+      RenderCssContainingBlock(width, height);
+
+  @override
+  void updateRenderObject(
+    BuildContext context,
+    RenderCssContainingBlock renderObject,
+  ) {
+    renderObject.containingSize = (width, height);
+  }
+}
+
+class RenderCssContainingBlock extends RenderProxyBox {
+  RenderCssContainingBlock(this._width, this._height);
+  double? _width;
+  double? _height;
+
+  set containingSize((double?, double?) value) {
+    if (value.$1 == _width && value.$2 == _height) return;
+    _width = value.$1;
+    _height = value.$2;
+    markNeedsLayout();
+  }
+}
+
 /// Sizes, pads, borders, decorates and clips one CSS box.
 class CssBox extends SingleChildRenderObjectWidget {
   const CssBox({super.key, required this.spec, super.child});
@@ -235,6 +269,12 @@ class RenderCssBox extends RenderBox with RenderObjectWithChildMixin<RenderBox> 
   (double?, double?) get _containingBlock {
     final pd = parentData;
     if (pd is CssItemParentData) return (pd.containingWidth, pd.containingHeight);
+    // Wrappers (anchors, effects, margins) may sit between this box and the
+    // containing block of a positioned element; stop at the next CSS box.
+    for (var node = parent; node != null; node = node.parent) {
+      if (node is RenderCssContainingBlock) return (node._width, node._height);
+      if (node is RenderCssBox || node is! RenderObjectWithChildMixin) break;
+    }
     return (null, null);
   }
 

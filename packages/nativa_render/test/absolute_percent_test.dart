@@ -35,4 +35,20 @@ void main() {
     expect(rect.left, closeTo(108, 2));
     expect(rect.top, closeTo(58, 2));
   });
+
+  testWidgets('absolute percentage sizes resolve against the padding box',
+      (tester) async {
+    final ctx = _document(
+      '<!doctype html><html><body style="margin:0">'
+      '<div style="position:relative;box-sizing:border-box;width:206px;'
+      'height:106px;border:3px solid #000">'
+      '<div id="child" style="position:absolute;top:0;left:0;width:50%;'
+      'height:calc(100% - 60px)">x</div>'
+      '</div></body></html>',
+    );
+    await tester.pumpWidget(_app(ctx.document, ctx.engine));
+    await tester.pump();
+    final child = ctx.document.getElementById('child')!;
+    expect(tester.getSize(find.byKey(ObjectKey(child))), const Size(100, 40));
+  });
 }
