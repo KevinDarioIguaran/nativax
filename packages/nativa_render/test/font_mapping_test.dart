@@ -5,6 +5,8 @@ void main() {
   tearDown(() {
     nativaxDefaultFontFamily = null;
     nativaxFontFallback = const [];
+    nativaxFontAvailable = null;
+    nativaxLoadedFontFamilies.clear();
   });
 
   test('sans-serif maps to the Arial-metric faces Chrome uses', () {
@@ -30,5 +32,22 @@ void main() {
     final (family, fallback) = mapFontFamily(['Open Sans', 'sans-serif']);
     expect(family, 'Open Sans');
     expect(fallback!.first, 'Arial');
+  });
+
+  test('unavailable families are skipped like a browser does', () {
+    nativaxFontAvailable = (family) => family == 'Arial';
+    final (family, _) = mapFontFamily(['Open Sans', 'sans-serif']);
+    expect(family, 'Arial');
+  });
+
+  test('families loaded through @font-face count as available', () {
+    nativaxFontAvailable = (family) => false;
+    nativaxLoadedFontFamilies.add('open sans');
+    expect(mapFontFamily(['Open Sans', 'sans-serif']).$1, 'Open Sans');
+  });
+
+  test('a list without any available family uses the standard serif font', () {
+    nativaxFontAvailable = (family) => family == 'Times New Roman';
+    expect(mapFontFamily(['Muli']).$1, 'Times New Roman');
   });
 }

@@ -4,6 +4,7 @@ import 'package:nativa_dom/nativa_dom.dart' as dom;
 import 'package:nativa_dom_bindings/nativa_dom_bindings.dart';
 import 'package:nativa_html/nativa_html.dart';
 import 'package:nativa_js/nativa_js.dart';
+import 'package:nativa_render/nativa_render.dart' show nativaxLoadedFontFamilies;
 
 import 'modules.dart';
 import 'resources.dart';
@@ -229,6 +230,7 @@ class NativaXRuntime {
       for (final entry in families.entries) {
         try {
           await entry.value.load();
+          nativaxLoadedFontFamilies.add(entry.key.toLowerCase());
         } catch (error) {
           config.onDiagnostic?.call('font "${entry.key}" failed: $error');
         }

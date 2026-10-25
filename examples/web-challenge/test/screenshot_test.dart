@@ -53,10 +53,12 @@ Future<void> _loadFonts() async {
   const liberation = '/usr/share/fonts/truetype/liberation';
   const dejavu = '/usr/share/fonts/truetype/dejavu';
   ByteData bytes(File f) => ByteData.view(f.readAsBytesSync().buffer);
+  final available = <String>{};
   Future<void> load(List<String> families, List<String> files) async {
     final faces = files.map(File.new).where((f) => f.existsSync()).toList();
     if (faces.isEmpty) return;
     for (final family in families) {
+      available.add(family.toLowerCase());
       final loader = FontLoader(family);
       for (final face in faces) {
         loader.addFont(Future.value(bytes(face)));
@@ -95,6 +97,9 @@ Future<void> _loadFonts() async {
   nativaxFontFallback = fallback;
   // system-ui (the platform default in mapFontFamily) is Noto Sans here.
   nativaxDefaultFontFamily = 'Noto Sans';
+  // flutter_tester renders unknown families in its block test font; skip
+  // them instead, as Chrome skips fonts that are not installed.
+  nativaxFontAvailable = (family) => available.contains(family.toLowerCase());
 }
 
 void main() {

@@ -28,20 +28,47 @@ List<String> nativaxFontFallback = const [];
 /// `system-ui`). null keeps the platform's own default font.
 String? nativaxDefaultFontFamily;
 
+/// Whether a named family can be used. null trusts Flutter's own resolution
+/// (the platform font manager skips missing families). Hosts without one,
+/// such as `flutter_tester`, which renders unknown families in its test
+/// font, set it so missing families are skipped as a browser skips them.
+bool Function(String family)? nativaxFontAvailable;
+
+/// Lower-cased families registered at runtime through `@font-face`; always
+/// available.
+final Set<String> nativaxLoadedFontFamilies = {};
+
+bool _available(String family) =>
+    nativaxFontAvailable == null ||
+    nativaxLoadedFontFamilies.contains(family.toLowerCase()) ||
+    nativaxFontAvailable!(family);
+
 (String?, List<String>?) mapFontFamily(List<String> families) {
   String? primary;
   final fallback = <String>[];
+  void add(String family) {
+    if (!_available(family)) return;
+    if (primary == null) {
+      primary = family;
+    } else {
+      fallback.add(family);
+    }
+  }
+
+  var generic = false;
   for (final f in families) {
     final lower = f.toLowerCase();
     final List<String> expanded = switch (lower) {
       'sans-serif' || 'ui-sans-serif' => _sansFallback,
       'system-ui' || '-apple-system' => const [],
-      'serif' || 'ui-serif' || 'times new roman' => _serifFallback,
+      'serif' || 'ui-serif' => _serifFallback,
       'monospace' || 'ui-monospace' => ['monospace', ..._monoFallback],
+      'times new roman' => _serifFallback,
       _ => [f],
     };
     if (expanded.isEmpty) {
       // Platform default: stop here so later families don't override it.
+      generic = true;
       if (primary == null) {
         primary = nativaxDefaultFontFamily;
       } else if (nativaxDefaultFontFamily != null) {
@@ -49,20 +76,23 @@ String? nativaxDefaultFontFamily;
       }
       break;
     }
-    for (final e in expanded) {
-      if (primary == null) {
-        primary = e;
-      } else {
-        fallback.add(e);
-      }
-    }
+    expanded.forEach(add);
     if (identical(expanded, _sansFallback)) {
       // Like system-ui, a generic sans-serif ends the list.
+      generic = true;
       if (nativaxDefaultFontFamily != null) {
         fallback.add(nativaxDefaultFontFamily!);
       }
       break;
     }
+    // serif/monospace expansions already end in a standard face.
+    if (expanded.length > 1) generic = true;
+  }
+  // No generic family: browsers fall back to their standard (serif) font.
+  if (!generic) {
+    _serifFallback
+        .where((f) => f != primary && !fallback.contains(f))
+        .forEach(add);
   }
   fallback.addAll(nativaxFontFallback);
   return (primary, fallback.isEmpty ? null : fallback);
