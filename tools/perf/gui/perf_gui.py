@@ -2660,13 +2660,13 @@ class Dashboard(ChartMixin):
         categories = self.store.visual_categories()
         items = []
         for name, value in categories.items():
-            color = GREEN if value >= 90 else (YELLOW if value >= 70 else RED)
+            color = GREEN if value >= 95 else (YELLOW if value >= 80 else RED)
             items.append((name, value, color))
         self.chart_bar(
             self.summary_categories,
             "Fidelidad media por categoría (51 páginas)",
             items,
-            target=90,
+            target=95,
             max_value=100,
             unit=" %",
         )
@@ -2870,18 +2870,18 @@ class Dashboard(ChartMixin):
             f"Categorías · {row.get('page')}",
             [
                 ("Posición", row.get("position") or 0,
-                 GREEN if (row.get("position") or 0) >= 90 else YELLOW),
+                 GREEN if (row.get("position") or 0) >= 95 else YELLOW),
                 ("Layout", row.get("layout") or 0,
-                 GREEN if (row.get("layout") or 0) >= 90 else YELLOW),
+                 GREEN if (row.get("layout") or 0) >= 95 else YELLOW),
                 ("Color" if row.get("color") is not None else "Color (n/d)",
                  row.get("color") or 0,
-                 GREEN if (row.get("color") or 0) >= 90 else YELLOW),
+                 GREEN if (row.get("color") or 0) >= 95 else YELLOW),
                 ("Diseño", row.get("design") or 0,
-                 GREEN if (row.get("design") or 0) >= 90 else YELLOW),
+                 GREEN if (row.get("design") or 0) >= 95 else YELLOW),
                 ("Overall", row.get("overall") or 0,
-                 GREEN if (row.get("overall") or 0) >= 90 else YELLOW),
+                 GREEN if (row.get("overall") or 0) >= 95 else YELLOW),
             ],
-            target=90,
+            target=95,
             max_value=100,
             unit=" %",
         )
