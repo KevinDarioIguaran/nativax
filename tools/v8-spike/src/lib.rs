@@ -43,6 +43,7 @@ unsafe extern "C" fn near_heap_limit(
     _initial_heap_limit: usize,
 ) -> usize {
     HEAP_EXHAUSTED.with(|f| f.set(true));
+    TERMINATED.with(|f| f.set(true));
     let handle = unsafe { &*(data as *const v8::IsolateHandle) };
     handle.terminate_execution();
     current_heap_limit + HEAP_HEADROOM
@@ -53,7 +54,7 @@ const MEMORY_ERROR: &str = r#"{"__nativax_error":"heap limit reached","kind":"me
 /// After script ran: when the heap callback terminated it, clear the
 /// termination so the isolate stays usable and report a memory error.
 fn memory_error(isolate: &v8::Isolate) -> Option<*mut c_char> {
-    if !HEAP_EXHAUSTED.with(|f| f.get()) {
+    if !TERMINATED.with(|f| f.replace(false)) {
         return None;
     }
     isolate.cancel_terminate_execution();
@@ -66,6 +67,8 @@ thread_local! {
     static TAKE_BUFFER_CB: Cell<Option<TakeBufferCb>> = const { Cell::new(None) };
     static PUT_BUFFER_CB: Cell<Option<PutBufferCb>> = const { Cell::new(None) };
     static HEAP_EXHAUSTED: Cell<bool> = const { Cell::new(false) };
+    /// Set by the heap callback, consumed by the call that was terminated.
+    static TERMINATED: Cell<bool> = const { Cell::new(false) };
 }
 
 fn init_v8() {
@@ -390,7 +393,7 @@ pub extern "C" fn nv8_drain_microtasks() -> u32 {
     if !state_ptr.is_null() {
         let state = unsafe { &mut *state_ptr };
         state.isolate.perform_microtask_checkpoint();
-        if HEAP_EXHAUSTED.with(|f| f.get()) {
+        if TERMINATED.with(|f| f.replace(false)) {
             state.isolate.cancel_terminate_execution();
         }
     }
