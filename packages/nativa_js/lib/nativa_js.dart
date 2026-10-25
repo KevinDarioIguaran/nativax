@@ -2,6 +2,7 @@
 library;
 
 export 'src/console.dart';
+export 'src/default_engine.dart';
 export 'src/event_loop.dart';
 export 'src/exceptions.dart';
 export 'src/javascript_engine.dart';

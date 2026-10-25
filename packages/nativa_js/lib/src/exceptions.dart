@@ -26,6 +26,13 @@ class JavaScriptTimeoutException extends JavaScriptException {
       : super(name: 'TimeoutError');
 }
 
+/// The script hit the engine's memory limit and was stopped. The engine
+/// itself remains usable.
+class JavaScriptMemoryLimitException extends JavaScriptException {
+  JavaScriptMemoryLimitException({required super.message, super.stack})
+      : super(name: 'MemoryLimitError');
+}
+
 /// The engine has been disposed, or could not be created.
 class JavaScriptEngineStateException implements Exception {
   JavaScriptEngineStateException(this.message);

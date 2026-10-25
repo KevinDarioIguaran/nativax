@@ -45,12 +45,19 @@ typedef _SetBuffersDart =
 /// V8 backend prototype. It implements the same [JavaScriptEngine] contract as
 /// [QuickJsEngine] and talks to the Rust `v8` cdylib through `dart:ffi`.
 ///
-/// The native library is loaded from `NATIVAX_V8_LIB` (or the platform loader
-/// path). It is not yet the default engine.
+/// The native library is loaded from [libraryPath], `NATIVAX_V8_LIB` or the
+/// platform loader path. [createDefaultJavaScriptEngine] picks it on desktop
+/// when the library loads.
+///
+/// The cdylib keeps one isolate per OS thread, so only one V8 engine may be
+/// live per thread ([hasLiveInstance]); workers use QuickJS.
 final class V8Engine implements JavaScriptEngine {
-  V8Engine([this.config = const JavaScriptEngineConfig()]) {
+  V8Engine([this.config = const JavaScriptEngineConfig(), String? libraryPath]) {
     _lib = DynamicLibrary.open(
-      Platform.environment['NATIVAX_V8_LIB'] ?? 'libnx_v8.so',
+      libraryPath ?? Platform.environment['NATIVAX_V8_LIB'] ?? 'libnx_v8.so',
+    );
+    _heapExhausted = _lib.lookupFunction<_U32Native, _U32Dart>(
+      'nv8_heap_exhausted',
     );
     _create = _lib.lookupFunction<_CreateNative, _CreateDart>('nv8_create');
     _setHost = _lib.lookupFunction<_SetHostNative, _SetHostDart>(
@@ -74,17 +81,14 @@ final class V8Engine implements JavaScriptEngine {
       _putBuffer,
       exceptionalReturn: _zeroUint32,
     );
-    // V8's object graph for large object graphs needs more room than the
-    // QuickJS default; keep a floor for the prototype.
-    const floor = 256 * 1024 * 1024;
-    final heapLimit = config.memoryLimitBytes < floor
-        ? floor
-        : config.memoryLimitBytes;
-    _runtime = _create(heapLimit, config.maxStackBytes);
+    // Same budget as QuickJS; near it the cdylib stops the script and
+    // reports JavaScriptMemoryLimitException instead of aborting.
+    _runtime = _create(config.memoryLimitBytes, config.maxStackBytes);
     if (_runtime == nullptr) {
       _callback.close();
       throw JavaScriptEngineStateException('V8 runtime creation failed');
     }
+    _live++;
     _setHost(_callback.nativeFunction);
     _setBuffers(
       _takeBufferCallback.nativeFunction,
@@ -115,6 +119,29 @@ final class V8Engine implements JavaScriptEngine {
   late final _U64Dart _memory;
   late final _VoidDart _gc;
   late final _U32Dart _drain;
+  late final _U32Dart _heapExhausted;
+
+  static int _live = 0;
+
+  /// Whether a V8 engine is live on this isolate's thread.
+  static bool get hasLiveInstance => _live > 0;
+
+  static final Map<String, bool> _availability = {};
+
+  /// Whether the V8 cdylib at [path] can be loaded (cached per path).
+  static bool isAvailable(String path) =>
+      _availability.putIfAbsent(path, () {
+        try {
+          DynamicLibrary.open(path).lookup('nv8_heap_exhausted');
+          return true;
+        } catch (_) {
+          return false;
+        }
+      });
+
+  /// A script was stopped at the heap limit (sticky; the runtime uses it to
+  /// fall back to QuickJS).
+  bool get memoryExhausted => !_disposed && _heapExhausted() != 0;
   late final _SetBuffersDart _setBuffers;
   late final NativeCallable<_HostNative> _callback;
   late final NativeCallable<_TakeBufferNative> _takeBufferCallback;
@@ -226,6 +253,11 @@ final class V8Engine implements JavaScriptEngine {
   Object? _decode(String text) {
     if (text == 'undefined') return null;
     if (text.contains('"__nativax_error"')) {
+      if (text.contains('"kind":"memory"')) {
+        throw JavaScriptMemoryLimitException(
+          message: 'heap limit of ${config.memoryLimitBytes} bytes reached',
+        );
+      }
       throw JavaScriptException(name: 'Error', message: text);
     }
     return jsonDecode(text);
@@ -291,6 +323,7 @@ final class V8Engine implements JavaScriptEngine {
   void dispose() {
     if (_disposed) return;
     _disposed = true;
+    _live--;
     _gcTimer?.cancel();
     _disposeNative();
     _callback.close();
