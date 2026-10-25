@@ -37,6 +37,9 @@ Chromium, CEF, Electron, or a local HTTP server for presentation.
 - Preserve stable defaults: DPR 1.0, `backdrop-filter` enabled,
   `GlSurfaceView` + `RawImage`, metrics opt-in.
 - Do not push, reset, or rewrite user work unless explicitly asked.
+- Commits and pull requests are authored only by the repository owner
+  (KevinDarioIguaran). Never add AI co-author trailers (`Co-Authored-By:`)
+  or "Generated with" attribution lines.
 
 ## Required workflow
 

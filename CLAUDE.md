@@ -13,3 +13,5 @@
 - Use plan mode for cross-package changes and for anything touching the JS
   bridge, parser, renderer, or security limits.
 - Keep compatibility commits separate from refactors and game changes.
+- Never add `Co-Authored-By: Claude` trailers or "Generated with Claude Code"
+  lines: commits and PRs are only in the owner's name.
