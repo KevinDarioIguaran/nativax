@@ -20,6 +20,8 @@ workspace:
   - tools/benchmark
   - tools/leaks
   - tools/security
+  - tools/visual
+  - tools/perf
 
 dev_dependencies:
   lints: ^6.0.0
