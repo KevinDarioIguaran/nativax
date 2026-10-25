@@ -487,9 +487,41 @@ repartidas por el catálogo (`--only` con esas 12, salida `.visual/fonts-check`)
   del conjunto preferido ya no se aplican. `alt-style-sheets`
   **22,6 % → 63,9 %**.
 
-Pendiente medido: `mobile-tab-navigation` pinta un bloque granate donde Chrome
-no pinta nada; `execcommand` depende de `queryCommandSupported` (no
-implementado). No se ha repetido la corrida completa de 300 páginas.
+- **Producto (`e8b2547`):** los márgenes negativos de cajas posicionadas
+  lanzaban una aserción de `RenderPadding` y Flutter pintaba su ErrorWidget
+  (bloque granate) sobre el contenedor. Ahora desplazan el offset.
+  `mobile-tab-navigation` 28,5 % → 44,4 %.
+- **Producto + arnés (`3a53ea1`):** las familias no instaladas se saltan y una
+  lista sin genérica cae a la serif estándar, como en Chrome.
+  `flutter_tester` dibujaba esas familias (web fonts bloqueadas) con su fuente
+  de bloques; el arnés declara `nativaxFontAvailable`.
+- **Producto (`6bae1bd`):** `width`/`height` en porcentaje (y `calc()`) de
+  elementos absolutos se resuelven contra la caja de padding del ancestro
+  posicionado; antes un `div` con `width:100%` medía 16×0.
+- **Producto (`bb90568`):** el marcador de lista *outside* cuelga delante del
+  borde de contenido en vez de ocupar 24 px dentro del `li`.
+  `css-painting` 48,3 % → 74,3 %.
+
+Muestra de 12 páginas tras `6bae1bd` (sin las viñetas): media
+**50,18 % → 63,60 %**.
+
+Corrida completa de 300 páginas tras `bb90568` (`.visual/full-after`,
+umbral PASS anterior del 90 %): **20 PASS, 32 WARN, 228 FAIL, 20 INVALID,
+media 66,75 %** (línea base: 9/15/256/20, media 50,77 %). Parte de la subida es
+corrección del arnés (fuentes); no se separó.
+
+Integrados después y aún sin medir en corrida completa: orden estable de la
+cascada (`3bcb709`), imágenes locales en el arnés (`7646d30`, medición),
+`background-repeat/position/size` (`80b9a0e`), `align-content` en flex
+(`92cac1f`), Arial en controles (`7304502`), `height: %` a través de los
+envoltorios (`c3a775f`).
+
+**Meta de fidelidad (`8f52c43`): PASS exige overall ≥ 99,99 %.** Con ese
+umbral el número de PASS bajará; es un criterio más estricto, no un cambio de
+puntuación.
+
+Pendiente: `execcommand` depende de `queryCommandSupported` (no
+implementado); 16 páginas INVALID por excepciones de NativaX en el arnés.
 
 ## Fase 4 — en curso
 
