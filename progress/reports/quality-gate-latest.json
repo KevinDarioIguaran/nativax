@@ -1,0 +1,491 @@
+{
+  "generated_at": "2026-10-24T21:59:54.067519+00:00",
+  "visual": {
+    "source": "/home/k3vin/Documents/nativax/.visual/runs/50projects50days/results.json",
+    "pages": 51,
+    "verdicts": {
+      "PASS": 6,
+      "WARN": 5,
+      "FAIL": 40,
+      "INVALID": 0
+    },
+    "categories": {
+      "overall": 52.591725490196076,
+      "position": 36.20301960784314,
+      "layout": 53.04196078431372,
+      "color": 45.23996078431372,
+      "design": 96.7220980392157
+    },
+    "pixels": 36720000,
+    "mismatched_pixels": 6569980,
+    "mismatched_pct": 17.89210239651416,
+    "mean_delta_e": 8.286117647058823,
+    "mean_ink_pct": 62.81850980392157,
+    "images": 153,
+    "worst": [
+      {
+        "page": "50projects50days/sound-board",
+        "overall": 19.453,
+        "verdict": "FAIL"
+      },
+      {
+        "page": "50projects50days/netflix-mobile-navigation",
+        "overall": 21.125,
+        "verdict": "FAIL"
+      },
+      {
+        "page": "50projects50days/toast-notification",
+        "overall": 22.416,
+        "verdict": "FAIL"
+      },
+      {
+        "page": "50projects50days/pokedex",
+        "overall": 22.598,
+        "verdict": "FAIL"
+      },
+      {
+        "page": "50projects50days/custom-range-slider",
+        "overall": 23.105,
+        "verdict": "FAIL"
+      }
+    ]
+  },
+  "perf": {
+    "scenarios": 17,
+    "verdicts": {
+      "PASS": 5,
+      "WARN": 2,
+      "FAIL": 10,
+      "INVALID": 0
+    },
+    "work": {
+      "idle.blank": 0,
+      "dom.rows-create-1k": 512.038,
+      "dom.rows-create-10k": 0,
+      "dom.rows-update-10k": 0,
+      "dom.rows-remove-10k": 161.499,
+      "scroll.rows-10k": 2357.52,
+      "scroll.2d-tiles": 192.822,
+      "js.arrays": 108.115,
+      "js.objects": 46.268,
+      "js.strings": 20.278,
+      "js.json": 133.93,
+      "external.browserbench-quick": 14780.057,
+      "external.jsfb-create-1k": 3723.357,
+      "external.jsfb-create-10k": 68847.526,
+      "external.jsfb-clear": 0,
+      "external.cerious-load-scroll": 149.723,
+      "external.uibench-load-scroll": 11.375
+    },
+    "ratios": {
+      "dom.rows-create-1k": 16.332950558213717,
+      "dom.rows-remove-10k": 23.957721406319536,
+      "scroll.rows-10k": 1964.6000000000001,
+      "scroll.2d-tiles": 160.685,
+      "js.arrays": 2.3657549234135664,
+      "js.objects": 2.838527607361963,
+      "js.strings": 1.4694202898550723,
+      "js.json": 3.720277777777778,
+      "external.browserbench-quick": 1.3101272981432255,
+      "external.jsfb-create-1k": 31.551466413578623,
+      "external.cerious-load-scroll": 748.615,
+      "external.uibench-load-scroll": 22.75
+    },
+    "idle": {
+      "rss_mb": 105.04,
+      "cpu_pct": 0.0,
+      "gpu_pct": null,
+      "status": "ok"
+    }
+  },
+  "compat": {
+    "test262": {
+      "suite": "test262",
+      "passRate": 97.93396698349174,
+      "counts": {
+        "PASS": 19577,
+        "FAIL": 413,
+        "SKIP": 1108,
+        "ERROR": 0
+      },
+      "command": "run_test262 test/language/expressions test/language/statements test/language/types test/language/literals",
+      "startedAt": "2026-10-23T22:13:34.191313",
+      "path": "/home/k3vin/Documents/nativax/.conformance/results/test262-2026-10-23T221334.summary.json"
+    },
+    "html5lib": {
+      "suite": "html5lib-tokenizer",
+      "passRate": 99.25887624956911,
+      "counts": {
+        "PASS": 5759,
+        "FAIL": 43,
+        "SKIP": 1025,
+        "ERROR": 0
+      },
+      "command": "run_html5lib",
+      "startedAt": "2026-10-23T22:12:55.706433",
+      "path": "/home/k3vin/Documents/nativax/.conformance/results/html5lib-tokenizer-2026-10-23T221255.summary.json"
+    },
+    "url": {
+      "suite": "wpt-url",
+      "passRate": 74.21875,
+      "counts": {
+        "PASS": 665,
+        "FAIL": 231,
+        "SKIP": 0,
+        "ERROR": 0
+      },
+      "command": "run_url",
+      "startedAt": "2026-10-23T22:12:58.289856",
+      "path": "/home/k3vin/Documents/nativax/.conformance/results/wpt-url-2026-10-23T221258.summary.json"
+    },
+    "html_tree": {
+      "suite": "wpt-html-tree",
+      "passRate": 71.1846318036286,
+      "counts": {
+        "PASS": 1334,
+        "FAIL": 537,
+        "SKIP": 99,
+        "ERROR": 3
+      },
+      "command": "run_html_tree",
+      "startedAt": "2026-10-24T06:46:49.334618",
+      "path": "/home/k3vin/Documents/nativax/.conformance/results/wpt-html-tree-2026-10-24T064649.summary.json"
+    },
+    "wpt": {
+      "suite": "wpt",
+      "passRate": 70.0,
+      "counts": {
+        "PASS": 196,
+        "FAIL": 84,
+        "SKIP": 47,
+        "ERROR": 0
+      },
+      "command": "run_wpt dom/nodes --limit 2000",
+      "startedAt": "2026-10-24T08:02:56.665183",
+      "path": "/home/k3vin/Documents/nativax/.conformance/results/wpt-2026-10-24T080256.summary.json"
+    }
+  },
+  "baseline_path": "/home/k3vin/Documents/nativax/progress/reports/quality-baseline.json",
+  "comparison": {
+    "verdict": "EQUAL",
+    "changes": [
+      {
+        "area": "visual",
+        "metric": "overall",
+        "before": 52.591725490196076,
+        "after": 52.591725490196076,
+        "delta": 0.0,
+        "unit": " %",
+        "status": "equal"
+      },
+      {
+        "area": "visual",
+        "metric": "position",
+        "before": 36.20301960784314,
+        "after": 36.20301960784314,
+        "delta": 0.0,
+        "unit": " %",
+        "status": "equal"
+      },
+      {
+        "area": "visual",
+        "metric": "layout",
+        "before": 53.04196078431372,
+        "after": 53.04196078431372,
+        "delta": 0.0,
+        "unit": " %",
+        "status": "equal"
+      },
+      {
+        "area": "visual",
+        "metric": "color",
+        "before": 45.23996078431372,
+        "after": 45.23996078431372,
+        "delta": 0.0,
+        "unit": " %",
+        "status": "equal"
+      },
+      {
+        "area": "visual",
+        "metric": "design",
+        "before": 96.7220980392157,
+        "after": 96.7220980392157,
+        "delta": 0.0,
+        "unit": " %",
+        "status": "equal"
+      },
+      {
+        "area": "visual",
+        "metric": "PASS pages",
+        "before": 6,
+        "after": 6,
+        "delta": 0,
+        "unit": "",
+        "status": "equal"
+      },
+      {
+        "area": "visual",
+        "metric": "FAIL pages",
+        "before": 40,
+        "after": 40,
+        "delta": 0,
+        "unit": "",
+        "status": "equal"
+      },
+      {
+        "area": "visual",
+        "metric": "ink %",
+        "before": 62.81850980392157,
+        "after": 62.81850980392157,
+        "delta": 0.0,
+        "unit": " %",
+        "status": "equal"
+      },
+      {
+        "area": "visual",
+        "metric": "images",
+        "before": 153,
+        "after": 153,
+        "delta": 0,
+        "unit": "",
+        "status": "equal"
+      },
+      {
+        "area": "performance",
+        "metric": "idle.blank",
+        "before": 0,
+        "after": 0,
+        "delta": 0,
+        "unit": " ms",
+        "status": "equal"
+      },
+      {
+        "area": "performance",
+        "metric": "dom.rows-create-1k",
+        "before": 512.038,
+        "after": 512.038,
+        "delta": 0.0,
+        "unit": " ms",
+        "status": "equal"
+      },
+      {
+        "area": "performance",
+        "metric": "dom.rows-create-10k",
+        "before": 0,
+        "after": 0,
+        "delta": 0,
+        "unit": " ms",
+        "status": "equal"
+      },
+      {
+        "area": "performance",
+        "metric": "dom.rows-update-10k",
+        "before": 0,
+        "after": 0,
+        "delta": 0,
+        "unit": " ms",
+        "status": "equal"
+      },
+      {
+        "area": "performance",
+        "metric": "dom.rows-remove-10k",
+        "before": 161.499,
+        "after": 161.499,
+        "delta": 0.0,
+        "unit": " ms",
+        "status": "equal"
+      },
+      {
+        "area": "performance",
+        "metric": "scroll.rows-10k",
+        "before": 2357.52,
+        "after": 2357.52,
+        "delta": 0.0,
+        "unit": " ms",
+        "status": "equal"
+      },
+      {
+        "area": "performance",
+        "metric": "scroll.2d-tiles",
+        "before": 192.822,
+        "after": 192.822,
+        "delta": 0.0,
+        "unit": " ms",
+        "status": "equal"
+      },
+      {
+        "area": "performance",
+        "metric": "js.arrays",
+        "before": 108.115,
+        "after": 108.115,
+        "delta": 0.0,
+        "unit": " ms",
+        "status": "equal"
+      },
+      {
+        "area": "performance",
+        "metric": "js.objects",
+        "before": 46.268,
+        "after": 46.268,
+        "delta": 0.0,
+        "unit": " ms",
+        "status": "equal"
+      },
+      {
+        "area": "performance",
+        "metric": "js.strings",
+        "before": 20.278,
+        "after": 20.278,
+        "delta": 0.0,
+        "unit": " ms",
+        "status": "equal"
+      },
+      {
+        "area": "performance",
+        "metric": "js.json",
+        "before": 133.93,
+        "after": 133.93,
+        "delta": 0.0,
+        "unit": " ms",
+        "status": "equal"
+      },
+      {
+        "area": "performance",
+        "metric": "external.browserbench-quick",
+        "before": 14780.057,
+        "after": 14780.057,
+        "delta": 0.0,
+        "unit": " ms",
+        "status": "equal"
+      },
+      {
+        "area": "performance",
+        "metric": "external.jsfb-create-1k",
+        "before": 3723.357,
+        "after": 3723.357,
+        "delta": 0.0,
+        "unit": " ms",
+        "status": "equal"
+      },
+      {
+        "area": "performance",
+        "metric": "external.jsfb-create-10k",
+        "before": 68847.526,
+        "after": 68847.526,
+        "delta": 0.0,
+        "unit": " ms",
+        "status": "equal"
+      },
+      {
+        "area": "performance",
+        "metric": "external.jsfb-clear",
+        "before": 0,
+        "after": 0,
+        "delta": 0,
+        "unit": " ms",
+        "status": "equal"
+      },
+      {
+        "area": "performance",
+        "metric": "external.cerious-load-scroll",
+        "before": 149.723,
+        "after": 149.723,
+        "delta": 0.0,
+        "unit": " ms",
+        "status": "equal"
+      },
+      {
+        "area": "performance",
+        "metric": "external.uibench-load-scroll",
+        "before": 11.375,
+        "after": 11.375,
+        "delta": 0.0,
+        "unit": " ms",
+        "status": "equal"
+      },
+      {
+        "area": "performance",
+        "metric": "PASS scenarios",
+        "before": 5,
+        "after": 5,
+        "delta": 0,
+        "unit": "",
+        "status": "equal"
+      },
+      {
+        "area": "performance",
+        "metric": "FAIL scenarios",
+        "before": 10,
+        "after": 10,
+        "delta": 0,
+        "unit": "",
+        "status": "equal"
+      },
+      {
+        "area": "idle",
+        "metric": "RSS MB",
+        "before": 105.04,
+        "after": 105.04,
+        "delta": 0.0,
+        "unit": " MB",
+        "status": "equal"
+      },
+      {
+        "area": "idle",
+        "metric": "CPU %",
+        "before": 0.0,
+        "after": 0.0,
+        "delta": 0.0,
+        "unit": " %",
+        "status": "equal"
+      },
+      {
+        "area": "compatibility",
+        "metric": "test262",
+        "before": 97.93396698349174,
+        "after": 97.93396698349174,
+        "delta": 0.0,
+        "unit": " %",
+        "status": "equal"
+      },
+      {
+        "area": "compatibility",
+        "metric": "html5lib",
+        "before": 99.25887624956911,
+        "after": 99.25887624956911,
+        "delta": 0.0,
+        "unit": " %",
+        "status": "equal"
+      },
+      {
+        "area": "compatibility",
+        "metric": "url",
+        "before": 74.21875,
+        "after": 74.21875,
+        "delta": 0.0,
+        "unit": " %",
+        "status": "equal"
+      },
+      {
+        "area": "compatibility",
+        "metric": "html_tree",
+        "before": 71.1846318036286,
+        "after": 71.1846318036286,
+        "delta": 0.0,
+        "unit": " %",
+        "status": "equal"
+      },
+      {
+        "area": "compatibility",
+        "metric": "wpt",
+        "before": 70.0,
+        "after": 70.0,
+        "delta": 0.0,
+        "unit": " %",
+        "status": "equal"
+      }
+    ],
+    "regressions": [],
+    "improvements": []
+  }
+}

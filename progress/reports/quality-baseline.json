@@ -1,0 +1,175 @@
+{
+  "generated_at": "2026-10-24T21:59:43.986092+00:00",
+  "visual": {
+    "source": "/home/k3vin/Documents/nativax/.visual/runs/50projects50days/results.json",
+    "pages": 51,
+    "verdicts": {
+      "PASS": 6,
+      "WARN": 5,
+      "FAIL": 40,
+      "INVALID": 0
+    },
+    "categories": {
+      "overall": 52.591725490196076,
+      "position": 36.20301960784314,
+      "layout": 53.04196078431372,
+      "color": 45.23996078431372,
+      "design": 96.7220980392157
+    },
+    "pixels": 36720000,
+    "mismatched_pixels": 6569980,
+    "mismatched_pct": 17.89210239651416,
+    "mean_delta_e": 8.286117647058823,
+    "mean_ink_pct": 62.81850980392157,
+    "images": 153,
+    "worst": [
+      {
+        "page": "50projects50days/sound-board",
+        "overall": 19.453,
+        "verdict": "FAIL"
+      },
+      {
+        "page": "50projects50days/netflix-mobile-navigation",
+        "overall": 21.125,
+        "verdict": "FAIL"
+      },
+      {
+        "page": "50projects50days/toast-notification",
+        "overall": 22.416,
+        "verdict": "FAIL"
+      },
+      {
+        "page": "50projects50days/pokedex",
+        "overall": 22.598,
+        "verdict": "FAIL"
+      },
+      {
+        "page": "50projects50days/custom-range-slider",
+        "overall": 23.105,
+        "verdict": "FAIL"
+      }
+    ]
+  },
+  "perf": {
+    "scenarios": 17,
+    "verdicts": {
+      "PASS": 5,
+      "WARN": 2,
+      "FAIL": 10,
+      "INVALID": 0
+    },
+    "work": {
+      "idle.blank": 0,
+      "dom.rows-create-1k": 512.038,
+      "dom.rows-create-10k": 0,
+      "dom.rows-update-10k": 0,
+      "dom.rows-remove-10k": 161.499,
+      "scroll.rows-10k": 2357.52,
+      "scroll.2d-tiles": 192.822,
+      "js.arrays": 108.115,
+      "js.objects": 46.268,
+      "js.strings": 20.278,
+      "js.json": 133.93,
+      "external.browserbench-quick": 14780.057,
+      "external.jsfb-create-1k": 3723.357,
+      "external.jsfb-create-10k": 68847.526,
+      "external.jsfb-clear": 0,
+      "external.cerious-load-scroll": 149.723,
+      "external.uibench-load-scroll": 11.375
+    },
+    "ratios": {
+      "dom.rows-create-1k": 16.332950558213717,
+      "dom.rows-remove-10k": 23.957721406319536,
+      "scroll.rows-10k": 1964.6000000000001,
+      "scroll.2d-tiles": 160.685,
+      "js.arrays": 2.3657549234135664,
+      "js.objects": 2.838527607361963,
+      "js.strings": 1.4694202898550723,
+      "js.json": 3.720277777777778,
+      "external.browserbench-quick": 1.3101272981432255,
+      "external.jsfb-create-1k": 31.551466413578623,
+      "external.cerious-load-scroll": 748.615,
+      "external.uibench-load-scroll": 22.75
+    },
+    "idle": {
+      "rss_mb": 105.04,
+      "cpu_pct": 0.0,
+      "gpu_pct": null,
+      "status": "ok"
+    }
+  },
+  "compat": {
+    "test262": {
+      "suite": "test262",
+      "passRate": 97.93396698349174,
+      "counts": {
+        "PASS": 19577,
+        "FAIL": 413,
+        "SKIP": 1108,
+        "ERROR": 0
+      },
+      "command": "run_test262 test/language/expressions test/language/statements test/language/types test/language/literals",
+      "startedAt": "2026-10-23T22:13:34.191313",
+      "path": "/home/k3vin/Documents/nativax/.conformance/results/test262-2026-10-23T221334.summary.json"
+    },
+    "html5lib": {
+      "suite": "html5lib-tokenizer",
+      "passRate": 99.25887624956911,
+      "counts": {
+        "PASS": 5759,
+        "FAIL": 43,
+        "SKIP": 1025,
+        "ERROR": 0
+      },
+      "command": "run_html5lib",
+      "startedAt": "2026-10-23T22:12:55.706433",
+      "path": "/home/k3vin/Documents/nativax/.conformance/results/html5lib-tokenizer-2026-10-23T221255.summary.json"
+    },
+    "url": {
+      "suite": "wpt-url",
+      "passRate": 74.21875,
+      "counts": {
+        "PASS": 665,
+        "FAIL": 231,
+        "SKIP": 0,
+        "ERROR": 0
+      },
+      "command": "run_url",
+      "startedAt": "2026-10-23T22:12:58.289856",
+      "path": "/home/k3vin/Documents/nativax/.conformance/results/wpt-url-2026-10-23T221258.summary.json"
+    },
+    "html_tree": {
+      "suite": "wpt-html-tree",
+      "passRate": 71.1846318036286,
+      "counts": {
+        "PASS": 1334,
+        "FAIL": 537,
+        "SKIP": 99,
+        "ERROR": 3
+      },
+      "command": "run_html_tree",
+      "startedAt": "2026-10-24T06:46:49.334618",
+      "path": "/home/k3vin/Documents/nativax/.conformance/results/wpt-html-tree-2026-10-24T064649.summary.json"
+    },
+    "wpt": {
+      "suite": "wpt",
+      "passRate": 70.0,
+      "counts": {
+        "PASS": 196,
+        "FAIL": 84,
+        "SKIP": 47,
+        "ERROR": 0
+      },
+      "command": "run_wpt dom/nodes --limit 2000",
+      "startedAt": "2026-10-24T08:02:56.665183",
+      "path": "/home/k3vin/Documents/nativax/.conformance/results/wpt-2026-10-24T080256.summary.json"
+    }
+  },
+  "baseline_path": "/home/k3vin/Documents/nativax/progress/reports/quality-baseline.json",
+  "comparison": {
+    "verdict": "BASELINE",
+    "changes": [],
+    "regressions": [],
+    "improvements": []
+  }
+}

@@ -1,8 +1,220 @@
 # Histórico
 
+## 2026-10-24 — Conformidad visible en el panel
+
+- La barra lateral incluye **Conformidad** con Test262, html5lib, URL y WPT
+  (DOM, CSS selectors, tree construction). Tabla de PASS/FAIL/SKIP/ERROR y
+  botones para ejecutar cada suite o todas; se refresca con los resultados.
+- El informe `progress/reports/conformance-latest.md` se genera y actualiza en
+  la UI.
+
+## 2026-10-24 — Secciones de Vídeo y Juegos en el panel
+
+- Nueva página **Vídeo** con los 25 perfiles 360p–2160p, tarjetas de contrato,
+  tabla y botón para ejecutar `tools/run_video_contract.py`. El aviso es
+  explícito: **NativaX no decodifica vídeo** y los tests son de contrato.
+- Nueva página **Juegos** con los 25 escenarios Canvas 2D, resolución,
+  partículas, veredicto, ratios, p95 y RSS; botón para ejecutar el lote. El
+  game-player Three.js completo sigue fuera de esta matriz.
+- `tools/video_profiles.json` alimenta la UI; `tools/test_video_manifest.py`
+  comprueba 25 perfiles y que no se afirme playback.
+
+## 2026-10-24 — Informe automático con recomendaciones
+
+- Nuevo `tools/recommend.py`: motor determinista que convierte resultados
+  medidos en prioridades P0/P1/P2 con evidencia, acción, criterio de aceptación
+  y comando. No inventa mejoras: usa ratios, p95, cobertura y estados.
+- Reglas con señales cruzadas: DOM+lento y layout/posición visual bajo →
+  recomendación P0 de renderer; idle alto → memoria; fugas/seguridad → P0;
+  scroll p95 → virtualización; JS → motor/bridge; juego Canvas → calidad.
+- El informe **En vivo** incluye las recomendaciones y hay una opción
+  **Informes → Recomendaciones**; `quality_report.sh` genera
+  `progress/reports/recommendations-latest.md` automáticamente. El informe
+  detallado incluye tabla por escenario, causas raíz por página, tablas de
+  juegos y vídeo, cobertura pendiente y procedencia.
+- Tests: `tools/test_recommend.py` (8) y `recommend.py --self-check`.
+- Límites explícitos en el informe: vídeo sin pipeline, juego Three.js no
+  ejecutado, RSS del arnés distinto del app idle.
+
+## 2026-10-24 — Matriz de 300 tests: cobertura amplia y límites reales
+
+- Añadidos **300 tests/casos nuevos** repartidos por riesgo:
+  - **120 escenarios** de rendimiento (filas, actualización, borrado, scroll y
+    layout) con tamaños 10–40k; el catálogo de rendimiento queda en **245**
+    (239 internos + 6 externos).
+  - **25 escenarios de juego** Canvas 2D con perfiles 360p/480p/720p/1080p/1440p
+    y 100–5.000 partículas; uno de ellos se ejecutó y midió.
+  - **25 tests de vídeo** en `nativa_render`: 360p–2160p, retrato, cuadrado,
+    ultrawide, controles, atributos y tamaños CSS. **NativaX todavía no decodifica
+    vídeo**: los tests fijan el contrato actual (placeholder `▶ video`,
+    `MEDIA_ERR_SRC_NOT_SUPPORTED`, dimensiones) y no afirman reproducción.
+  - **50 tests del juez visual**, **20 de media/platform (DPR, orientación,
+    resolución, color scheme)** y **30 casos de seguridad** (10 globals, 10
+    esquemas de URL, 10 payloads innerHTML).
+  - **30 casos de memoria/lifecycle** (10 JS, 10 DOM, 10 stacks de runtime);
+  ejecutados con el perfil quick: **30 PASS, 0 FAIL, 0 ERROR, 0 INCONCLUSIVE**.
+- **Vídeo:** 25 tests de contrato 360p–2160p; **no hay reproducción real**.
+  **Juegos:** 25 escenarios Canvas 2D por resolución y partículas; smoke
+  640x360/100 partículas WARN (56,7 ms NativaX vs 2,0 ms Chromium).
+- No se presenta esto como “todo pasa”: los 17 escenarios base siguen siendo
+  los medidos; los 120+25 nuevos están definidos y se ejecutan con la suite.
+  Los tests de vídeo documentan una carencia, no la convierten en compatibilidad.
+- `tool/perf/scenarios.json` se regeneró con **245** escenarios.
+
+## 2026-10-24 — Primer lote de escenarios y actualización en vivo (luego ampliado a 245)
+
+- El registro pasa de 17 a **100 escenarios**: 94 internos (DOM, scroll, JS,
+  flex/grid/table, formularios, animación y canvas) y 6 externos resueltos.
+  El catálogo vive en `tools/perf/scenarios.json` y el panel muestra los 100
+  desde el primer arranque, con las filas no medidas en `pendiente`.
+- `perf.dart list --json` genera ese catálogo; añadidos escenarios de
+  100/250/500/2k/5k/20k/50k filas, scrolls 1D/2D/horizontal, 21 cargas JS,
+  layouts, formularios y animación.
+- El panel se refresca solo cada segundo cuando cambian `results.json`,
+  `app-idle.json`, la matriz Docker o el catálogo, y también durante una
+  ejecución lanzada desde fuera. El estado muestra `n/total · ejecutando…`.
+- Visual y rendimiento escriben un snapshot atómico de `results.json` tras
+  cada página/escenario, de modo que tablas y tarjetas crecen sin esperar al
+  final.
+- Los catálogos no son estáticos: si cambian las fuentes de escenarios o de
+  páginas, el panel los regenera en segundo plano (`perf.dart list --json` y
+  `visual_check.dart --all --list --json`) y recarga la tabla.
+- Captura del panel actualizada con el contador `17/100` y la tabla de 100.
+- Verificación: 14 tests de `tools/perf` y 69 de `tools/visual`; smoke real
+  de 13 escenarios JS y 11 de layout/formularios/animación, sin INVALID.
+  Prueba de refresco con dos escenarios reales: la tabla pasó de 17 a 1 y
+  luego a 2 medidas sin pulsar «Refrescar», conservando la fila seleccionada.
+
+## 2026-10-24 — Panel Tkinter restilizado como el informe HTML
+
+- La ventana deja las pestañas y pasa a **barra lateral** (Resumen,
+  Rendimiento, Fidelidad visual, Idle, Contenedores, Informes), con tipografía
+  Noto Sans, tarjetas, tablas alternadas, botones planos y los mismos colores
+  del informe.
+- **Informes** muestra una captura del HTML real renderizada por Chromium
+  headless dentro del panel; se cachea en `.perf/preview/` y se regenera
+  cuando cambia el Markdown. Ya no hay botón de vista previa externa.
+- Tablas de rendimiento, fidelidad y contenedores reajustadas para que no se
+  corten columnas; se conserva la etiqueta **RSS arnés** para no confundirla
+  con el idle de la app.
+- El catálogo visual muestra **300** páginas (51 medidas y 249 pendientes) y
+  el botón pasa a **Visual 300**.
+
 > Las entradas anteriores al 2026-10-21 usan la nomenclatura antigua
 > `nativax_*`. La tabla de migración y los nombres actuales están en
 > [`docs/nativa-family.md`](../docs/nativa-family.md).
+
+## 2026-10-24 — Suite de rendimiento headless y panel Tkinter
+
+- Nuevo paquete `tools/perf` (`nativa_perf`): Chromium headless vía CDP
+  (`Emulation.setDeviceMetricsOverride`, `Runtime.evaluate`,
+  `Performance.getMetrics`) contra NativaX offscreen (`flutter test` +
+  `tester.pump()`). Mide escenario, render/frame, nodos, layout/style, heap,
+  RSS/CPU (`/proc` PSS) y GPU si existe `gpu_busy_percent`.
+- Escenarios internos: crear/actualizar/eliminar 1k y 10k filas, scroll de
+  10k, scroll 2D de 900 teselas y cuatro cargas JS. Benchmarks reales:
+  js-framework-benchmark vanilla keyed (Apache-2.0), Browser-Bench (MIT),
+  Cerious-Scroll (MIT) y uibench (descarga, sin licencia). PassMark 2D HTML
+  Scroll no es redistribuible: se reproduce su carga 2D. million-rows queda
+  como build npm opcional por falta de licencia.
+- Objetivos y veredictos: frame p95 ≤16,7 ms y máximo ≤100 ms en scroll,
+  trabajo ≤3× (no en scroll), nodos ±5 %, app idle ≤250 MB / ≤1 % CPU.
+- Idle real de la app Linux (página blanca, `NATIVAX_PERF_PAGE`): **105,0 MB
+  de RSS y 0,00 % de CPU** en la pasada final (105–106 MB). El `idle.blank` del arnés (incluye `flutter
+  test`) se reporta aparte y no decide el objetivo.
+- Pasadas de 17 escenarios: **4–5 PASS, 2–4 WARN, 9–10 FAIL, 0
+  INVALID** (última 5/2/10). JS
+  puro 0,4×–2,9×; crear 1k 4,4×–4,7×; crear 10k 6,6–8,2 s o timeout del
+  presupuesto JS; update/clear 10k agotan QuickJS; scroll 10k p95 108–206 ms;
+  scroll 2D p95 6,8–8,4 ms (PASS); jsfb 1k 13,6×–21,1×; Browser-Bench Quick
+  timeout; cerious 416 vs 721 nodos; uibench 13 vs 153.
+- Panel `tools/perf/gui/perf_gui.py` (Tkinter): tabla, motivos, ratios,
+  timeline RSS, botones de ejecución e idle. Probado con captura real.
+- Comandos:
+  - `dart run tools/perf/bin/perf.dart run --app-idle --out .perf/latest`
+  - `dart run tools/perf/bin/perf.dart idle-app --seconds 5 --build`
+  - `python3 tools/perf/gui/perf_gui.py`
+  - `cd tools/perf && dart test && dart analyze`
+  - `NATIVA_PERF_E2E=1 dart test test/cdp_e2e_test.dart`
+- `tools/perf`: **12 tests** en verde (1 skip e2e); `dart analyze` limpio;
+  `flutter analyze` en `examples/web-challenge` limpio. El `test_all` completo
+  no terminó en 0 por el test flaky `wasm_rapier_test`; `packages/nativax`
+  solo pasa **30/30** y el resto de secciones se verificó por separado.
+- Detalle: `progress/reports/perf-latest.md`,
+  `docs/performance-suite.md` y `tools/perf/README.md`.
+
+## 2026-10-24 — Catálogo visual de 300 páginas
+
+- `tools/visual --all`: 300 páginas con commit pinneado y licencia clara:
+  51 `50projects50days` (MIT, vendorizado), 27 `mdn/css-examples` (CC0), 67
+  `mdn/learning-area` (CC0), 21 `TheOdinProject/css-exercises` (MIT) y 134
+  `mdn/dom-examples` (CC0).
+- Descubrimiento recursivo y listas de inclusión; las suites externas se
+  descargan en `.visual/suites/` (~270 MB, ignorado por git).
+- `--all --list` devuelve exactamente 300. Se añadió botón **Visual 300** al
+  panel y `tools/quality_report.sh --all-visual`.
+- Prueba de humo de 4 páginas (una por suite nueva): todas FAIL, 39,7–65,6 %
+  overall. Es una muestra, no la tasa de las 300.
+- Catálogo y fuentes: `progress/reports/visual-catalog-latest.md`.
+- `tools/visual`: **69 tests** en verde (1 skip).
+
+## 2026-10-24 — Matriz de rendimiento en contenedores
+
+- `tools/perf/container`: Dockerfile Debian trixie con Chromium y build tools;
+  el repo y el SDK de Flutter se montan en sus rutas reales. `run.sh` ejecuta
+  la suite con `--cpus`, `--memory`, `--network none` y UID del host.
+- `matrix.sh` corre 2 CPU/2 GB, 1 CPU/1 GB y 0,5 CPU/768 MB; `summarize.py`
+  genera `.perf/container/matrix.json`/`.md`.
+- Resultados: `scroll.2d-tiles` p95 7,8 ms (PASS) → 31,2 ms (FAIL) → 167,9 ms
+  (FAIL); `dom.rows-create-1k` 395 → 714 → 3.292 ms (FAIL en las tres);
+  `js.arrays` PASS en las tres (91/107/680 ms). El idle real de la app sigue
+  midiéndose aparte (105 MB / 0 % CPU).
+- El panel Tkinter estrena pestaña **Contenedores** con tabla, motivos y
+  gráfica por configuración, y botón para lanzar la matriz.
+- Límite: cuotas cgroup de CPU, no frecuencia real; sin estresores
+  concurrentes, soak tests ni comparación visual bajo carga.
+
+## 2026-10-24 — Juicio visual headless contra Chromium
+
+- Nuevo paquete `tools/visual` (workspace `nativa_visual`): Chromium
+  `--headless=new` como referencia y NativaX offscreen con
+  `flutter test` + `RenderRepaintBoundary.toImage()`. No abre ventana.
+- Puntúa **posición** (`getBoundingClientRect` en ambos motores, tolerancia
+  2 px), **layout** (tamaños, IoU, altura del documento), **color** (ΔE76 de
+  media y paleta dominante por elemento), **diseño** (27 propiedades
+  computadas normalizadas) y **entorno** (viewport, DPR, captura, cobertura,
+  errores JS, red).
+- Reporte píxel a píxel: ΔE por píxel, cubos 2/5/10/20, filas, teselas
+  16×16, `diff.png`, `ink_mismatch_pct`, y `pixels.csv` opcional. Salidas
+  `results.json` (tabla con `columns`/`rows`), `report.md/json`,
+  `elements.json/csv`, `positions.csv`, `colors.csv`, `pixels.json`.
+- Fixtures: **51** páginas de `bradtraversy/50projects50days` @
+  `c92b0bc3a87fc95d44b89552b7b6a2eeb36ca481` (MIT, LICENSE y NOTICE
+  incluidos) vendorizadas en `tools/visual/fixtures/`. `--suite` las usa sin
+  red; si faltan, descarga el archivo pinneado en `.visual/suites/`.
+- Corregido un sesgo de medición: Chromium 152 informa `innerHeight = ventana
+  − 87` con `--dump-dom` pero pinta a la altura de la ventana con
+  `--screenshot`. El juicio calibra el desfase, mide con `alto + desfase` y
+  captura con `alto`; `tools/visual/test/chrome_e2e_test.dart` verifica que
+  una caja `100vh` centrada aparezca en las coordenadas del sondeo.
+- Robustez del arnés: `--no-pub`, timeout por página, reintento único, grupo
+  de procesos (`setsid`) para no dejar `flutter_tester` colgados y
+  `runtime.dispose()` al final del test de captura.
+- Calibración: `--self-check` compara Chromium contra Chromium y da
+  **100 % / PASS** (posición, layout, color y diseño).
+- Línea base (51 páginas, 800x900): **6 PASS, 5 WARN, 40 FAIL, 0 INVALID**,
+  overall medio **52,59 %** (mediana 48,54), posición **36,20 %**, layout
+  **53,04 %**, color **45,24 %**, diseño **96,72 %**; 36.720.000 píxeles,
+  6.569.980 con ΔE > 2 (17,89 % medio).
+- Comandos:
+  - `dart run tools/visual/bin/visual_check.dart --suite 50projects50days`
+  - `dart run tools/visual/bin/visual_check.dart --self-check --limit 1`
+  - `cd tools/visual && dart test && dart analyze`
+  - `NATIVA_VISUAL_E2E=1 dart test test/chrome_e2e_test.dart`
+- `tools/visual`: **66 tests** en verde (1 skip e2e); `dart analyze` limpio;
+  `flutter analyze` en `examples/web-challenge` limpio.
+- Detalle: `progress/reports/visual-50projects50days-latest.md`,
+  `docs/visual-fidelity.md` y `tools/visual/README.md`.
 
 ## 2026-10-20 — Sesión 1: cimientos
 
