@@ -1455,15 +1455,29 @@ class _Builder {
     final clip = ps.overflowX == 'hidden' || ps.overflowX == 'clip' || ps.overflowY == 'hidden' || ps.overflowY == 'clip'
         ? Clip.hardEdge
         : Clip.none;
-    return Stack(
-      clipBehavior: clip,
-      children: [
-        for (final entry in entries)
-          if (entry.$2 < 0) _absoluteWidget(entry.$1, padding, containerWidth, containerHeight),
-        normalChild,
-        for (final entry in entries)
-          if (entry.$2 >= 0) _absoluteWidget(entry.$1, padding, containerWidth, containerHeight),
-      ],
+    // The laid-out content box beats the declared size: a percentage height
+    // (`height: 100%` of a `100vh` body) is only known at layout time.
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final width = constraints.hasBoundedWidth
+            ? constraints.maxWidth + padding.horizontal
+            : containerWidth;
+        final height = constraints.hasTightHeight
+            ? constraints.maxHeight + padding.vertical
+            : containerHeight;
+        return Stack(
+          clipBehavior: clip,
+          children: [
+            for (final entry in entries)
+              if (entry.$2 < 0)
+                _absoluteWidget(entry.$1, padding, width, height),
+            normalChild,
+            for (final entry in entries)
+              if (entry.$2 >= 0)
+                _absoluteWidget(entry.$1, padding, width, height),
+          ],
+        );
+      },
     );
   }
 

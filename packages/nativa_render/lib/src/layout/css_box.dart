@@ -269,11 +269,17 @@ class RenderCssBox extends RenderBox with RenderObjectWithChildMixin<RenderBox> 
   (double?, double?) get _containingBlock {
     final pd = parentData;
     if (pd is CssItemParentData) return (pd.containingWidth, pd.containingHeight);
-    // Wrappers (anchors, effects, margins) may sit between this box and the
-    // containing block of a positioned element; stop at the next CSS box.
+    // Wrappers (anchors, effects, margins) sit between this box and the
+    // layout that placed the element; the containing block is on the
+    // outermost wrapper's parent data (or a positioned element's
+    // CssContainingBlock). Stop at the next CSS box.
     for (var node = parent; node != null; node = node.parent) {
       if (node is RenderCssContainingBlock) return (node._width, node._height);
       if (node is RenderCssBox || node is! RenderObjectWithChildMixin) break;
+      final npd = node.parentData;
+      if (npd is CssItemParentData) {
+        return (npd.containingWidth, npd.containingHeight);
+      }
     }
     return (null, null);
   }
