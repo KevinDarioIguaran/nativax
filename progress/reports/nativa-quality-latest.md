@@ -119,6 +119,9 @@ informe HTML:
   medidos en prioridades P0/P1/P2 con evidencia, acción, criterio de aceptación
   y comando; está en **Informes → Recomendaciones** y en **En vivo**;
   `quality_report.sh` lo regenera al final.
+- **Historial**: cada corrida se puede guardar como JSON detallado en
+  `.visual/history` y `.perf/history`; el panel compara la última con la
+  anterior.
 - Barra de acciones para ejecutar todo, solo visual, solo rendimiento, idle
   real, refrescar o detener; el registro se muestra en la ventana.
 - La tabla, las tarjetas, los contadores y las gráficas se refrescan solos

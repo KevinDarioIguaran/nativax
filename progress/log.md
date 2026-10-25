@@ -23,6 +23,18 @@
 - Cada medición debe incluir viewport, captura, métricas, RSS/CPU, nodos y
   límites.
 
+## 2026-10-24 — Historial de corridas y comparación
+
+- Nuevo `tools/history.py`: guarda cada corrida como JSON detallado con
+  timestamp, commit, resumen y todas las filas.
+- Compara la última corrida con la anterior y muestra los casos que mejoraron
+  o empeoraron: overall, posición, layout, color, diseño, ΔE, píxeles, tinta,
+  ratio, p95 y RSS.
+- El panel incluye la página **Historial** con botones para registrar y
+  comparar visual/perf, y auto-registra una corrida cuando termina una
+  ejecución.
+- `tools/test_history.py` añade 4 tests del motor de historial.
+
 ## 2026-10-24 — Conformidad visible en el panel
 
 - La barra lateral incluye **Conformidad** con Test262, html5lib, URL y WPT

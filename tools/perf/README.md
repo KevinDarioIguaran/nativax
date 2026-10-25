@@ -145,6 +145,9 @@ navigation and the same dark/typographic language as the HTML report:
   JSON data and rendered as an HTML capture. During a run the text refreshes
   without launching Chromium; the capture is regenerated when the run ends.
   The historical reports remain available as manual snapshots.
+- **Historial**: every run can be stored as detailed JSON in
+  `.visual/history` and `.perf/history`; the dashboard compares the last two
+  runs and shows per-case deltas.
 - **Row actions**: right-click a scenario/page (or use **Acciones ▾**) to view
   details or run only that test/page. The single result is merged into the
   table and the detail opens automatically.

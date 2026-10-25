@@ -18,7 +18,8 @@ resumen de sesión; aquí están los números, las fases y el histórico.
   [`recommendations-latest.md`](reports/recommendations-latest.md) se genera
   automáticamente con prioridades y evidencia, y
   [`test-matrix-300.md`](reports/test-matrix-300.md) documenta la matriz de
-  cobertura.
+  cobertura. El historial de corridas se guarda en `.visual/history` y
+  `.perf/history` y se compara desde la página **Historial**.
 
 ## Regla
 

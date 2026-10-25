@@ -107,6 +107,10 @@ La GPU se reporta si el kernel expone `gpu_busy_percent`; si no, se dice
   y con scroll. Durante una ejecución se muestra el texto actualizado sin
   lanzar Chromium; al terminar se genera la captura. Los informes
   **Histórico …** quedan como snapshots manuales.
+- **Historial**: guarda cada corrida como JSON detallado en `.visual/history`
+  y `.perf/history`, compara la última con la anterior y muestra los casos que
+  mejoraron o empeoraron en posición, layout, color, diseño, ΔE, ratio, p95
+  y RSS.
 - **Acciones por fila**: clic derecho en un escenario o página (o el botón
   **Acciones ▾**) abre un menú para **ver detalles** o **ejecutar solo ese
   test/página**. Al terminar, el resultado se fusiona en la tabla sin borrar
