@@ -466,6 +466,31 @@ Bloqueados: vídeo y audio (multimedia) y fetch/WebSocket cuando la red está
 denegada (el ejemplo real habilita sus hosts con `IoNetwork`). No
 soportados: `share` y `geolocation`.
 
+## Fidelidad visual: fuentes y hojas alternativas — 2026-10-25
+
+Línea base: corrida completa de 300 páginas (`.visual/previous`, 9 PASS,
+15 WARN, 256 FAIL, 20 INVALID). Medición sobre 12 páginas FAIL/WARN
+repartidas por el catálogo (`--only` con esas 12, salida `.visual/fonts-check`).
+
+- **Arnés (corrección de medición, `68e03b4`):** `flutter_tester` no tiene
+  fontconfig; el arnés cargaba Noto Sans para Arial/sans-serif y ninguna serif.
+  Ahora carga Liberation Serif/Sans/Mono, Noto Sans/Serif y DejaVu con los
+  nombres que resuelve Chrome aquí (verificado con capturas idénticas píxel a
+  píxel de Chrome headless).
+- **Producto (`f33d6c2`):** `font-family` inicial = Times New Roman y
+  `sans-serif` → Arial/Helvetica/Liberation Sans, como Chrome. `system-ui`
+  sigue en la fuente de plataforma.
+  Con ambos: media de las 12 páginas **50,18 % → 57,41 %**; 7 mejoran (máx.
+  +25,7), 3 igual, 2 bajan (`web-crypto/import-key` −3,8,
+  `workers/start` −2,5). No se separó la parte del arnés de la del producto.
+- **Producto:** `<link rel="alternate stylesheet">` y las hojas con título fuera
+  del conjunto preferido ya no se aplican. `alt-style-sheets`
+  **22,6 % → 63,9 %**.
+
+Pendiente medido: `mobile-tab-navigation` pinta un bloque granate donde Chrome
+no pinta nada; `execcommand` depende de `queryCommandSupported` (no
+implementado). No se ha repetido la corrida completa de 300 páginas.
+
 ## Fase 4 — en curso
 
 - [x] Test262 (97,93 %), html5lib (99,26 %) y URL (70,98 %) por encima del 70 %.

@@ -243,12 +243,31 @@ class NativaXRuntime {
       return sheet;
     }
 
+    // HTML "preferred style sheet set": alternate sheets and titled sheets
+    // outside the first title in document order start disabled.
+    List<String> relOf(dom.Element e) =>
+        (e.getAttribute('rel') ?? '').toLowerCase().split(RegExp(r'\s+'));
+    String? preferredTitle;
+    bool enabled(dom.Element e) {
+      if (e.localName == 'link' && relOf(e).contains('alternate')) return false;
+      final title = e.getAttribute('title') ?? '';
+      if (title.isEmpty) return true;
+      preferredTitle ??= title;
+      return title == preferredTitle;
+    }
+
+    final disabled = <dom.Element>{};
+    for (final e in document.querySelectorAll('style, link')) {
+      if (e.localName == 'link' && !relOf(e).contains('stylesheet')) continue;
+      if (!enabled(e)) disabled.add(e);
+    }
     for (final style in document.querySelectorAll('style')) {
+      if (disabled.contains(style)) continue;
       styleSheets[style] = addSheet(style.textContent, '<style>');
     }
     for (final link in document.querySelectorAll('link')) {
-      final rel = (link.getAttribute('rel') ?? '').toLowerCase().split(' ');
-      if (!rel.contains('stylesheet')) continue;
+      final rel = relOf(link);
+      if (!rel.contains('stylesheet') || disabled.contains(link)) continue;
       final href = link.getAttribute('href');
       if (href == null || href.isEmpty) continue;
       try {

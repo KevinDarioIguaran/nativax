@@ -90,6 +90,36 @@ body { font-family: 'Font Awesome 6 Free', sans-serif; }
     runtime.dispose();
   });
 
+  test('alternate and non-preferred titled stylesheets stay disabled', () async {
+    final loader = _FontLoader(
+      files: {
+        '/default.css': 'p { color: #010101 } .persist { width: 7px }',
+        '/simple.css': 'p { color: #020202 }',
+        '/other-set.css': 'p { color: #030303 }',
+        '/always.css': '.persist { height: 9px }',
+      },
+    );
+    final runtime = await NativaXRuntime.create(
+      source: '''
+<!doctype html><html><head>
+<link href="/default.css" rel="stylesheet" title="Default">
+<link href="/simple.css" rel="alternate stylesheet" title="Simple">
+<link href="/other-set.css" rel="stylesheet" title="Other">
+<link href="/always.css" rel="stylesheet">
+<style title="Other">p { font-size: 33px }</style>
+</head><body><p class="persist">x</p></body></html>
+''',
+      documentUrl: 'http://test/',
+      config: NativaXRuntimeConfig(resources: loader),
+    );
+    final p = runtime.document.querySelector('p')!;
+    final style = runtime.styleEngine.styleOf(p);
+    expect(style.color, const CssColor(0xff010101));
+    expect(style.fontSize, isNot(33));
+    expect(style.height?.value, 9);
+    runtime.dispose();
+  });
+
   testWidgets('NativaXView loads and renders a document', (tester) async {
     await tester.pumpWidget(
       const MaterialApp(
