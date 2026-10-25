@@ -96,16 +96,22 @@ final class V8Engine implements JavaScriptEngine {
     );
     evaluate(nativaxHostPrelude, filename: '<nativax:host>');
     // V8 otherwise waits for the heap limit before a full GC; large app caches
-    // leave hundreds of MB of collectable garbage.
-    _gcTimer = Timer.periodic(const Duration(seconds: 15), (_) {
-      if (_disposed) return;
-      final used = _memory();
-      _gc();
-      if (Platform.environment['NATIVAX_TRACE_GC'] == '1') {
-        stderr.writeln('V8_GC before=${(used / 1048576).toStringAsFixed(1)}MB '
-            'after=${(_memory() / 1048576).toStringAsFixed(1)}MB');
-      }
+    // leave hundreds of MB of collectable garbage. Page startup alone leaves
+    // ~20 MB, so the first collection runs shortly after creation.
+    _gcTimer = Timer(const Duration(seconds: 2), () {
+      _collect();
+      _gcTimer = Timer.periodic(const Duration(seconds: 15), (_) => _collect());
     });
+  }
+
+  void _collect() {
+    if (_disposed) return;
+    final used = _memory();
+    _gc();
+    if (Platform.environment['NATIVAX_TRACE_GC'] == '1') {
+      stderr.writeln('V8_GC before=${(used / 1048576).toStringAsFixed(1)}MB '
+          'after=${(_memory() / 1048576).toStringAsFixed(1)}MB');
+    }
   }
 
   final JavaScriptEngineConfig config;
