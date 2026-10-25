@@ -1,5 +1,28 @@
 # Histórico
 
+## 2026-10-24 — Tests añadidos, no solo listados
+
+- Se añadieron 90 tests de fuzzing determinista: 30 en `nativa_html`,
+  30 en `nativa_css` y 30 en `nativa_dom`.
+- Se añadió `tools/test_architecture.py`, guardia que falla si aparece
+  WebView, CEF, Chromium embebido, Electron o servidor HTTP de presentación.
+- Ambos quedan en `tools/test_all.sh`.
+- Lo que no se puede cerrar aquí se documenta en
+  `progress/tasks/remaining-tests.md`: soak 24–72 h, plataformas, golden,
+  fuzzing con minimización, vídeo real y game-player completo.
+
+## 2026-10-24 — Tarea de precisión para vídeo y juegos
+
+- Se creó `progress/tasks/video-games-precision.md` con tareas y criterios de
+  aceptación para vídeo y juegos.
+- Vídeo: primero contrato medible; después pipeline real. No se afirma
+  reproducción.
+- Juegos: medir los 25 perfiles 2D y 25 3D, luego el game-player real con
+  `NATIVAX_GAME_DPR`.
+- Memoria: RSS pico bajo carga y guardia de arquitectura.
+- Cada medición debe incluir viewport, captura, métricas, RSS/CPU, nodos y
+  límites.
+
 ## 2026-10-24 — Conformidad visible en el panel
 
 - La barra lateral incluye **Conformidad** con Test262, html5lib, URL y WPT

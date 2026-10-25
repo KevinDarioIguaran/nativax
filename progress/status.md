@@ -2,7 +2,7 @@
 
 Última actualización: 2026-10-24 (juicio visual + rendimiento headless + V8 + CSS).
 Tests focalizados en esta pasada: **14 perf + 119 visual + 78 CSS +
-4 security + 10 leaks + 25 vídeo + 9 recomendaciones + 3 manifiesto de vídeo = 262 en verde**. La matriz de casos añade
+4 security + 10 leaks + 25 vídeo + 9 recomendaciones + 3 manifiesto de vídeo + 90 fuzz = 352 en verde**. La matriz de casos añade
 300 casos nuevos (escenarios, casos de seguridad/leaks y tests). El
 `./tools/test_all.sh` completo sigue sin terminar en 0 por el test flaky
 `wasm_rapier_test` de `packages/nativax`; ese paquete solo pasa **30/30**.

@@ -14,9 +14,10 @@ tasa de compatibilidad ni una promesa de reproducción multimedia.
 | Memoria y lifecycle | 30 | `tools/leaks/lib/src/cases/matrix_cases.dart` | quick: 30 PASS, 0 FAIL, 0 ERROR |
 | **Total** | **300** | | |
 
-Además, `tools/test_recommend.py` añade 9 tests del motor de recomendaciones
-y `tools/test_video_manifest.py` 3 del manifiesto de vídeo (fuera del recuento
-de 300 casos de producto).
+Además, `tools/test_recommend.py` añade 9 tests del motor de recomendaciones,
+`tools/test_video_manifest.py` 3 del manifiesto de vídeo y 90 tests de
+fuzzing determinista en HTML/CSS/DOM más una guardia de arquitectura
+(fuera del recuento de 300 casos de producto).
 
 ## Catálogo de rendimiento
 

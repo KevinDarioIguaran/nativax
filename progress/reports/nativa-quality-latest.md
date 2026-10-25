@@ -21,7 +21,7 @@ widgets Flutter, y JavaScript sobre QuickJS-ng.
 | JS puro (arrays/objetos/strings) | A la altura o por delante de Chromium (0,4×–2,9×) |
 | Coste dominante | **DOM/layout/scroll**, no el motor JS |
 | Autocalibración del juicio visual | Chromium vs Chromium = **100 % / PASS** |
-| Tests | **14 perf + 119 visual + 78 CSS + 4 security + 10 leaks + 25 vídeo + 9 recomendaciones + 3 manifiesto de vídeo** en verde; el `test_all` completo mantiene un flake ajeno en `wasm_rapier_test` |
+| Tests | **14 perf + 119 visual + 78 CSS + 4 security + 10 leaks + 25 vídeo + 9 recomendaciones + 3 manifiesto de vídeo + 90 fuzz** en verde; el `test_all` completo mantiene un flake ajeno en `wasm_rapier_test` |
 
 Respuesta corta a “¿rinde como debe?”: **en reposo y en CPU pura sí; en creación
 de filas, actualización masiva y scroll largo todavía no**.
@@ -342,7 +342,7 @@ progress/reports/perf-latest.md
 - `tools/visual`: **66 tests** en verde (1 skip e2e), analyze limpio.
 - `tools/perf`: **12 tests** en verde (1 skip e2e), analyze limpio.
 - `examples/web-challenge`: `flutter analyze` limpio; tests en verde.
-- En esta pasada: **14 perf + 119 visual + 78 CSS + 4 security + 10 leaks + 25 vídeo + 9 recomendaciones + 3 manifiesto de vídeo** en verde. El `test_all` completo mantiene un flake ajeno en `wasm_rapier_test`.
+- En esta pasada: **14 perf + 119 visual + 78 CSS + 4 security + 10 leaks + 25 vídeo + 9 recomendaciones + 3 manifiesto de vídeo + 90 fuzz** en verde. El `test_all` completo mantiene un flake ajeno en `wasm_rapier_test`.
 - `./tools/test_all.sh` no terminó en 0 en dos intentos por el test flaky
   `wasm_rapier_test` de `packages/nativax`; ese paquete solo pasa **30/30** y
   el resto de secciones se verificó por separado con éxito.
