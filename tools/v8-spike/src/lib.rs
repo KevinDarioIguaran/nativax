@@ -15,6 +15,49 @@ type PutBufferCb = extern "C" fn(*const u8, usize) -> u32;
 struct State {
     isolate: Box<v8::OwnedIsolate>,
     context: v8::Global<Context>,
+    /// Owned by the near-heap-limit callback; freed on dispose.
+    heap_handle: *mut v8::IsolateHandle,
+}
+
+impl Drop for State {
+    fn drop(&mut self) {
+        if !self.heap_handle.is_null() {
+            // Unregister before freeing the callback's data.
+            self.isolate
+                .remove_near_heap_limit_callback(near_heap_limit, 0);
+            unsafe { drop(Box::from_raw(self.heap_handle)) };
+            self.heap_handle = std::ptr::null_mut();
+        }
+    }
+}
+
+/// Extra room granted once the heap limit is near, so V8 can unwind the
+/// terminated script instead of aborting the process.
+const HEAP_HEADROOM: usize = 16 * 1024 * 1024;
+
+/// Near the heap limit: stop the running script (uncatchable termination)
+/// and report it, instead of letting V8 abort with an OOM.
+unsafe extern "C" fn near_heap_limit(
+    data: *mut c_void,
+    current_heap_limit: usize,
+    _initial_heap_limit: usize,
+) -> usize {
+    HEAP_EXHAUSTED.with(|f| f.set(true));
+    let handle = unsafe { &*(data as *const v8::IsolateHandle) };
+    handle.terminate_execution();
+    current_heap_limit + HEAP_HEADROOM
+}
+
+const MEMORY_ERROR: &str = r#"{"__nativax_error":"heap limit reached","kind":"memory"}"#;
+
+/// After script ran: when the heap callback terminated it, clear the
+/// termination so the isolate stays usable and report a memory error.
+fn memory_error(isolate: &v8::Isolate) -> Option<*mut c_char> {
+    if !HEAP_EXHAUSTED.with(|f| f.get()) {
+        return None;
+    }
+    isolate.cancel_terminate_execution();
+    Some(string_result(MEMORY_ERROR.to_string()))
 }
 
 thread_local! {
@@ -22,6 +65,7 @@ thread_local! {
     static HOST_CB: Cell<Option<HostCb>> = const { Cell::new(None) };
     static TAKE_BUFFER_CB: Cell<Option<TakeBufferCb>> = const { Cell::new(None) };
     static PUT_BUFFER_CB: Cell<Option<PutBufferCb>> = const { Cell::new(None) };
+    static HEAP_EXHAUSTED: Cell<bool> = const { Cell::new(false) };
 }
 
 fn init_v8() {
@@ -184,6 +228,9 @@ pub extern "C" fn nv8_create(memory_limit: usize, _max_stack: usize) -> *mut c_v
         v8::CreateParams::default()
     };
     let mut isolate = Box::new(Isolate::new(params));
+    let heap_handle = Box::into_raw(Box::new(isolate.thread_safe_handle()));
+    isolate.add_near_heap_limit_callback(near_heap_limit, heap_handle as *mut c_void);
+    HEAP_EXHAUSTED.with(|f| f.set(false));
     let context_global;
     {
         let isolate_ref = &mut *isolate;
@@ -227,6 +274,7 @@ globalThis.__nx_gl_native = null;
     let state = Box::new(State {
         isolate,
         context: context_global,
+        heap_handle,
     });
     let ptr = Box::into_raw(state);
     STATE.with(|s| s.set(ptr));
@@ -255,7 +303,7 @@ pub extern "C" fn nv8_eval(source: *const c_char) -> *mut c_char {
     }
     let state = unsafe { &mut *state_ptr };
     let source = unsafe { CStr::from_ptr(source) }.to_string_lossy().to_string();
-    let State { isolate, context } = state;
+    let State { isolate, context, .. } = state;
     let isolate = &mut **isolate;
     v8::scope!(let handle_scope, isolate);
     let context = v8::Local::new(handle_scope, &*context);
@@ -266,7 +314,11 @@ pub extern "C" fn nv8_eval(source: *const c_char) -> *mut c_char {
     let Some(script) = v8::Script::compile(scope, code, None) else {
         return string_result(r#"{"__nativax_error":"compile error"}"#.to_string());
     };
-    let Some(result) = script.run(scope) else {
+    let result = script.run(scope);
+    if let Some(error) = memory_error(scope) {
+        return error;
+    }
+    let Some(result) = result else {
         return string_result(r#"{"__nativax_error":"runtime error"}"#.to_string());
     };
     string_result(json_result(scope, result))
@@ -288,7 +340,7 @@ pub extern "C" fn nv8_call_global(
     } else {
         unsafe { CStr::from_ptr(argument) }.to_string_lossy().to_string()
     };
-    let State { isolate, context } = state;
+    let State { isolate, context, .. } = state;
     let isolate = &mut **isolate;
     v8::scope!(let handle_scope, isolate);
     let context = v8::Local::new(handle_scope, &*context);
@@ -312,7 +364,11 @@ pub extern "C" fn nv8_call_global(
         return string_result("null".to_string());
     };
     let recv = global.into();
-    let Some(result) = dispatcher.call(scope, recv, &[name_value.into(), arg_value]) else {
+    let result = dispatcher.call(scope, recv, &[name_value.into(), arg_value]);
+    if let Some(error) = memory_error(scope) {
+        return error;
+    }
+    let Some(result) = result else {
         return string_result(r#"{"__nativax_error":"call error"}"#.to_string());
     };
     string_result(json_result(scope, result))
@@ -334,8 +390,22 @@ pub extern "C" fn nv8_drain_microtasks() -> u32 {
     if !state_ptr.is_null() {
         let state = unsafe { &mut *state_ptr };
         state.isolate.perform_microtask_checkpoint();
+        if HEAP_EXHAUSTED.with(|f| f.get()) {
+            state.isolate.cancel_terminate_execution();
+        }
     }
     0
+}
+
+/// 1 when a script was stopped at the heap limit since the last clear.
+#[no_mangle]
+pub extern "C" fn nv8_heap_exhausted() -> u32 {
+    HEAP_EXHAUSTED.with(|f| f.get()) as u32
+}
+
+#[no_mangle]
+pub extern "C" fn nv8_clear_heap_exhausted() {
+    HEAP_EXHAUSTED.with(|f| f.set(false));
 }
 
 #[no_mangle]
