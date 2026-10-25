@@ -1419,13 +1419,28 @@ class _Builder {
       pad('right'),
       pad('bottom'),
     );
+    // Expand the in-flow child only when the containing block has a finite
+    // size. A loose `Stack` would otherwise let a flex container shrink to
+    // its content and defeat cross-axis centering, while an unconditional
+    // expand passes infinite constraints to text in unbounded contexts.
+    final normalChild = LayoutBuilder(
+      builder: (context, constraints) {
+        if (constraints.hasBoundedWidth && constraints.hasBoundedHeight) {
+          return SizedBox(
+            width: constraints.maxWidth,
+            height: constraints.maxHeight,
+            child: normal,
+          );
+        }
+        return normal;
+      },
+    );
     return Stack(
-      fit: StackFit.expand,
       clipBehavior: Clip.none,
       children: [
         for (final entry in entries)
           if (entry.$2 < 0) _absoluteWidget(entry.$1, padding, containerWidth, containerHeight),
-        normal,
+        normalChild,
         for (final entry in entries)
           if (entry.$2 >= 0) _absoluteWidget(entry.$1, padding, containerWidth, containerHeight),
       ],
