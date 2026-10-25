@@ -181,37 +181,204 @@ List<double> _stopPositions(List<GradientStop> stops) {
   return [for (final v in out) v!];
 }
 
+/// The laid-out size of a positioned element's containing block, published
+/// by [CssContainingBlockScope] during layout to its [CssContainingBlock]s.
+class CssContainingBlockSize {
+  double? width;
+  double? height;
+  final Set<RenderCssContainingBlock> _listeners = {};
+}
+
+/// Measures the content box of a positioned container (the `Stack`) at
+/// layout time and publishes its padding box, so `height: 100%` of a
+/// percentage-height container resolves. Unlike a `LayoutBuilder` it
+/// supports intrinsic sizing.
+class CssContainingBlockScope extends SingleChildRenderObjectWidget {
+  const CssContainingBlockScope({
+    super.key,
+    required this.size,
+    required this.padding,
+    this.fallbackWidth,
+    this.fallbackHeight,
+    super.child,
+  });
+  final CssContainingBlockSize size;
+  final EdgeInsets padding;
+  final double? fallbackWidth;
+  final double? fallbackHeight;
+
+  @override
+  RenderCssContainingBlockScope createRenderObject(BuildContext context) =>
+      RenderCssContainingBlockScope(
+        size,
+        padding,
+        fallbackWidth,
+        fallbackHeight,
+      );
+
+  @override
+  void updateRenderObject(
+    BuildContext context,
+    RenderCssContainingBlockScope renderObject,
+  ) {
+    renderObject
+      ..block = size
+      ..padding = padding
+      ..fallback = (fallbackWidth, fallbackHeight);
+  }
+}
+
+class RenderCssContainingBlockScope extends RenderProxyBox {
+  RenderCssContainingBlockScope(
+    this._block,
+    this._padding,
+    this._fallbackWidth,
+    this._fallbackHeight,
+  );
+  CssContainingBlockSize _block;
+  EdgeInsets _padding;
+  double? _fallbackWidth;
+  double? _fallbackHeight;
+
+  set block(CssContainingBlockSize v) {
+    if (identical(v, _block)) return;
+    _block = v;
+    markNeedsLayout();
+  }
+
+  set padding(EdgeInsets v) {
+    if (v == _padding) return;
+    _padding = v;
+    markNeedsLayout();
+  }
+
+  set fallback((double?, double?) v) {
+    if (v.$1 == _fallbackWidth && v.$2 == _fallbackHeight) return;
+    _fallbackWidth = v.$1;
+    _fallbackHeight = v.$2;
+    markNeedsLayout();
+  }
+
+  @override
+  void performLayout() {
+    final width = constraints.hasBoundedWidth
+        ? constraints.maxWidth + _padding.horizontal
+        : _fallbackWidth;
+    final height = constraints.hasTightHeight
+        ? constraints.maxHeight + _padding.vertical
+        : _fallbackHeight;
+    if (width != _block.width || height != _block.height) {
+      _block
+        ..width = width
+        ..height = height;
+      invokeLayoutCallback<BoxConstraints>((_) {
+        for (final listener in _block._listeners) {
+          listener.markNeedsLayout();
+        }
+      });
+    }
+    super.performLayout();
+  }
+}
+
 /// Reports the containing block (padding box of the positioned ancestor) to
 /// the [CssBox] of an absolutely positioned element. A `Stack` gives such
-/// children unbounded constraints, so percentages would not resolve.
+/// children unbounded constraints, so percentages would not resolve. With a
+/// [scope] the laid-out size wins over the static [width]/[height].
 class CssContainingBlock extends SingleChildRenderObjectWidget {
-  const CssContainingBlock({super.key, this.width, this.height, super.child});
+  const CssContainingBlock({
+    super.key,
+    this.width,
+    this.height,
+    this.scope,
+    super.child,
+  });
   final double? width;
   final double? height;
+  final CssContainingBlockSize? scope;
 
   @override
   RenderCssContainingBlock createRenderObject(BuildContext context) =>
-      RenderCssContainingBlock(width, height);
+      RenderCssContainingBlock(width, height, scope);
 
   @override
   void updateRenderObject(
     BuildContext context,
     RenderCssContainingBlock renderObject,
   ) {
-    renderObject.containingSize = (width, height);
+    renderObject
+      ..containingSize = (width, height)
+      ..scope = scope;
   }
 }
 
 class RenderCssContainingBlock extends RenderProxyBox {
-  RenderCssContainingBlock(this._width, this._height);
-  double? _width;
-  double? _height;
+  RenderCssContainingBlock(this._staticWidth, this._staticHeight, this._scope);
+  double? _staticWidth;
+  double? _staticHeight;
+  CssContainingBlockSize? _scope;
+
+  double? get _width => _scope?.width ?? _staticWidth;
+  double? get _height => _scope?.height ?? _staticHeight;
 
   set containingSize((double?, double?) value) {
-    if (value.$1 == _width && value.$2 == _height) return;
-    _width = value.$1;
-    _height = value.$2;
+    if (value.$1 == _staticWidth && value.$2 == _staticHeight) return;
+    _staticWidth = value.$1;
+    _staticHeight = value.$2;
     markNeedsLayout();
+  }
+
+  set scope(CssContainingBlockSize? value) {
+    if (identical(value, _scope)) return;
+    if (attached) _scope?._listeners.remove(this);
+    _scope = value;
+    if (attached) _scope?._listeners.add(this);
+    markNeedsLayout();
+  }
+
+  @override
+  void attach(PipelineOwner owner) {
+    super.attach(owner);
+    _scope?._listeners.add(this);
+  }
+
+  @override
+  void detach() {
+    _scope?._listeners.remove(this);
+    super.detach();
+  }
+}
+
+/// Gives its child the parent's full size when both axes are bounded (like
+/// `SizedBox.expand`), and the incoming constraints otherwise. Unlike a
+/// `LayoutBuilder` it supports intrinsic sizing.
+class CssExpandToBounds extends SingleChildRenderObjectWidget {
+  const CssExpandToBounds({super.key, super.child});
+
+  @override
+  RenderCssExpandToBounds createRenderObject(BuildContext context) =>
+      RenderCssExpandToBounds();
+}
+
+class RenderCssExpandToBounds extends RenderProxyBox {
+  BoxConstraints _forChild(BoxConstraints c) =>
+      c.hasBoundedWidth && c.hasBoundedHeight ? BoxConstraints.tight(c.biggest) : c;
+
+  @override
+  Size computeDryLayout(covariant BoxConstraints constraints) {
+    final inner = _forChild(constraints);
+    return child == null ? inner.smallest : child!.getDryLayout(inner);
+  }
+
+  @override
+  void performLayout() {
+    final inner = _forChild(constraints);
+    if (child == null) {
+      size = inner.smallest;
+      return;
+    }
+    child!.layout(inner, parentUsesSize: true);
+    size = constraints.constrain(child!.size);
   }
 }
 

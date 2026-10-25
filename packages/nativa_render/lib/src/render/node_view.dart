@@ -1440,44 +1440,32 @@ class _Builder {
     // size. A loose `Stack` would otherwise let a flex container shrink to
     // its content and defeat cross-axis centering, while an unconditional
     // expand passes infinite constraints to text in unbounded contexts.
-    final normalChild = LayoutBuilder(
-      builder: (context, constraints) {
-        if (constraints.hasBoundedWidth && constraints.hasBoundedHeight) {
-          return SizedBox(
-            width: constraints.maxWidth,
-            height: constraints.maxHeight,
-            child: normal,
-          );
-        }
-        return normal;
-      },
-    );
+    final normalChild = CssExpandToBounds(child: normal);
     final clip = ps.overflowX == 'hidden' || ps.overflowX == 'clip' || ps.overflowY == 'hidden' || ps.overflowY == 'clip'
         ? Clip.hardEdge
         : Clip.none;
     // The laid-out content box beats the declared size: a percentage height
     // (`height: 100%` of a `100vh` body) is only known at layout time.
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final width = constraints.hasBoundedWidth
-            ? constraints.maxWidth + padding.horizontal
-            : containerWidth;
-        final height = constraints.hasTightHeight
-            ? constraints.maxHeight + padding.vertical
-            : containerHeight;
-        return Stack(
-          clipBehavior: clip,
-          children: [
-            for (final entry in entries)
-              if (entry.$2 < 0)
-                _absoluteWidget(entry.$1, padding, width, height),
-            normalChild,
-            for (final entry in entries)
-              if (entry.$2 >= 0)
-                _absoluteWidget(entry.$1, padding, width, height),
-          ],
-        );
-      },
+    final block = CssContainingBlockSize();
+    return CssContainingBlockScope(
+      size: block,
+      padding: padding,
+      fallbackWidth: containerWidth,
+      fallbackHeight: containerHeight,
+      child: Stack(
+        clipBehavior: clip,
+        children: [
+          for (final entry in entries)
+            if (entry.$2 < 0)
+              _absoluteWidget(
+                entry.$1, padding, containerWidth, containerHeight, block),
+          normalChild,
+          for (final entry in entries)
+            if (entry.$2 >= 0)
+              _absoluteWidget(
+                entry.$1, padding, containerWidth, containerHeight, block),
+        ],
+      ),
     );
   }
 
@@ -1486,6 +1474,7 @@ class _Builder {
     EdgeInsets containerPadding = EdgeInsets.zero,
     double? containerWidth,
     double? containerHeight,
+    CssContainingBlockSize? block,
   ]) {
     final style = styleOfChild(node)!;
     final element = node is _Pseudo ? node.element : node as dom.Element;
@@ -1541,6 +1530,7 @@ class _Builder {
     box = CssContainingBlock(
       width: basisWidth,
       height: isFixed ? basisHeight : containerHeight,
+      scope: isFixed ? null : block,
       child: box,
     );
     final shiftTop = math.min(0.0, marginTop);
