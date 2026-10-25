@@ -466,6 +466,28 @@ Bloqueados: vídeo y audio (multimedia) y fetch/WebSocket cuando la red está
 denegada (el ejemplo real habilita sus hosts con `IoNetwork`). No
 soportados: `share` y `geolocation`.
 
+## RAM con V8 frente al tope de 250 MB — 2026-10-25
+
+App release `examples/web-challenge`, ventana visible, RSS a los 10 s,
+mediana de 4 arranques (esta máquina: Mesa/LLVM ocupa ~55 MB en cualquier
+app Flutter).
+
+| Configuración | RSS |
+|---|---:|
+| App Flutter vacía (`flutter create --empty`) | 181 MB |
+| NativaX + QuickJS | 218 MB |
+| NativaX + V8 (antes) | 270 MB |
+| NativaX + V8 con page-out de código y GC a los 2 s | **252 MB** |
+| + `--optimize-for-size` (vía `NATIVAX_V8_FLAGS`) | 250 MB |
+| + `--lite-mode` (sin JIT optimizador; no recomendado) | 239 MB |
+
+- V8 añade ~33 MB sobre QuickJS: ~14 MB de código residente de
+  `libnx_v8.so` (26 → 14 MB con `MADV_PAGEOUT`) y el heap del isolate.
+- La base de NativaX sobre Flutter vacío es ~37 MB y no se ha desglosado
+  (requiere perfil de memoria de Dart).
+- **Tope de 250 MB: V8 queda en el límite, sin margen.** No se cumple de forma
+  fiable todavía.
+
 ## V8 por defecto en escritorio — 2026-10-25
 
 - `createDefaultJavaScriptEngine` (`nativa_js`): V8 en Linux/macOS/Windows
