@@ -325,10 +325,16 @@ class RenderCssBox extends RenderBox with RenderObjectWithChildMixin<RenderBox> 
     // incoming (possibly tight) constraints to that max-width so max-width
     // is honored instead of being overridden by the parent's tight width.
     BoxConstraints c = constraints;
+    // The parent's minimum still wins: never cap below it.
     if (w == null && maxW.isFinite && constraints.hasBoundedWidth &&
-        !constraints.isTight && constraints.maxWidth > maxW) {
+        !constraints.hasTightWidth && constraints.maxWidth > maxW) {
       final cap = math.max(minW, maxW);
-      c = constraints.copyWith(maxWidth: math.min(constraints.maxWidth, cap));
+      c = constraints.copyWith(
+        maxWidth: math.max(
+          constraints.minWidth,
+          math.min(constraints.maxWidth, cap),
+        ),
+      );
     }
     return wanted
         .enforce(c)
