@@ -776,7 +776,6 @@ class Dashboard(ChartMixin):
             ("visual", "◉", "Fidelidad visual"),
             ("conformance", "✓", "Conformidad"),
             ("video", "▶", "Vídeo"),
-            ("video", "▶", "Vídeo"),
             ("games", "▣", "Videojuegos"),
             ("idle", "◷", "Idle"),
             ("container", "❏", "Contenedores"),
