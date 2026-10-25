@@ -151,10 +151,14 @@ class IsolateWorkerLauncher implements WorkerLauncher {
   }
 
   @override
-  void terminate(int workerId) {
+  void terminate(int workerId, {bool immediate = false}) {
     final handle = _workers.remove(workerId);
     if (handle == null) return;
     handle.terminated = true;
+    if (immediate) {
+      handle.kill();
+      return;
+    }
     handle.toWorker?.send(['terminate']);
     // A worker busy in a long script cannot read the request: kill it.
     Timer(const Duration(milliseconds: 250), handle.kill);

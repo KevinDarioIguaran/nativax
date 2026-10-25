@@ -104,4 +104,23 @@ void main() {
       runtime.dispose();
     });
   });
+
+  testWidgets('disposing the runtime leaves no worker timer pending',
+      (tester) async {
+    // mdn web-workers/offscreen-canvas-worker: dispose() terminated live
+    // workers through a 250 ms grace timer that outlived the runtime.
+    late NativaXRuntime runtime;
+    await tester.runAsync(() async {
+      runtime = await NativaXRuntime.create(
+        source: r'''<script>
+          const src = 'postMessage("started"); setInterval(() => {}, 10);';
+          globalThis.w = new Worker(URL.createObjectURL(new Blob([src])));
+          w.onmessage = (e) => { globalThis.started = e.data; };
+        </script>''',
+      );
+    });
+    expect(await _waitFor(tester, runtime, 'globalThis.started'), 'started');
+    runtime.dispose();
+    // flutter_test fails the test if a Timer is still pending here.
+  });
 }

@@ -65,7 +65,9 @@ abstract interface class WorkerLauncher {
     required void Function(Map<String, Object?> event) report,
   });
 
-  void terminate(int workerId);
+  /// Stops a worker. [immediate] skips any grace period (used when the page
+  /// runtime is disposed, so nothing outlives it).
+  void terminate(int workerId, {bool immediate = false});
 }
 
 class _PortState {
@@ -225,7 +227,7 @@ class PortRouter {
     if (_disposed) return;
     _disposed = true;
     for (final id in List.of(_workerOwner.keys)) {
-      launcher?.terminate(id);
+      launcher?.terminate(id, immediate: true);
     }
     _workerOwner.clear();
     _workerEndpoint.clear();

@@ -179,7 +179,7 @@ class InProcessWorkerLauncher implements WorkerLauncher {
   }
 
   @override
-  void terminate(int workerId) {
+  void terminate(int workerId, {bool immediate = false}) {
     final w = _running.remove(workerId);
     if (w == null) {
       _terminated.add(workerId);
