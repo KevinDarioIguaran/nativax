@@ -260,6 +260,19 @@ void main() {
       expect(d.backgroundSize, ['auto', 'auto']);
     });
 
+    test('form controls do not inherit the page font family', () {
+      // Chrome's UA sheet gives controls `font: -webkit-small-control`,
+      // which computes to Arial 13.333px (textarea: monospace).
+      final s = styled(
+        '<div><button>b</button><input><select></select><textarea></textarea></div>',
+        'div { font-family: Georgia; }',
+      );
+      expect(styleOf(s, 'button').fontFamily, ['Arial']);
+      expect(styleOf(s, 'input').fontFamily, ['Arial']);
+      expect(styleOf(s, 'select').fontFamily, ['Arial']);
+      expect(styleOf(s, 'textarea').fontFamily, ['monospace']);
+    });
+
     test('inheritance of inherited properties only', () {
       final s = styled('<div><p><span>x</span></p></div>',
           'div { color: #123456; padding: 5px; font-family: Inter; text-align: center }');

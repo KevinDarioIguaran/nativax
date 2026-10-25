@@ -56,7 +56,7 @@ ul ul, ol ul { list-style-type: circle }
 hr { border: 1px solid #b0b0b0; margin-top: 0.5em; margin-bottom: 0.5em }
 img { display: inline-block }
 button, input, textarea, select {
-  display: inline-block; font-size: 13.333px; color: #000000;
+  display: inline-block; font-size: 13.333px; font-family: Arial; color: #000000;
   border: 1px solid #767676; border-radius: 2px;
 }
 button {
