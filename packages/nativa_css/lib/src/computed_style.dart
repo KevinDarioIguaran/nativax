@@ -161,6 +161,18 @@ class ComputedStyle {
     return v is UrlValue ? v.url : null;
   }
 
+  /// `repeat`, `no-repeat`, `repeat-x` or `repeat-y`.
+  String get backgroundRepeat => _kw('background-repeat');
+
+  /// `[x, y]` as px or percentage [Length]s.
+  List<Length> get backgroundPosition =>
+      (this['background-position'] as ListValue<Length>).items;
+
+  /// `['cover']`, `['contain']` or `[width, height]` with [Length] or
+  /// `'auto'` items.
+  List<Object> get backgroundSize =>
+      (this['background-size'] as ListValue<Object>).items;
+
   CssColor get color => (this['color'] as ColorValue).color ?? CssColor.black;
   double get opacity => (this['opacity'] as NumberValue).value;
   String get visibility => _kw('visibility');

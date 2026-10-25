@@ -98,6 +98,39 @@ bool _available(String family) =>
   return (primary, fallback.isEmpty ? null : fallback);
 }
 
+/// The first background layer as a [DecorationImage]: `background-repeat`,
+/// `background-position` (keywords and percentages; px offsets anchor at the
+/// start edge) and `background-size` (`auto`, `cover`, `contain`, `100%`
+/// widths/heights; other explicit sizes keep the natural size).
+DecorationImage backgroundDecorationImage(ImageProvider image, ComputedStyle s) {
+  final repeat = switch (s.backgroundRepeat) {
+    'no-repeat' => ImageRepeat.noRepeat,
+    'repeat-x' => ImageRepeat.repeatX,
+    'repeat-y' => ImageRepeat.repeatY,
+    _ => ImageRepeat.repeat,
+  };
+  final size = s.backgroundSize;
+  bool full(Object v) =>
+      v is Length && v.unit == LengthUnit.percent && v.value == 100;
+  final fit = switch (size) {
+    ['cover'] => BoxFit.cover,
+    ['contain'] => BoxFit.contain,
+    [final w, final h] when full(w) && full(h) => BoxFit.fill,
+    [final w, 'auto'] when full(w) => BoxFit.fitWidth,
+    ['auto', final h] when full(h) => BoxFit.fitHeight,
+    _ => BoxFit.none,
+  };
+  double axis(Length l) =>
+      l.unit == LengthUnit.percent ? l.value / 50 - 1 : -1;
+  final position = s.backgroundPosition;
+  return DecorationImage(
+    image: image,
+    fit: fit,
+    repeat: repeat,
+    alignment: Alignment(axis(position[0]), axis(position[1])),
+  );
+}
+
 FontWeight mapFontWeight(int w) {
   final index = ((w / 100).round() - 1).clamp(0, 8);
   return FontWeight.values[index];

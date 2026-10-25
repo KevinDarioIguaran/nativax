@@ -176,6 +176,114 @@ CssValue? _textDecorationLine(ValueStream s) {
   return lines.isEmpty ? null : Keyword((lines.toList()..sort()).join(' '));
 }
 
+const _repeatKeywords = {'repeat', 'no-repeat', 'space', 'round'};
+
+/// `background-repeat` for the first layer, normalised to one of `repeat`,
+/// `no-repeat`, `repeat-x` or `repeat-y` (`space`/`round` tile like
+/// `repeat`).
+Keyword? _parseBackgroundRepeat(ValueStream s) {
+  final t = s.peek;
+  if (t == null || t.type != CssTokenType.ident) return null;
+  final first = t.value.toLowerCase();
+  if (first == 'repeat-x' || first == 'repeat-y') {
+    s.next();
+    return Keyword(first);
+  }
+  if (!_repeatKeywords.contains(first)) return null;
+  s.next();
+  var second = first;
+  final n = s.peek;
+  if (n != null &&
+      n.type == CssTokenType.ident &&
+      _repeatKeywords.contains(n.value.toLowerCase())) {
+    second = s.next().value.toLowerCase();
+  }
+  final x = first == 'no-repeat' ? 'no-repeat' : 'repeat';
+  final y = second == 'no-repeat' ? 'no-repeat' : 'repeat';
+  if (x == y) return Keyword(x);
+  return Keyword(x == 'repeat' ? 'repeat-x' : 'repeat-y');
+}
+
+const _positionKeywords = {
+  'left': 0.0,
+  'center': 50.0,
+  'right': 100.0,
+  'top': 0.0,
+  'bottom': 100.0,
+};
+
+/// One or two `background-position` components as `[x, y]` (keywords become
+/// percentages). Three/four-value offsets are not supported.
+ListValue<Length>? _parseBackgroundPosition(ValueStream s) {
+  final parts = <(String?, Length?)>[];
+  while (parts.length < 2 && !s.done) {
+    final t = s.peek!;
+    if (t.type == CssTokenType.ident &&
+        _positionKeywords.containsKey(t.value.toLowerCase())) {
+      parts.add((s.next().value.toLowerCase(), null));
+      continue;
+    }
+    final l = lengthFromToken(t);
+    if (l == null || (l.unit != LengthUnit.px && l.unit != LengthUnit.percent)) {
+      break;
+    }
+    s.next();
+    parts.add((null, l));
+  }
+  if (parts.isEmpty) return null;
+  Length value((String?, Length?) part) => part.$2 ??
+      Length(_positionKeywords[part.$1]!, LengthUnit.percent);
+  const center = Length(50, LengthUnit.percent);
+  bool vertical((String?, Length?) p) => p.$1 == 'top' || p.$1 == 'bottom';
+  bool horizontal((String?, Length?) p) => p.$1 == 'left' || p.$1 == 'right';
+  if (parts.length == 1) {
+    final only = parts.single;
+    return vertical(only)
+        ? ListValue([center, value(only)])
+        : ListValue([value(only), center]);
+  }
+  var (x, y) = (parts[0], parts[1]);
+  if (vertical(x) || horizontal(y)) (x, y) = (y, x);
+  return ListValue([value(x), value(y)]);
+}
+
+/// `background-size`: `['cover']`, `['contain']` or `[width, height]` where
+/// each is a [Length] or `'auto'`.
+ListValue<Object>? _parseBackgroundSize(ValueStream s) {
+  final t = s.peek;
+  if (t == null) return null;
+  if (t.type == CssTokenType.ident) {
+    final k = t.value.toLowerCase();
+    if (k == 'cover' || k == 'contain') {
+      s.next();
+      return ListValue([k]);
+    }
+  }
+  final parts = <Object>[];
+  while (parts.length < 2 && !s.done) {
+    final n = s.peek!;
+    if (n.isIdent('auto')) {
+      s.next();
+      parts.add('auto');
+      continue;
+    }
+    final l = lengthFromToken(n, allowNegative: false);
+    if (l == null || (l.unit != LengthUnit.px && l.unit != LengthUnit.percent)) {
+      break;
+    }
+    s.next();
+    parts.add(l);
+  }
+  if (parts.isEmpty) return null;
+  if (parts.length == 1) parts.add('auto');
+  return ListValue(parts);
+}
+
+CssValue? _whole(CssValue? Function(ValueStream) parse, ValueStream s) {
+  final v = parse(s);
+  return v != null && s.done ? v : null;
+}
+
 CssValue? _backgroundImage(ValueStream s) {
   final gradient = parseGradient(s);
   if (gradient != null) return gradient;
@@ -872,6 +980,24 @@ final Map<String, PropertySpec> longhands = {
     ),
     PropertySpec('background-image', _backgroundImage, _none),
     PropertySpec(
+      'background-repeat',
+      (s) => _whole(_parseBackgroundRepeat, s),
+      const Keyword('repeat'),
+    ),
+    PropertySpec(
+      'background-position',
+      (s) => _whole(_parseBackgroundPosition, s),
+      const ListValue<Length>([
+        Length(0, LengthUnit.percent),
+        Length(0, LengthUnit.percent),
+      ]),
+    ),
+    PropertySpec(
+      'background-size',
+      (s) => _whole(_parseBackgroundSize, s),
+      const ListValue<Object>(['auto', 'auto']),
+    ),
+    PropertySpec(
       'color',
       _color,
       const ColorValue(CssColor.black),
@@ -1341,9 +1467,6 @@ final Map<String, PropertySpec> longhands = {
       'counter-reset',
       'counter-increment',
       'quotes',
-      'background-size',
-      'background-position',
-      'background-repeat',
       'background-attachment',
       'background-clip',
       'background-origin',
@@ -1574,7 +1697,7 @@ final Map<String, _Expander> _shorthands = {
   'background': (s) {
     // Only the last layer may carry a color; NativaX paints the first image
     // layer and the color.
-    CssValue? color, image;
+    CssValue? color, image, repeat, position, size;
     var depth = 0;
     while (!s.done) {
       final t = s.peek!;
@@ -1599,13 +1722,28 @@ final Map<String, _Expander> _shorthands = {
           continue;
         }
       }
+      if (repeat == null) {
+        repeat = _parseBackgroundRepeat(s);
+        if (repeat != null) continue;
+      }
+      if (position == null) {
+        position = _parseBackgroundPosition(s);
+        if (position != null) {
+          if (!s.done && s.peek!.isDelim('/')) {
+            s.next();
+            size = _parseBackgroundSize(s);
+            if (size == null) return null;
+          }
+          continue;
+        }
+      }
       final c = parseColor(s);
       if (c != null) {
         color = c;
         continue;
       }
-      // Position, size, repeat, attachment and box keywords are accepted
-      // and ignored.
+      // Attachment and box keywords (and later layers' position, size and
+      // repeat) are accepted and ignored.
       final n = s.next();
       if (n.type == CssTokenType.ident &&
           const {
@@ -1644,6 +1782,13 @@ final Map<String, _Expander> _shorthands = {
     return {
       'background-color': color ?? const ColorValue(CssColor.transparent),
       'background-image': image ?? _none,
+      'background-repeat': repeat ?? const Keyword('repeat'),
+      'background-position': position ??
+          const ListValue<Length>([
+            Length(0, LengthUnit.percent),
+            Length(0, LengthUnit.percent),
+          ]),
+      'background-size': size ?? const ListValue<Object>(['auto', 'auto']),
     };
   },
   'overflow': (s) {
@@ -1904,7 +2049,13 @@ final Map<String, List<String>> _shorthandTargets = {
   for (final x in _sides)
     'border-$x': ['border-$x-width', 'border-$x-style', 'border-$x-color'],
   'border-radius': [for (final c in _corners) 'border-$c-radius'],
-  'background': ['background-color', 'background-image'],
+  'background': [
+    'background-color',
+    'background-image',
+    'background-repeat',
+    'background-position',
+    'background-size',
+  ],
   'overflow': ['overflow-x', 'overflow-y'],
   'gap': ['row-gap', 'column-gap'],
   'flex': ['flex-grow', 'flex-shrink', 'flex-basis'],

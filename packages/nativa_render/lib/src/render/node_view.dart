@@ -2172,7 +2172,7 @@ class _Builder {
     try {
       final provider = imageResolver!(element, url);
       if (provider == null) return null;
-      return DecorationImage(image: provider, fit: BoxFit.cover);
+      return backgroundDecorationImage(provider, style);
     } catch (error) {
       onDiagnostic?.call('background image failed for "$url": $error');
       return null;

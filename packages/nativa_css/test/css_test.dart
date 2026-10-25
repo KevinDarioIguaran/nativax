@@ -164,7 +164,13 @@ void main() {
       expect(all('flex: 2 0 100px'), ['flex-grow: 2.0', 'flex-shrink: 0.0', 'flex-basis: 100px']);
       expect(all('flex: none'), ['flex-grow: 0.0', 'flex-shrink: 0.0', 'flex-basis: auto']);
       expect(all('gap: 4px 8px'), ['row-gap: 4px', 'column-gap: 8px']);
-      expect(all('background: #fff url(a.png)'), ['background-color: #ffffffff', 'background-image: url(a.png)']);
+      expect(all('background: #fff url(a.png)'), [
+        'background-color: #ffffffff',
+        'background-image: url(a.png)',
+        'background-repeat: repeat',
+        'background-position: 0%, 0%',
+        'background-size: auto, auto',
+      ]);
       expect(all('text-decoration: underline red'), contains('text-decoration-line: underline'));
       expect(all('margin: inherit').first, 'margin-top: inherit');
       expect(all('font-family: "Open Sans", Arial, sans-serif'), ['font-family: Open Sans, Arial, sans-serif']);
@@ -224,6 +230,34 @@ void main() {
       final after = s.$2.pseudoStyleOf(s.$1.querySelector('.k')!, 'after')!;
       expect(after.borderColorOf('bottom'), const CssColor(0xffffffff));
       expect(after.borderColorOf('top'), const CssColor(0x00000000));
+    });
+
+    test('background repeat, position and size longhands and shorthand', () {
+      final s = styled(
+        '<div class="a"></div><div class="b"></div><div class="c"></div>'
+            '<div class="d"></div>',
+        '.a { background: url(x.png) no-repeat center; }'
+            '.b { background: #fff url(x.png) right 10px / cover repeat-x; }'
+            '.c { background-image: url(x.png); background-repeat: repeat no-repeat;'
+            ' background-position: bottom; background-size: 50% auto; }'
+            '.d { background-image: url(x.png); }',
+      );
+      final a = styleOf(s, '.a');
+      expect(a.backgroundRepeat, 'no-repeat');
+      expect(a.backgroundPosition, [const Length(50, LengthUnit.percent), const Length(50, LengthUnit.percent)]);
+      expect(a.backgroundSize, ['auto', 'auto']);
+      final b = styleOf(s, '.b');
+      expect(b.backgroundRepeat, 'repeat-x');
+      expect(b.backgroundPosition, [const Length(100, LengthUnit.percent), const Length.px(10)]);
+      expect(b.backgroundSize, ['cover']);
+      final c = styleOf(s, '.c');
+      expect(c.backgroundRepeat, 'repeat-x');
+      expect(c.backgroundPosition, [const Length(50, LengthUnit.percent), const Length(100, LengthUnit.percent)]);
+      expect(c.backgroundSize, [const Length(50, LengthUnit.percent), 'auto']);
+      final d = styleOf(s, '.d');
+      expect(d.backgroundRepeat, 'repeat');
+      expect(d.backgroundPosition, [const Length(0, LengthUnit.percent), const Length(0, LengthUnit.percent)]);
+      expect(d.backgroundSize, ['auto', 'auto']);
     });
 
     test('inheritance of inherited properties only', () {
