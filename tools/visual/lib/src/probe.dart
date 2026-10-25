@@ -73,6 +73,17 @@ globalThis.__visualProbe = function () {
   var de = document.documentElement;
   var body = document.body;
   if (body) walk(body);
+  // A body with only text (or nothing visible) has no child element to
+  // measure; report the body itself so the page stays comparable.
+  if (body && elements.length === 0) {
+    var br = body.getBoundingClientRect();
+    elements.push({
+      path: pathOf(body),
+      tag: 'body',
+      rect: [r1(br.x + sx), r1(br.y + sy), r1(br.width), r1(br.height)],
+      styles: styles(body)
+    });
+  }
   return JSON.stringify({
     title: document.title || '',
     externalResources: external,

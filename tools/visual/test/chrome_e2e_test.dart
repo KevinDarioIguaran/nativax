@@ -66,4 +66,37 @@ body { display: flex; align-items: center; justify-content: center; background: 
         ? false
         : 'set NATIVA_VISUAL_E2E=1 to run Chrome integration tests',
   );
+
+  test(
+    'a body with only text still reports a measurable element',
+    () async {
+      // mdn html-text-formatting has text directly in <body>; with no child
+      // element both engines reported 0 elements and the page was INVALID.
+      final root = Directory.systemTemp.createTempSync('nativa-visual-e2e-');
+      addTearDown(() => root.deleteSync(recursive: true));
+      final page = Directory('${root.path}/page')..createSync();
+      File('${page.path}/index.html').writeAsStringSync(
+        '<!doctype html><html><body>Quick hummus recipe</body></html>',
+      );
+      const width = 500;
+      const height = 400;
+      final delta = await calibrateChromeFrame(
+        executable: chrome,
+        width: width,
+        height: height,
+      );
+      final outcome = await renderWithChrome(
+        executable: chrome,
+        pageDirectory: page.path,
+        artifacts: '${root.path}/artifacts',
+        width: width,
+        height: height,
+        frameDelta: delta,
+      );
+      expect(outcome.probe.elements.map((e) => e.tag), ['body']);
+    },
+    skip: enabled
+        ? false
+        : 'set NATIVA_VISUAL_E2E=1 to run Chrome integration tests',
+  );
 }
