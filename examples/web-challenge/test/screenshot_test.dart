@@ -39,6 +39,23 @@ class _Loader extends NativaXResourceLoader {
   }
 }
 
+/// Same-origin images from the page directory, as Chrome loads them from
+/// `file://`. Remote images stay blocked, like Chrome's host resolver rules.
+/// Sources arrive resolved against the document URL (`app://local/...`).
+NativaXImageResolver _images(String? dir) => (element, src) {
+      final uri = Uri.tryParse(src);
+      if (dir == null || uri == null) return null;
+      if (uri.hasScheme && uri.scheme != 'app' && uri.scheme != 'file') {
+        return null;
+      }
+      var path = Uri.decodeComponent(uri.path);
+      if (path.startsWith('/')) path = path.substring(1);
+      if (path.split('/').contains('..')) return null;
+      final file = File('$dir/$path');
+      if (!file.existsSync()) return null;
+      return MemoryImage(file.readAsBytesSync());
+    };
+
 Future<void> _loadFonts() async {
   // flutter_tester has no fontconfig, so load the installed faces under the
   // names fontconfig resolves for the reference Chrome on this machine
@@ -133,6 +150,7 @@ void main() {
           body: NativaXView(
             source: source,
             padding: EdgeInsets.zero,
+            imageResolver: _images(dir),
             config: NativaXRuntimeConfig(
               resources: _Loader(dir),
               onScriptError: errors.add,
