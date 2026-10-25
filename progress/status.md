@@ -466,6 +466,29 @@ Bloqueados: vídeo y audio (multimedia) y fetch/WebSocket cuando la red está
 denegada (el ejemplo real habilita sus hosts con `IoNetwork`). No
 soportados: `share` y `geolocation`.
 
+## V8 por defecto en escritorio — 2026-10-25
+
+- `createDefaultJavaScriptEngine` (`nativa_js`): V8 en Linux/macOS/Windows
+  cuando carga `libnx_v8.so` (`NATIVAX_V8_LIB` o el loader) y no hay otro V8
+  vivo en el hilo; QuickJS en el resto, con `NATIVAX_ENGINE=quickjs`, para
+  workers y para páginas con `<script type="module">` (**`V8Engine` aún no
+  implementa módulos ES**; el juego sigue en QuickJS).
+- Límite de memoria: V8 usa ya `memoryLimitBytes` (se quitó el suelo de
+  256 MB). Al acercarse al límite la cdylib termina el script con 16 MB de
+  margen en vez de abortar el proceso → `JavaScriptMemoryLimitException`.
+  Si ocurre al arrancar, la página se recrea en QuickJS; después,
+  `onEngineOverBudget` y `NativaXView` recarga en QuickJS (se pierde el
+  estado de la página).
+- Tests: `nativa_js` 59/59 con la librería (56 + 3 omitidos sin ella);
+  `nativax` completo con V8 por defecto en verde salvo `game_play_test`, que
+  en el worktree falla por falta de `dist/` (no versionado).
+- RSS pico de `flutter_tester` (render por software) con una página de
+  200.000 objetos JS: **V8 310–312 MB, QuickJS 287–288 MB**. Es el proceso de
+  test, no la app release; el tope de 250 MB de proceso **no se ha medido en
+  release** ni se impone desde el motor (solo el heap del motor).
+- Encontrado de paso: el acceso a elementos por id como global (`b` para
+  `id="b"`) no funciona en ningún motor.
+
 ## Fidelidad visual: fuentes y hojas alternativas — 2026-10-25
 
 Línea base: corrida completa de 300 páginas (`.visual/previous`, 9 PASS,
