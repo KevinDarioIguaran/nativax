@@ -267,7 +267,15 @@ class NativeXLayerView extends StatelessWidget {
       onDiagnostic: onDiagnostic,
       cache: cache,
     );
-    if (!modal) return builder._absoluteWidget(element);
+    if (!modal) {
+      final mq = MediaQuery.maybeOf(context);
+      return builder._absoluteWidget(
+        element,
+        EdgeInsets.zero,
+        mq?.size.width ?? 800,
+        mq?.size.height ?? 600,
+      );
+    }
     final style = styleEngine.styleOf(element);
     final backdrop = styleEngine.pseudoStyleOf(element, 'backdrop');
     final box = builder._interact(
@@ -417,6 +425,7 @@ class _Builder {
   }
 
   bool _isAbsolute(Object c) => styleOfChild(c)?.position == 'absolute';
+  bool _isFixed(Object c) => styleOfChild(c)?.position == 'fixed';
 
   bool _isInline(Object c) =>
       c is dom.Text || (styleOfChild(c)?.isInlineLevel ?? false);
@@ -846,7 +855,7 @@ class _Builder {
   Widget _normalContent(dom.Element element, ComputedStyle style) {
     final all = [
       for (final c in children(element))
-        if (!_skipped(c)) c,
+        if (!_skipped(c) && !_isFixed(c)) c,
     ];
     final absolute = all.where(_isAbsolute).toList();
     final normal = all.where((c) => !_isAbsolute(c)).toList();
@@ -1377,8 +1386,7 @@ class _Builder {
     return child;
   }
 
-  double? _px(ResolvedLength? length) =>
-      length == null || length.isPercent ? null : length.value;
+  double? _px(ResolvedLength? length) => length?.resolve(null);
 
   Offset _relativeOffset(ComputedStyle style) {
     final left = _px(style.left);
@@ -1398,6 +1406,8 @@ class _Builder {
     // The Stack is the parent's content box, but offsets are relative to its
     // padding box (CSS 2.1 §10.1).
     final ps = styleEngine.styleOf(parent);
+    final containerWidth = _px(ps.width) ?? _availableWidth(parent);
+    final containerHeight = _px(ps.height);
     double pad(String side) {
       final p = ps.paddingOf(side);
       return p.isPercent ? 0 : p.value;
@@ -1410,13 +1420,14 @@ class _Builder {
       pad('bottom'),
     );
     return Stack(
+      fit: StackFit.expand,
       clipBehavior: Clip.none,
       children: [
         for (final entry in entries)
-          if (entry.$2 < 0) _absoluteWidget(entry.$1, padding),
+          if (entry.$2 < 0) _absoluteWidget(entry.$1, padding, containerWidth, containerHeight),
         normal,
         for (final entry in entries)
-          if (entry.$2 >= 0) _absoluteWidget(entry.$1, padding),
+          if (entry.$2 >= 0) _absoluteWidget(entry.$1, padding, containerWidth, containerHeight),
       ],
     );
   }
@@ -1424,13 +1435,33 @@ class _Builder {
   Widget _absoluteWidget(
     Object node, [
     EdgeInsets containerPadding = EdgeInsets.zero,
+    double? containerWidth,
+    double? containerHeight,
   ]) {
     final style = styleOfChild(node)!;
     final element = node is _Pseudo ? node.element : node as dom.Element;
-    final left = _px(style.left);
-    final right = _px(style.right);
-    final top = _px(style.top);
-    final bottom = _px(style.bottom);
+    // Percentage offsets of `position: fixed` are relative to the viewport.
+    // For `position: absolute`, percentages are relative to the containing
+    // block; use the parent size when it is known and fall back to the
+    // viewport otherwise. This keeps `top: 50%; left: 50%` centred instead
+    // of being dropped as an unresolvable percentage.
+    final isFixed = style.position == 'fixed';
+    final mq = isFixed ? MediaQuery.maybeOf(context) : null;
+    final basisWidth = isFixed
+        ? (mq?.size.width ?? containerWidth ?? 800.0)
+        : (containerWidth ?? mq?.size.width ?? 800.0);
+    final basisHeight = isFixed
+        ? (mq?.size.height ?? containerHeight ?? 600.0)
+        : (containerHeight ?? mq?.size.height ?? 600.0);
+    double? resolve(ResolvedLength? length, double? basis) {
+      if (length == null) return null;
+      if (!length.isPercent) return length.value;
+      return length.resolve(basis);
+    }
+    final left = resolve(style.left, basisWidth);
+    final right = resolve(style.right, basisWidth);
+    final top = resolve(style.top, basisHeight);
+    final bottom = resolve(style.bottom, basisHeight);
     final hasWidth = style.width != null;
     final hasHeight = style.height != null;
 
