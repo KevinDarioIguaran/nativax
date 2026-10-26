@@ -18,6 +18,27 @@ debug/
   scripts/          quality_report.sh, preview_report.sh, render_report.py
 ```
 
+## Interfaces
+
+- **Quality dashboard** (`debug/engines/performance/gui/perf_gui.py`, Spanish,
+  the day-to-day panel): runs the visual, performance and game suites live,
+  per-area reports, and the **Historial** page that says whether visual
+  fidelity and performance improved or got worse, with charts.
+  `python3 debug/run.py gui`
+- **Debug Suite app** (`debug/app`, English): report explorer by folder,
+  a dedicated workspace per report type (visual images side by side with zoom
+  and regions, performance, memory, security, microbenchmarks, compatibility,
+  bug detection A–F), raw evidence inspector, append-only history and
+  annotations, comparison of two reports with a compatibility check first,
+  and an engine launcher that archives each finished run.
+  `python3 debug/app/main.py`
+  Layers: `debug/app` (pages, components) → `debug/logic` (catalog,
+  workspaces, compare_runs, storage) → engines. Colors and fonts come only
+  from `debug/styles` (enforced by `debug/tests/ui/test_app.py`).
+
+The JSON interface audit (`debug/engines/bug_detection`) is an AI-facing tool;
+it is run from the command line, not from the dashboard.
+
 ## Canonical vs derived
 
 Canonical evidence:
