@@ -101,7 +101,10 @@ La GPU se reporta si el kernel expone `gpu_busy_percent`; si no, se dice
   resultados y botón para ejecutar el lote de juegos. No es el game-player
   Three.js completo.
 - **Idle**: RSS/CPU reales frente a 250 MB / 1 % y muestras.
-- **Informes**: por defecto **En vivo**, un informe que se recalcula desde
+- **Informes**: un informe independiente por área — **Rendimiento**
+  (`.perf/live/report-perf.md`), **Visual** (`report-visual.md`), **Juegos**
+  (`report-games.md`), **Conformidad**, **Auditoría JSON** y **Recomendaciones**;
+  ninguno mezcla datos de otra área. Los generados por el panel se recalculan desde
   `results.json`, `app-idle.json` y la matriz cada vez que cambian los datos;
   se muestra como captura del HTML real (misma tipografía, tablas y colores)
   y con scroll. Durante una ejecución se muestra el texto actualizado sin
@@ -152,7 +155,7 @@ causas raíz por página, tablas de juegos y vídeo, cobertura pendiente por sui
 y procedencia de los datos. No es una caja negra ni inventa
 porcentajes: si falta cobertura lo declara y baja la confianza. `quality_report.sh`
 lo regenera después de las suites, y el panel lo muestra en **Informes →
-Recomendaciones**; el informe **En vivo** incluye la misma sección.
+Recomendaciones**, separado de los informes de cada área.
 
 ## Vídeo y juegos por calidad
 

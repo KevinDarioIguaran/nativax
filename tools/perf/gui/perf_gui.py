@@ -50,7 +50,18 @@ CONFORMANCE_DIR = ROOT / ".conformance"
 CONFORMANCE_RESULTS = CONFORMANCE_DIR / "results"
 CONFORMANCE_REPORT = ROOT / "progress" / "reports" / "conformance-latest.md"
 VISUAL_CATALOG = ROOT / ".visual" / "catalog.json"
-LIVE_REPORT = ROOT / ".perf" / "live" / "report-live.md"
+LIVE_DIR = ROOT / ".perf" / "live"
+# Each area writes its own independent report; none mixes another area's data.
+PERF_REPORT = LIVE_DIR / "report-perf.md"
+VISUAL_REPORT = LIVE_DIR / "report-visual.md"
+GAMES_REPORT = LIVE_DIR / "report-games.md"
+AUDIT_DIR = ROOT / ".audit"
+AUDIT_LATEST = AUDIT_DIR / "latest"
+AUDIT_SUMMARY = AUDIT_LATEST / "summary.json"
+AUDIT_LEDGER = AUDIT_DIR / "ledger.json"
+AUDIT_REPORT = ROOT / "progress" / "reports" / "audit-latest.md"
+AUDIT_BENCH_REPORT = ROOT / "progress" / "reports" / "audit-benchmark-latest.md"
+AUDIT_SELF_REPORT = ROOT / "progress" / "reports" / "audit-self-check-latest.md"
 VISUAL_HISTORY_DIR = ROOT / ".visual" / "history"
 PERF_HISTORY_DIR = ROOT / ".perf" / "history"
 PERF_CATALOG_SOURCES = [
@@ -59,6 +70,14 @@ PERF_CATALOG_SOURCES = [
 ]
 VISUAL_CATALOG_SOURCES = [ROOT / "tools" / "visual" / "lib" / "src" / "fixtures.dart"]
 CONSOLIDATED = ROOT / "progress" / "reports" / "nativa-quality-latest.md"
+
+REPORT_CHOICES = [
+    "Rendimiento", "Visual", "Juegos", "Conformidad", "Auditoría JSON",
+    "Auditoría · fallos inyectados", "Auditoría · self-check", "Recomendaciones",
+    "Histórico consolidado", "Histórico visual", "Histórico rendimiento",
+    "Histórico quality gate",
+]
+GENERATED_REPORTS = ("Rendimiento", "Visual", "Juegos", "Recomendaciones", "Conformidad")
 
 BG = "#0b0f14"
 PANEL = "#11161d"
@@ -707,6 +726,8 @@ class Dashboard(ChartMixin):
         self.selected_perf_pending: dict | None = None
         self.visual_live = False
         self.visual_live_current: str | None = None
+        self.perf_live = False
+        self.perf_live_current: str | None = None
         self._live_buffer = ""
         self.thumb_refs = []
         self.visual_report_cache = {}
@@ -718,6 +739,10 @@ class Dashboard(ChartMixin):
         self._live_report_timer = None
         self._last_data_sig = None
         self._report_sig = None
+        self._visual_baseline_rows = None
+        self._perf_baseline_rows = None
+        self._prev_visual_run = None
+        self._prev_perf_run = None
         self._run_done = 0
         self._run_total = 0
         self._last_visual_history_mtime = None
@@ -735,16 +760,26 @@ class Dashboard(ChartMixin):
         self._build()
         self.reload()
         self._last_data_sig = self._data_signature()
-        self.root.after(150, self._drain_log)
+        self.root.after(50, self._drain_log)
         self.root.after(1000, self._auto_refresh)
 
     def _load_history(self):
         if history_engine is None:
             return {"visual": [], "perf": []}
-        return {
-            "visual": history_engine.list_runs("visual", VISUAL_HISTORY_DIR),
-            "perf": history_engine.list_runs("perf", PERF_HISTORY_DIR),
-        }
+        visual_runs = history_engine.list_runs("visual", VISUAL_HISTORY_DIR)
+        perf_runs = history_engine.list_runs("perf", PERF_HISTORY_DIR)
+        self._prev_visual_run = self._load_full_history_run(VISUAL_HISTORY_DIR)
+        self._prev_perf_run = self._load_full_history_run(PERF_HISTORY_DIR)
+        return {"visual": visual_runs, "perf": perf_runs}
+
+    def _load_full_history_run(self, directory):
+        files = sorted(directory.glob("*.json"))
+        if not files:
+            return None
+        try:
+            return json.loads(files[-1].read_text())
+        except (OSError, json.JSONDecodeError):
+            return None
 
     def _load_conformance(self):
         if not CONFORMANCE_RESULTS.exists():
@@ -805,6 +840,7 @@ class Dashboard(ChartMixin):
             ("games", "▣", "Videojuegos"),
             ("idle", "◷", "Idle"),
             ("container", "❏", "Contenedores"),
+            ("audit", "⚑", "Auditoría JSON"),
             ("reports", "▥", "Informes"),
             ("history", "▨", "Historial"),
         ]
@@ -849,8 +885,8 @@ class Dashboard(ChartMixin):
         self.buttons = []
         self._button(bar, "▶ Ejecutar todo", self.run_all, ACCENT, "#07101f")
         self._button(bar, "▶ Tests visuales", self.run_visual_live, PANEL2, FG)
-        self._button(bar, "Visual 300", self.run_visual_all, PANEL2, FG)
-        self._button(bar, "Solo rendimiento", self.run_perf, PANEL2, FG)
+        self._button(bar, "▶ Rendimiento", self.run_perf_live, PANEL2, FG)
+        self._button(bar, "▶ Auditoría JSON", self.run_audit, PANEL2, FG)
         self._button(bar, "Idle app", self.run_idle, PANEL2, FG)
         self._button(bar, "Refrescar", self.reload, PANEL2, FG)
         self.stop_button = self._button(bar, "■ Detener", self.stop, "#3a2026", RED)
@@ -865,7 +901,7 @@ class Dashboard(ChartMixin):
         self.page_host.pack(fill="both", expand=True, padx=18, pady=(2, 4))
         self.pages = {}
         for key in ("summary", "perf", "visual", "conformance", "video", "games",
-                    "history", "idle", "container", "reports"):
+                    "history", "idle", "container", "audit", "reports"):
             frame = tk.Frame(self.page_host, bg=BG)
             self.pages[key] = frame
         self.tab_summary = self.pages["summary"]
@@ -878,6 +914,7 @@ class Dashboard(ChartMixin):
         self.tab_container = self.pages["container"]
         self.tab_reports = self.pages["reports"]
         self.tab_history = self.pages["history"]
+        self.tab_audit = self.pages["audit"]
 
         self._build_summary()
         self._build_perf()
@@ -886,7 +923,11 @@ class Dashboard(ChartMixin):
         self._build_video()
         self._build_games()
         self._build_idle()
+        for btn in ("game_run_button", "game_run_2d_button", "video_run_button"):
+            if hasattr(self, btn):
+                self.buttons.append(getattr(self, btn))
         self._build_container()
+        self._build_audit()
         self._build_reports()
         self._build_history()
 
@@ -924,6 +965,8 @@ class Dashboard(ChartMixin):
             CONFORMANCE_REPORT,
             VISUAL_HISTORY_DIR,
             PERF_HISTORY_DIR,
+            AUDIT_SUMMARY,
+            AUDIT_LEDGER,
             *sorted((ROOT / "progress" / "reports").glob("*-latest.md")),
         ]
         state = []
@@ -1172,6 +1215,9 @@ class Dashboard(ChartMixin):
         self.perf_summary = tk.Label(top, text="", bg=BG, fg=MUTED,
                                      font=(FONT, 9))
         self.perf_summary.pack(side="left", padx=10)
+        self.perf_trend = tk.Label(top, text="", bg=BG, fg=MUTED,
+                                   font=(FONT, 9, "bold"))
+        self.perf_trend.pack(side="left", padx=4)
         self.perf_filter = tk.Entry(top, bg=PANEL2, fg=FG, insertbackground=FG,
                                     relief="flat", width=24)
         self.perf_filter.pack(side="right", padx=4)
@@ -1192,18 +1238,19 @@ class Dashboard(ChartMixin):
         left = tk.Frame(panes, bg=BG)
         panes.add(left, stretch="always")
         columns = ("scenario", "verdict", "nativa", "chrome", "ratio", "nodes",
-                   "p95", "rss")
+                   "p95", "rss", "trend")
         self.perf_tree = ttk.Treeview(left, columns=columns, show="headings",
                                        selectmode="browse")
         for column, label, width, anchor in [
-            ("scenario", "Escenario", 187, "w"),
-            ("verdict", "Veredicto", 71, "w"),
-            ("nativa", "NativaX", 71, "e"),
-            ("chrome", "Chromium", 78, "e"),
-            ("ratio", "Ratio", 56, "e"),
-            ("nodes", "Nodos", 70, "e"),
-            ("p95", "p95", 54, "e"),
-            ("rss", "RSS arnés", 86, "e"),
+            ("scenario", "Escenario", 150, "w"),
+            ("verdict", "Veredicto", 68, "w"),
+            ("nativa", "NativaX", 68, "e"),
+            ("chrome", "Chromium", 74, "e"),
+            ("ratio", "Ratio", 52, "e"),
+            ("nodes", "Nodos", 66, "e"),
+            ("p95", "p95", 50, "e"),
+            ("rss", "RSS arnés", 82, "e"),
+            ("trend", "Tend", 44, "c"),
         ]:
             self.perf_tree.heading(column, text=label)
             self.perf_tree.column(column, width=width, anchor=anchor)
@@ -1726,12 +1773,13 @@ class Dashboard(ChartMixin):
         self.video_last = tk.Label(top, text="", bg=BG, fg=MUTED,
                                    font=(FONT, 9))
         self.video_last.pack(side="left", padx=10)
-        tk.Button(
+        self.video_run_button = tk.Button(
             top, text="Ejecutar tests de vídeo", command=self.run_video_tests,
             bg=PANEL2, fg=FG, activebackground=HOVER, relief="flat",
             bd=0, highlightthickness=0, padx=10, pady=4,
             font=(FONT, 9, "bold"),
-        ).pack(side="right")
+        )
+        self.video_run_button.pack(side="right")
 
         panes = tk.Frame(tab, bg=BG)
         panes.pack(fill="both", expand=True)
@@ -1834,18 +1882,20 @@ class Dashboard(ChartMixin):
         self.game_summary = tk.Label(top, text="", bg=BG, fg=MUTED,
                                      font=(FONT, 9))
         self.game_summary.pack(side="left", padx=10)
-        tk.Button(
+        self.game_run_button = tk.Button(
             top, text="Ejecutar 25 3D", command=self.run_games3d,
             bg=PANEL2, fg=FG, activebackground=HOVER, relief="flat",
             bd=0, highlightthickness=0, padx=10, pady=4,
             font=(FONT, 9, "bold"),
-        ).pack(side="right", padx=(0, 6))
-        tk.Button(
+        )
+        self.game_run_button.pack(side="right", padx=(0, 6))
+        self.game_run_2d_button = tk.Button(
             top, text="Ejecutar 25 2D", command=self.run_games,
             bg=PANEL2, fg=FG, activebackground=HOVER, relief="flat",
             bd=0, highlightthickness=0, padx=10, pady=4,
             font=(FONT, 9, "bold"),
-        ).pack(side="right")
+        )
+        self.game_run_2d_button.pack(side="right")
         tk.Label(
             tab,
             text="2D: Canvas 2D. 3D: WebGL con cubos, perspectiva y "
@@ -2268,20 +2318,209 @@ class Dashboard(ChartMixin):
         self._start(["tools/perf/container/matrix.sh"], "matriz Docker")
 
     # -------------------------------------------------------------- reports
+    # ---------------------------------------------------------- JSON audit
+    def _build_audit(self):
+        tab = self.tab_audit
+        self._page_header(
+            tab, "Auditoría JSON",
+            "Pantallas JSON generadas y ejecutadas en NativaX y en Chromium (referencia); "
+            "defectos agrupados, reproducidos, minimizados y con instrucciones para corregirlos.",
+        )
+        top = tk.Frame(tab, bg=BG)
+        top.pack(fill="x", pady=(4, 6))
+        tk.Label(top, text="Escenarios", bg=BG, fg=MUTED, font=(FONT, 9)).pack(side="left")
+        self.audit_budget = tk.Spinbox(top, from_=10, to=100000, increment=10, width=7,
+                                       bg=PANEL2, fg=FG, buttonbackground=PANEL2,
+                                       insertbackground=FG, relief="flat")
+        self.audit_budget.delete(0, "end")
+        self.audit_budget.insert(0, "200")
+        self.audit_budget.pack(side="left", padx=(6, 10))
+        for text, command in (("▶ Auditar", self.run_audit),
+                              ("Fallos inyectados", self.run_audit_benchmark),
+                              ("Self-check", self.run_audit_selfcheck),
+                              ("Abrir el juez (explorador completo)", self.open_audit_judge)):
+            button = tk.Button(top, text=text, command=command, bg=PANEL2, fg=FG,
+                               activebackground=HOVER, relief="flat", bd=0,
+                               highlightthickness=0, padx=10, pady=4,
+                               font=(FONT, 9, "bold"))
+            button.pack(side="left", padx=(0, 6))
+            self.buttons.append(button)
+        self.audit_summary = tk.Label(top, text="", bg=BG, fg=MUTED, font=(FONT, 9),
+                                      justify="left")
+        self.audit_summary.pack(side="left", padx=10)
+
+        panes = tk.PanedWindow(tab, orient="horizontal", bg=BG, sashwidth=6,
+                               bd=0, sashrelief="flat")
+        panes.pack(fill="both", expand=True)
+        left = tk.Frame(panes, bg=BG)
+        panes.add(left, stretch="always")
+        columns = ("issue", "severity", "kind", "subsystem", "component", "property",
+                   "count", "minimized", "repro", "novelty")
+        self.audit_tree = ttk.Treeview(left, columns=columns, show="headings",
+                                       selectmode="browse")
+        for column, label, width, anchor in [
+            ("issue", "Issue", 100, "w"), ("severity", "Gravedad", 70, "w"),
+            ("kind", "Tipo", 80, "w"), ("subsystem", "Subsistema", 92, "w"),
+            ("component", "Componente", 100, "w"), ("property", "Propiedad", 130, "w"),
+            ("count", "Ocurr.", 52, "e"), ("minimized", "Min.", 40, "c"),
+            ("repro", "Repro", 46, "c"), ("novelty", "Novedad", 70, "w"),
+        ]:
+            self.audit_tree.heading(column, text=label)
+            self.audit_tree.column(column, width=width, anchor=anchor)
+        scroll = ttk.Scrollbar(left, orient="vertical", command=self.audit_tree.yview)
+        self.audit_tree.configure(yscrollcommand=scroll.set)
+        self.audit_tree.pack(side="left", fill="both", expand=True)
+        scroll.pack(side="left", fill="y")
+        for severity, color in (("critical", RED), ("high", RED), ("medium", YELLOW),
+                                ("low", MUTED), ("info", PURPLE)):
+            self.audit_tree.tag_configure(severity, foreground=color)
+        self.audit_tree.tag_configure("odd", background=SUBTLE)
+        self.audit_tree.bind("<<TreeviewSelect>>", self._on_audit_select)
+        self.audit_tree.bind("<Button-3>", self._audit_context_menu)
+        right = tk.Frame(panes, bg=PANEL, width=640)
+        panes.add(right, stretch="never")
+        right.pack_propagate(False)
+        self.audit_detail = MarkdownView(right)
+        self.audit_detail.pack(fill="both", expand=True)
+        self._audit_selected = None
+
+    def _fill_audit(self):
+        if not hasattr(self, "audit_tree"):
+            return
+        summary = _load_json(AUDIT_SUMMARY)
+        selected = self.audit_tree.selection()
+        for item in self.audit_tree.get_children():
+            self.audit_tree.delete(item)
+        if not summary:
+            self.audit_summary.configure(
+                text="sin ejecución · python3 tools/audit/audit.py run")
+            return
+        m = summary.get("metrics") or {}
+        cov = (summary.get("coverage") or {}).get("componentes") or {}
+        props = (summary.get("coverage") or {}).get("propiedades") or {}
+        self.audit_summary.configure(text=(
+            f"{summary.get('run_id')} · {m.get('executed', 0)} ejecutados · "
+            f"{m.get('verified', 0)} verificados · {m.get('rejected', 0)} rechazados · "
+            f"{m.get('unique_issues', 0)} defectos únicos ({m.get('new_issues', 0)} nuevos, "
+            f"{m.get('regressions', 0)} regresiones) · {m.get('minimized', 0)} minimizados · "
+            f"componentes {cov.get('verified', 0)}/{cov.get('universe', '—')} · "
+            f"propiedades {props.get('verified', 0)}/{props.get('universe', '—')} · "
+            f"{m.get('wall_s', 0):.0f} s"))
+        for index, issue in enumerate(summary.get("issues") or []):
+            tags = [issue.get("severity", "")]
+            if index % 2:
+                tags.append("odd")
+            repro = issue.get("reproducible")
+            self.audit_tree.insert("", "end", iid=issue["issue_id"], tags=tuple(tags), values=(
+                issue["issue_id"], issue.get("severity"), issue.get("kind"),
+                issue.get("subsystem"), ", ".join((issue.get("component_types") or [])[:3]) or "—",
+                issue.get("property") or "—", issue.get("count"),
+                "sí" if issue.get("minimized") else "no",
+                "—" if repro is None else ("sí" if repro else "no"),
+                issue.get("novelty"),
+            ))
+        keep = selected[0] if selected and self.audit_tree.exists(selected[0]) else None
+        children = self.audit_tree.get_children()
+        if keep or children:
+            self.audit_tree.selection_set(keep or children[0])
+
+    def _on_audit_select(self, _event=None):
+        selection = self.audit_tree.selection()
+        if not selection:
+            return
+        issue_id = selection[0]
+        if issue_id == self._audit_selected:
+            return
+        self._audit_selected = issue_id
+        path = AUDIT_LATEST / "issues" / f"{issue_id}.md"
+        try:
+            self.audit_detail.render(path.read_text(), path.parent)
+        except OSError:
+            self.audit_detail.render(f"# {issue_id}\n\nNo existe `{path}`.", ROOT)
+
+    def _audit_context_menu(self, event):
+        row = self.audit_tree.identify_row(event.y)
+        if not row:
+            return
+        self.audit_tree.selection_set(row)
+        menu = tk.Menu(self.root, tearoff=0, bg=PANEL2, fg=FG, activebackground=HOVER)
+        issue_dir = AUDIT_LATEST / "issues"
+        menu.add_command(label="Copiar instrucciones para el LLM",
+                         command=lambda: self._copy_file(issue_dir / f"{row}.md"))
+        menu.add_command(label="Copiar informe JSON",
+                         command=lambda: self._copy_file(issue_dir / f"{row}.json"))
+        menu.add_separator()
+        menu.add_command(label="Reproducir (replay)", command=lambda: self._audit_command(
+            ["replay", str(issue_dir / f"{row}.json")], f"replay {row}"))
+        menu.add_command(label="Verificar corrección", command=lambda: self._audit_command(
+            ["verify", row], f"verificar {row}"))
+        menu.add_command(label="Promover a regresión", command=lambda: self._audit_command(
+            ["promote", row], f"promover {row}"))
+        menu.add_separator()
+        menu.add_command(label="Abrir carpeta de la auditoría",
+                         command=lambda: subprocess.Popen(["xdg-open", str(AUDIT_LATEST)]))
+        menu.tk_popup(event.x_root, event.y_root)
+
+    def _copy_file(self, path: Path):
+        try:
+            self._copy_text(path.read_text())
+            self._append_log(f"[auditoría] copiado {path.name}\n")
+        except OSError as error:
+            self._append_log(f"[auditoría] {error}\n")
+
+    def _audit_command(self, args, label, report=None):
+        self._start(["python3", "-u", "tools/audit/audit.py", *args], f"auditoría: {label}",
+                    action={"kind": "audit", "report": report})
+
+    def _audit_budget(self):
+        try:
+            return max(10, int(self.audit_budget.get()))
+        except (ValueError, AttributeError):
+            return 200
+
+    def run_audit(self):
+        self._show_page("audit")
+        self._audit_command(["run", "--budget", str(self._audit_budget())],
+                            f"auditoría JSON ({self._audit_budget()} escenarios)", "Auditoría JSON")
+
+    def run_audit_benchmark(self):
+        self._audit_command(["benchmark", "--budget", str(min(self._audit_budget(), 400))],
+                            "benchmark de fallos inyectados", "Auditoría · fallos inyectados")
+
+    def run_audit_selfcheck(self):
+        self._audit_command(["self-check", "--budget", str(min(self._audit_budget(), 200))],
+                            "self-check Chromium contra Chromium", "Auditoría · self-check")
+
+    def open_audit_judge(self):
+        """Opens the full audit explorer (tools/audit/gui) in its own window."""
+        subprocess.Popen([sys.executable, str(ROOT / "tools" / "audit" / "gui" / "app.py")], cwd=ROOT,
+                         start_new_session=True)
+
+    def _finish_audit(self, action):
+        self._audit_selected = None
+        self._last_data_sig = None
+        self._refresh_data()
+        report = action.get("report")
+        if report:
+            self.report_choice.set(report)
+            self._show_page("reports")
+        else:
+            self._show_page("audit")
+
     def _build_reports(self):
         tab = self.tab_reports
-        self._page_header(tab, "Informes", "Informe HTML real renderizado dentro del panel.")
+        self._page_header(tab, "Informes",
+                          "Un informe independiente por área: rendimiento, visual, juegos, "
+                          "conformidad y auditoría no se mezclan.")
         top = tk.Frame(tab, bg=BG)
         top.pack(fill="x", pady=(4, 6))
         tk.Label(top, text="Informe", bg=BG, fg=FG,
                  font=(FONT, 11, "bold")).pack(side="left")
         self.report_choice = ttk.Combobox(
             top,
-            values=["En vivo", "Recomendaciones", "Conformidad",
-                    "Histórico consolidado", "Histórico visual",
-                    "Histórico rendimiento", "Histórico quality gate"],
+            values=REPORT_CHOICES,
             state="readonly",
-            width=24,
+            width=30,
         )
         self.report_choice.current(0)
         self.report_choice.pack(side="left", padx=8)
@@ -2296,10 +2535,10 @@ class Dashboard(ChartMixin):
     # ---------------------------------------------------------------- data
     def reload(self):
         self.store.load()
+        self.history = self._load_history()
         self._fill_summary()
         self._fill_perf_table()
         self.conformance = self._load_conformance()
-        self.history = self._load_history()
         self._fill_visual_table()
         self._fill_conformance()
         self._fill_video()
@@ -2307,13 +2546,7 @@ class Dashboard(ChartMixin):
         self._fill_history()
         self._fill_idle()
         self._fill_container()
-        if hasattr(self, "report_choice"):
-            if self.report_choice.get() == "En vivo":
-                self._write_live_report()
-            elif self.report_choice.get() == "Recomendaciones":
-                self._write_recommendations_report()
-            elif self.report_choice.get() == "Conformidad":
-                self._write_conformance_report()
+        self._fill_audit()
         self._load_report()
         self._draw_summary()
         self._draw_perf_charts()
@@ -2325,10 +2558,10 @@ class Dashboard(ChartMixin):
 
     def _refresh_data(self):
         self.store.load()
+        self.history = self._load_history()
         self._fill_summary()
         self._fill_perf_table()
         self.conformance = self._load_conformance()
-        self.history = self._load_history()
         self._fill_visual_table()
         self._fill_conformance()
         self._fill_video()
@@ -2341,18 +2574,9 @@ class Dashboard(ChartMixin):
         self._draw_visual_charts()
         self._draw_idle()
         self._draw_container()
-        if hasattr(self, "report_choice") and self.report_choice.get() in (
-            "En vivo", "Recomendaciones"
-        ):
-            if self.report_choice.get() == "En vivo":
-                self._write_live_report()
-                path = LIVE_REPORT
-            elif self.report_choice.get() == "Recomendaciones":
-                self._write_recommendations_report()
-                path = RECOMMENDATIONS_REPORT
-            else:
-                self._write_conformance_report()
-                path = CONFORMANCE_REPORT
+        self._fill_audit()
+        path = self._write_selected_report()
+        if path is not None:
             try:
                 self._report_sig = path.stat().st_mtime_ns
             except OSError:
@@ -2374,6 +2598,35 @@ class Dashboard(ChartMixin):
                         1800, self._load_report
                     )
         self._update_header()
+
+    def _update_trend_labels(self, visual, perf):
+        if hasattr(self, "perf_trend"):
+            prev = self._perf_baseline_rows
+            if prev is None and getattr(self, "_prev_perf_run", None):
+                prev = self._prev_perf_run.get("rows") or self._prev_perf_run.get("results") or []
+            prev_pass = sum(1 for r in (prev or []) if str(r.get("verdict", "")).upper() == "PASS")
+            cur_pass = sum(1 for r in self.store.perf_rows if str(r.get("verdict", "")).upper() == "PASS")
+            prev_ratio = None
+            cur_ratio = None
+            if prev:
+                vals = [self._perf_ratio(r) for r in prev]
+                vals = [v for v in vals if v is not None]
+                prev_ratio = sum(vals) / len(vals) if vals else None
+            if self.store.perf_rows:
+                vals = [self._perf_ratio(r) for r in self.store.perf_rows]
+                vals = [v for v in vals if v is not None]
+                cur_ratio = sum(vals) / len(vals) if vals else None
+            better_count = sum(
+                1 for r in self.store.perf_rows
+                if (r.get("nativax") or {}).get("status") == "ok"
+                and (r.get("chromium") or {}).get("status") == "ok"
+                and self._perf_ratio(r) is not None
+                and self._perf_ratio(r) <= 1.0
+            )
+            if better_count > 0:
+                self.perf_trend.configure(text=f"better ({better_count})", fg=GREEN)
+            else:
+                self.perf_trend.configure(text="", fg=MUTED)
 
     def _update_header(self):
         if self.store.loaded_at:
@@ -2434,6 +2687,7 @@ class Dashboard(ChartMixin):
             text=f"{visual['total']}/{pages_total} páginas medidas\n"
                  f"{perf['total']}/{perf_total} escenarios{idle}"
         )
+        self._update_trend_labels(visual, perf)
 
     def _update_worst_lists(self):
         pages = sorted(self.store.visual_rows, key=lambda r: r.get("overall") or 0)
@@ -2477,6 +2731,14 @@ class Dashboard(ChartMixin):
         for item in self.perf_tree.get_children():
             self.perf_tree.delete(item)
         measured = {row.get("scenario"): row for row in self.store.perf_rows}
+        prev_rows = self._perf_baseline_rows
+        if prev_rows is None and getattr(self, "_prev_perf_run", None):
+            prev_rows = (
+                self._prev_perf_run.get("rows")
+                or self._prev_perf_run.get("results")
+                or []
+            )
+        prev_map = {row.get("scenario"): row for row in (prev_rows or [])}
         entries = []
         if self.store.perf_catalog:
             entries = [entry.get("id") for entry in self.store.perf_catalog]
@@ -2506,6 +2768,7 @@ class Dashboard(ChartMixin):
                     "—",
                     "—",
                     "—",
+                    "—",
                 ))
                 continue
             nativa = row.get("nativax") or {}
@@ -2516,15 +2779,21 @@ class Dashboard(ChartMixin):
             ratio = nwork / cwork if ok and cwork > 0.0001 else None
             p95 = (nativa.get("frame_ms") or {}).get("p95")
             tags.insert(0, row.get("verdict", ""))
+            better = ok and ratio is not None and ratio <= 1.0
+            trend = "better" if better else ""
+            if better:
+                tags.insert(0, "BETTER")
+            verdict_text = "BETTER" if better else row.get("verdict", "")
             self.perf_tree.insert("", "end", iid=scenario_id, tags=tuple(tags), values=(
                 scenario_id,
-                row.get("verdict", ""),
+                verdict_text,
                 _num(nwork, 1) if ok else "—",
                 _num(cwork, 1) if ok else "—",
                 f"{_num(ratio, 2)}x" if ratio is not None else "—",
                 f"{nativa.get('nodes', '—') if ok else '—'}/{chrome.get('nodes', '—') if ok else '—'}",
                 _num(p95, 1) if p95 else "—",
                 _num(nativa.get("rss_peak_mb"), 0),
+                trend,
             ))
         children = self.perf_tree.get_children()
         keep = selected[0] if selected and self.perf_tree.exists(selected[0]) else None
@@ -2660,7 +2929,7 @@ class Dashboard(ChartMixin):
         categories = self.store.visual_categories()
         items = []
         for name, value in categories.items():
-            color = GREEN if value >= 95 else (YELLOW if value >= 80 else RED)
+            color = GREEN if value >= 99.99 else (YELLOW if value >= 90 else RED)
             items.append((name, value, color))
         self.chart_bar(
             self.summary_categories,
@@ -2870,16 +3139,16 @@ class Dashboard(ChartMixin):
             f"Categorías · {row.get('page')}",
             [
                 ("Posición", row.get("position") or 0,
-                 GREEN if (row.get("position") or 0) >= 95 else YELLOW),
+                 GREEN if (row.get("position") or 0) >= 99.99 else YELLOW),
                 ("Layout", row.get("layout") or 0,
-                 GREEN if (row.get("layout") or 0) >= 95 else YELLOW),
+                 GREEN if (row.get("layout") or 0) >= 99.99 else YELLOW),
                 ("Color" if row.get("color") is not None else "Color (n/d)",
                  row.get("color") or 0,
-                 GREEN if (row.get("color") or 0) >= 95 else YELLOW),
+                 GREEN if (row.get("color") or 0) >= 99.99 else YELLOW),
                 ("Diseño", row.get("design") or 0,
-                 GREEN if (row.get("design") or 0) >= 95 else YELLOW),
+                 GREEN if (row.get("design") or 0) >= 99.99 else YELLOW),
                 ("Overall", row.get("overall") or 0,
-                 GREEN if (row.get("overall") or 0) >= 95 else YELLOW),
+                 GREEN if (row.get("overall") or 0) >= 99.99 else YELLOW),
             ],
             target=95,
             max_value=100,
@@ -2974,16 +3243,21 @@ class Dashboard(ChartMixin):
         self.chart_timeline(self.idle_timeline, "RSS de la app durante el idle (MB)", series)
 
     def _report_path(self):
-        choice = self.report_choice.get() if hasattr(self, "report_choice") else "En vivo"
+        choice = self.report_choice.get() if hasattr(self, "report_choice") else "Rendimiento"
         return {
-            "En vivo": LIVE_REPORT,
+            "Rendimiento": PERF_REPORT,
+            "Visual": VISUAL_REPORT,
+            "Juegos": GAMES_REPORT,
+            "Auditoría JSON": AUDIT_REPORT,
+            "Auditoría · fallos inyectados": AUDIT_BENCH_REPORT,
+            "Auditoría · self-check": AUDIT_SELF_REPORT,
             "Recomendaciones": RECOMMENDATIONS_REPORT,
             "Conformidad": CONFORMANCE_REPORT,
             "Histórico consolidado": CONSOLIDATED,
             "Histórico visual": ROOT / "progress" / "reports" / "visual-50projects50days-latest.md",
             "Histórico rendimiento": ROOT / "progress" / "reports" / "perf-latest.md",
             "Histórico quality gate": ROOT / "progress" / "reports" / "quality-gate-latest.md",
-        }.get(choice, LIVE_REPORT)
+        }.get(choice, PERF_REPORT)
 
     def _recommendation_data(self):
         return {
@@ -3025,72 +3299,112 @@ class Dashboard(ChartMixin):
         tmp.write_text(text)
         tmp.replace(RECOMMENDATIONS_REPORT)
 
-    def _write_live_report(self):
-        if not hasattr(self, "report_choice") or self.report_choice.get() != "En vivo":
-            return
-        self._refresh_auxiliary_runs()
+    def _write_selected_report(self):
+        """Regenerates the selected report when it is built from panel data.
+
+        Returns its path, or None for reports written by other tools.
+        """
+        if not hasattr(self, "report_choice"):
+            return None
+        writer = {
+            "Rendimiento": self._write_perf_report,
+            "Visual": self._write_visual_report,
+            "Juegos": self._write_games_report,
+            "Recomendaciones": self._write_recommendations_report,
+            "Conformidad": self._write_conformance_report,
+        }.get(self.report_choice.get())
+        if writer is None:
+            return None
+        writer()
+        return self._report_path()
+
+    @staticmethod
+    def _write_md(path: Path, lines):
+        path.parent.mkdir(parents=True, exist_ok=True)
+        tmp = path.with_suffix(".md.tmp")
+        tmp.write_text("\n".join(lines))
+        tmp.replace(path)
+
+    @staticmethod
+    def _now():
+        return datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+    def _write_visual_report(self):
         store = self.store
         visual = store.visual_summary()
-        perf = store.perf_summary()
         categories = store.visual_categories()
         pixels = store.visual_pixels()
-        app = store.app_idle or {}
         visual_total = len(store.catalog or []) or visual["total"]
-        perf_total = len(store.perf_catalog or []) or perf["total"]
-        now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         lines = [
-            "# NativaX — informe en vivo",
+            "# NativaX — informe de fidelidad visual",
             "",
-            f"**Generado:** {now}. Se recalcula con los datos actuales del panel; "
-            "no es una copia de un informe histórico.",
+            f"**Generado:** {self._now()} desde `results.json` del juez visual. "
+            "Solo fidelidad visual; rendimiento, juegos y auditoría tienen su propio informe.",
             "",
-            "## Resumen",
-            "",
-            "| Área | Resultado |",
+            "| Medida | Valor |",
             "|---|---|",
-            f"| Fidelidad visual | {visual['total']}/{visual_total} medidas · "
-            f"{visual['PASS']} PASS, {visual['WARN']} WARN, {visual['FAIL']} FAIL, "
-            f"{visual['INVALID']} INVALID |",
-            f"| Rendimiento | {perf['total']}/{perf_total} medidos · "
-            f"{perf['PASS']} PASS, {perf['WARN']} WARN, {perf['FAIL']} FAIL, "
-            f"{perf['INVALID']} INVALID |",
-            f"| App idle | {_num(app.get('rss_tail_mb'), 0)} MB · "
-            f"{_num(app.get('cpu_tail_pct'), 2)} % CPU |",
-            f"| Píxeles | {pixels['mismatched']:,} con ΔE > 2 de "
-            f"{pixels['pixels']:,} |",
+            f"| Páginas medidas | {visual['total']}/{visual_total} |",
+            f"| Veredictos | {visual['PASS']} PASS · {visual['WARN']} WARN · "
+            f"{visual['FAIL']} FAIL · {visual['INVALID']} INVALID |",
+            f"| Píxeles con ΔE > 2 | {pixels['mismatched']:,} de {pixels['pixels']:,} |",
             "",
+            "## Por categoría",
+            "",
+            "| Categoría | Media |",
+            "|---|---:|",
         ]
-        if recommendation_engine is not None:
-            rec_data = self._recommendation_data()
-            recs = recommendation_engine.build_recommendations(rec_data)
-            lines.extend(recommendation_engine.markdown_lines(rec_data, recs))
-            lines.append("")
-        lines.extend(["## Fidelidad visual", "", "| Categoría | Media |", "|---|---:|"])
         for name, value in categories.items():
             lines.append(f"| {name} | {_num(value, 2)} % |")
-        lines.extend(["", f"Páginas medidas: **{visual['total']}** de "
-                      f"**{visual_total}**.", "", "### Peores páginas", "",
-                      "| Página | Veredicto | Overall | Posición | Layout | Color | Diseño |",
-                      "|---|---|---:|---:|---:|---:|---:|"])
-        for row in sorted(store.visual_rows,
-                          key=lambda r: r.get("overall") or 0)[:10]:
+        prev = {r.get("page"): r for r in (self._visual_baseline_rows or [])}
+        lines.extend(["", "## Peores páginas", "",
+                      "| Página | Veredicto | Overall | Δ anterior | Posición | Layout | Color | Diseño |",
+                      "|---|---|---:|---:|---:|---:|---:|---:|"])
+        for row in sorted(store.visual_rows, key=lambda r: r.get("overall") or 0)[:15]:
+            before = (prev.get(row.get("page")) or {}).get("overall")
+            delta = (row.get("overall") or 0) - before if isinstance(before, (int, float)) else None
             lines.append(
                 f"| {row.get('page', '')} | {row.get('verdict', '')} | "
-                f"{_num(row.get('overall'), 1)} | {_num(row.get('position'), 1)} | "
-                f"{_num(row.get('layout'), 1)} | {_num(row.get('color'), 1)} | "
-                f"{_num(row.get('design'), 1)} |"
+                f"{_num(row.get('overall'), 1)} | "
+                f"{('+' if delta and delta > 0 else '') + _num(delta, 1) if delta is not None else '—'} | "
+                f"{_num(row.get('position'), 1)} | {_num(row.get('layout'), 1)} | "
+                f"{_num(row.get('color'), 1)} | {_num(row.get('design'), 1)} |"
             )
-        lines.extend(["", "## Rendimiento", "",
-                      f"Escenarios medidos: **{perf['total']}** de **{perf_total}**.",
-                      "", "| Escenario | Veredicto | NativaX ms | Chromium ms | "
-                      "Ratio | Frame p95 | RSS arnés MB |",
-                      "|---|---|---:|---:|---:|---:|---:|"])
-        for row in store.perf_rows:
+        lines.extend(["", "## Cómo se calcula", "",
+                      "- Píxeles, posición, layout, color y diseño computado contra Chromium headless "
+                      "(ver `tools/visual/README.md`).", ""])
+        self._write_md(VISUAL_REPORT, lines)
+
+    def _write_perf_report(self):
+        store = self.store
+        perf = store.perf_summary()
+        app = store.app_idle or {}
+        rows = [r for r in store.perf_rows
+                if not str(r.get("scenario", "")).startswith(("game.", "game3d."))]
+        perf_total = len([e for e in (store.perf_catalog or [])
+                          if not str(e.get("id", "")).startswith(("game.", "game3d."))]) or len(rows)
+        lines = [
+            "# NativaX — informe de rendimiento",
+            "",
+            f"**Generado:** {self._now()} desde `.perf/latest/results.json`. "
+            "Solo rendimiento; los juegos tienen su propio informe.",
+            "",
+            "| Medida | Valor |",
+            "|---|---|",
+            f"| Escenarios medidos | {len(rows)}/{perf_total} |",
+            f"| Veredictos (suite) | {perf['PASS']} PASS · {perf['WARN']} WARN · "
+            f"{perf['FAIL']} FAIL · {perf['INVALID']} INVALID |",
+            f"| App idle | {_num(app.get('rss_tail_mb'), 0)} MB · {_num(app.get('cpu_tail_pct'), 2)} % CPU |",
+            "",
+            "## Escenarios",
+            "",
+            "| Escenario | Veredicto | NativaX ms | Chromium ms | Ratio | Frame p95 | RSS arnés MB |",
+            "|---|---|---:|---:|---:|---:|---:|",
+        ]
+        for row in rows:
             nativa = row.get("nativax") or {}
-            chrome = row.get("chromium") or {}
             nwork = store.perf_work(row, "nativax")
             cwork = store.perf_work(row, "chromium")
-            ratio = nwork / cwork if cwork > 0.0001 else None
+            ratio = self._perf_ratio(row)
             lines.append(
                 f"| {row.get('scenario', '')} | {row.get('verdict', '')} | "
                 f"{_num(nwork, 1)} | {_num(cwork, 1)} | "
@@ -3099,30 +3413,49 @@ class Dashboard(ChartMixin):
                 f"{_num(nativa.get('rss_peak_mb'), 0)} |"
             )
         lines.extend(["", "## Idle real de la app", "",
-                      f"- RSS: **{_num(app.get('rss_tail_mb'), 1)} MB** "
-                      f"(objetivo 250 MB).",
-                      f"- CPU: **{_num(app.get('cpu_tail_pct'), 2)} %** "
-                      f"(objetivo 1 %).",
+                      f"- RSS: **{_num(app.get('rss_tail_mb'), 1)} MB** (objetivo 250 MB).",
+                      f"- CPU: **{_num(app.get('cpu_tail_pct'), 2)} %** (objetivo 1 %).",
                       f"- GPU: {app.get('gpu') or 'no expuesta'}.", ""])
         if store.matrix:
             lines.extend(["## Contenedores", "",
                           f"Configuraciones: **{len(store.matrix_configs)}** · "
                           f"escenarios: **{len(store.matrix_scenarios)}**.", ""])
-        lines.extend([
-            "## Cómo se calcula",
+        lines.extend(["## Cómo se calcula", "",
+                      "- Trabajo de NativaX frente a Chromium (script + render); frame p95, nodos, RSS y CPU.",
+                      ""])
+        self._write_md(PERF_REPORT, lines)
+
+    def _write_games_report(self):
+        entries, measured = self._game_entries()
+        lines = [
+            "# NativaX — informe de videojuegos",
             "",
-            "- Fidelidad: píxeles, posición, layout, color y diseño computado "
-            "contra Chromium headless.",
-            "- Rendimiento: trabajo de NativaX frente a Chromium; frame p95, "
-            "nodos, RSS y CPU.",
-            "- Los valores de esta página se construyen desde `results.json`, "
-            "`app-idle.json` y la matriz Docker; se actualizan solos.",
+            f"**Generado:** {self._now()} desde `.perf/game` y `.perf/game3d`. "
+            "Solo perfiles de juego 2D (Canvas) y 3D (WebGL).",
             "",
-        ])
-        LIVE_REPORT.parent.mkdir(parents=True, exist_ok=True)
-        tmp = LIVE_REPORT.with_suffix(".md.tmp")
-        tmp.write_text("\n".join(lines))
-        tmp.replace(LIVE_REPORT)
+            f"Perfiles medidos: **{len(measured)}** de **{len(entries)}**.",
+            "",
+            "| Tipo | Escenario | Veredicto | NativaX ms | Chromium ms | Ratio | Frame p95 | RSS MB |",
+            "|---|---|---|---:|---:|---:|---:|---:|",
+        ]
+        for scenario in entries:
+            row = measured.get(scenario)
+            kind = "3D" if scenario.startswith("game3d.") else "2D"
+            if row is None:
+                lines.append(f"| {kind} | {scenario} | pendiente | — | — | — | — | — |")
+                continue
+            nativa = row.get("nativax") or {}
+            ratio = self._perf_ratio(row)
+            lines.append(
+                f"| {kind} | {scenario} | {row.get('verdict', '')} | "
+                f"{_num(self.store.perf_work(row, 'nativax'), 1)} | "
+                f"{_num(self.store.perf_work(row, 'chromium'), 1)} | "
+                f"{(_num(ratio, 2) + 'x') if ratio is not None else '—'} | "
+                f"{_num((nativa.get('frame_ms') or {}).get('p95'), 1)} | "
+                f"{_num(nativa.get('rss_peak_mb'), 0)} |"
+            )
+        lines.append("")
+        self._write_md(GAMES_REPORT, lines)
 
     def _load_report(self):
         if self._live_report_timer is not None:
@@ -3132,13 +3465,8 @@ class Dashboard(ChartMixin):
                 pass
             self._live_report_timer = None
         path = self._report_path()
-        if self.report_choice.get() == "En vivo":
-            self._write_live_report()
-        elif self.report_choice.get() == "Recomendaciones":
-            self._write_recommendations_report()
-        elif self.report_choice.get() == "Conformidad":
-            self._write_conformance_report()
-        if self.report_choice.get() in ("En vivo", "Recomendaciones", "Conformidad"):
+        self._write_selected_report()
+        if self.report_choice.get() in GENERATED_REPORTS:
             if self.process is not None:
                 try:
                     self.report_view.render(path.read_text(), path.parent)
@@ -3452,7 +3780,7 @@ class Dashboard(ChartMixin):
 
         def run_and_close():
             win.destroy()
-            if kind == "perf":
+            if kind in ("perf", "perf_step", "game_step"):
                 self.run_perf_scenario(item_id)
             else:
                 self.run_visual_page(item_id)
@@ -3476,8 +3804,8 @@ class Dashboard(ChartMixin):
              "--only", f"^{re.escape(scenario_id)}$", "--out", str(out)],
             f"escenario {scenario_id}",
             action={
-                "kind": "perf", "id": scenario_id, "out": out,
-                "open_detail": True,
+                "kind": "perf", "area": "perf", "id": scenario_id, "out": out,
+                "open_detail": True, "merge_target": str(PERF_RESULTS),
             },
         )
 
@@ -3493,8 +3821,26 @@ class Dashboard(ChartMixin):
              "--all", "--only", f"^{re.escape(page_id)}$", "--out", str(out)],
             f"página {page_id}",
             action={
-                "kind": "visual", "id": page_id, "out": out,
-                "open_detail": True,
+                "kind": "visual", "area": "visual", "id": page_id, "out": out,
+                "open_detail": True, "merge_target": str(VISUAL_CANDIDATES[0]),
+            },
+        )
+
+    def run_game_scenario(self, scenario_id):
+        if self.process is not None:
+            messagebox.showinfo("En curso", "Ya hay una ejecución en marcha.")
+            return
+        out = ROOT / ".perf" / "single" / self._slug(scenario_id)
+        if out.exists():
+            shutil.rmtree(out, ignore_errors=True)
+        self._start(
+            ["dart", "run", "tools/perf/bin/perf.dart", "run",
+             "--only", f"^{re.escape(scenario_id)}$", "--out", str(out)],
+            f"juego {scenario_id}",
+            action={
+                "kind": "game_step", "area": "game", "step": True,
+                "id": scenario_id, "out": out, "open_detail": False,
+                "merge_target": str(PERF_GAME_RESULTS),
             },
         )
 
@@ -3504,11 +3850,18 @@ class Dashboard(ChartMixin):
         out = Path(action["out"])
         data = _load_json(out / "results.json")
         if not data:
-            self._append_log(
-                f"[single] {item_id}: no hay results.json; no se fusiona\n"
-            )
+            code = action.get("returncode")
+            if code not in (None, 0):
+                self._append_log(
+                    f"[single] {item_id}: el comando falló con código {code}; "
+                    "revisa el registro.\n"
+                )
+            else:
+                self._append_log(
+                    f"[single] {item_id}: no hay results.json; no se fusiona\n"
+                )
             return
-        if kind == "perf":
+        if kind in ("perf", "perf_step", "game_step"):
             rows = data.get("results") or []
             new = next(
                 (r for r in rows if r.get("scenario") == item_id),
@@ -3517,7 +3870,8 @@ class Dashboard(ChartMixin):
             if new is None:
                 self._append_log(f"[single] {item_id}: resultado no encontrado\n")
                 return
-            base = _load_json(PERF_RESULTS) or data
+            target = Path(action.get("merge_target") or PERF_RESULTS)
+            base = _load_json(target) or data
             base_rows = base.get("results") or []
             for index, row in enumerate(base_rows):
                 if row.get("scenario") == item_id:
@@ -3535,7 +3889,7 @@ class Dashboard(ChartMixin):
                 )
             base["summary"]["scenarios"] = len(base_rows)
             base["generated_at"] = datetime.now().isoformat(timespec="seconds")
-            self._write_json_atomic(PERF_RESULTS, base)
+            self._write_json_atomic(target, base)
             self._append_log(f"[single] {item_id}: resultado actualizado\n")
         else:
             rows = data.get("rows") or []
@@ -3545,8 +3899,10 @@ class Dashboard(ChartMixin):
             if new is None:
                 self._append_log(f"[single] {item_id}: resultado no encontrado\n")
                 return
+            target = Path(action.get("merge_target") or VISUAL_CANDIDATES[0])
             base = (
-                _load_json(VISUAL_CANDIDATES[0])
+                _load_json(target)
+                or _load_json(VISUAL_CANDIDATES[0])
                 or _load_json(VISUAL_CANDIDATES[1])
                 or self.store.visual
                 or data
@@ -3568,8 +3924,23 @@ class Dashboard(ChartMixin):
                 sum(scores) / len(scores) if scores else 0
             )
             base["generatedAt"] = datetime.now().isoformat(timespec="seconds")
-            self._write_json_atomic(VISUAL_CANDIDATES[0], base)
+            self._write_json_atomic(target, base)
             self._append_log(f"[single] {item_id}: resultado actualizado\n")
+
+    @staticmethod
+    def _verdict_rank(verdict):
+        return {"INVALID": 0, "FAIL": 1, "WARN": 2, "PASS": 3}.get(
+            str(verdict or "").upper(), 0
+        )
+
+    def _perf_ratio(self, row):
+        nativa = (row or {}).get("nativax") or {}
+        chrome = (row or {}).get("chromium") or {}
+        if nativa.get("status") != "ok" or chrome.get("status") != "ok":
+            return None
+        nwork = self.store.perf_work(row, "nativax")
+        cwork = self.store.perf_work(row, "chromium")
+        return nwork / cwork if cwork and cwork > 0.0001 else None
 
     def _set_running(self, running: bool):
         state = "disabled" if running else "normal"
@@ -3592,6 +3963,7 @@ class Dashboard(ChartMixin):
         self._set_running(True)
         self._run_done = 0
         self._run_total = 0
+        self._run_started_at = __import__("time").monotonic()
         self._append_log(f"\n$ {label}\n")
         try:
             self.process = subprocess.Popen(
@@ -3653,6 +4025,19 @@ class Dashboard(ChartMixin):
                 if page_id != self.visual_live_current:
                     self._live_focus(page_id)
 
+        if self.perf_live:
+            self._live_buffer = (self._live_buffer + text)[-4000:]
+            starts = re.findall(
+                r"\[\s*(\d+)\s*/\s*(\d+)\s*\]\s+(\S+)\s+\.\.\. ",
+                self._live_buffer,
+            )
+            if starts:
+                done, total, scenario_id = starts[-1]
+                self.status.configure(text=f"{done}/{total} · {scenario_id}")
+                if scenario_id != self.perf_live_current:
+                    self._live_focus_perf(scenario_id)
+                    self.root.after(150, lambda: self._refresh_data() if self.perf_live else None)
+
     def _drain_log(self):
         try:
             while True:
@@ -3680,6 +4065,12 @@ class Dashboard(ChartMixin):
             self._append_log(f"[catálogo {kind} actualizado]\n")
             self._last_data_sig = None
             self._refresh_data()
+        if self.process is not None:
+            elapsed = __import__("time").monotonic() - getattr(self, "_run_started_at", __import__("time").monotonic())
+            if self._run_total:
+                self.status.configure(text=f"{self._run_done}/{self._run_total} · {elapsed:.0f}s")
+            else:
+                self.status.configure(text=f"ejecutando… {elapsed:.0f}s")
         if self.process is not None and self.process.poll() is not None:
             self.process = None
             self._set_running(False)
@@ -3688,19 +4079,28 @@ class Dashboard(ChartMixin):
             if action and action.get("kind") == "visual_live":
                 self._finish_visual_live()
                 action = None
+            if action and action.get("kind") == "perf_live":
+                self._finish_perf_live()
+                action = None
+            if action and action.get("kind") == "game_live":
+                self._finish_game_live()
+                action = None
+            if action and action.get("kind") == "audit":
+                self._finish_audit(action)
+                action = None
             if action:
                 try:
                     self._merge_single(action)
                 except Exception as error:
                     self._append_log(f"[single] error al fusionar: {error}\n")
-            self._record_history_if_needed()
+                self._record_history_if_needed()
             self.reload()
             if action and action.get("open_detail"):
                 try:
                     self.open_detail(action["kind"], action["id"])
                 except Exception as error:
                     self._append_log(f"[single] error al abrir detalle: {error}\n")
-        self.root.after(150, self._drain_log)
+        self.root.after(50, self._drain_log)
 
     def run_all(self):
         self._start(["tools/quality_report.sh"], "tools/quality_report.sh")
@@ -3740,6 +4140,7 @@ class Dashboard(ChartMixin):
             messagebox.showerror("Tests visuales", f"No se pudo limpiar: {error}")
             return
         self._append_log(f"[visual] resultados anteriores archivados en {previous}\n")
+        self._visual_baseline_rows = list(self.store.visual_rows)
         self.store.visual_latest_only = True
         self.visual_live = True
         self.visual_live_current = None
@@ -3791,7 +4192,146 @@ class Dashboard(ChartMixin):
         if current and self.visual_tree.exists(current):
             self.visual_tree.item(current, tags=())
         self._append_log("[visual] terminado; abriendo el informe\n")
-        self.report_choice.set("En vivo")
+        self._record_history_if_needed()
+        try:
+            self._refresh_data()
+        except Exception as error:
+            self._append_log(f"refresh: {error}\n")
+        self.report_choice.set("Visual")
+        self._show_page("reports")
+
+    def run_perf_live(self):
+        """Runs every performance scenario while the table follows the runner."""
+        if self.process is not None:
+            messagebox.showinfo("En curso", "Ya hay una ejecución en marcha.")
+            return
+        previous = PERF_DIR.parent / "previous"
+        try:
+            if previous.exists():
+                shutil.rmtree(previous)
+            if PERF_DIR.exists():
+                PERF_DIR.rename(previous)
+        except OSError as error:
+            messagebox.showerror("Rendimiento", f"No se pudo limpiar: {error}")
+            return
+        self._append_log(f"[perf] resultados anteriores archivados en {previous}\n")
+        self._perf_baseline_rows = list(self.store.perf_rows)
+        self.perf_live = True
+        self.perf_live_current = None
+        self._live_buffer = ""
+        self.reload()
+        self._show_page("perf")
+        children = self.perf_tree.get_children()
+        if children:
+            self.perf_tree.selection_set(children[0])
+            self.perf_tree.see(children[0])
+        self._start(
+            ["dart", "run", "tools/perf/bin/perf.dart", "run",
+             "--app-idle", "--out", str(PERF_DIR)],
+            "rendimiento en vivo (todos los escenarios)",
+            action={"kind": "perf_live"},
+            raw=True,
+        )
+        if self.process is None:
+            self.perf_live = False
+
+    def _live_focus_perf(self, scenario_id):
+        tree = self.perf_tree
+        if not tree.exists(scenario_id):
+            return
+        previous = self.perf_live_current
+        if previous and previous != scenario_id and tree.exists(previous):
+            tree.item(previous, tags=tuple(
+                t for t in tree.item(previous, "tags") if t != "running"
+            ))
+        self.perf_live_current = scenario_id
+        measured = any(r.get("scenario") == scenario_id for r in self.store.perf_rows)
+        if not measured:
+            tree.item(scenario_id, tags=("running",))
+            tree.set(scenario_id, "verdict", "midiendo…")
+        if tuple(tree.selection()) != (scenario_id,):
+            tree.selection_set(scenario_id)
+        tree.focus(scenario_id)
+        tree.see(scenario_id)
+
+    def _finish_perf_live(self):
+        current = self.perf_live_current
+        self.perf_live = False
+        self.perf_live_current = None
+        self._live_buffer = ""
+        if current and self.perf_tree.exists(current):
+            self.perf_tree.item(current, tags=())
+        self._append_log("[perf] terminado; abriendo el informe\n")
+        self._record_history_if_needed()
+        try:
+            self._refresh_data()
+        except Exception as error:
+            self._append_log(f"refresh: {error}\n")
+        self.report_choice.set("Rendimiento")
+        self._show_page("reports")
+
+    def run_games_live(self):
+        """Runs all game scenarios while the game table follows the runner."""
+        if self.process is not None:
+            messagebox.showinfo("En curso", "Ya hay una ejecución en marcha.")
+            return
+        previous = PERF_GAME_DIR.with_name("game-previous")
+        try:
+            if previous.exists():
+                shutil.rmtree(previous)
+            if PERF_GAME_DIR.exists():
+                PERF_GAME_DIR.rename(previous)
+        except OSError as error:
+            messagebox.showerror("Juegos", f"No se pudo limpiar: {error}")
+            return
+        self._append_log(f"[juegos] resultados anteriores archivados en {previous}\n")
+        self.game_live = True
+        self.game_live_current = None
+        self._live_buffer = ""
+        self.reload()
+        self._show_page("games")
+        children = self.game_tree.get_children()
+        if children:
+            self.game_tree.selection_set(children[0])
+            self.game_tree.see(children[0])
+        self._start(
+            ["dart", "run", "tools/perf/bin/perf.dart", "run",
+             "--only", r"^game", "--out", str(PERF_GAME_DIR)],
+            "juegos en vivo (todos los perfiles)",
+            action={"kind": "game_live"},
+            raw=True,
+        )
+        if self.process is None:
+            self.game_live = False
+
+    def _live_focus_game(self, scenario_id):
+        tree = self.game_tree
+        if not tree.exists(scenario_id):
+            return
+        previous = self.game_live_current
+        if previous and previous != scenario_id and tree.exists(previous):
+            tree.item(previous, tags=tuple(
+                t for t in tree.item(previous, "tags") if t != "running"
+            ))
+        self.game_live_current = scenario_id
+        measured = any(r.get("scenario") == scenario_id for r in self.store.game_rows)
+        if not measured:
+            tree.item(scenario_id, tags=("running",))
+            tree.set(scenario_id, "verdict", "midiendo…")
+        if tuple(tree.selection()) != (scenario_id,):
+            tree.selection_set(scenario_id)
+        tree.focus(scenario_id)
+        tree.see(scenario_id)
+
+    def _finish_game_live(self):
+        current = self.game_live_current
+        self.game_live = False
+        self.game_live_current = None
+        self._live_buffer = ""
+        if current and self.game_tree.exists(current):
+            self.game_tree.item(current, tags=())
+        self._append_log("[juegos] terminado; abriendo el informe\n")
+        self.report_choice.set("Juegos")
         self._show_page("reports")
 
     def run_perf(self):

@@ -141,8 +141,11 @@ navigation and the same dark/typographic language as the HTML report:
   and Chromium/NativaX/diff thumbnails.
 - **Idle**: real app RSS/CPU versus the 250 MB / 1 % targets and the sample
   timeline.
-- **Informes**: **En vivo** is the default; it is rebuilt from the current
-  JSON data and rendered as an HTML capture. During a run the text refreshes
+- **Informes**: one independent report per area — **Rendimiento**,
+  **Visual**, **Juegos**, **Conformidad**, **Auditoría JSON** (plus its fault
+  benchmark and self-check) and **Recomendaciones**; none mixes another area's
+  data. A finished live run opens its own report. Panel-built reports are
+  rebuilt from the current JSON data and rendered as an HTML capture. During a run the text refreshes
   without launching Chromium; the capture is regenerated when the run ends.
   The historical reports remain available as manual snapshots.
 - **Historial**: every run can be stored as detailed JSON in
@@ -170,7 +173,7 @@ tools/perf/gui/run_gui.sh
 builds a deterministic P0/P1/P2 report with measured evidence, an action, an
 acceptance criterion and a command. It is rule-based and coverage-aware, not a
 black-box model. `quality_report.sh` runs it automatically; the dashboard shows
-it under **Informes → Recomendaciones** and inside **En vivo**.
+it under **Informes → Recomendaciones**.
 
 ## Container isolation (CPU/RAM)
 

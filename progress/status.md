@@ -44,8 +44,8 @@ Tests focalizados en esta pasada: **14 perf + 119 visual + 78 CSS +
   `.perf/container/matrix.json`. Panel **Tkinter**
   (`tools/perf/gui/perf_gui.py`) con barra lateral, tabla de los 245
   escenarios, motivos, ratios, RSS en el tiempo, refresco automático cada
-  segundo, menú por fila para ejecutar un solo test/ver detalles, informe
-  **En vivo** recalculado desde los JSON y botones para ejecutar todo o medir
+  segundo, menú por fila para ejecutar un solo test/ver detalles, informes
+  independientes por área recalculados desde los JSON y botones para ejecutar todo o medir
   el idle real.
 - Matriz de cobertura añadida: **120 escenarios de rendimiento**,
   **25 de juego Canvas 2D**, **25 tests de vídeo**, **50 tests del juez visual**,
@@ -55,7 +55,7 @@ Tests focalizados en esta pasada: **14 perf + 119 visual + 78 CSS +
   convierten el placeholder en compatibilidad. Detalle y comandos:
   `progress/reports/test-matrix-300.md`. El motor `tools/recommend.py` genera
   informes P0/P1/P2 con evidencia, acción, criterio de aceptación y comando;
-  el panel los muestra en **Informes → Recomendaciones** y en **En vivo**, y
+  el panel los muestra en **Informes → Recomendaciones**, y
   `quality_report.sh` los regenera automáticamente. La barra lateral incluye
   **Vídeo** (25 perfiles, contrato sin playback) y **Juegos** (25 perfiles
   Canvas 2D), con botón para ejecutar cada lote.
