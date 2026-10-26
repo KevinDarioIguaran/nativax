@@ -305,15 +305,14 @@ LeakClassification classifyLeak(
     leakClass = worst.leakClass;
     reason = '${worst.name}: ${worst.reason}';
     primary = worst.name;
-    if (rss.leakClass == LeakClass.provenLeak &&
-        leakClass.severity > LeakClass.suspectedLeak.severity) {
-      // Precise channels are clean but RSS keeps growing: a native leak the
-      // counters cannot see, or allocator behaviour. Only a suspicion.
-      leakClass = LeakClass.suspectedLeak;
+    if (rss.leakClass == LeakClass.provenLeak ||
+        rss.leakClass == LeakClass.suspectedLeak) {
+      // RSS is advisory when a precise channel exists: in a fresh process it
+      // climbs monotonically during allocator/Dart-heap warm-up, so it is
+      // noted but never changes the class.
       reason =
-          'precise channels are ${worst.leakClass.label} but RSS meets '
-          'the proof criteria: ${rss.reason}';
-      primary = rss.name;
+          '$reason (advisory: RSS ${rss.leakClass.label}, Sen slope '
+          '${(rss.senSlope / (1024 * 1024)).toStringAsFixed(1)} MiB/batch)';
     }
   }
 

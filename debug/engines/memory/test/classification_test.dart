@@ -173,7 +173,10 @@ void main() {
       expect(c.reason, contains('capped'));
     });
 
-    test('clean precise channels with strong RSS growth are suspected', () {
+    test('RSS growth never overrides clean precise channels', () {
+      // Regression: a fresh process grows RSS ~1.3 MiB/batch during warm-up;
+      // audit.control.listeners_balanced was raised to suspected_leak in
+      // 2 of 3 separate-process runs.
       final samples = [
         for (var i = 0; i < 6; i++)
           LeakSample(
@@ -183,7 +186,9 @@ void main() {
             listeners: 0,
           ),
       ];
-      expect(_classOf(samples), LeakClass.suspectedLeak);
+      final c = classifyLeak(samples);
+      expect(c.leakClass, LeakClass.noLeak);
+      expect(c.reason, contains('advisory: RSS proven_leak'));
     });
 
     test('noisy RSS beside a flat counter stays no leak', () {

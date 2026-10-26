@@ -4,31 +4,31 @@ import 'package:nativa_leaks/leaks.dart';
 import 'package:test/test.dart';
 
 LeakRun _run(List<LeakResult> results) => LeakRun(
-      metadata: LeakRunMetadata(
-        engine: 'QuickJS-ng',
-        engineVersion: '0.17.0',
-        dartVersion: 'test',
-        mode: 'JIT',
-        os: 'linux',
-        osVersion: 'test',
-        arch: 'x64',
-        profile: 'quick',
-        timestamp: DateTime.utc(2026, 1, 1),
-        command: 'leaks run',
-      ),
-      results: results,
-    );
+  metadata: LeakRunMetadata(
+    engine: 'QuickJS-ng',
+    engineVersion: '0.17.0',
+    dartVersion: 'test',
+    mode: 'JIT',
+    os: 'linux',
+    osVersion: 'test',
+    arch: 'x64',
+    profile: 'quick',
+    timestamp: DateTime.utc(2026, 1, 1),
+    command: 'leaks run',
+  ),
+  results: results,
+);
 
 LeakResult _result(String id, LeakStatus status) => LeakResult(
-      id: id,
-      subsystem: 'test',
-      scenario: 'synthetic',
-      expectation: 'released',
-      status: status,
-      reason: status.label,
-      samples: const [],
-      durationMs: 1,
-    );
+  id: id,
+  subsystem: 'test',
+  scenario: 'synthetic',
+  expectation: 'released',
+  status: status,
+  reason: status.label,
+  samples: const [],
+  durationMs: 1,
+);
 
 void main() {
   test('writes JSON, JSONL and Markdown', () {
@@ -67,10 +67,9 @@ void main() {
     expect(loaded.results.single.id, 'case');
     expect(loaded.results.single.samples.length, 2);
     expect(File(files.markdown).readAsStringSync(), contains('case'));
-    final lines = File(files.jsonl)
-        .readAsLinesSync()
-        .where((l) => l.trim().isNotEmpty)
-        .toList();
+    final lines = File(
+      files.jsonl,
+    ).readAsLinesSync().where((l) => l.trim().isNotEmpty).toList();
     expect(lines.length, 2);
   });
 
