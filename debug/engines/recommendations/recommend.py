@@ -29,9 +29,138 @@ class Recommendation:
     acceptance: str = ""
     confidence: str = "medium"
     commands: list[str] = field(default_factory=list)
+    # Stable rule id (see RULES); identity across runs, never the title.
+    id: str = ""
+    # The condition that fired, as data: conditions with metric, operator,
+    # threshold and observed value, plus the subjects it is about.
+    rule: dict[str, Any] = field(default_factory=dict)
+    # Which metric should move, in which direction, and to what target.
+    expected_impact: list[dict[str, Any]] = field(default_factory=list)
+    # None unless before/after data was provided.
+    measured_impact: list[dict[str, Any]] | None = None
 
     def as_dict(self) -> dict[str, Any]:
         return asdict(self)
+
+
+IDLE_RSS_TARGET_MB = 250.0
+IDLE_CPU_TARGET_PCT = 1.0
+FRAME_P95_TARGET_MS = 16.7
+WORK_RATIO_TARGET = 3.0
+OVER_TARGET_CRITERION = (
+    f"verdict in {{FAIL, WARN}} or nativax/chromium work ratio > {WORK_RATIO_TARGET}"
+)
+
+# Every rule the engine can emit. `ordering` lists (first, then) claims the
+# rule's action makes about what to fix first; two fired rules with opposite
+# claims are contradictory. `exclusive` lists rules that must never fire
+# together with this one.
+RULES: dict[str, dict[str, Any]] = {
+    "visual.coverage.missing_pages": {
+        "priority": "P2", "area": "visual coverage",
+        "fires_when": "measured visual pages < visual catalog size",
+    },
+    "perf.coverage.missing_scenarios": {
+        "priority": "P2", "area": "performance coverage",
+        "fires_when": "measured perf scenarios < perf catalog size",
+    },
+    "memory.idle.unmeasured": {
+        "priority": "P1", "area": "memory",
+        "fires_when": "app_idle missing or status != ok",
+        "exclusive": ["memory.idle.over_target", "memory.load_peak.unmeasured"],
+    },
+    "memory.idle.over_target": {
+        "priority": "P0", "area": "memory",
+        "fires_when": "app_idle ok and (rss_tail_mb > 250 or cpu_tail_pct > 1)",
+        "exclusive": ["memory.load_peak.unmeasured"],
+        "ordering": [["memory", "features"]],
+    },
+    "memory.load_peak.unmeasured": {
+        "priority": "P2", "area": "memory",
+        "fires_when": "app_idle ok and rss_tail_mb <= 250 and cpu_tail_pct <= 1",
+    },
+    "leaks.cases.failing": {
+        "priority": "P0", "area": "leaks",
+        "fires_when": "any leak case status FAIL or ERROR",
+        "exclusive": ["leaks.cases.inconclusive"],
+    },
+    "leaks.cases.inconclusive": {
+        "priority": "P2", "area": "leaks",
+        "fires_when": "no leak FAIL/ERROR and any INCONCLUSIVE",
+    },
+    "capability.video.no_playback": {
+        "priority": "P1", "area": "multimedia",
+        "fires_when": "capabilities.video is False",
+    },
+    "capability.game_player.unmeasured": {
+        "priority": "P2", "area": "games",
+        "fires_when": "capabilities.game_player is False",
+    },
+    "security.checks.failing": {
+        "priority": "P0", "area": "security",
+        "fires_when": "any security check status FAIL or ERROR",
+        "ordering": [["security", "performance"], ["security", "compatibility"]],
+    },
+    "perf.dom.over_target": {
+        "priority": "P1", "area": "DOM / layout",
+        "fires_when": f"any ok dom scenario with {OVER_TARGET_CRITERION}",
+    },
+    "perf.scroll.frame_p95_over_target": {
+        "priority": "P1", "area": "scroll / frames",
+        "fires_when": "any ok scroll scenario with nativax frame p95 > 16.7 ms",
+    },
+    "perf.js.over_target": {
+        "priority": "P1", "area": "JavaScript",
+        "fires_when": f"any ok js scenario with {OVER_TARGET_CRITERION}",
+    },
+    "perf.game.over_target": {
+        "priority": "P1", "area": "games",
+        "fires_when": f"any ok game./game3d. scenario with {OVER_TARGET_CRITERION}",
+    },
+    "renderer.dom_layout.cross_signal": {
+        "priority": "P0 if mean layout < 70 else P1", "area": "renderer",
+        "fires_when": "dom scenarios measured and mean visual layout < 90 and mean position < 90",
+        "ordering": [["layout", "page micro-optimization"]],
+    },
+    "visual.position.low": {
+        "priority": "P1", "area": "visual fidelity",
+        "fires_when": "any visual page with position < 70",
+        "exclusive": ["visual.ink.missing"],
+        "ordering": [["layout", "color"]],
+    },
+    "visual.ink.missing": {
+        "priority": "P1", "area": "visual fidelity",
+        "fires_when": "no page with position < 70 and any page with ink_mismatch_pct >= 80",
+    },
+    "visual.color.low": {
+        "priority": "P1", "area": "color",
+        "fires_when": "visual rows present and mean color < 60",
+        "ordering": [["color", "layout"]],
+    },
+}
+
+
+def _cond(metric: str, op: str, threshold: Any, observed: Any) -> dict[str, Any]:
+    if isinstance(observed, float) and math.isfinite(observed):
+        observed = round(observed, 3)
+    return {"metric": metric, "op": op, "threshold": threshold, "observed": observed}
+
+
+def _rule(
+    conditions: list[dict[str, Any]],
+    logic: str = "all",
+    criterion: str | None = None,
+    subjects: list[str] | None = None,
+) -> dict[str, Any]:
+    rule: dict[str, Any] = {"logic": logic, "conditions": conditions}
+    if criterion:
+        rule["criterion"] = criterion
+    rule["subjects"] = list(subjects or [])
+    return rule
+
+
+def _impact(metric: str, direction: str, target: Any) -> dict[str, Any]:
+    return {"metric": metric, "direction": direction, "target": target}
 
 
 def _rows(payload: Any, key: str) -> list[dict]:
@@ -67,6 +196,13 @@ def _ratio(row: dict) -> float | None:
 def _ratio_label(row: dict) -> str:
     ratio = _ratio(row)
     return f"{ratio:.2f}×" if ratio is not None else "—"
+
+
+def _over_target(row: dict) -> bool:
+    return (
+        row.get("verdict") in {"FAIL", "WARN"}
+        or (_ratio(row) or 0) > WORK_RATIO_TARGET
+    )
 
 
 def _is_ok(row: dict) -> bool:
@@ -223,11 +359,17 @@ def _visual_categories(rows: list[dict]) -> dict[str, float]:
     return result
 
 
-def build_recommendations(data: dict[str, Any]) -> list[Recommendation]:
+def build_recommendations(
+    data: dict[str, Any],
+    before: dict[str, Any] | None = None,
+) -> list[Recommendation]:
     """Derives prioritized recommendations from current measured data.
 
     The rules are deliberately conservative: missing data produces a coverage
-    recommendation, never a fabricated failure.
+    recommendation, never a fabricated failure. Every recommendation carries
+    its stable rule id, the condition that fired and the metric it is expected
+    to move. `measured_impact` stays None unless `before` (an earlier data
+    snapshot in the same shape) is given.
     """
     recommendations: list[Recommendation] = []
     visual_payload = data.get("visual") or {}
@@ -253,6 +395,9 @@ def build_recommendations(data: dict[str, Any]) -> list[Recommendation]:
         recommendations.append(Recommendation(
             priority="P2",
             area="visual coverage",
+            id="visual.coverage.missing_pages",
+            rule=_rule([_cond("visual.coverage.measured_pages", "<", visual_total, len(visual_rows))]),
+            expected_impact=[_impact("visual.coverage.unmeasured_pages", "decrease", 0)],
             title=f"{visual_total - len(visual_rows)} visual pages are still unmeasured",
             evidence=[
                 f"{len(visual_rows)}/{visual_total} pages have a measured result.",
@@ -273,6 +418,9 @@ def build_recommendations(data: dict[str, Any]) -> list[Recommendation]:
         recommendations.append(Recommendation(
             priority="P2",
             area="performance coverage",
+            id="perf.coverage.missing_scenarios",
+            rule=_rule([_cond("perf.coverage.measured_scenarios", "<", perf_total, len(perf_rows))]),
+            expected_impact=[_impact("perf.coverage.unmeasured_scenarios", "decrease", 0)],
             title=f"{perf_total - len(perf_rows)} performance scenarios are still unmeasured",
             evidence=[
                 f"{len(perf_rows)}/{perf_total} scenarios measured.",
@@ -296,6 +444,12 @@ def build_recommendations(data: dict[str, Any]) -> list[Recommendation]:
         recommendations.append(Recommendation(
             priority="P1",
             area="memory",
+            id="memory.idle.unmeasured",
+            rule=_rule([_cond("app_idle.status", "!=", "ok", app.get("status"))]),
+            expected_impact=[
+                _impact("app_idle.rss_tail_mb", "measure", 250),
+                _impact("app_idle.cpu_tail_pct", "measure", 1),
+            ],
             title="The real idle app measurement is missing",
             evidence=[
                 "The test harness RSS includes Flutter/Dart and does not represent "
@@ -312,10 +466,19 @@ def build_recommendations(data: dict[str, Any]) -> list[Recommendation]:
     if app.get("status") == "ok":
         rss = float(app.get("rss_tail_mb") or 0)
         cpu = float(app.get("cpu_tail_pct") or 0)
-        if rss > 250 or cpu > 1:
+        if rss > IDLE_RSS_TARGET_MB or cpu > IDLE_CPU_TARGET_PCT:
             recommendations.append(Recommendation(
                 priority="P0",
                 area="memory",
+                id="memory.idle.over_target",
+                rule=_rule([
+                    _cond("app_idle.rss_tail_mb", ">", IDLE_RSS_TARGET_MB, rss),
+                    _cond("app_idle.cpu_tail_pct", ">", IDLE_CPU_TARGET_PCT, cpu),
+                ], logic="any"),
+                expected_impact=[
+                    _impact("app_idle.rss_tail_mb", "decrease", IDLE_RSS_TARGET_MB),
+                    _impact("app_idle.cpu_tail_pct", "decrease", IDLE_CPU_TARGET_PCT),
+                ],
                 title="The app exceeds the idle budget",
                 evidence=[f"RSS {rss:.1f} MB (target 250 MB); CPU {cpu:.2f} % (target 1 %)."],
                 action="Locate retention in the bridge, documents, caches and renderer before adding features.",
@@ -327,6 +490,12 @@ def build_recommendations(data: dict[str, Any]) -> list[Recommendation]:
             recommendations.append(Recommendation(
                 priority="P2",
                 area="memory",
+                id="memory.load_peak.unmeasured",
+                rule=_rule([
+                    _cond("app_idle.rss_tail_mb", "<=", IDLE_RSS_TARGET_MB, rss),
+                    _cond("app_idle.cpu_tail_pct", "<=", IDLE_CPU_TARGET_PCT, cpu),
+                ]),
+                expected_impact=[_impact("app_peak.rss_mb", "measure", IDLE_RSS_TARGET_MB)],
                 title="Idle meets the budget; the peak under load is unmeasured",
                 evidence=[
                     f"Real idle: {rss:.1f} MB and {cpu:.2f} % CPU.",
@@ -354,6 +523,12 @@ def build_recommendations(data: dict[str, Any]) -> list[Recommendation]:
             recommendations.append(Recommendation(
                 priority="P0",
                 area="leaks",
+                id="leaks.cases.failing",
+                rule=_rule(
+                    [_cond("leaks.failing_count", ">", 0, len(failing))],
+                    subjects=[f"leak:{row.get('id', '?')}" for row in failing],
+                ),
+                expected_impact=[_impact("leaks.failing_count", "decrease", 0)],
                 title=f"{len(failing)} memory cases do not release",
                 evidence=[detail],
                 action=(
@@ -364,10 +539,20 @@ def build_recommendations(data: dict[str, Any]) -> list[Recommendation]:
                 confidence="high",
                 commands=["cd debug/engines/memory && dart run bin/leaks.dart run --profile quick"],
             ))
-        elif any(str(row.get("status", "")).upper() == "INCONCLUSIVE" for row in leak_results):
+        inconclusive = [
+            row for row in leak_results
+            if str(row.get("status", "")).upper() == "INCONCLUSIVE"
+        ]
+        if not failing and inconclusive:
             recommendations.append(Recommendation(
                 priority="P2",
                 area="leaks",
+                id="leaks.cases.inconclusive",
+                rule=_rule(
+                    [_cond("leaks.inconclusive_count", ">", 0, len(inconclusive))],
+                    subjects=[f"leak:{row.get('id', '?')}" for row in inconclusive],
+                ),
+                expected_impact=[_impact("leaks.inconclusive_count", "decrease", 0)],
                 title="Some memory cases are INCONCLUSIVE",
                 evidence=["The suite cannot assert release with the available counters."],
                 action="Add resource counters and repeat the cases with more batches.",
@@ -381,6 +566,9 @@ def build_recommendations(data: dict[str, Any]) -> list[Recommendation]:
         recommendations.append(Recommendation(
             priority="P1",
             area="multimedia",
+            id="capability.video.no_playback",
+            rule=_rule([_cond("capabilities.video", "==", False, capabilities.get("video"))]),
+            expected_impact=[_impact("capabilities.video", "become_true", True)],
             title="There is no real video playback",
             evidence=[
                 "NativaX does not decode video: the renderer uses a placeholder and "
@@ -403,6 +591,9 @@ def build_recommendations(data: dict[str, Any]) -> list[Recommendation]:
         recommendations.append(Recommendation(
             priority="P2",
             area="games",
+            id="capability.game_player.unmeasured",
+            rule=_rule([_cond("capabilities.game_player", "==", False, capabilities.get("game_player"))]),
+            expected_impact=[_impact("capabilities.game_player", "become_true", True)],
             title="The full Three.js game-player is unmeasured",
             evidence=[
                 "The game matrix uses Canvas 2D and resolution profiles; it does "
@@ -431,6 +622,12 @@ def build_recommendations(data: dict[str, Any]) -> list[Recommendation]:
             recommendations.append(Recommendation(
                 priority="P0",
                 area="security",
+                id="security.checks.failing",
+                rule=_rule(
+                    [_cond("security.failing_count", ">", 0, len(bad))],
+                    subjects=[f"security:{row.get('id', '?')}" for row in bad],
+                ),
+                expected_impact=[_impact("security.failing_count", "decrease", 0)],
                 title=f"{len(bad)} security checks fail",
                 evidence=[detail],
                 action="Fix the trust boundary before continuing with performance or compatibility.",
@@ -455,8 +652,7 @@ def build_recommendations(data: dict[str, Any]) -> list[Recommendation]:
     if dom_rows:
         failing = [
             row for row in dom_rows
-            if (row.get("verdict") in {"FAIL", "WARN"})
-            or (_ratio(row) or 0) > 3.0
+            if _over_target(row)
         ]
         if failing:
             top = failing[:3]
@@ -468,6 +664,13 @@ def build_recommendations(data: dict[str, Any]) -> list[Recommendation]:
             recommendations.append(Recommendation(
                 priority="P1",
                 area="DOM / layout",
+                id="perf.dom.over_target",
+                rule=_rule(
+                    [_cond("perf.dom.over_target_count", ">", 0, len(failing))],
+                    criterion=OVER_TARGET_CRITERION,
+                    subjects=[f"perf:{row.get('scenario')}" for row in failing],
+                ),
+                expected_impact=[_impact("perf.dom.over_target_count", "decrease", 0)],
                 title="The dominant cost is in DOM and layout, not pure JS",
                 evidence=evidence + [
                     f"{len(failing)} DOM scenarios are above the 3× target.",
@@ -496,13 +699,20 @@ def build_recommendations(data: dict[str, Any]) -> list[Recommendation]:
         slow = []
         for row in scroll_rows:
             p95 = ((row.get("nativax") or {}).get("frame_ms") or {}).get("p95")
-            if p95 is not None and float(p95) > 16.7:
+            if p95 is not None and float(p95) > FRAME_P95_TARGET_MS:
                 slow.append((row, float(p95)))
         if slow:
             slow.sort(key=lambda item: item[1], reverse=True)
             recommendations.append(Recommendation(
                 priority="P1",
                 area="scroll / frames",
+                id="perf.scroll.frame_p95_over_target",
+                rule=_rule(
+                    [_cond("perf.scroll.p95_over_target_count", ">", 0, len(slow))],
+                    criterion=f"nativax frame p95 > {FRAME_P95_TARGET_MS} ms",
+                    subjects=[f"perf:{row.get('scenario')}" for row, _ in slow],
+                ),
+                expected_impact=[_impact("perf.scroll.p95_over_target_count", "decrease", 0)],
                 title="Long-list scrolling misses the frame budget",
                 evidence=[
                     f"{row.get('scenario')}: p95 {p95:.1f} ms (target 16.7 ms)."
@@ -523,12 +733,19 @@ def build_recommendations(data: dict[str, Any]) -> list[Recommendation]:
     js_rows = worst(category.get("js", []))
     js_slow = [
         row for row in js_rows
-        if (row.get("verdict") in {"FAIL", "WARN"}) or (_ratio(row) or 0) > 3.0
+        if _over_target(row)
     ]
     if js_slow:
         recommendations.append(Recommendation(
             priority="P1",
             area="JavaScript",
+            id="perf.js.over_target",
+            rule=_rule(
+                [_cond("perf.js.over_target_count", ">", 0, len(js_slow))],
+                criterion=OVER_TARGET_CRITERION,
+                subjects=[f"perf:{row.get('scenario')}" for row in js_slow],
+            ),
+            expected_impact=[_impact("perf.js.over_target_count", "decrease", 0)],
             title="The JS engine loses on workloads that exceed the budget",
             evidence=[
                 f"{row.get('scenario')}: {_ratio_label(row)}"
@@ -547,22 +764,21 @@ def build_recommendations(data: dict[str, Any]) -> list[Recommendation]:
             commands=["dart run debug/engines/performance/bin/perf.dart run --only '^js\\.' --out .perf/js"],
         ))
 
-    game_rows = {
-        str(row.get("scenario")): row
-        for row in perf_rows
-        if str(row.get("scenario", "")).startswith("game.")
-    }
-    for row in _rows(game_payload, "results") + _rows(game3d_payload, "results"):
-        if str(row.get("scenario", "")).startswith(("game.", "game3d.")):
-            game_rows[str(row.get("scenario"))] = row
     game_slow = [
-        row for row in worst(game_rows.values())
-        if (row.get("verdict") in {"FAIL", "WARN"}) or (_ratio(row) or 0) > 3.0
+        row for row in worst(_game_rows(data, perf_rows).values())
+        if _over_target(row)
     ]
     if game_slow:
         recommendations.append(Recommendation(
             priority="P1",
             area="games",
+            id="perf.game.over_target",
+            rule=_rule(
+                [_cond("perf.game.over_target_count", ">", 0, len(game_slow))],
+                criterion=OVER_TARGET_CRITERION,
+                subjects=[f"perf:{row.get('scenario')}" for row in game_slow],
+            ),
+            expected_impact=[_impact("perf.game.over_target_count", "decrease", 0)],
             title="Canvas 2D game profiles are above the budget",
             evidence=[
                 f"{row.get('scenario')}: {_ratio_label(row)}"
@@ -585,6 +801,17 @@ def build_recommendations(data: dict[str, Any]) -> list[Recommendation]:
         recommendations.append(Recommendation(
             priority="P0" if categories.get("Layout", 100) < 70 else "P1",
             area="renderer",
+            id="renderer.dom_layout.cross_signal",
+            rule=_rule([
+                _cond("perf.dom.measured_rows", ">", 0, len(dom_rows)),
+                _cond("visual.mean_layout", "<", 90, categories.get("Layout")),
+                _cond("visual.mean_position", "<", 90, categories.get("Position")),
+            ]),
+            expected_impact=[
+                _impact("visual.mean_layout", "increase", 90),
+                _impact("visual.mean_position", "increase", 90),
+                _impact("perf.dom.over_target_count", "decrease", 0),
+            ],
             title="DOM, layout and position point at the same bottleneck",
             evidence=[
                 f"Mean visual layout {categories['Layout']:.1f} % and position "
@@ -619,6 +846,13 @@ def build_recommendations(data: dict[str, Any]) -> list[Recommendation]:
             recommendations.append(Recommendation(
                 priority="P1",
                 area="visual fidelity",
+                id="visual.position.low",
+                rule=_rule(
+                    [_cond("visual.low_position_count", ">", 0, len(low_position))],
+                    criterion="page position score < 70",
+                    subjects=[f"visual:{row.get('page')}" for row in low_position],
+                ),
+                expected_impact=[_impact("visual.low_position_count", "decrease", 0)],
                 title="Content is mispositioned or outside its box",
                 evidence=[
                     f"{row.get('page')}: position {_num(row.get('position'))} %, "
@@ -640,6 +874,13 @@ def build_recommendations(data: dict[str, Any]) -> list[Recommendation]:
             recommendations.append(Recommendation(
                 priority="P1",
                 area="visual fidelity",
+                id="visual.ink.missing",
+                rule=_rule(
+                    [_cond("visual.high_ink_count", ">", 0, len(low_ink))],
+                    criterion="page ink_mismatch_pct >= 80",
+                    subjects=[f"visual:{row.get('page')}" for row in low_ink],
+                ),
+                expected_impact=[_impact("visual.high_ink_count", "decrease", 0)],
                 title="Geometry may match but visible ink is missing",
                 evidence=[
                     f"{row.get('page')}: mismatched ink "
@@ -655,6 +896,9 @@ def build_recommendations(data: dict[str, Any]) -> list[Recommendation]:
             recommendations.append(Recommendation(
                 priority="P1",
                 area="color",
+                id="visual.color.low",
+                rule=_rule([_cond("visual.mean_color", "<", 60, categories.get("Color"))]),
+                expected_impact=[_impact("visual.mean_color", "increase", 90)],
                 title="Computed color diverges from the reference render",
                 evidence=[f"Mean color {categories['Color']:.1f} %."],
                 action="Review inheritance, currentColor, gradients and filters before touching layout.",
@@ -663,18 +907,237 @@ def build_recommendations(data: dict[str, Any]) -> list[Recommendation]:
                 commands=[],
             ))
 
-    # Deduplicate and sort by priority; preserve insertion order inside a tier.
+    # Deduplicate by rule id and sort by priority; preserve insertion order
+    # inside a tier.
     seen = set()
     unique = []
     for item in recommendations:
-        key = (item.area, item.title)
-        if key in seen:
+        if item.id in seen:
             continue
-        seen.add(key)
+        seen.add(item.id)
         unique.append(item)
     order = {"P0": 0, "P1": 1, "P2": 2}
     unique.sort(key=lambda item: (order.get(item.priority, 9), item.area))
+    if before is not None:
+        attach_measured_impact(unique, before, data)
     return unique
+
+
+def _game_rows(data: dict[str, Any], perf_rows: list[dict]) -> dict[str, dict]:
+    """Game scenarios from the perf run, overridden by the game batches."""
+    rows = {
+        str(row.get("scenario")): row
+        for row in perf_rows
+        if str(row.get("scenario", "")).startswith("game.")
+    }
+    for row in (_rows(data.get("game") or {}, "results")
+                + _rows(data.get("game3d") or {}, "results")):
+        if str(row.get("scenario", "")).startswith(("game.", "game3d.")):
+            rows[str(row.get("scenario"))] = row
+    return rows
+
+
+def _number(value: Any) -> float | None:
+    if isinstance(value, bool):
+        return None
+    try:
+        number = float(value)
+    except (TypeError, ValueError):
+        return None
+    return number if math.isfinite(number) else None
+
+
+def _status_count(payload: Any, statuses: set[str]) -> int | None:
+    results = payload.get("results") if isinstance(payload, dict) else None
+    if not isinstance(results, list):
+        return None
+    return sum(
+        1 for row in results
+        if isinstance(row, dict) and str(row.get("status", "")).upper() in statuses
+    )
+
+
+def measure(data: dict[str, Any]) -> dict[str, Any]:
+    """The metrics the rules read, by the names used in `rule` and
+    `expected_impact`. None means not measured in this snapshot."""
+    visual_rows = _rows(data.get("visual") or {}, "rows")
+    perf_rows = _rows(data.get("perf") or {}, "results")
+    visual_total = len(data.get("visual_catalog") or []) or len(visual_rows)
+    perf_total = len(data.get("perf_catalog") or []) or len(perf_rows)
+    app = data.get("app_idle") or {}
+    app_ok = isinstance(app, dict) and app.get("status") == "ok"
+    capabilities = data.get("capabilities") or {}
+    ok_rows = [row for row in perf_rows if _is_ok(row)]
+
+    def kind(name: str) -> list[dict]:
+        return [row for row in ok_rows if str(row.get("kind") or "?") == name]
+
+    scroll = kind("scroll")
+    metrics: dict[str, Any] = {
+        "visual.coverage.measured_pages": len(visual_rows),
+        "visual.coverage.unmeasured_pages": max(visual_total - len(visual_rows), 0),
+        "perf.coverage.measured_scenarios": len(perf_rows),
+        "perf.coverage.unmeasured_scenarios": max(perf_total - len(perf_rows), 0),
+        "app_idle.status": app.get("status") if isinstance(app, dict) else None,
+        "app_idle.rss_tail_mb": _number(app.get("rss_tail_mb")) if app_ok else None,
+        "app_idle.cpu_tail_pct": _number(app.get("cpu_tail_pct")) if app_ok else None,
+        "app_peak.rss_mb": _number((data.get("app_peak") or {}).get("rss_peak_mb")),
+        "leaks.failing_count": _status_count(data.get("leaks"), {"FAIL", "ERROR"}),
+        "leaks.inconclusive_count": _status_count(data.get("leaks"), {"INCONCLUSIVE"}),
+        "security.failing_count": _status_count(data.get("security"), {"FAIL", "ERROR"}),
+        "perf.dom.measured_rows": len(kind("dom")),
+        "perf.dom.over_target_count": sum(1 for row in kind("dom") if _over_target(row)),
+        "perf.scroll.p95_over_target_count": sum(
+            1 for row in scroll
+            if (_p95(row) or 0) > FRAME_P95_TARGET_MS
+        ),
+        "perf.js.over_target_count": sum(1 for row in kind("js") if _over_target(row)),
+        "perf.game.over_target_count": sum(
+            1 for row in _game_rows(data, perf_rows).values()
+            if _is_ok(row) and _over_target(row)
+        ),
+        "capabilities.video": capabilities.get("video"),
+        "capabilities.game_player": capabilities.get("game_player"),
+    }
+    if not perf_rows:
+        for name in list(metrics):
+            if name.startswith("perf.") and not name.startswith("perf.coverage."):
+                metrics[name] = None
+    if not _game_rows(data, perf_rows):
+        metrics["perf.game.over_target_count"] = None
+    categories = _visual_categories(visual_rows) if visual_rows else {}
+    metrics["visual.mean_layout"] = categories.get("Layout")
+    metrics["visual.mean_position"] = categories.get("Position")
+    metrics["visual.mean_color"] = categories.get("Color")
+    metrics["visual.low_position_count"] = sum(
+        1 for row in visual_rows
+        if isinstance(row.get("position"), (int, float)) and row["position"] < 70
+    ) if visual_rows else None
+    metrics["visual.high_ink_count"] = sum(
+        1 for row in visual_rows
+        if isinstance(row.get("ink_mismatch_pct"), (int, float))
+        and row["ink_mismatch_pct"] >= 80
+    ) if visual_rows else None
+    return metrics
+
+
+def attach_measured_impact(
+    recommendations: list[Recommendation],
+    before: dict[str, Any],
+    after: dict[str, Any],
+) -> None:
+    """Fills `measured_impact` by comparing each expected-impact metric in two
+    snapshots. A metric missing from either snapshot stays inconclusive."""
+    old = measure(before)
+    new = measure(after)
+    for rec in recommendations:
+        entries = []
+        for impact in rec.expected_impact:
+            metric = impact["metric"]
+            direction = impact["direction"]
+            was, now = old.get(metric), new.get(metric)
+            entry = {
+                "metric": metric, "before": was, "after": now,
+                "delta": None, "moved_as_expected": None, "status": "inconclusive",
+            }
+            if direction in {"increase", "decrease"}:
+                a, b = _number(was), _number(now)
+                if a is not None and b is not None:
+                    delta = round(b - a, 3)
+                    entry["delta"] = delta
+                    entry["moved_as_expected"] = (
+                        delta > 0 if direction == "increase" else delta < 0
+                    )
+                    entry["status"] = (
+                        "unchanged" if delta == 0
+                        else "improved" if entry["moved_as_expected"]
+                        else "regressed"
+                    )
+            elif direction == "measure":
+                entry["moved_as_expected"] = was is None and now is not None
+                entry["status"] = (
+                    "still_unmeasured" if now is None
+                    else "newly_measured" if was is None
+                    else "already_measured"
+                )
+            elif direction == "become_true":
+                entry["moved_as_expected"] = now is True and was is not True
+                entry["status"] = "true" if now is True else "not_true"
+            entries.append(entry)
+        rec.measured_impact = entries
+
+
+def audit(recommendations: list[Recommendation]) -> dict[str, list[dict[str, Any]]]:
+    """Deterministic duplicate and contradiction report for one run.
+
+    Duplicates: the same rule id twice, or two rules citing the same subject
+    (scenario, page, case). Contradictions: two rules declared exclusive in
+    RULES, opposite fix-first ordering claims, or the same metric observed
+    with different values.
+    """
+    duplicates: list[dict[str, Any]] = []
+    contradictions: list[dict[str, Any]] = []
+    counts: dict[str, int] = {}
+    for rec in recommendations:
+        counts[rec.id] = counts.get(rec.id, 0) + 1
+    for rule_id, count in sorted(counts.items()):
+        if count > 1:
+            duplicates.append({"kind": "same_id", "ids": [rule_id], "count": count})
+    fired = list(dict.fromkeys(rec.id for rec in recommendations))
+    by_id = {rec.id: rec for rec in recommendations}
+    for i, first in enumerate(fired):
+        for second in fired[i + 1:]:
+            pair = sorted([first, second])
+            a, b = by_id[pair[0]], by_id[pair[1]]
+            shared = sorted(
+                set(a.rule.get("subjects") or []) & set(b.rule.get("subjects") or [])
+            )
+            if shared:
+                duplicates.append({
+                    "kind": "shared_subjects", "ids": pair, "subjects": shared,
+                })
+            spec_a, spec_b = RULES.get(pair[0], {}), RULES.get(pair[1], {})
+            if pair[1] in spec_a.get("exclusive", []) or pair[0] in spec_b.get("exclusive", []):
+                contradictions.append({"kind": "exclusive", "ids": pair})
+            claims_a = {tuple(c) for c in spec_a.get("ordering", [])}
+            claims_b = {tuple(c) for c in spec_b.get("ordering", [])}
+            opposite = sorted(
+                f"{x} before {y}" for x, y in claims_a if (y, x) in claims_b
+            )
+            if opposite:
+                contradictions.append({
+                    "kind": "ordering", "ids": pair, "claims": opposite,
+                })
+            observed_a = {
+                c["metric"]: c["observed"] for c in a.rule.get("conditions", [])
+            }
+            for cond in b.rule.get("conditions", []):
+                metric = cond["metric"]
+                if metric in observed_a and observed_a[metric] != cond["observed"]:
+                    contradictions.append({
+                        "kind": "observed_value", "ids": pair, "metric": metric,
+                        "values": [observed_a[metric], cond["observed"]],
+                    })
+    return {"duplicates": duplicates, "contradictions": contradictions}
+
+
+def _rule_summary(rule: dict[str, Any]) -> str:
+    parts = [
+        f"{c['metric']} {c['op']} {c['threshold']} (observed {c['observed']})"
+        for c in rule.get("conditions", [])
+    ]
+    joiner = " or " if rule.get("logic") == "any" else " and "
+    text = joiner.join(parts)
+    if rule.get("criterion"):
+        text += f"; per subject: {rule['criterion']}"
+    return text
+
+
+def _impact_summary(impacts: list[dict[str, Any]]) -> str:
+    return "; ".join(
+        f"{i['metric']} should {i['direction'].replace('_', ' ')} (target {i['target']})"
+        for i in impacts
+    )
 
 
 def _cell(value: Any, limit: int = 120) -> str:
@@ -1078,16 +1541,41 @@ def markdown_lines(
             "",
         ])
         lines.extend(f"- {item}" for item in rec.evidence)
+        if rec.measured_impact is None:
+            measured = "not measured (no before/after runs)"
+        else:
+            measured = "; ".join(
+                f"{m['metric']}: {m['before']} → {m['after']} ({m['status']})"
+                for m in rec.measured_impact
+            ) or "nothing to measure"
         lines.extend([
             "",
             f"**Action:** {rec.action}",
             "",
             f"**Acceptance criterion:** {rec.acceptance}",
+            "",
+            f"**Rule:** `{rec.id}` fired on {_rule_summary(rec.rule)}.",
+            "",
+            f"**Expected impact:** {_impact_summary(rec.expected_impact)}.",
+            "",
+            f"**Measured impact:** {measured}.",
         ])
         if rec.commands:
             lines.extend(["", "**Command:**", "", "```bash"])
             lines.extend(rec.commands)
             lines.append("```")
+        lines.append("")
+    report = audit(recommendations)
+    lines.extend(["## Consistency", ""])
+    if not report["duplicates"] and not report["contradictions"]:
+        lines.extend(["No duplicate or contradictory recommendations.", ""])
+    for item in report["duplicates"]:
+        detail = ", ".join(item.get("subjects", [])[:5]) or f"{item.get('count')} times"
+        lines.append(f"- Duplicate ({item['kind']}): {' + '.join(item['ids'])} — {detail}")
+    for item in report["contradictions"]:
+        detail = "; ".join(item.get("claims", [])) or item.get("metric", "declared exclusive")
+        lines.append(f"- Contradiction ({item['kind']}): {' vs '.join(item['ids'])} — {detail}")
+    if report["duplicates"] or report["contradictions"]:
         lines.append("")
     if include_limits:
         lines.extend(limits_lines())

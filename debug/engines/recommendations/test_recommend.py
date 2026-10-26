@@ -116,6 +116,91 @@ class RecommendationsTest(unittest.TestCase):
         self.assertIn("Acceptance criterion", text)
         self.assertIn("NativaX does not decode", text)
 
+    def test_every_recommendation_has_a_registered_id_rule_and_impact(self):
+        data = dict(BASE)
+        data["app_idle"] = {"status": "ok", "rss_tail_mb": 320, "cpu_tail_pct": 0}
+        data["security"] = {"results": [{"id": "xss.bad", "status": "FAIL"}]}
+        data["capabilities"] = {"video": False, "game_player": False}
+        recs = recommend.build_recommendations(data)
+        self.assertTrue(recs)
+        for rec in recs:
+            self.assertIn(rec.id, recommend.RULES)
+            self.assertTrue(rec.rule["conditions"])
+            self.assertTrue(rec.expected_impact)
+            self.assertIsNone(rec.measured_impact)
+        idle = next(r for r in recs if r.id == "memory.idle.over_target")
+        self.assertEqual(idle.rule["logic"], "any")
+        self.assertEqual(idle.rule["conditions"][0], {
+            "metric": "app_idle.rss_tail_mb", "op": ">",
+            "threshold": 250.0, "observed": 320.0,
+        })
+
+    def test_id_is_stable_when_numbers_change(self):
+        ids = []
+        for missing in (1, 7):
+            data = dict(BASE)
+            data["visual_catalog"] = [{"id": str(i)} for i in range(missing)]
+            recs = recommend.build_recommendations(data)
+            ids.append({r.id for r in recs if r.area == "visual coverage"})
+        self.assertEqual(ids[0], ids[1])
+        self.assertEqual(ids[0], {"visual.coverage.missing_pages"})
+
+    def test_measured_impact_compares_before_and_after(self):
+        before = dict(BASE)
+        before["app_idle"] = {"status": "ok", "rss_tail_mb": 400, "cpu_tail_pct": 0}
+        after = dict(BASE)
+        after["app_idle"] = {"status": "ok", "rss_tail_mb": 300, "cpu_tail_pct": 0}
+        recs = recommend.build_recommendations(after, before=before)
+        idle = next(r for r in recs if r.id == "memory.idle.over_target")
+        rss = idle.measured_impact[0]
+        self.assertEqual((rss["before"], rss["after"], rss["delta"]), (400.0, 300.0, -100.0))
+        self.assertTrue(rss["moved_as_expected"])
+        self.assertEqual(rss["status"], "improved")
+        cpu = idle.measured_impact[1]
+        self.assertEqual(cpu["status"], "unchanged")
+
+    def test_measured_impact_is_inconclusive_without_before_metric(self):
+        data = dict(BASE)
+        data["visual"] = {"rows": [{"page": "p", "position": 10}]}
+        recs = recommend.build_recommendations(data, before={})
+        low = next(r for r in recs if r.id == "visual.position.low")
+        self.assertEqual(low.measured_impact[0]["status"], "inconclusive")
+        self.assertIsNone(low.measured_impact[0]["moved_as_expected"])
+
+    def test_audit_reports_same_id_shared_subject_and_ordering(self):
+        make = recommend.Recommendation
+        recs = [
+            make("P1", "a", "t", id="perf.dom.over_target",
+                 rule={"conditions": [], "subjects": ["perf:x"]}),
+            make("P1", "b", "t", id="perf.game.over_target",
+                 rule={"conditions": [], "subjects": ["perf:x"]}),
+            make("P1", "c", "t", id="visual.position.low", rule={"conditions": []}),
+            make("P1", "d", "t", id="visual.color.low", rule={"conditions": []}),
+            make("P1", "d", "t", id="visual.color.low", rule={"conditions": []}),
+        ]
+        report = recommend.audit(recs)
+        kinds = sorted(d["kind"] for d in report["duplicates"])
+        self.assertEqual(kinds, ["same_id", "shared_subjects"])
+        self.assertEqual(
+            [(c["kind"], c["ids"]) for c in report["contradictions"]],
+            [("ordering", ["visual.color.low", "visual.position.low"])],
+        )
+
+    def test_audit_reports_exclusive_rules(self):
+        make = recommend.Recommendation
+        recs = [
+            make("P0", "m", "t", id="memory.idle.over_target", rule={"conditions": []}),
+            make("P2", "m", "t", id="memory.load_peak.unmeasured", rule={"conditions": []}),
+        ]
+        report = recommend.audit(recs)
+        self.assertEqual(report["contradictions"][0]["kind"], "exclusive")
+
+    def test_markdown_shows_rule_id_and_unmeasured_impact(self):
+        text = recommend.build_markdown(BASE)
+        self.assertIn("**Rule:** `memory.load_peak.unmeasured`", text)
+        self.assertIn("not measured (no before/after runs)", text)
+        self.assertIn("## Consistency", text)
+
 
 if __name__ == "__main__":
     unittest.main()
