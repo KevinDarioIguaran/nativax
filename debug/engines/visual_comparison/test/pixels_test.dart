@@ -250,4 +250,32 @@ void main() {
       );
     });
   });
+
+  test('images of different widths compare the common area pixel by pixel', () {
+    // Same gradient content; the actual capture is 3 px narrower. A stride
+    // error would compare shifted rows and report false mismatches.
+    RasterImage gradient(int width, int height) {
+      final rgba = Uint8List(width * height * 4);
+      for (var y = 0; y < height; y++) {
+        for (var x = 0; x < width; x++) {
+          final i = (y * width + x) * 4;
+          rgba[i] = x * 20;
+          rgba[i + 1] = y * 20;
+          rgba[i + 2] = 128;
+          rgba[i + 3] = 255;
+        }
+      }
+      return RasterImage(width, height, rgba);
+    }
+
+    final wide = gradient(10, 6);
+    final narrow = gradient(7, 6);
+    for (final (a, b) in [(wide, narrow), (narrow, wide)]) {
+      final result = comparePixels(a, b);
+      expect(result.totals.width, 7);
+      expect(result.totals.mismatched, 0);
+      expect(result.totals.maxDeltaE, 0);
+      expect(pixelCsv(a, b).trim().split('\n'), hasLength(1));
+    }
+  });
 }
