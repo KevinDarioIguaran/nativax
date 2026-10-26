@@ -7,7 +7,7 @@ verdict. Designed for an AI/CI to answer "is it better or worse?" without a UI.
 
     python3 debug/engines/quality_gate/quality_gate.py --run          # full run + comparison
     python3 debug/engines/quality_gate/quality_gate.py                # reuse latest artifacts
-    python3 debug/engines/quality_gate/quality_gate.py --no-compat    # visual + performance only
+    python3 debug/engines/quality_gate/quality_gate.py --compat none  # visual + performance only
     python3 debug/engines/quality_gate/quality_gate.py --json         # JSON on stdout
 
 Exit codes: 0 = equal/better or baseline created, 2 = regression, 3 = missing
