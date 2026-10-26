@@ -191,10 +191,16 @@ LeakResult analyzeLeak(LeakCase test, LeakContext context, int durationMs) {
   final slope = _slope(series);
   final increases = _monotonicIncreases(series);
   final resourceDeltas = <String, int>{};
+  // Counter growth is measured from the first batch, not from the baseline:
+  // the first batch pays one-time setup (for example the `document.body`
+  // wrapper), and a single step that never grows again is not sustained
+  // growth. `resourceDeltas` keeps the baseline delta for the report.
+  final resourceTrend = <String, int>{};
   void delta(String name, int? Function(LeakSample) read) {
     final values = samples.map(read).whereType<int>().toList();
     if (values.length == samples.length) {
       resourceDeltas[name] = values.last - values.first;
+      resourceTrend[name] = values.last - values[1];
     }
   }
 
@@ -204,7 +210,7 @@ LeakResult analyzeLeak(LeakCase test, LeakContext context, int durationMs) {
   delta('targets', (s) => s.targets);
   delta('activeRuntimes', (s) => s.activeRuntimes);
 
-  final resourceLeak = resourceDeltas.values
+  final resourceLeak = resourceTrend.values
       .any((d) => d > context.profile.resourceGrowthThreshold);
   final resourceEvidence = resourceDeltas.isNotEmpty && !resourceLeak;
   final sustainedMemory =

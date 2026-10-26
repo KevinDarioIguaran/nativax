@@ -97,4 +97,17 @@ void main() {
     expect(result.status, LeakStatus.fail);
     expect(result.evidence.any((e) => e.contains('QuickJS')), isTrue);
   });
+
+  test('a one-time counter step in the first batch is not sustained growth',
+      () {
+    // Regression: dom.detached_listeners went 2 -> 3 wrappers in batch 1
+    // (setup) and stayed at 3; the legacy rule reported FAIL.
+    final ctx = _context(LeakProfile.quick);
+    _add(ctx, 0, nodes: 5, listeners: 0);
+    for (var i = 1; i <= 5; i++) {
+      _add(ctx, i, nodes: 6, listeners: 0);
+    }
+    final result = analyzeLeak(_case('released'), ctx, 1);
+    expect(result.status, LeakStatus.pass);
+  });
 }
