@@ -10,20 +10,35 @@ verdict. Designed for an AI/CI to answer "is it better or worse?" without a UI.
     python3 debug/engines/quality_gate/quality_gate.py --compat none  # visual + performance only
     python3 debug/engines/quality_gate/quality_gate.py --json         # JSON on stdout
 
-Exit codes: 0 = equal/better or baseline created, 2 = regression, 3 = missing
-measurements. The detailed snapshot is written to
-progress/reports/quality-gate-latest.json and .md.
+    python3 debug/engines/quality_gate/quality_gate.py --out /tmp/gate   # write gate.json/.md there
+    python3 debug/engines/quality_gate/quality_gate.py --current a.json b.json c.json  # repeated runs
+
+Nothing is written unless asked: ``--out DIR`` writes gate.json, gate.md and
+snapshot.json, ``--write-baseline PATH`` writes the current snapshot as a
+baseline. ``--legacy-outputs`` restores the old behaviour (overwrite the
+tracked progress/reports/quality-gate-latest.{json,md} and create the default
+baseline when it is missing); perf_gui still reads that Markdown file.
+
+Statuses per metric: improved, regressed, unchanged, inconclusive,
+not_comparable (see gate_compare.py and
+debug/architecture/metrics-gate-compat.md).
+
+Exit codes: 0 = unchanged, improved, inconclusive or no baseline;
+2 = regressed; 3 = missing measurements; 4 = not comparable; 64 = usage.
 """
 from __future__ import annotations
 
 import argparse
 import json
 import os
-import re
+import platform
 import subprocess
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import gate_compare  # noqa: E402
 
 ROOT = Path(__file__).resolve().parents[3]
 VISUAL_DIR = ROOT / ".visual" / "latest"
@@ -31,8 +46,9 @@ VISUAL_FALLBACK = ROOT / ".visual" / "runs" / "50projects50days"
 PERF_DIR = ROOT / ".perf" / "latest"
 RESULTS_DIR = ROOT / ".conformance" / "results"
 BASELINE_DEFAULT = ROOT / "progress" / "reports" / "quality-baseline.json"
-GATE_JSON = ROOT / "progress" / "reports" / "quality-gate-latest.json"
-GATE_MD = ROOT / "progress" / "reports" / "quality-gate-latest.md"
+# Written only with --legacy-outputs (tracked files).
+LEGACY_JSON = ROOT / "progress" / "reports" / "quality-gate-latest.json"
+LEGACY_MD = ROOT / "progress" / "reports" / "quality-gate-latest.md"
 
 VERDICTS = ("PASS", "WARN", "FAIL", "INVALID")
 
@@ -80,7 +96,18 @@ def visual_snapshot():
         for key in ("chrome_png", "nativax_png", "diff_png"):
             if row.get(key) and Path(row[key]).exists():
                 images += 1
+    pages = [row.get("page") for row in rows]
+    context = {
+        "catalog_size": len(rows),
+        "catalog_digest": gate_compare.digest(pages),
+        "tool_version": data.get("version"),
+        "reference": data.get("reference"),
+        "viewport": data.get("viewport"),
+        "scheme": data.get("scheme"),
+        "suites": sorted({str(row.get("suite")) for row in rows if row.get("suite")}),
+    }
     return {
+        "context": context,
         "source": str(source),
         "pages": len(rows),
         "verdicts": verdicts,
@@ -116,7 +143,19 @@ def perf_snapshot():
         if ok and cwork > 0.0001:
             ratios[row.get("scenario")] = nwork / cwork
     app = load_json(PERF_DIR / "app-idle.json") or load_json(ROOT / ".perf" / "app-idle.json")
+    context = {
+        "catalog_size": len(rows),
+        "catalog_digest": gate_compare.digest(row.get("scenario") for row in rows),
+        "tool_version": data.get("version"),
+        "reference": data.get("chrome"),
+        "viewport": data.get("viewport"),
+        "targets": data.get("targets"),
+        "command": data.get("command"),
+        "engine": sorted({str((row.get("nativax") or {}).get("engine"))
+                          for row in rows if (row.get("nativax") or {}).get("engine")}),
+    }
     return {
+        "context": context,
         "scenarios": len(rows),
         "verdicts": {v: sum(1 for row in rows if row.get("verdict") == v) for v in VERDICTS},
         "work": work,
@@ -150,6 +189,7 @@ def newest_summary(prefix, exclude=()):
         "command": data.get("command"),
         "startedAt": data.get("startedAt"),
         "path": str(path),
+        **{key: data[key] for key in ("suiteCommit", "runnerVersion") if key in data},
     }
 
 
@@ -188,87 +228,41 @@ def run_compat(mode):
     )
 
 
-def compare(current, baseline):
-    changes = []
-    if not baseline:
-        return {"verdict": "BASELINE", "changes": [], "regressions": [], "improvements": []}
+def environment_class():
+    """Coarse machine class: OS, architecture, logical CPUs, CPU model.
 
-    def add(area, name, before, after, unit="", higher_is_better=True, tolerance=0.5):
-        if before is None or after is None:
-            return
-        delta = after - before
-        status = "equal"
-        if abs(delta) < tolerance:
-            status = "equal"
-        elif (delta > 0) == higher_is_better:
-            status = "better"
-        else:
-            status = "worse"
-        changes.append({
-            "area": area,
-            "metric": name,
-            "before": before,
-            "after": after,
-            "delta": delta,
-            "unit": unit,
-            "status": status,
-        })
+    It describes the machine running the gate; artifacts reused from another
+    machine are not detected (documented limitation)."""
+    model = platform.processor() or ""
+    try:
+        for line in Path("/proc/cpuinfo").read_text().splitlines():
+            if line.startswith("model name"):
+                model = line.split(":", 1)[1].strip()
+                break
+    except OSError:
+        pass
+    return f"{platform.system()}-{platform.machine()}-{os.cpu_count()}cpu-{model or 'unknown'}"
 
-    visual_now = current.get("visual") or {}
-    visual_base = baseline.get("visual") or {}
-    for key in ("overall", "position", "layout", "color", "design"):
-        add("visual", key, (visual_base.get("categories") or {}).get(key),
-            (visual_now.get("categories") or {}).get(key), " %", True, 0.5)
-    for verdict in ("PASS", "FAIL"):
-        add("visual", f"{verdict} pages",
-            (visual_base.get("verdicts") or {}).get(verdict),
-            (visual_now.get("verdicts") or {}).get(verdict),
-            "", verdict == "PASS", 0.5)
-    add("visual", "ink %", visual_base.get("mean_ink_pct"),
-        visual_now.get("mean_ink_pct"), " %", False, 1.0)
-    add("visual", "images", visual_base.get("images"),
-        visual_now.get("images"), "", True, 0.5)
 
-    perf_now = current.get("perf") or {}
-    perf_base = baseline.get("perf") or {}
-    for scenario, after in (perf_now.get("work") or {}).items():
-        before = (perf_base.get("work") or {}).get(scenario)
-        if before is None:
-            continue
-        add("performance", scenario, before, after, " ms", False, 10.0)
-    for verdict in ("PASS", "FAIL"):
-        add("performance", f"{verdict} scenarios",
-            (perf_base.get("verdicts") or {}).get(verdict),
-            (perf_now.get("verdicts") or {}).get(verdict),
-            "", verdict == "PASS", 0.5)
-    idle_now = (perf_now.get("idle") or {})
-    idle_base = (perf_base.get("idle") or {})
-    add("idle", "RSS MB", idle_base.get("rss_mb"), idle_now.get("rss_mb"), " MB", False, 5.0)
-    add("idle", "CPU %", idle_base.get("cpu_pct"), idle_now.get("cpu_pct"), " %", False, 0.25)
-
-    compat_now = current.get("compat") or {}
-    compat_base = baseline.get("compat") or {}
-    for suite, after in compat_now.items():
-        before = (compat_base.get(suite) or {}).get("passRate")
-        if before is None:
-            continue
-        add("compatibility", suite, before, after.get("passRate"), " %", True, 0.5)
-
-    regressions = [change for change in changes if change["status"] == "worse"]
-    improvements = [change for change in changes if change["status"] == "better"]
-    verdict = "EQUAL"
-    if regressions and not improvements:
-        verdict = "WORSE"
-    elif regressions and improvements:
-        verdict = "MIXED"
-    elif improvements:
-        verdict = "BETTER"
+def build_snapshot(baseline_path):
+    visual = visual_snapshot()
+    perf = perf_snapshot()
+    context = {"global": {"environment_class": environment_class()}}
+    if visual:
+        context["visual"] = visual.pop("context")
+    if perf:
+        context["performance"] = perf.pop("context")
     return {
-        "verdict": verdict,
-        "changes": changes,
-        "regressions": regressions,
-        "improvements": improvements,
+        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "context": context,
+        "visual": visual,
+        "perf": perf,
+        "compat": compat_snapshot(),
+        "baseline_path": str(baseline_path),
     }
+
+
+compare = gate_compare.compare
 
 
 def markdown(snapshot, comparison):
@@ -276,76 +270,78 @@ def markdown(snapshot, comparison):
     perf = snapshot.get("perf") or {}
     compat = snapshot.get("compat") or {}
     lines = [
-        "# Quality gate — mejor/peor que la línea base",
+        "# Quality gate: comparison with the baseline",
         "",
-        f"- Fecha: {snapshot['generated_at']}",
-        f"- Veredicto: **{comparison['verdict']}**",
-        f"- Baseline: `{snapshot['baseline_path']}`",
-        "",
-        "## Estado actual",
-        "",
-        "| Área | Métrica | Valor |",
-        "|---|---|---:|",
+        f"- Generated: {snapshot.get('generated_at')}",
+        f"- Verdict: **{comparison['verdict']}**",
+        f"- Baseline: `{snapshot.get('baseline_path')}`",
     ]
+    if snapshot.get("repeats"):
+        lines.append(f"- Repeated runs aggregated: {snapshot['repeats']}")
+    counts = comparison.get("counts") or {}
+    if counts:
+        lines.append("- Metrics: " + ", ".join(f"{k} {v}" for k, v in counts.items()))
+    lines += ["", "## Current state", "", "| Area | Metric | Value |", "|---|---|---:|"]
     if visual:
+        categories = visual.get("categories") or {}
         lines += [
-            f"| Visual | Páginas | {visual['pages']} |",
-            f"| Visual | Fidelidad media | {visual['categories'].get('overall', 0):.2f} % |",
-            f"| Visual | Posición / layout / color / diseño | "
-            f"{visual['categories'].get('position', 0):.1f} / {visual['categories'].get('layout', 0):.1f} / "
-            f"{visual['categories'].get('color', 0):.1f} / {visual['categories'].get('design', 0):.1f} % |",
-            f"| Visual | Píxeles ΔE>2 | {visual['mismatched_pixels']:,} / {visual['pixels']:,} |",
-            f"| Visual | Imágenes generadas | {visual['images']} |",
+            f"| Visual | Pages | {visual.get('pages')} |",
+            f"| Visual | Mean fidelity | {_fmt(categories.get('overall'))} % |",
+            f"| Visual | Position / layout / color / design | "
+            f"{_fmt(categories.get('position'))} / {_fmt(categories.get('layout'))} / "
+            f"{_fmt(categories.get('color'))} / {_fmt(categories.get('design'))} % |",
+            f"| Visual | Pixels with ΔE>2 | {visual.get('mismatched_pixels')} / {visual.get('pixels')} |",
         ]
     if perf:
+        verdicts = perf.get("verdicts") or {}
+        idle = perf.get("idle") or {}
         lines += [
-            f"| Rendimiento | Escenarios PASS/FAIL | {perf['verdicts'].get('PASS', 0)} / {perf['verdicts'].get('FAIL', 0)} |",
-            f"| Rendimiento | App idle RSS / CPU | "
-            f"{_fmt((perf.get('idle') or {}).get('rss_mb'))} MB / "
-            f"{_fmt((perf.get('idle') or {}).get('cpu_pct'))} % |",
+            f"| Performance | Scenarios PASS/FAIL | {verdicts.get('PASS', 0)} / {verdicts.get('FAIL', 0)} |",
+            f"| Performance | App idle RSS / CPU | {_fmt(idle.get('rss_mb'))} MB / {_fmt(idle.get('cpu_pct'))} % |",
         ]
-    if compat:
-        for name, data in compat.items():
-            lines.append(f"| Compatibilidad | {name} | {_fmt(data.get('passRate'))} % |")
-    lines += ["", "## Cambios frente a la base", ""]
-    if comparison["verdict"] == "BASELINE":
-        lines.append("No había baseline; se guardó el estado actual como referencia.")
-    elif not comparison["changes"]:
-        lines.append("Sin cambios comparables.")
+    for name, data in compat.items():
+        lines.append(f"| Compatibility | {name} | {_fmt(data.get('passRate'))} % |")
+
+    lines += ["", "## Comparability", ""]
+    areas = comparison.get("areas") or {}
+    if comparison["verdict"] == "no_baseline":
+        lines.append("No baseline was found; nothing was compared.")
+    for area, info in sorted(areas.items()):
+        state = "comparable" if info["comparable"] else "**not comparable**"
+        lines.append(f"- {area}: {state}")
+        for reason in info["reasons"]:
+            lines.append(f"  - {reason}")
+        if info.get("unverified"):
+            lines.append(f"  - unverified (recorded by neither side): {', '.join(info['unverified'])}")
+
+    shown = [c for c in comparison.get("changes", []) if c["status"] != "unchanged"]
+    lines += ["", "## Changes", ""]
+    if not shown:
+        lines.append("No metric changed beyond its tolerance.")
     else:
-        lines += ["| Área | Métrica | Antes | Ahora | Δ | Estado |", "|---|---|---:|---:|---:|---|"]
-        for change in comparison["changes"]:
-            if change["status"] == "equal" and abs(change["delta"]) < 0.01:
+        lines += ["| Area | Metric | Before | Now | Δ | Threshold | Status |",
+                  "|---|---|---:|---:|---:|---:|---|"]
+        for c in shown:
+            if c["status"] == "not_comparable":
+                lines.append(f"| {c['area']} | {c['metric']} | {_fmt(c['before'])} | {_fmt(c['after'])} | "
+                             f"— | — | not_comparable |")
                 continue
+            threshold = max(c["min_effect"], c["noise_threshold"])
             lines.append(
-                f"| {change['area']} | {change['metric']} | "
-                f"{_fmt(change['before'])}{change['unit']} | "
-                f"{_fmt(change['after'])}{change['unit']} | "
-                f"{change['delta']:+.2f}{change['unit']} | {change['status']} |"
-            )
-    lines += ["", "## Regresiones", ""]
-    if comparison["regressions"]:
-        for change in comparison["regressions"]:
-            lines.append(f"- **{change['area']} · {change['metric']}**: "
-                         f"{_fmt(change['before'])}{change['unit']} → "
-                         f"{_fmt(change['after'])}{change['unit']} "
-                         f"({change['delta']:+.2f}{change['unit']})")
-    else:
-        lines.append("Ninguna detectada.")
+                f"| {c['area']} | {c['metric']} | {_fmt(c['before'])} {c['unit']} | "
+                f"{_fmt(c['after'])} {c['unit']} | {c['delta']:+.2f} | {threshold:.2f} "
+                f"({c['noise_source']} noise) | {c['status']} |")
     lines += [
         "",
-        "## Límites de esta compuerta",
+        "## Limits of this gate",
         "",
-        "- Bajo carga de CPU real: los escenarios ejecutan DOM/scroll/JS, pero no lanzan "
-        "estresores de CPU en paralelo, ni soak tests largos, ni concurrencia. La "
-        "comparación visual se hace en reposo y con animaciones congeladas.",
-        "- GPU/FPS reales: se mide trabajo de frame en CPU y RSS/CPU; la GPU no está "
-        "expuesta en esta máquina y no se reportan FPS de pantalla ni rasterización GPU.",
-        "- Vídeo, audio, canvas animado y WebGL no se juzgan.",
-        "- La red se bloquea en ambos motores para que la comparación sea reproducible.",
-        "- PassMark 2D HTML Scroll es propietario; se usa una escena equivalente.",
-        "- Los números de una pasada tienen varianza; la compuerta compara cocientes y "
-        "métricas con tolerancias, no FPS.",
+        "- Tolerances and assumed noise are documented in "
+        "debug/architecture/metrics-gate-compat.md; assumed noise is a prior, "
+        "pass several --current snapshots to measure it.",
+        "- The environment class describes the machine running the gate, not "
+        "the machine that produced reused artifacts.",
+        "- No CPU stressors, soak tests, GPU counters or display FPS; video, audio, "
+        "animated canvas and WebGL are not judged; network is blocked.",
     ]
     return "\n".join(lines) + "\n"
 
@@ -359,19 +355,31 @@ def _fmt(value):
         return str(value)
 
 
-def main():
+def main(argv=None):
     parser = argparse.ArgumentParser(description="Headless NativaX quality gate")
     parser.add_argument("--run", action="store_true", help="run the suites; otherwise reuse latest artifacts")
     parser.add_argument("--no-visual", action="store_true")
     parser.add_argument("--no-perf", action="store_true")
     parser.add_argument("--compat", choices=["fast", "full", "reuse", "none"], default="reuse")
-    parser.add_argument("--baseline", default=str(BASELINE_DEFAULT))
-    parser.add_argument("--save-baseline", action="store_true")
+    parser.add_argument("--baseline", default=str(BASELINE_DEFAULT), help="baseline snapshot to read")
+    parser.add_argument("--current", nargs="+", metavar="SNAPSHOT",
+                        help="compare these snapshot files instead of the latest artifacts; "
+                             "several files are repeated runs and give the measured noise")
+    parser.add_argument("--out", metavar="DIR", help="write gate.json, gate.md and snapshot.json here")
+    parser.add_argument("--write-baseline", metavar="PATH", help="write the current snapshot as a baseline")
+    parser.add_argument("--legacy-outputs", action="store_true",
+                        help="old behaviour: overwrite progress/reports/quality-gate-latest.{json,md} "
+                             "and create the default baseline when missing")
+    parser.add_argument("--save-baseline", action="store_true",
+                        help="with --legacy-outputs: overwrite the --baseline file")
     parser.add_argument("--json", action="store_true", help="print the JSON result")
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
+    if args.save_baseline and not args.legacy_outputs:
+        parser.error("--save-baseline needs --legacy-outputs; use --write-baseline PATH")
+    if args.current and args.run:
+        parser.error("--current and --run are exclusive")
 
     baseline_path = Path(args.baseline)
-
     if args.run:
         if not args.no_visual:
             run(
@@ -388,45 +396,68 @@ def main():
             )
         run_compat(args.compat)
 
-    snapshot = {
-        "generated_at": datetime.now(timezone.utc).isoformat(),
-        "visual": visual_snapshot(),
-        "perf": perf_snapshot(),
-        "compat": compat_snapshot(),
-        "baseline_path": str(baseline_path),
-    }
-    if not snapshot["visual"] and not snapshot["perf"]:
-        print("[gate] no measurements found", file=sys.stderr)
-        print("Run: python3 debug/engines/quality_gate/quality_gate.py --run", file=sys.stderr)
-        return 3
+    if args.current:
+        snapshots = []
+        for path in args.current:
+            data = load_json(Path(path))
+            if data is None:
+                print(f"[gate] cannot read snapshot {path}", file=sys.stderr)
+                return 3
+            snapshots.append(data)
+        try:
+            snapshot = gate_compare.aggregate(snapshots) if len(snapshots) > 1 else snapshots[0]
+        except ValueError as error:
+            print(f"[gate] {error}", file=sys.stderr)
+            return 4
+        snapshot = dict(snapshot, baseline_path=str(baseline_path))
+        snapshot.pop("comparison", None)
+    else:
+        snapshot = build_snapshot(baseline_path)
+        if not snapshot["visual"] and not snapshot["perf"]:
+            print("[gate] no measurements found", file=sys.stderr)
+            print("Run: python3 debug/engines/quality_gate/quality_gate.py --run", file=sys.stderr)
+            return 3
 
     baseline = load_json(baseline_path)
-    comparison = compare(snapshot, baseline)
-    snapshot["comparison"] = comparison
-    GATE_JSON.parent.mkdir(parents=True, exist_ok=True)
-    GATE_JSON.write_text(json.dumps(snapshot, indent=2, ensure_ascii=False) + "\n")
-    GATE_MD.write_text(markdown(snapshot, comparison))
+    comparison = gate_compare.compare(snapshot, baseline)
+    result = dict(snapshot, comparison=comparison)
+    report = markdown(snapshot, comparison)
+    log = sys.stderr if args.json else sys.stdout
 
-    if baseline is None or args.save_baseline:
-        baseline_path.parent.mkdir(parents=True, exist_ok=True)
-        baseline_path.write_text(json.dumps(snapshot, indent=2, ensure_ascii=False) + "\n")
-        if baseline is None:
-            comparison["verdict"] = "BASELINE"
-            print(f"[gate] baseline created: {baseline_path}", file=sys.stderr if args.json else sys.stdout)
-        else:
-            print(f"[gate] baseline updated: {baseline_path}", file=sys.stderr if args.json else sys.stdout)
+    written = []
+    if args.out:
+        out = Path(args.out)
+        out.mkdir(parents=True, exist_ok=True)
+        (out / "gate.json").write_text(json.dumps(result, indent=2, ensure_ascii=False) + "\n")
+        (out / "gate.md").write_text(report)
+        (out / "snapshot.json").write_text(json.dumps(snapshot, indent=2, ensure_ascii=False) + "\n")
+        written.append(out / "gate.md")
+    if args.write_baseline:
+        target = Path(args.write_baseline)
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_text(json.dumps(snapshot, indent=2, ensure_ascii=False) + "\n")
+        print(f"[gate] baseline written: {target}", file=log)
+    if args.legacy_outputs:
+        LEGACY_JSON.parent.mkdir(parents=True, exist_ok=True)
+        LEGACY_JSON.write_text(json.dumps(result, indent=2, ensure_ascii=False) + "\n")
+        LEGACY_MD.write_text(report)
+        written.append(LEGACY_MD)
+        if baseline is None or args.save_baseline:
+            baseline_path.parent.mkdir(parents=True, exist_ok=True)
+            baseline_path.write_text(json.dumps(snapshot, indent=2, ensure_ascii=False) + "\n")
+            print(f"[gate] baseline {'created' if baseline is None else 'updated'}: {baseline_path}", file=log)
 
     if args.json:
-        print(json.dumps(snapshot, indent=2, ensure_ascii=False))
-        print(f"[gate] verdict: {comparison['verdict']}", file=sys.stderr)
-        print(f"[gate] report: {GATE_MD}", file=sys.stderr)
+        print(json.dumps(result, indent=2, ensure_ascii=False))
     else:
-        print(markdown(snapshot, comparison))
-        print(f"\n[gate] verdict: {comparison['verdict']}")
-        print(f"[gate] report: {GATE_MD}")
-    if comparison["verdict"] == "WORSE" or comparison["verdict"] == "MIXED":
-        return 2
-    return 0
+        print(report)
+    print(f"[gate] verdict: {comparison['verdict']}", file=log)
+    for path in written:
+        print(f"[gate] report: {path}", file=log)
+    return EXIT_CODES.get(comparison["verdict"], 0)
+
+
+EXIT_CODES = {"regressed": 2, "not_comparable": 4}
 
 
 if __name__ == "__main__":
