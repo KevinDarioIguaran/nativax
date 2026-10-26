@@ -226,6 +226,7 @@ class WptRunner {
     final completed = Completer<void>();
     final subtests = <_Subtest>[];
     final scriptErrors = <String>[];
+    var timedOut = false;
     try {
       engine = QuickJsEngine(
         JavaScriptEngineConfig(
@@ -328,6 +329,9 @@ for (const el of document.querySelectorAll('[id]')) {
           completed.future,
           Future<void>.delayed(options.timeout),
         ]);
+        // testharness.js reports TIMEOUT for tests that never finish; it is
+        // never a pass, even when every reported subtest passed.
+        timedOut = !completed.isCompleted && scriptErrors.isEmpty;
       }
     } on JavaScriptException catch (err) {
       scriptErrors.add('${err.name}: ${err.message}');
@@ -352,6 +356,10 @@ for (const el of document.querySelectorAll('[id]')) {
     }
     clock.stop();
 
+    if (timedOut) {
+      scriptErrors.add('harness timeout after '
+          '${options.timeout.inMilliseconds} ms: not every test completed');
+    }
     if (subtests.isEmpty && scriptErrors.isEmpty) {
       return _result(
         id,

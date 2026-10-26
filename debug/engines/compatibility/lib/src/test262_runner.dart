@@ -248,13 +248,15 @@ class Test262Runner {
     }
 
     final onlyStrict = flags.contains('onlyStrict');
-    final noStrict = flags.contains('noStrict');
+    final raw = flags.contains('raw');
+    // Test262 INTERPRETING.md: `raw` implies `noStrict`; the source runs
+    // verbatim, without harness files or a "use strict" prefix.
+    final noStrict = flags.contains('noStrict') || raw;
     final modes = onlyStrict
         ? const [true]
         : noStrict
             ? const [false]
             : const [false, true];
-    final raw = flags.contains('raw');
     final async = flags.contains('async');
 
     final failures = <String>[];
@@ -267,6 +269,12 @@ class Test262Runner {
         raw: raw,
         async: async,
       );
+      if (outcome.harnessError) {
+        return _result(id, ResultStatus.error,
+            reason: '[$mode] ${outcome.message}',
+            features: meta.features,
+            durationMs: clock.elapsedMilliseconds);
+      }
       if (!outcome.ok) {
         failures.add('[$mode] ${outcome.message}');
         if (!options.verbose) break;
@@ -318,6 +326,7 @@ class Test262Runner {
     final done = Completer<String?>();
     String? doneError;
     var doneCalls = 0;
+    var evaluating = false;
     try {
       engine = QuickJsEngine(JavaScriptEngineConfig(
         memoryLimitBytes: 256 * 1024 * 1024,
@@ -339,31 +348,44 @@ class Test262Runner {
         if (!done.isCompleted) done.complete(doneError);
         return null;
       });
+      e.registerHostFunction('test262.evaluating', (_) {
+        evaluating = true;
+        return null;
+      });
       e.registerHostFunction('test262.gc', (_) {
         e.collectGarbage();
         return null;
       });
       timers = TimerHost(e);
 
-      final prefix = StringBuffer()
-        ..writeln(_hostPrelude)
-        ..writeln('void 0;');
-      if (!raw) {
-        for (final include in const ['sta.js', 'assert.js']) {
-          prefix.writeln(_harness(include));
+      // The host prelude runs as its own script so that a parse error in the
+      // test never hides it, and so that the test script can start with a
+      // real "use strict" directive. A directive is only a directive at the
+      // start of the script: placed after other statements it is a plain
+      // string expression and the code stays sloppy.
+      final prefix = StringBuffer();
+      if (raw) {
+        e.evaluate(_hostPrelude, filename: '<test262:host>');
+        prefix.write(source);
+      } else {
+        if (strict) prefix.writeln('"use strict";');
+        // Runs only if the whole script parsed. A parse-phase negative test
+        // passes only when this marker never fires.
+        prefix.writeln("__nx.host('test262.evaluating');");
+        for (final include in ['sta.js', 'assert.js', ...meta.includes]) {
+          // Test262 includes are harness file names. Reject traversal.
+          if (include.contains('/') || include.contains('..')) {
+            return _Outcome.harness('invalid include: $include');
+          }
+          final harness = _harness(include);
+          if (harness == null) {
+            return _Outcome.harness('missing Test262 harness file: $include');
+          }
+          prefix.writeln(harness);
         }
+        e.evaluate(_hostPrelude, filename: '<test262:host>');
+        prefix.writeln(source);
       }
-      for (final include in meta.includes) {
-        // Test262 includes are harness file names. Reject traversal.
-        if (include.contains('/') || include.contains('..')) {
-          return _Outcome(false, 'invalid include: $include');
-        }
-        prefix.writeln(_harness(include));
-      }
-      prefix.writeln(_hostPrelude);
-
-      if (strict) prefix.writeln('"use strict";');
-      prefix.writeln(source);
 
       final negative = meta.negative;
       if (negative != null) {
@@ -377,6 +399,12 @@ class Test262Runner {
         } on JavaScriptTimeoutException catch (err) {
           return _Outcome(false, 'timeout: ${err.message}');
         } on JavaScriptException catch (err) {
+          final early = phase == 'parse' || phase == 'resolution';
+          // A raw test cannot carry the marker, so the phase is not checked.
+          if (err.name == type && early && evaluating && !raw) {
+            return _Outcome(false,
+                'expected $type during $phase, but it was thrown at runtime');
+          }
           if (err.name == type) return const _Outcome(true, '');
           return _Outcome(false,
               'expected $type during $phase, got ${err.name}: ${err.message}');
@@ -409,7 +437,7 @@ class Test262Runner {
     } on JavaScriptEngineStateException catch (err) {
       return _Outcome(false, 'engine failure: ${err.message}');
     } catch (err) {
-      return _Outcome(false, 'runner error: $err');
+      return _Outcome.harness('runner error: $err');
     } finally {
       try {
         timers?.dispose();
@@ -420,23 +448,27 @@ class Test262Runner {
     }
   }
 
-  String _harness(String name) {
-    return _harnessCache.putIfAbsent(name, () {
-      final file = File(p.join(options.suitePath, 'harness', name));
-      if (!file.existsSync()) {
-        throw StateError('missing Test262 harness file: ${file.path}');
-      }
-      return file.readAsStringSync();
-    });
+  String? _harness(String name) {
+    final cached = _harnessCache[name];
+    if (cached != null) return cached;
+    final file = File(p.join(options.suitePath, 'harness', name));
+    if (!file.existsSync()) return null;
+    return _harnessCache[name] = file.readAsStringSync();
   }
 
   static const _asyncSentinel = '<__nativax_async_timeout__>';
 }
 
 class _Outcome {
-  const _Outcome(this.ok, this.message);
+  const _Outcome(this.ok, this.message) : harnessError = false;
+  const _Outcome.harness(this.message)
+      : ok = false,
+        harnessError = true;
   final bool ok;
   final String message;
+
+  /// The harness, not the engine, failed: reported as ERROR, never FAIL.
+  final bool harnessError;
 }
 
 const _hostPrelude = r'''
