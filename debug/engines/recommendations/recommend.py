@@ -66,7 +66,7 @@ RULES: dict[str, dict[str, Any]] = {
     },
     "memory.idle.unmeasured": {
         "priority": "P1", "area": "memory",
-        "fires_when": "app_idle missing or status != ok",
+        "fires_when": "app_idle missing, status != ok, or RSS/CPU not numeric",
         "exclusive": ["memory.idle.over_target", "memory.load_peak.unmeasured"],
     },
     "memory.idle.over_target": {
@@ -458,12 +458,23 @@ def build_recommendations(
                 "dart run debug/engines/performance/bin/perf.dart run --out .perf/latest",
             ],
         ))
-    if not app or app.get("status") != "ok":
+    if not isinstance(app, dict):
+        app = {}
+    idle_rss = _number(app.get("rss_tail_mb"))
+    idle_cpu = _number(app.get("cpu_tail_pct"))
+    idle_measured = (
+        app.get("status") == "ok" and idle_rss is not None and idle_cpu is not None
+    )
+    if not idle_measured:
         recommendations.append(Recommendation(
             priority="P1",
             area="memory",
             id="memory.idle.unmeasured",
-            rule=_rule([_cond("app_idle.status", "!=", "ok", app.get("status"))]),
+            rule=_rule([
+                _cond("app_idle.status", "!=", "ok", app.get("status")),
+                _cond("app_idle.rss_tail_mb", "missing", None, idle_rss),
+                _cond("app_idle.cpu_tail_pct", "missing", None, idle_cpu),
+            ], logic="any"),
             expected_impact=[
                 _impact("app_idle.rss_tail_mb", "measure", 250),
                 _impact("app_idle.cpu_tail_pct", "measure", 1),
@@ -472,7 +483,7 @@ def build_recommendations(
             evidence=[
                 "The test harness RSS includes Flutter/Dart and does not represent "
                 "the app's consumption.",
-                "There is no `app-idle.json` with RSS/CPU of the real process.",
+                "There is no `app-idle.json` with numeric RSS/CPU of the real process.",
             ],
             action="Measure the real Linux app on a blank page, with warm-up and idle time.",
             acceptance="Peak and steady RSS ≤250 MB and CPU ≤1 % in the real app.",
@@ -481,9 +492,8 @@ def build_recommendations(
         ))
 
     # --- Memory budget and leaks ---------------------------------------------
-    if app.get("status") == "ok":
-        rss = float(app.get("rss_tail_mb") or 0)
-        cpu = float(app.get("cpu_tail_pct") or 0)
+    if idle_measured:
+        rss, cpu = idle_rss, idle_cpu
         if rss > IDLE_RSS_TARGET_MB or cpu > IDLE_CPU_TARGET_PCT:
             recommendations.append(Recommendation(
                 priority="P0",
@@ -986,7 +996,11 @@ def measure(data: dict[str, Any]) -> dict[str, Any]:
     visual_total = len(data.get("visual_catalog") or []) or len(visual_rows)
     perf_total = len(data.get("perf_catalog") or []) or len(perf_rows)
     app = data.get("app_idle") or {}
-    app_ok = isinstance(app, dict) and app.get("status") == "ok"
+    app_ok = (
+        isinstance(app, dict) and app.get("status") == "ok"
+        and _number(app.get("rss_tail_mb")) is not None
+        and _number(app.get("cpu_tail_pct")) is not None
+    )
     capabilities = data.get("capabilities") or {}
     ok_rows = [row for row in perf_rows if _is_ok(row)]
 

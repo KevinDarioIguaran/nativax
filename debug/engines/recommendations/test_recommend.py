@@ -261,6 +261,20 @@ class RecommendationsTest(unittest.TestCase):
         ids = {r.id for r in recommend.build_recommendations(data)}
         self.assertIn("perf.game.over_target", ids)
 
+    def test_idle_ok_without_numbers_is_unmeasured_not_a_pass(self):
+        # Regression: status ok with no RSS/CPU was read as 0 MB / 0 % and
+        # reported "Idle meets the budget".
+        data = dict(BASE)
+        data["app_idle"] = {"status": "ok", "rss_tail_mb": None}
+        ids = {r.id for r in recommend.build_recommendations(data)}
+        self.assertIn("memory.idle.unmeasured", ids)
+        self.assertNotIn("memory.load_peak.unmeasured", ids)
+        self.assertNotIn("memory.idle.over_target", ids)
+        data["app_idle"] = {"status": "ok", "rss_tail_mb": "260", "cpu_tail_pct": 0}
+        ids = {r.id for r in recommend.build_recommendations(data)}
+        self.assertEqual(ids & {"memory.idle.over_target", "memory.idle.unmeasured"},
+                         {"memory.idle.over_target"})
+
 
 if __name__ == "__main__":
     unittest.main()
