@@ -7,12 +7,17 @@ import '../model.dart';
 /// Pure JavaScript benchmarks. These are intentionally independent from DOM
 /// and renderer work so the results measure the engine, not the bridge.
 class JsBenchmarks {
-  JsBenchmarks() {
-    engine = QuickJsEngine();
+  /// [engineFactory] selects the engine under test. The default is QuickJS-ng;
+  /// the benchmark CLI passes a V8 factory only for the documented reference
+  /// run (`--engine v8`, `NATIVAX_V8_LIB`). Cases and checksums never change.
+  JsBenchmarks({JavaScriptEngine Function(JavaScriptEngineConfig config)?
+      engineFactory}) {
+    engine = engineFactory?.call(const JavaScriptEngineConfig()) ??
+        QuickJsEngine();
     engine.registerHostFunction('noop', (args) => args.isEmpty ? 0 : args[0]);
   }
 
-  late final QuickJsEngine engine;
+  late final JavaScriptEngine engine;
 
   List<BenchmarkCase> cases() {
     final parseText = jsonEncode(

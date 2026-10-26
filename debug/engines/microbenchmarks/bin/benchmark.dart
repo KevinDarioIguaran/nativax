@@ -1,6 +1,8 @@
 import 'dart:io';
 
 import 'package:nativa_benchmark/benchmark.dart';
+import 'package:nativa_js/nativa_js.dart'
+    show JavaScriptEngine, JavaScriptEngineConfig, V8Engine;
 import 'package:nativa_run_manifest/nativa_run_manifest.dart';
 import 'package:path/path.dart' as p;
 
@@ -33,6 +35,7 @@ Future<void> _run(List<String> args) async {
   String? outDir;
   String? jsonPath;
   String? markdownPath;
+  var engineName = 'quickjs';
 
   for (var i = 0; i < args.length; i++) {
     switch (args[i]) {
@@ -48,6 +51,8 @@ Future<void> _run(List<String> args) async {
         includeDart = false;
       case '--only':
         only = args[++i];
+      case '--engine':
+        engineName = args[++i];
       case '--out':
         outDir = args[++i];
       case '--json':
@@ -77,8 +82,20 @@ Future<void> _run(List<String> args) async {
   }
 
   final root = findRepoRoot();
-  final js = includeJs ? JsBenchmarks() : null;
-  final dom = includeDom ? DomBenchmarks() : null;
+  JavaScriptEngine Function(JavaScriptEngineConfig config)? engineFactory;
+  if (engineName == 'v8') {
+    final lib = Platform.environment['NATIVAX_V8_LIB'] ?? 'libnx_v8.so';
+    // The V8 cdylib keeps one isolate per OS thread, so both suites must
+    // share a single engine instance (dispose() is idempotent).
+    JavaScriptEngine? shared;
+    engineFactory = (config) => shared ??= V8Engine(config, lib);
+  } else if (engineName != 'quickjs') {
+    stderr.writeln('--engine must be quickjs or v8, got: $engineName');
+    exitCode = 64;
+    return;
+  }
+  final js = includeJs ? JsBenchmarks(engineFactory: engineFactory) : null;
+  final dom = includeDom ? DomBenchmarks(engineFactory: engineFactory) : null;
   final cases = <BenchmarkCase>[
     if (js != null) ...js.cases(),
     if (dom != null) ...dom.cases(),
@@ -116,7 +133,7 @@ Future<void> _run(List<String> args) async {
     }
 
     final report = RunReport(
-      metadata: collectMetadata(repoRoot: root),
+      metadata: collectMetadata(repoRoot: root, engineName: engineName),
       results: results,
       command: 'benchmark ${args.join(' ')}'.trim(),
       notes: const [
@@ -217,6 +234,8 @@ void _usage() {
     ..writeln('    --rounds N       measured rounds (default 15, min 3)')
     ..writeln('    --warmup N       warmup rounds (default 3)')
     ..writeln('    --only TEXT      filter by name/category')
+    ..writeln('    --engine ENGINE  quickjs (default) | v8 (reference, '
+        'needs NATIVAX_V8_LIB)')
     ..writeln('    --no-js|--no-dom|--no-dart')
     ..writeln('    --out DIR        results directory')
     ..writeln('    --json FILE      explicit JSON path')

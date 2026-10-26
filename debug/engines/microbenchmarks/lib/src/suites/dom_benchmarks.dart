@@ -9,17 +9,22 @@ import '../model.dart';
 /// DOM and style benchmarks. Setup is included in each sample on purpose, so
 /// the result includes the real cost of creating/resetting the working set.
 class DomBenchmarks {
-  DomBenchmarks() {
+  /// [engineFactory] selects the engine under test. The default is QuickJS-ng;
+  /// the benchmark CLI passes a V8 factory only for the documented reference
+  /// run (`--engine v8`, `NATIVAX_V8_LIB`). Cases and checksums never change.
+  DomBenchmarks({JavaScriptEngine Function(JavaScriptEngineConfig config)?
+      engineFactory}) {
     final parsed = HtmlParser().parseDocument(
       '<!doctype html><html><head><style>.hot { color: #ff0000 } '
       '.item { display: block; }</style></head><body></body></html>',
     );
     document = parsed.value;
-    engine = QuickJsEngine(const JavaScriptEngineConfig(
+    const config = JavaScriptEngineConfig(
       maxJobsPerDrain: 1000000,
       memoryLimitBytes: 256 * 1024 * 1024,
       executionBudget: Duration(seconds: 10),
-    ));
+    );
+    engine = engineFactory?.call(config) ?? QuickJsEngine(config);
     bindings = DomBindings(
       engine: engine,
       document: document,
@@ -39,7 +44,7 @@ class DomBenchmarks {
   }
 
   late final Document document;
-  late final QuickJsEngine engine;
+  late final JavaScriptEngine engine;
   late final DomBindings bindings;
   late final StyleEngine styleEngine;
   final List<Element> _styled = [];

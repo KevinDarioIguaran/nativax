@@ -291,8 +291,8 @@ pub extern "C" fn nv8_create(memory_limit: usize, _max_stack: usize) -> *mut c_v
 globalThis.__nx_registry = new Map();
 globalThis.__nx_register = (name, fn) => { __nx_registry.set(String(name), fn); };
 globalThis.__nx_call = (name, arg) => {
-  const fn = __nx_registry.get(String(name));
-  return fn ? fn(arg) : undefined;
+  const fn = __nx_registry.get(String(name)) || globalThis[String(name)];
+  return typeof fn === 'function' ? fn(arg) : undefined;
 };
 globalThis.__nx_buffer_take = () => null;
 globalThis.__nx_buffer_put = () => 0;

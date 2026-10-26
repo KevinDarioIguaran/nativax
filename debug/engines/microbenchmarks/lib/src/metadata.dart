@@ -5,11 +5,21 @@ import 'package:path/path.dart' as p;
 import 'model.dart';
 
 /// Builds the environment metadata included in every JSON report.
-RunMetadata collectMetadata({String? repoRoot}) {
+///
+/// [engineName] selects which engine the run used. The default (`quickjs`) is
+/// the product engine; `v8` is the documented reference run through the same
+/// Dart bridge (`NATIVAX_V8_LIB`).
+RunMetadata collectMetadata({
+  String? repoRoot,
+  String engineName = 'quickjs',
+}) {
   final root = repoRoot ?? findRepoRoot();
+  final isV8 = engineName == 'v8';
   return RunMetadata(
-    engine: 'QuickJS-ng',
-    engineVersion: quickJsVersion(root),
+    engine: isV8 ? 'V8 (libnx_v8.so)' : 'QuickJS-ng',
+    engineVersion: isV8
+        ? 'v8 crate 152.2.0 (tools/v8-spike)'
+        : quickJsVersion(root),
     dartVersion: Platform.version.split(' ').first,
     os: Platform.operatingSystem,
     osVersion: Platform.operatingSystemVersion,
