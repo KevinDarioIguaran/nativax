@@ -7,7 +7,7 @@ This document covers two engines of the debug suite:
 - `debug/engines/compatibility`: Test262, html5lib, URL, WPT tree construction
   and WPT testharness runners.
 
-It answers sections 9 and 3 of [`engine-inventory.md`](engine-inventory.md):
+It answers sections 9 and 3 of [`engine-inventory.md`](../archive/engine-inventory-2026-10-25.md):
 the gate used fixed tolerances and never checked comparability, and the
 runners had never been checked against hand-verified outcomes.
 
