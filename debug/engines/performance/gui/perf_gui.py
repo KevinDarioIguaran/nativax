@@ -121,6 +121,10 @@ try:
 except Exception:  # pragma: no cover - optional history engine
     history_engine = None
 try:
+    import area_trends
+except Exception:  # pragma: no cover - optional history engine
+    area_trends = None
+try:
     import storage as storage_engine
 except Exception:  # pragma: no cover - optional run storage
     storage_engine = None
@@ -1575,13 +1579,31 @@ class Dashboard(ChartMixin):
             detail.pack(fill="x", pady=(2, 6))
             charts = tk.Frame(box, bg=PANEL)
             charts.pack(fill="both", expand=True)
-            trend = tk.Canvas(charts, bg=PANEL, height=200, highlightthickness=0)
+            trend = tk.Canvas(charts, bg=PANEL, height=170, highlightthickness=0)
             trend.pack(side="left", fill="both", expand=True, padx=(0, 6))
-            changes = tk.Canvas(charts, bg=PANEL, height=200, highlightthickness=0)
+            changes = tk.Canvas(charts, bg=PANEL, height=170, highlightthickness=0)
             changes.pack(side="left", fill="both", expand=True)
             trend.bind("<Configure>", lambda _e: self._fill_history())
             self.history_sections[area] = {"verdict": verdict, "detail": detail,
                                            "trend": trend, "changes": changes}
+        # Pass/fail areas: one compact box each, side by side.
+        row = tk.Frame(tab, bg=BG)
+        row.pack(fill="both", expand=True, pady=(4, 4))
+        for area, title in (("conformance", "Conformidad (tests de estándares)"),
+                            ("memory", "Memoria (fugas)"), ("security", "Seguridad")):
+            box = tk.Frame(row, bg=PANEL, padx=10, pady=8)
+            box.pack(side="left", fill="both", expand=True, padx=(0, 6) if area != "security" else 0)
+            head = tk.Frame(box, bg=PANEL)
+            head.pack(fill="x")
+            tk.Label(head, text=title, bg=PANEL, fg=FG, font=(FONT, 11, "bold")).pack(side="left")
+            verdict = tk.Label(head, text="", bg=PANEL, fg=MUTED, font=(FONT, 12, "bold"))
+            verdict.pack(side="left", padx=10)
+            detail = tk.Label(box, text="", bg=PANEL, fg=FG, font=(FONT, 9), justify="left",
+                              anchor="w", wraplength=380)
+            detail.pack(fill="x", pady=(2, 4))
+            chart = tk.Canvas(box, bg=PANEL, height=170, highlightthickness=0)
+            chart.pack(fill="both", expand=True)
+            self.history_sections[area] = {"verdict": verdict, "detail": detail, "chart": chart}
 
     # Thresholds below which a change is "the same" (measurement noise).
     HISTORY_VISUAL_POINTS = 0.5     # mean overall score, percentage points
@@ -1604,6 +1626,99 @@ class Dashboard(ChartMixin):
                            higher_better=True, unit=" %", item_key="overall")
         self._history_area("perf", perf, key="mean_work_ratio", count_key="scenarios",
                            higher_better=False, unit="x", item_key="work_ratio")
+        if area_trends is not None:
+            try:
+                self._history_conformance(area_trends.conformance_status(
+                    area_trends.conformance_series(CONFORMANCE_RESULTS)))
+                for area, prefix in (("memory", "leaks"), ("security", "security")):
+                    self._history_bench(area, area_trends.bench_status(area_trends.bench_series(
+                        ROOT / "debug" / "benchmarks" / prefix, prefix)))
+            except Exception as error:  # noqa: BLE001 - logged, boxes keep their last state
+                self._append_log(f"historial: {error}\n")
+
+    HISTORY_WORDS = {
+        "improved": ("MEJORÓ", GREEN), "regressed": ("EMPEORÓ", RED), "mixed": ("MIXTO", YELLOW),
+        "same": ("IGUAL", MUTED), "not_enough_data": ("SIN DATOS SUFICIENTES", MUTED),
+    }
+
+    @staticmethod
+    def _names(ids, limit=4):
+        ids = list(ids)
+        text = ", ".join(ids[:limit])
+        return text + (f" y {len(ids) - limit} más" if len(ids) > limit else "")
+
+    def _history_conformance(self, status):
+        sec = self.history_sections["conformance"]
+        word, color = self.HISTORY_WORDS[status["verdict"]]
+        sec["verdict"].configure(text=word, fg=color)
+        lines = []
+        for s in status["suites"]:
+            if s["verdict"] == "not_enough_data":
+                lines.append(f"{s['suite']}: {s['after']}/{s['total']}, solo una corrida de este tamaño.")
+                continue
+            change = f"{s['before']} → {s['after']} de {s['total']}"
+            extra = []
+            if s["fixed"]:
+                extra.append(f"{len(s['fixed'])} empiezan a pasar")
+            if s["broken"]:
+                extra.append(f"{len(s['broken'])} dejan de pasar ({self._names(s['broken'], 3)})")
+            lines.append(f"{s['suite']}: {change}" + (f" · {'; '.join(extra)}" if extra else " · sin cambios"))
+        sec["detail"].configure(text=(
+            "\n".join(lines) + "\nCada suite se compara con su corrida anterior del mismo tamaño."
+            if lines else "No hay corridas de conformidad guardadas."))
+        self._draw_suites(sec["chart"], status["suites"])
+
+    def _history_bench(self, area, status):
+        sec = self.history_sections[area]
+        word, color = self.HISTORY_WORDS[status["verdict"]]
+        sec["verdict"].configure(text=word, fg=color)
+        if not status.get("runs"):
+            sec["detail"].configure(text="No hay corridas guardadas.")
+            self._draw_trend(sec["chart"], "Casos que pasan (%)", [], True, " %")
+            return
+        parts = [f"{status['pass']} de {status['cases']} casos pasan en la última corrida completa "
+                 f"({self._short_date(status['run'])})."]
+        if status["verdict"] == "not_enough_data":
+            parts.append("Hace falta otra corrida completa con los mismos casos para comparar.")
+        else:
+            if status["fixed"]:
+                parts.append(f"Ahora pasan: {self._names(status['fixed'])}.")
+            if status["broken"]:
+                parts.append(f"Dejaron de pasar: {self._names(status['broken'])}.")
+            if not status["fixed"] and not status["broken"]:
+                parts.append(f"Mismo resultado que la corrida anterior ({self._short_date(status['prev_run'])}).")
+        if status["fail"]:
+            parts.append(f"Fallan ahora: {self._names(status['fail'])}.")
+        if status["skipped"]:
+            parts.append(f"{status['skipped']} corrida(s) parciales o de otros casos no se comparan.")
+        sec["detail"].configure(text=" ".join(parts))
+        points = [(self._short_date(at.replace("-", "").replace(":", "")), rate)
+                  for at, rate in status["trend"]]
+        self._draw_trend(sec["chart"], "Casos que pasan por corrida (%, más alto es mejor)", points, True, " %")
+
+    def _draw_suites(self, canvas, suites):
+        """One bar per suite: share of tests passing, with the change since
+        the previous comparable run."""
+        canvas.delete("all")
+        width = max(canvas.winfo_width(), 360)
+        canvas.create_text(10, 8, anchor="nw", text="Tests que pasan por suite (%)", fill=MUTED,
+                           font=(FONT, 9, "bold"))
+        if not suites:
+            canvas.create_text(width / 2, 80, text="Sin datos", fill=MUTED)
+            return
+        left, right, top = 130, width - 70, 30
+        row_h = max(16, min(26, (max(canvas.winfo_height(), 170) - top - 6) // len(suites)))
+        for i, s in enumerate(suites):
+            y = top + i * row_h
+            rate = (s["after"] / s["total"] * 100) if s["total"] else 0
+            delta = s.get("delta")
+            color = {"improved": GREEN, "regressed": RED, "mixed": YELLOW}.get(s["verdict"], ACCENT)
+            canvas.create_text(10, y + row_h / 2, anchor="w", text=s["suite"][:18], fill=FG, font=(FONT, 8))
+            canvas.create_rectangle(left, y + 3, right, y + row_h - 3, fill=PANEL2, outline="")
+            canvas.create_rectangle(left, y + 3, left + (right - left) * rate / 100, y + row_h - 3,
+                                    fill=color, outline="")
+            label = f"{rate:.1f} %" + (f" ({delta:+d})" if isinstance(delta, int) and delta else "")
+            canvas.create_text(right + 4, y + row_h / 2, anchor="w", text=label, fill=FG, font=(FONT, 8))
 
     def _history_area(self, area, runs, *, key, count_key, higher_better, unit, item_key):
         sec = self.history_sections[area]

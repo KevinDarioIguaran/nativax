@@ -23,7 +23,8 @@ debug/
 - **Quality dashboard** (`debug/engines/performance/gui/perf_gui.py`, Spanish,
   the day-to-day panel): runs the visual, performance and game suites live,
   per-area reports, and the **Historial** page that says whether visual
-  fidelity and performance improved or got worse, with charts.
+  fidelity, performance, conformance, memory and security improved or got
+  worse, with charts.
   `python3 debug/run.py gui`
 - **Debug Suite app** (`debug/app`, English): report explorer by folder,
   a dedicated workspace per report type (visual images side by side with zoom

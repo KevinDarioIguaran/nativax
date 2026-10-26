@@ -270,5 +270,46 @@ class HistoryVerdictTest(unittest.TestCase):
         self.assertEqual(self.verdict(alone)[0], "SIN DATOS SUFICIENTES")
 
 
+class PassFailHistoryTest(unittest.TestCase):
+    """Conformance, memory and security boxes say in words what changed."""
+
+    def dash(self):
+        d = types.SimpleNamespace(
+            history_sections={a: {k: _Widget() for k in ("verdict", "detail", "chart")}
+                              for a in ("conformance", "memory", "security")},
+            _short_date=perf_gui.Dashboard._short_date, _names=perf_gui.Dashboard._names,
+            HISTORY_WORDS=perf_gui.Dashboard.HISTORY_WORDS)
+        d._draw_trend = lambda *a, **k: perf_gui.Dashboard._draw_trend(d, *a, **k)
+        d._draw_suites = lambda *a, **k: perf_gui.Dashboard._draw_suites(d, *a, **k)
+        return d
+
+    def test_conformance_box(self):
+        d = self.dash()
+        perf_gui.Dashboard._history_conformance(d, {"verdict": "regressed", "suites": [
+            {"suite": "wpt-url", "verdict": "regressed", "before": 665, "after": 660, "total": 896,
+             "delta": -5, "fixed": [], "broken": ["#1", "#2", "#3", "#4", "#5"]},
+            {"suite": "test262", "verdict": "not_enough_data", "before": None, "after": 10, "total": 20,
+             "delta": None, "fixed": [], "broken": []}]})
+        sec = d.history_sections["conformance"]
+        self.assertEqual(sec["verdict"].cget("text"), "EMPEORÓ")
+        self.assertIn("665 → 660 de 896", sec["detail"].cget("text"))
+        self.assertIn("5 dejan de pasar (#1, #2, #3 y 2 más)", sec["detail"].cget("text"))
+        self.assertIn(("create_text", "73.7 % (-5)"), sec["chart"].items)
+
+    def test_bench_box(self):
+        d = self.dash()
+        perf_gui.Dashboard._history_bench(d, "memory", {
+            "verdict": "improved", "runs": 3, "cases": 18, "pass": 18, "run": "20261020T213058Z",
+            "fixed": ["timers.cancel"], "broken": [], "fail": [], "skipped": 1,
+            "trend": [("2026-10-20T21:30:25", 83.3), ("2026-10-20T21:30:58", 100.0)]})
+        sec = d.history_sections["memory"]
+        self.assertEqual(sec["verdict"].cget("text"), "MEJORÓ")
+        self.assertIn("18 de 18 casos pasan", sec["detail"].cget("text"))
+        self.assertIn("Ahora pasan: timers.cancel.", sec["detail"].cget("text"))
+        self.assertIn(("create_text", "100.00 %"), sec["chart"].items)
+        perf_gui.Dashboard._history_bench(d, "security", {"verdict": "not_enough_data", "runs": 0})
+        self.assertEqual(d.history_sections["security"]["verdict"].cget("text"), "SIN DATOS SUFICIENTES")
+
+
 if __name__ == "__main__":
     unittest.main()

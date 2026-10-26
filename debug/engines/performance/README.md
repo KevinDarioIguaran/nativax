@@ -157,6 +157,19 @@ navigation and the same dark/typographic language as the HTML report:
   and a chart of the pages/scenarios that changed most. Changes below 0.5
   overall points (visual) or 5 % of the work ratio (performance) count as the
   same (measurement noise).
+  Below them, one box each for **conformance**, **memory** and **security**
+  (`debug/logic/history/area_trends.py`). These areas are deterministic
+  pass/fail, so there is no noise threshold:
+  - **Conformance:** each suite is compared with its previous run of the
+    same test count, using the per-test JSONL. The box names the tests that
+    started or stopped passing, and its chart shows the pass share per suite
+    with the change.
+  - **Memory and security:** the newest run that covers the most cases is
+    compared with the previous run of the same case set; `--only` runs are
+    skipped and counted. The chart shows the passing share per run.
+  - **Verdict:** EMPEORÓ when a test or case stops passing, MIXTO when some
+    start passing and others stop, MEJORÓ when only fixes happen, and IGUAL
+    otherwise.
 - **Row actions**: right-click a scenario/page (or use **Acciones ▾**) to view
   details or run only that test/page. The single result is merged into the
   table and the detail opens automatically.

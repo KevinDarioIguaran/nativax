@@ -367,12 +367,19 @@ def conformance(results_dir: Path | None = None):
 
 # ---------------------------------------------------- memory and security
 def _latest_bench(area: str, prefix: str):
+    """Newest run that covers the most cases: a `--only` run of 1 case is not
+    the state of the area."""
     runs = sorted(p for p in (BENCH / area).glob("*") if p.is_dir()) if (BENCH / area).exists() else []
-    for run in reversed(runs):
+    best = None
+    for run in runs:
         files = sorted(run.glob(f"{prefix}-*.json"))
-        if files:
-            return run, files[-1], load_json(files[-1]) or {}
-    return None, None, {}
+        if not files:
+            continue
+        data = load_json(files[-1]) or {}
+        size = len(data.get("results") or [])
+        if best is None or size >= best[0]:
+            best = (size, run, files[-1], data)
+    return (best[1], best[2], best[3]) if best else (None, None, {})
 
 
 def memory():
@@ -382,22 +389,24 @@ def memory():
     results = data.get("results") or []
     counts = {}
     for r in results:
-        counts[r.get("status")] = counts.get(r.get("status"), 0) + 1
+        st = str(r.get("status")).upper()
+        counts[st] = counts.get(st, 0) + 1
     summary = compact({"run": rel(run), "cases": len(results), "v": counts,
                        "profile": (data.get("metadata") or {}).get("profile")})
     items = []
     for r in results:
         cls = (r.get("classification") or {}).get("class") if isinstance(r.get("classification"), dict) else None
-        if r.get("status") == "PASS" and cls in (None, "no_leak"):
+        status = str(r.get("status")).upper()
+        if status == "PASS" and cls in (None, "no_leak"):
             continue
         samples = [[s.get("batch"), r1((s.get("rssBytes") or 0) / 1048576, 1)] for s in (r.get("samples") or [])[:12]
                    if isinstance(s, dict)]
         ch = (r.get("classification") or {}).get("channels") if isinstance(r.get("classification"), dict) else None
-        prio = 1 if cls == "proven_leak" else (2 if r.get("status") == "FAIL" or cls == "suspected_leak" else 3)
+        prio = 1 if cls == "proven_leak" else (2 if status in ("FAIL", "ERROR") or cls == "suspected_leak" else 3)
         items.append(Item(
             id=stable_id("MEM", str(r.get("id")), 60), area="memory", priority=prio,
-            headline=f"{r.get('id')} {r.get('status')}" + (f" class {cls}" if cls else "") + f" · {str(r.get('reason') or '')[:140]}",
-            detail=compact({"case": r.get("id"), "st": r.get("status"), "cls": cls, "why": r.get("reason"),
+            headline=f"{r.get('id')} {status}" + (f" class {cls}" if cls else "") + f" · {str(r.get('reason') or '')[:140]}",
+            detail=compact({"case": r.get("id"), "st": status, "cls": cls, "why": r.get("reason"),
                             "ch": ch, "smp": samples, "ev": r.get("evidence")}),
             sources=[rel(path)], impact=0,
             commands=[f"cd debug/engines/memory && dart run bin/leaks.dart run --only {r.get('id')}"]))

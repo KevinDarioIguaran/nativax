@@ -185,6 +185,21 @@ class PackTest(unittest.TestCase):
         self.assertIn("PERF-dom.s2", ch["resolved_ids"])
 
 
+class MemoryRunTest(PackTest):
+    def test_full_run_wins_over_only_run_and_status_is_case_insensitive(self):
+        bench = self.tmp / "bench" / "leaks"
+        write(bench / "20261020T000000Z" / "leaks-a.json", {"metadata": {"profile": "quick"}, "results": [
+            {"id": "control.release", "status": "pass", "reason": "ok"},
+            {"id": "dom.listeners", "status": "fail", "reason": "grew 30 MiB"}]})
+        write(bench / "20261026T000000Z" / "leaks-b.json", {"metadata": {"profile": "quick"}, "results": [
+            {"id": "control.release", "status": "pass", "reason": "ok"}]})
+        self.build()
+        self.assertEqual(self.index()["areas"]["memory"]["cases"], 2)
+        ids = {p.stem for p in (self.out / "items").glob("MEM-*.json")}
+        self.assertEqual(ids, {"MEM-dom.listeners"})
+        self.assertEqual(self.item("MEM-dom.listeners")["p"], 2)
+
+
 class PartialBuildTest(PackTest):
     def test_partial_build_keeps_other_areas(self):
         self.build()
