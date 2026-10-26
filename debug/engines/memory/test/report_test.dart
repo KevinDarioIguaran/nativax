@@ -67,6 +67,10 @@ void main() {
     expect(loaded.results.single.id, 'case');
     expect(loaded.results.single.samples.length, 2);
     expect(File(files.markdown).readAsStringSync(), contains('case'));
+    final markdown = File(files.markdown).readAsStringSync();
+    expect(markdown, contains('| Case | Subsystem | Status | Class |'));
+    expect(markdown, contains('| no_leak |'));
+    expect(loaded.results.single.classification, isNull);
     final lines = File(
       files.jsonl,
     ).readAsLinesSync().where((l) => l.trim().isNotEmpty).toList();
