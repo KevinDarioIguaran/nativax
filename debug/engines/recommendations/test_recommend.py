@@ -215,6 +215,20 @@ class RecommendationsTest(unittest.TestCase):
         )
         self.assertIn("## Memory and leaks", recommend.build_markdown(data))
 
+    def test_missing_visual_scores_are_not_zero(self):
+        # Regression: a category no row measured averaged to 0.0 %, so slow DOM
+        # without visual data fired the renderer cross-signal and rows without
+        # a color score fired the color rule.
+        data = dict(BASE)
+        data["perf"] = {"results": [row("dom", "dom.rows-create-1k", 100, 10)]}
+        ids = {r.id for r in recommend.build_recommendations(data)}
+        self.assertNotIn("renderer.dom_layout.cross_signal", ids)
+        data["visual"] = {"rows": [{"page": "p", "overall": 95}]}
+        ids = {r.id for r in recommend.build_recommendations(data)}
+        self.assertNotIn("renderer.dom_layout.cross_signal", ids)
+        self.assertNotIn("visual.color.low", ids)
+        self.assertIn("perf.dom.over_target", ids)
+
 
 if __name__ == "__main__":
     unittest.main()

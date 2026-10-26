@@ -351,8 +351,9 @@ def collect(root: Path = ROOT) -> dict[str, Any]:
     }
 
 
-def _visual_categories(rows: list[dict]) -> dict[str, float]:
-    result = {}
+def _visual_categories(rows: list[dict]) -> dict[str, float | None]:
+    """Mean score per category; None when no row measured that category."""
+    result: dict[str, float | None] = {}
     for key, label in (
         ("position", "Position"),
         ("layout", "Layout"),
@@ -365,7 +366,7 @@ def _visual_categories(rows: list[dict]) -> dict[str, float]:
             for row in rows
             if isinstance(row.get(key), (int, float))
         ]
-        result[label] = sum(values) / len(values) if values else 0.0
+        result[label] = sum(values) / len(values) if values else None
     return result
 
 
@@ -805,11 +806,13 @@ def build_recommendations(
 
     # Cross-signal: DOM performance and visual layout both point at the renderer.
     categories = _visual_categories(visual_rows)
-    if dom_rows and categories.get("Layout", 100) < 90 and (
-        categories.get("Position", 100) < 90
+    layout_mean = categories.get("Layout")
+    position_mean = categories.get("Position")
+    if dom_rows and layout_mean is not None and position_mean is not None and (
+        layout_mean < 90 and position_mean < 90
     ):
         recommendations.append(Recommendation(
-            priority="P0" if categories.get("Layout", 100) < 70 else "P1",
+            priority="P0" if layout_mean < 70 else "P1",
             area="renderer",
             id="renderer.dom_layout.cross_signal",
             rule=_rule([
@@ -902,7 +905,8 @@ def build_recommendations(
                 confidence="high",
                 commands=[],
             ))
-        if categories.get("Color", 100) < 60:
+        color_mean = categories.get("Color")
+        if color_mean is not None and color_mean < 60:
             recommendations.append(Recommendation(
                 priority="P1",
                 area="color",
