@@ -223,10 +223,17 @@ cd debug/engines/visual_comparison && dart test && dart analyze
 
 # Chrome-only integration test: probe viewport == painted viewport
 NATIVA_VISUAL_E2E=1 dart test test/chrome_e2e_test.dart
+
+# Accuracy audit on the synthetic dataset (debug/datasets/visual_comparison)
+dart run tool/generate_dataset.dart && dart run tool/audit_dataset.dart
 ```
+
+Measured detector accuracy, formulas and known failure cases:
+[`debug/architecture/metrics-visual.md`](../../architecture/metrics-visual.md).
 
 Unit coverage: PNG decode/encode/crop, Lab/ΔE/CSS colours, geometry falloff,
 root-cause attribution, style canonicalisation, palette comparison, per-pixel
-statistics, difference regions and overlay, environment timestamps,
+statistics, difference regions and overlay, environment timestamps, the accuracy
+dataset and its evaluator,
 scoring/verdicts/invalidations, report + artifacts, fixture
 discovery, and the provenance of the vendored suite.

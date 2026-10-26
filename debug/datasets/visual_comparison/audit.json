@@ -1,0 +1,860 @@
+{
+  "schema": "nativa_visual.audit/1",
+  "defaults": {
+    "threshold": 2.0,
+    "minArea": 4,
+    "connectivity": 8,
+    "localizationIou": 0.5
+  },
+  "cases": [
+    {
+      "id": "identical",
+      "kind": "identical",
+      "threshold": 2.0,
+      "minArea": 4,
+      "comparedPixels": 19200,
+      "sizeMismatch": false,
+      "pixel": {
+        "maskPixels": 0,
+        "truthPixels": 0,
+        "tp": 0,
+        "fp": 0,
+        "fn": 0,
+        "precision": null,
+        "recall": null,
+        "outcome": "TN",
+        "mismatchedPctAtDefault": 0.0
+      },
+      "region": {
+        "regions": 0,
+        "falseRegions": 0,
+        "droppedComponents": 0,
+        "outcome": "TN",
+        "truth": []
+      }
+    },
+    {
+      "id": "one-pixel",
+      "kind": "important",
+      "threshold": 2.0,
+      "minArea": 4,
+      "comparedPixels": 19200,
+      "sizeMismatch": false,
+      "pixel": {
+        "maskPixels": 1,
+        "truthPixels": 1,
+        "tp": 1,
+        "fp": 0,
+        "fn": 0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "outcome": "TP",
+        "mismatchedPctAtDefault": 0.01
+      },
+      "region": {
+        "regions": 0,
+        "falseRegions": 0,
+        "droppedComponents": 1,
+        "outcome": "FN",
+        "truth": [
+          {
+            "truth": [
+              120,
+              100,
+              1,
+              1
+            ],
+            "bestIou": 0.0,
+            "mergedIou": 0.0,
+            "intersectingRegions": 0,
+            "localized": false
+          }
+        ]
+      }
+    },
+    {
+      "id": "small-block",
+      "kind": "important",
+      "threshold": 2.0,
+      "minArea": 4,
+      "comparedPixels": 19200,
+      "sizeMismatch": false,
+      "pixel": {
+        "maskPixels": 36,
+        "truthPixels": 36,
+        "tp": 36,
+        "fp": 0,
+        "fn": 0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "outcome": "TP",
+        "mismatchedPctAtDefault": 0.19
+      },
+      "region": {
+        "regions": 1,
+        "falseRegions": 0,
+        "droppedComponents": 0,
+        "outcome": "TP",
+        "truth": [
+          {
+            "truth": [
+              132,
+              64,
+              6,
+              6
+            ],
+            "bestIou": 1.0,
+            "mergedIou": 1.0,
+            "intersectingRegions": 1,
+            "localized": true
+          }
+        ]
+      }
+    },
+    {
+      "id": "layout-shift",
+      "kind": "important",
+      "threshold": 2.0,
+      "minArea": 4,
+      "comparedPixels": 19200,
+      "sizeMismatch": false,
+      "pixel": {
+        "maskPixels": 3220,
+        "truthPixels": 3220,
+        "tp": 3220,
+        "fp": 0,
+        "fn": 0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "outcome": "TP",
+        "mismatchedPctAtDefault": 16.77
+      },
+      "region": {
+        "regions": 7,
+        "falseRegions": 0,
+        "droppedComponents": 0,
+        "outcome": "TP",
+        "truth": [
+          {
+            "truth": [
+              90,
+              28,
+              60,
+              76
+            ],
+            "bestIou": 0.3289,
+            "mergedIou": 1.0,
+            "intersectingRegions": 7,
+            "localized": false
+          }
+        ]
+      }
+    },
+    {
+      "id": "missing-component",
+      "kind": "important",
+      "threshold": 2.0,
+      "minArea": 4,
+      "comparedPixels": 19200,
+      "sizeMismatch": false,
+      "pixel": {
+        "maskPixels": 610,
+        "truthPixels": 610,
+        "tp": 610,
+        "fp": 0,
+        "fn": 0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "outcome": "TP",
+        "mismatchedPctAtDefault": 3.18
+      },
+      "region": {
+        "regions": 1,
+        "falseRegions": 0,
+        "droppedComponents": 0,
+        "outcome": "TP",
+        "truth": [
+          {
+            "truth": [
+              10,
+              30,
+              40,
+              16
+            ],
+            "bestIou": 1.0,
+            "mergedIou": 1.0,
+            "intersectingRegions": 1,
+            "localized": true
+          }
+        ]
+      }
+    },
+    {
+      "id": "extra-component",
+      "kind": "important",
+      "threshold": 2.0,
+      "minArea": 4,
+      "comparedPixels": 19200,
+      "sizeMismatch": false,
+      "pixel": {
+        "maskPixels": 189,
+        "truthPixels": 189,
+        "tp": 189,
+        "fp": 0,
+        "fn": 0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "outcome": "TP",
+        "mismatchedPctAtDefault": 0.98
+      },
+      "region": {
+        "regions": 1,
+        "falseRegions": 0,
+        "droppedComponents": 0,
+        "outcome": "TP",
+        "truth": [
+          {
+            "truth": [
+              60,
+              30,
+              22,
+              11
+            ],
+            "bestIou": 1.0,
+            "mergedIou": 1.0,
+            "intersectingRegions": 1,
+            "localized": true
+          }
+        ]
+      }
+    },
+    {
+      "id": "text-change",
+      "kind": "important",
+      "threshold": 2.0,
+      "minArea": 4,
+      "comparedPixels": 19200,
+      "sizeMismatch": false,
+      "pixel": {
+        "maskPixels": 13,
+        "truthPixels": 13,
+        "tp": 13,
+        "fp": 0,
+        "fn": 0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "outcome": "TP",
+        "mismatchedPctAtDefault": 0.07
+      },
+      "region": {
+        "regions": 1,
+        "falseRegions": 0,
+        "droppedComponents": 4,
+        "outcome": "TP",
+        "truth": [
+          {
+            "truth": [
+              52,
+              56,
+              5,
+              7
+            ],
+            "bestIou": 0.3429,
+            "mergedIou": 0.3429,
+            "intersectingRegions": 1,
+            "localized": false
+          }
+        ]
+      }
+    },
+    {
+      "id": "color-change",
+      "kind": "important",
+      "threshold": 2.0,
+      "minArea": 4,
+      "comparedPixels": 19200,
+      "sizeMismatch": false,
+      "pixel": {
+        "maskPixels": 610,
+        "truthPixels": 610,
+        "tp": 610,
+        "fp": 0,
+        "fn": 0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "outcome": "TP",
+        "mismatchedPctAtDefault": 3.18
+      },
+      "region": {
+        "regions": 1,
+        "falseRegions": 0,
+        "droppedComponents": 0,
+        "outcome": "TP",
+        "truth": [
+          {
+            "truth": [
+              10,
+              30,
+              40,
+              16
+            ],
+            "bestIou": 1.0,
+            "mergedIou": 1.0,
+            "intersectingRegions": 1,
+            "localized": true
+          }
+        ]
+      }
+    },
+    {
+      "id": "opacity-change",
+      "kind": "important",
+      "threshold": 2.0,
+      "minArea": 4,
+      "comparedPixels": 19200,
+      "sizeMismatch": false,
+      "pixel": {
+        "maskPixels": 444,
+        "truthPixels": 3120,
+        "tp": 444,
+        "fp": 0,
+        "fn": 2676,
+        "precision": 1.0,
+        "recall": 0.1423,
+        "outcome": "TP",
+        "mismatchedPctAtDefault": 2.31
+      },
+      "region": {
+        "regions": 6,
+        "falseRegions": 0,
+        "droppedComponents": 0,
+        "outcome": "TP",
+        "truth": [
+          {
+            "truth": [
+              90,
+              28,
+              60,
+              52
+            ],
+            "bestIou": 1.0,
+            "mergedIou": 1.0,
+            "intersectingRegions": 6,
+            "localized": true
+          }
+        ]
+      }
+    },
+    {
+      "id": "scaling",
+      "kind": "important",
+      "threshold": 2.0,
+      "minArea": 4,
+      "comparedPixels": 19200,
+      "sizeMismatch": false,
+      "pixel": {
+        "maskPixels": 3182,
+        "truthPixels": 3182,
+        "tp": 3182,
+        "fp": 0,
+        "fn": 0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "outcome": "TP",
+        "mismatchedPctAtDefault": 16.57
+      },
+      "region": {
+        "regions": 29,
+        "falseRegions": 0,
+        "droppedComponents": 5,
+        "outcome": "TP",
+        "truth": [
+          {
+            "truth": [
+              0,
+              0,
+              160,
+              120
+            ],
+            "bestIou": 0.1983,
+            "mergedIou": 0.9583,
+            "intersectingRegions": 29,
+            "localized": false
+          }
+        ]
+      }
+    },
+    {
+      "id": "viewport-size",
+      "kind": "important",
+      "threshold": 2.0,
+      "minArea": 4,
+      "comparedPixels": 18240,
+      "sizeMismatch": true,
+      "pixel": {
+        "maskPixels": 0,
+        "truthPixels": 960,
+        "tp": 0,
+        "fp": 0,
+        "fn": 960,
+        "precision": null,
+        "recall": 0.0,
+        "outcome": "FN",
+        "mismatchedPctAtDefault": 0.0
+      },
+      "region": {
+        "regions": 0,
+        "falseRegions": 0,
+        "droppedComponents": 0,
+        "outcome": "FN",
+        "truth": [
+          {
+            "truth": [
+              152,
+              0,
+              8,
+              120
+            ],
+            "bestIou": 0.0,
+            "mergedIou": 0.0,
+            "intersectingRegions": 0,
+            "localized": false
+          }
+        ]
+      }
+    },
+    {
+      "id": "antialias-noise",
+      "kind": "unimportant",
+      "threshold": 2.0,
+      "minArea": 4,
+      "comparedPixels": 19200,
+      "sizeMismatch": false,
+      "pixel": {
+        "maskPixels": 3258,
+        "truthPixels": 0,
+        "tp": 0,
+        "fp": 3258,
+        "fn": 0,
+        "precision": 0.0,
+        "recall": null,
+        "outcome": "FP",
+        "mismatchedPctAtDefault": 16.97
+      },
+      "region": {
+        "regions": 15,
+        "falseRegions": 15,
+        "droppedComponents": 0,
+        "outcome": "FP",
+        "truth": []
+      }
+    },
+    {
+      "id": "tiny-important",
+      "kind": "important",
+      "threshold": 2.0,
+      "minArea": 4,
+      "comparedPixels": 19200,
+      "sizeMismatch": false,
+      "pixel": {
+        "maskPixels": 1,
+        "truthPixels": 1,
+        "tp": 1,
+        "fp": 0,
+        "fn": 0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "outcome": "TP",
+        "mismatchedPctAtDefault": 0.01
+      },
+      "region": {
+        "regions": 0,
+        "falseRegions": 0,
+        "droppedComponents": 1,
+        "outcome": "FN",
+        "truth": [
+          {
+            "truth": [
+              52,
+              70,
+              5,
+              7
+            ],
+            "bestIou": 0.0,
+            "mergedIou": 0.0,
+            "intersectingRegions": 0,
+            "localized": false
+          }
+        ]
+      }
+    },
+    {
+      "id": "unimportant-many",
+      "kind": "unimportant",
+      "threshold": 2.0,
+      "minArea": 4,
+      "comparedPixels": 19200,
+      "sizeMismatch": false,
+      "pixel": {
+        "maskPixels": 12183,
+        "truthPixels": 0,
+        "tp": 0,
+        "fp": 12183,
+        "fn": 0,
+        "precision": 0.0,
+        "recall": null,
+        "outcome": "FP",
+        "mismatchedPctAtDefault": 63.45
+      },
+      "region": {
+        "regions": 2,
+        "falseRegions": 2,
+        "droppedComponents": 0,
+        "outcome": "FP",
+        "truth": []
+      }
+    }
+  ],
+  "thresholdSweep": [
+    {
+      "threshold": 0.5,
+      "minArea": 4,
+      "pixel": {
+        "caseTp": 10,
+        "caseFp": 2,
+        "caseFn": 1,
+        "caseTn": 1,
+        "tp": 10982,
+        "fp": 15504,
+        "fn": 960,
+        "precision": 0.4146,
+        "recall": 0.9196
+      },
+      "region": {
+        "caseTp": 8,
+        "caseFp": 2,
+        "caseFn": 3,
+        "caseTn": 1,
+        "truthBoxes": 11,
+        "localized": 5,
+        "meanBestIou": 0.5336,
+        "meanMergedIou": 0.6637,
+        "falseRegions": 15
+      }
+    },
+    {
+      "threshold": 1.0,
+      "minArea": 4,
+      "pixel": {
+        "caseTp": 10,
+        "caseFp": 2,
+        "caseFn": 1,
+        "caseTn": 1,
+        "tp": 10982,
+        "fp": 15504,
+        "fn": 960,
+        "precision": 0.4146,
+        "recall": 0.9196
+      },
+      "region": {
+        "caseTp": 8,
+        "caseFp": 2,
+        "caseFn": 3,
+        "caseTn": 1,
+        "truthBoxes": 11,
+        "localized": 5,
+        "meanBestIou": 0.5336,
+        "meanMergedIou": 0.6637,
+        "falseRegions": 15
+      }
+    },
+    {
+      "threshold": 2.0,
+      "minArea": 4,
+      "pixel": {
+        "caseTp": 10,
+        "caseFp": 2,
+        "caseFn": 1,
+        "caseTn": 1,
+        "tp": 8306,
+        "fp": 15441,
+        "fn": 3636,
+        "precision": 0.3498,
+        "recall": 0.6955
+      },
+      "region": {
+        "caseTp": 8,
+        "caseFp": 2,
+        "caseFn": 3,
+        "caseTn": 1,
+        "truthBoxes": 11,
+        "localized": 5,
+        "meanBestIou": 0.5336,
+        "meanMergedIou": 0.6637,
+        "falseRegions": 17
+      }
+    },
+    {
+      "threshold": 3.0,
+      "minArea": 4,
+      "pixel": {
+        "caseTp": 10,
+        "caseFp": 1,
+        "caseFn": 1,
+        "caseTn": 2,
+        "tp": 8306,
+        "fp": 3053,
+        "fn": 3636,
+        "precision": 0.7312,
+        "recall": 0.6955
+      },
+      "region": {
+        "caseTp": 8,
+        "caseFp": 1,
+        "caseFn": 3,
+        "caseTn": 2,
+        "truthBoxes": 11,
+        "localized": 5,
+        "meanBestIou": 0.5336,
+        "meanMergedIou": 0.6637,
+        "falseRegions": 30
+      }
+    },
+    {
+      "threshold": 5.0,
+      "minArea": 4,
+      "pixel": {
+        "caseTp": 10,
+        "caseFp": 1,
+        "caseFn": 1,
+        "caseTn": 2,
+        "tp": 5082,
+        "fp": 2822,
+        "fn": 6860,
+        "precision": 0.643,
+        "recall": 0.4256
+      },
+      "region": {
+        "caseTp": 8,
+        "caseFp": 1,
+        "caseFn": 3,
+        "caseTn": 2,
+        "truthBoxes": 11,
+        "localized": 5,
+        "meanBestIou": 0.5336,
+        "meanMergedIou": 0.6637,
+        "falseRegions": 12
+      }
+    },
+    {
+      "threshold": 10.0,
+      "minArea": 4,
+      "pixel": {
+        "caseTp": 10,
+        "caseFp": 1,
+        "caseFn": 1,
+        "caseTn": 2,
+        "tp": 4762,
+        "fp": 2497,
+        "fn": 7180,
+        "precision": 0.656,
+        "recall": 0.3988
+      },
+      "region": {
+        "caseTp": 8,
+        "caseFp": 1,
+        "caseFn": 3,
+        "caseTn": 2,
+        "truthBoxes": 11,
+        "localized": 5,
+        "meanBestIou": 0.5336,
+        "meanMergedIou": 0.6387,
+        "falseRegions": 32
+      }
+    },
+    {
+      "threshold": 20.0,
+      "minArea": 4,
+      "pixel": {
+        "caseTp": 9,
+        "caseFp": 1,
+        "caseFn": 2,
+        "caseTn": 2,
+        "tp": 3932,
+        "fp": 1530,
+        "fn": 8010,
+        "precision": 0.7199,
+        "recall": 0.3293
+      },
+      "region": {
+        "caseTp": 7,
+        "caseFp": 1,
+        "caseFn": 4,
+        "caseTn": 2,
+        "truthBoxes": 11,
+        "localized": 3,
+        "meanBestIou": 0.3565,
+        "meanMergedIou": 0.4802,
+        "falseRegions": 33
+      }
+    },
+    {
+      "threshold": 40.0,
+      "minArea": 4,
+      "pixel": {
+        "caseTp": 8,
+        "caseFp": 1,
+        "caseFn": 3,
+        "caseTn": 2,
+        "tp": 2934,
+        "fp": 131,
+        "fn": 9008,
+        "precision": 0.9573,
+        "recall": 0.2457
+      },
+      "region": {
+        "caseTp": 6,
+        "caseFp": 1,
+        "caseFn": 5,
+        "caseTn": 2,
+        "truthBoxes": 11,
+        "localized": 3,
+        "meanBestIou": 0.311,
+        "meanMergedIou": 0.3988,
+        "falseRegions": 5
+      }
+    }
+  ],
+  "minAreaSweep": [
+    {
+      "threshold": 2.0,
+      "minArea": 1,
+      "pixel": {
+        "caseTp": 10,
+        "caseFp": 2,
+        "caseFn": 1,
+        "caseTn": 1,
+        "tp": 8306,
+        "fp": 15441,
+        "fn": 3636,
+        "precision": 0.3498,
+        "recall": 0.6955
+      },
+      "region": {
+        "caseTp": 10,
+        "caseFp": 2,
+        "caseFn": 1,
+        "caseTn": 1,
+        "truthBoxes": 11,
+        "localized": 6,
+        "meanBestIou": 0.6272,
+        "meanMergedIou": 0.817,
+        "falseRegions": 17
+      }
+    },
+    {
+      "threshold": 2.0,
+      "minArea": 4,
+      "pixel": {
+        "caseTp": 10,
+        "caseFp": 2,
+        "caseFn": 1,
+        "caseTn": 1,
+        "tp": 8306,
+        "fp": 15441,
+        "fn": 3636,
+        "precision": 0.3498,
+        "recall": 0.6955
+      },
+      "region": {
+        "caseTp": 8,
+        "caseFp": 2,
+        "caseFn": 3,
+        "caseTn": 1,
+        "truthBoxes": 11,
+        "localized": 5,
+        "meanBestIou": 0.5336,
+        "meanMergedIou": 0.6637,
+        "falseRegions": 17
+      }
+    },
+    {
+      "threshold": 2.0,
+      "minArea": 9,
+      "pixel": {
+        "caseTp": 10,
+        "caseFp": 2,
+        "caseFn": 1,
+        "caseTn": 1,
+        "tp": 8306,
+        "fp": 15441,
+        "fn": 3636,
+        "precision": 0.3498,
+        "recall": 0.6955
+      },
+      "region": {
+        "caseTp": 7,
+        "caseFp": 2,
+        "caseFn": 4,
+        "caseTn": 1,
+        "truthBoxes": 11,
+        "localized": 5,
+        "meanBestIou": 0.5025,
+        "meanMergedIou": 0.6326,
+        "falseRegions": 16
+      }
+    },
+    {
+      "threshold": 2.0,
+      "minArea": 16,
+      "pixel": {
+        "caseTp": 10,
+        "caseFp": 2,
+        "caseFn": 1,
+        "caseTn": 1,
+        "tp": 8306,
+        "fp": 15441,
+        "fn": 3636,
+        "precision": 0.3498,
+        "recall": 0.6955
+      },
+      "region": {
+        "caseTp": 7,
+        "caseFp": 2,
+        "caseFn": 4,
+        "caseTn": 1,
+        "truthBoxes": 11,
+        "localized": 5,
+        "meanBestIou": 0.5025,
+        "meanMergedIou": 0.6326,
+        "falseRegions": 16
+      }
+    },
+    {
+      "threshold": 2.0,
+      "minArea": 64,
+      "pixel": {
+        "caseTp": 10,
+        "caseFp": 2,
+        "caseFn": 1,
+        "caseTn": 1,
+        "tp": 8306,
+        "fp": 15441,
+        "fn": 3636,
+        "precision": 0.3498,
+        "recall": 0.6955
+      },
+      "region": {
+        "caseTp": 6,
+        "caseFp": 2,
+        "caseFn": 5,
+        "caseTn": 1,
+        "truthBoxes": 11,
+        "localized": 4,
+        "meanBestIou": 0.4116,
+        "meanMergedIou": 0.5417,
+        "falseRegions": 14
+      }
+    }
+  ]
+}
