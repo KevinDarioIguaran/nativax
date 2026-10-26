@@ -25,37 +25,37 @@ for ex in "$root"/examples/*/; do
 done
 
 echo "=== conformance analyze ==="
-(cd "$root/tools/conformance" && dart analyze)
+(cd "$root/debug/engines/compatibility" && dart analyze)
 
 echo "=== benchmark tests ==="
-(cd "$root/tools/benchmark" && dart test)
+(cd "$root/debug/engines/microbenchmarks" && dart test)
 
 echo "=== benchmark analyze ==="
-(cd "$root/tools/benchmark" && dart analyze)
+(cd "$root/debug/engines/microbenchmarks" && dart analyze)
 
 echo "=== leak tests ==="
-(cd "$root/tools/leaks" && dart test)
+(cd "$root/debug/engines/memory" && dart test)
 
 echo "=== leak analyze ==="
-(cd "$root/tools/leaks" && dart analyze)
+(cd "$root/debug/engines/memory" && dart analyze)
 
 echo "=== security tests ==="
-(cd "$root/tools/security" && dart test)
+(cd "$root/debug/engines/security" && dart test)
 
 echo "=== security analyze ==="
-(cd "$root/tools/security" && dart analyze)
+(cd "$root/debug/engines/security" && dart analyze)
 
 echo "=== visual tests ==="
-(cd "$root/tools/visual" && dart test)
+(cd "$root/debug/engines/visual_comparison" && dart test)
 
 echo "=== visual analyze ==="
-(cd "$root/tools/visual" && dart analyze)
+(cd "$root/debug/engines/visual_comparison" && dart analyze)
 
 echo "=== perf tests ==="
-(cd "$root/tools/perf" && dart test)
+(cd "$root/debug/engines/performance" && dart test)
 
 echo "=== perf analyze ==="
-(cd "$root/tools/perf" && dart analyze)
+(cd "$root/debug/engines/performance" && dart analyze)
 
 echo "=== python tooling syntax and recommendation tests ==="
-(cd "$root" && python3 -m py_compile tools/quality_gate.py tools/render_report.py tools/recommend.py tools/run_video_contract.py tools/history.py tools/test_architecture.py tools/perf/gui/perf_gui.py tools/perf/container/summarize.py tools/audit/audit.py tools/audit/gui/app.py && python3 tools/test_recommend.py && python3 tools/test_video_manifest.py && python3 tools/test_history.py && python3 tools/test_architecture.py && python3 tools/audit/test_audit.py && python3 tools/audit/gui/test_gui.py)
+(cd "$root" && python3 -m py_compile tools/quality_gate.py tools/render_report.py tools/recommend.py tools/run_video_contract.py tools/history.py tools/test_architecture.py debug/engines/performance/gui/perf_gui.py debug/engines/performance/container/summarize.py tools/audit/audit.py tools/audit/gui/app.py && python3 tools/test_recommend.py && python3 tools/test_video_manifest.py && python3 tools/test_history.py && python3 tools/test_architecture.py && python3 tools/audit/test_audit.py && python3 tools/audit/gui/test_gui.py)

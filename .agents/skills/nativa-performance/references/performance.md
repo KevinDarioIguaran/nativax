@@ -24,15 +24,15 @@ cost, not the number of small calls.
 
 ## Benchmark suite
 
-`tools/benchmark` implements JS, bridge, DOM, style, and Dart-reference
+`debug/engines/microbenchmarks` implements JS, bridge, DOM, style, and Dart-reference
 categories with JSONL/JSON/Markdown output, checksums, and noise-aware
 comparison. See `docs/benchmarks.md`.
 
 ## Leak suite
 
-`tools/leaks` measures retention with a baseline, batches, GC, and controls. It
+`debug/engines/memory` measures retention with a baseline, batches, GC, and controls. It
 classifies `PASS/FAIL/SKIP/ERROR/INCONCLUSIVE`. A single RSS sample never proves
-a leak. See `../../nativa-project/references/requirements.md` §4. `tools/leaks` implements the
+a leak. See `../../nativa-project/references/requirements.md` §4. `debug/engines/memory` implements the
 protocol with quick/full/stress profiles and controls.
 
 ## Rules
@@ -46,7 +46,7 @@ protocol with quick/full/stress profiles and controls.
 
 ## Pending
 
-- Expand `tools/benchmark` with parsing, styles, layout, bridge, and memory.
+- Expand `debug/engines/microbenchmarks` with parsing, styles, layout, bridge, and memory.
 - Measure CSS recomputation on large documents.
 - Profile QuickJS startup per document.
 
@@ -128,5 +128,5 @@ JIT on iOS, keeping wasm3 as a fallback.
 - Rejected experiments with no improvement: LTO, `-O2`, `-march=native`,
   `-fno-semantic-interposition`, raising the GC threshold.
 - Details, per-benchmark table, and roadmap: `docs/performance-audit.md`.
-- New harness: `tools/benchmark/node/steady_bench.mjs` and
-  `tools/benchmark/node/compare_node.py`.
+- New harness: `debug/engines/microbenchmarks/node/steady_bench.mjs` and
+  `debug/engines/microbenchmarks/node/compare_node.py`.

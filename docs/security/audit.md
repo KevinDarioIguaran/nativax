@@ -12,7 +12,7 @@ exploits”. Recoge lo comprobado y lo que queda abierto.
 Comando:
 
 ```bash
-cd tools/security
+cd debug/engines/security
 dart run bin/security.dart run
 ```
 
@@ -56,7 +56,7 @@ Resultado real: **14 PASS, 0 FAIL, 1 SKIP, 0 ERROR** (15 casos).
 - **Severidad:** media (retención/DoS).
 - **Causa:** `node.release` eliminaba el target del mapa pero no sus listeners.
 - **Corrección:** al liberar el wrapper se llama `removeAllEventListeners()`.
-- **Regresión:** `dom.detached_listeners` de `tools/leaks`.
+- **Regresión:** `dom.detached_listeners` de `debug/engines/memory`.
 
 ### S-04 — Callbacks internos `__nx_*` visibles en `globalThis` (corregido)
 
@@ -148,7 +148,7 @@ Resultado real: **14 PASS, 0 FAIL, 1 SKIP, 0 ERROR** (15 casos).
 ## Cómo reproducir
 
 ```bash
-cd tools/security
+cd debug/engines/security
 dart run bin/security.dart run
 dart run bin/security.dart run --only internal.callback_globals
 ```
@@ -156,4 +156,4 @@ dart run bin/security.dart run --only internal.callback_globals
 
 Las correcciones tienen tests de regresión en la suite y en
 `packages/nativa_dom/test`, `packages/nativa_dom_bindings/test` y
-`tools/leaks`.
+`debug/engines/memory`.

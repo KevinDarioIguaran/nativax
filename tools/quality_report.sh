@@ -22,13 +22,13 @@ for arg in "$@"; do
 done
 
 echo "=== visual fidelity (${visual_args[*]}) ==="
-dart run tools/visual/bin/visual_check.dart \
+dart run debug/engines/visual_comparison/bin/visual_check.dart \
   "${visual_args[@]}" \
   --out .visual/latest || true
 
 echo
 echo "=== performance (245 scenarios + app idle) ==="
-dart run tools/perf/bin/perf.dart run \
+dart run debug/engines/performance/bin/perf.dart run \
   --app-idle \
   --out .perf/latest || true
 
@@ -48,5 +48,5 @@ echo "  progress/reports/nativa-quality-latest.md  consolidated report"
 echo "  progress/reports/recommendations-latest.md  automatic recommendations"
 
 if [[ "$gui" == "1" ]]; then
-  python3 tools/perf/gui/perf_gui.py
+  python3 debug/engines/performance/gui/perf_gui.py
 fi

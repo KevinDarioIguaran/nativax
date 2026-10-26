@@ -41,7 +41,7 @@ Tarea 4. Medir perfiles de juego por calidad:
 - 3D: las mismas resoluciones con 100–5.000 cubos.
 - Partículas/cubos: 100, 500, 1.000, 2.500 y 5.000.
 - Métricas: frame p95, frame máximo, trabajo, nodos, RSS y CPU.
-- Comando: `dart run tools/perf/bin/perf.dart run --only '^game' --out .perf/game`
+- Comando: `dart run debug/engines/performance/bin/perf.dart run --only '^game' --out .perf/game`
 - Aceptación: cada perfil tiene frame p95 y RSS medidos; no se ocultan WARN.
 
 Tarea 5. Medir el game-player real:

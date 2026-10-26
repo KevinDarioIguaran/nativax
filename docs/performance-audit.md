@@ -59,7 +59,7 @@ JS __nx.host(nombre, args)
 Comando reproducible:
 
 ```bash
-cd tools/benchmark
+cd debug/engines/microbenchmarks
 taskset -c 4 dart run bin/benchmark.dart run \
   --only js_steady --warmup 8 --rounds 21 \
   --json /tmp/nativax-steady.json --md /tmp/nativax-steady.md
@@ -164,8 +164,8 @@ Con la evidencia actual:
 ## 8. Estado de los entregables
 
 - Auditoría: este documento.
-- Harness V8: `tools/benchmark/node/steady_bench.mjs`.
-- Comparador: `tools/benchmark/node/compare_node.py`.
-- Benchmarks steady: `js_steady.*` en `tools/benchmark`.
+- Harness V8: `debug/engines/microbenchmarks/node/steady_bench.mjs`.
+- Comparador: `debug/engines/microbenchmarks/node/compare_node.py`.
+- Benchmarks steady: `js_steady.*` en `debug/engines/microbenchmarks`.
 - Correctitud: suite completa de NativaX y Test262/WPT existentes.
 - 7×: **no demostrado**; evidencia en contra para JS puro.

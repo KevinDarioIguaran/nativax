@@ -5,10 +5,10 @@ RenderObjects de Flutter). No es un motor de navegador completo: esta página
 define qué se pinta como en un navegador, qué se aproxima y qué falta.
 
 La referencia de calidad es la comparación visual contra Chrome sin ventana:
-`tools/visual` (Chromium headless contra NativaX offscreen, con puntuaciones de
+`debug/engines/visual_comparison` (Chromium headless contra NativaX offscreen, con puntuaciones de
 posición, layout, color, diseño y píxeles). Ver
 [`visual-fidelity.md`](visual-fidelity.md). El arnés histórico
-`examples/web-challenge/test/screenshot_test.dart` sigue sirviendo para
+`debug/harness/test/screenshot_test.dart` sigue sirviendo para
 capturas puntuales.
 
 ## Selectores y cascada

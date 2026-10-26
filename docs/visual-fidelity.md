@@ -6,9 +6,9 @@ instrumento de referencia: `google-chrome --headless=new` produce la captura
 patrón y NativaX produce la suya con `flutter test` +
 `RenderRepaintBoundary.toImage()`.
 
-La herramienta vive en `tools/visual` y su contrato completo (fórmulas,
+La herramienta vive en `debug/engines/visual_comparison` y su contrato completo (fórmulas,
 umbrales y formato de salida) está en
-[`tools/visual/README.md`](../tools/visual/README.md).
+[`debug/engines/visual_comparison/README.md`](../debug/engines/visual_comparison/README.md).
 
 ## Qué mide
 
@@ -42,7 +42,7 @@ El catálogo completo tiene **300 páginas** con `--all`: 51 de
 commit pinneado en `.visual/suites/` y no se redistribuyen. Catálogo y fuentes:
 [`progress/reports/visual-catalog-latest.md`](../progress/reports/visual-catalog-latest.md).
 
-`tools/visual/fixtures/50projects50days` contiene una copia íntegra y sin
+`debug/engines/visual_comparison/fixtures/50projects50days` contiene una copia íntegra y sin
 modificar de los 51 proyectos HTML/CSS/JS de
 [bradtraversy/50projects50days](https://github.com/bradtraversy/50projects50days)
 en el commit `c92b0bc3a87fc95d44b89552b7b6a2eeb36ca481` (licencia MIT y aviso
@@ -50,9 +50,9 @@ de procedencia incluidos). Son fixtures de prueba: NativaX no los carga desde
 el runtime público.
 
 ```bash
-dart run tools/visual/bin/visual_check.dart --suite 50projects50days
-dart run tools/visual/bin/visual_check.dart examples/test-pages/form.html
-dart run tools/visual/bin/visual_check.dart --self-check --limit 1
+dart run debug/engines/visual_comparison/bin/visual_check.dart --suite 50projects50days
+dart run debug/engines/visual_comparison/bin/visual_check.dart examples/test-pages/form.html
+dart run debug/engines/visual_comparison/bin/visual_check.dart --self-check --limit 1
 ```
 
 ## Salidas
@@ -91,7 +91,7 @@ desfase al arrancar, mide con `alto + desfase` y captura con `alto`, de modo
 que las cajas del sondeo y los píxeles pertenecen al mismo viewport. Sin esa
 corrección, páginas con `100vh`, centrado con `fixed` o alturas porcentuales
 se medían contra un viewport y se pintaban contra otro. El test
-`tools/visual/test/chrome_e2e_test.dart` lo verifica con una caja centrada.
+`debug/engines/visual_comparison/test/chrome_e2e_test.dart` lo verifica con una caja centrada.
 
 ## Limitaciones declaradas
 

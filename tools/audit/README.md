@@ -28,7 +28,7 @@ python3 tools/audit/test_audit.py                                   # engine tes
 python3 tools/audit/gui/app.py                                      # visual explorer (see gui/README.md)
 ```
 
-The Tkinter panel (`tools/perf/gui/perf_gui.py`) has an **Auditoría JSON**
+The Tkinter panel (`debug/engines/performance/gui/perf_gui.py`) has an **Auditoría JSON**
 page (run, fault benchmark, self-check, issue table, LLM brief, replay /
 verify / promote from the row menu) and the reports **Auditoría JSON**,
 **Auditoría · fallos inyectados** and **Auditoría · self-check**, separate from
@@ -42,7 +42,7 @@ the performance, visual and games reports.
 | Generation | `generate.py` | Families `basic`, `combinatorial` (greedy pairwise covering array, 12 factors), `random` (seeded trees), `adversarial` (depth, width, huge/Unicode text, boundary values, tiny viewports), `invalid` (legal JSON, CSS a browser must drop), `schema_invalid` (broken scenario JSON), `interaction` (handlers + click/type/Tab/resize/rebuild with assertions), `mutation` (one recorded edit of an executed scenario), `regression` (`regressions/*.json`). Each scenario is a pure function of family + seed + `GENERATOR_VERSION`; its id ends in a content hash. |
 | Validation | `schema.py` | Stdlib JSON Schema subset over `schemas/scenario.schema.json` plus semantic rules (unique ids, action/assertion/handler targets exist, leaf types have no children, nesting limits, non-executable types). Deliberate negatives must be rejected; one that passes is counted as `validator_escapes` (an engine defect). |
 | Selection | `explore.py` | Per round: `novelty + UCB(family)`; novelty = share of the candidate's coverage features never executed; UCB rewards families whose scenarios found *new* fingerprints. Every family gets a slot per round; none gets more than `max_share` (35 %). |
-| Execution | `execute.py` | **NativaX**: `examples/web-challenge/test/audit_batch_test.dart` mounts a fresh `NativaXView` per scenario in one `flutter_tester` (real taps with `tester.tapAt`, `enterText`, `sendKeyEvent`, viewport resize, remount). FlutterErrors are captured per scenario with stack. A `begin` line before each scenario isolates hangs: the unmatched `begin` becomes `timeout`/`crash` and the batch resumes after it. **Chromium**: one page per chunk runs every scenario in a same-origin `srcdoc` iframe at the scenario viewport. |
+| Execution | `execute.py` | **NativaX**: `debug/harness/test/audit_batch_test.dart` mounts a fresh `NativaXView` per scenario in one `flutter_tester` (real taps with `tester.tapAt`, `enterText`, `sendKeyEvent`, viewport resize, remount). FlutterErrors are captured per scenario with stack. A `begin` line before each scenario isolates hangs: the unmatched `begin` becomes `timeout`/`crash` and the batch resumes after it. **Chromium**: one page per chunk runs every scenario in a same-origin `srcdoc` iframe at the scenario viewport. |
 | Probe | `probe.py` | One JS probe for both engines: rect, client/scroll size, 65 computed longhands, text, value, checked, activeElement, event log, script errors. |
 | Oracles | `compare.py` | `crash`, `script_error`, `missing`, `style` (per property family), `geometry` (first-divergence localization), `overflow`, `events`, `focus`, `state`, `lifecycle` (remount must restore the initial state, no reference needed), explicit `assertion`s, `performance`. A divergence already present in an earlier state is not reported again. |
 | Clustering | `diagnose.py` | Only primary findings open issues; fingerprints ignore element ids. Issue id `NX-` + sha1(fingerprint)[:8], stable across runs. |
@@ -104,8 +104,8 @@ minimization record, reproducible), `evidence`, `root_cause`,
 - `change`/`keydown` events are not compared (the reference cannot
   synthesize them like real input).
 - Colour/paint is compared through computed styles only; pixel fidelity is
-  the visual judge's job (`tools/visual`).
+  the visual judge's job (`debug/engines/visual_comparison`).
 - `image` is in the schema but not executable: the harness passes no
   `imageResolver`.
 - Performance findings are per-scenario wall time and RSS growth of the
-  harness, not benchmarks; use `tools/perf` for performance claims.
+  harness, not benchmarks; use `debug/engines/performance` for performance claims.

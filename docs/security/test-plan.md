@@ -9,7 +9,7 @@ un sandbox del sistema operativo.
 ## Ejecución
 
 ```bash
-cd tools/security
+cd debug/engines/security
 dart run bin/security.dart run
 dart run bin/security.dart run --only <caso>
 dart run bin/security.dart run --list

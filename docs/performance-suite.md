@@ -4,24 +4,24 @@ Este apartado mide si NativaX **rinde y responde como un navegador** sin usar
 WebView, Chromium embebido, CEF ni Electron. Chromium es solo el instrumento de
 referencia; los dos motores ejecutan la misma página y el mismo JavaScript.
 
-Es independiente del juicio visual (`tools/visual`): allí se pregunta *¿se ve
+Es independiente del juicio visual (`debug/engines/visual_comparison`): allí se pregunta *¿se ve
 igual?*; aquí, *¿se mantiene fluido, responde y cabe en memoria?*
 
 ## Comandos
 
 ```bash
 # Escenarios internos + benchmarks externos vendorizados
-dart run tools/perf/bin/perf.dart run --out .perf/latest
+dart run debug/engines/performance/bin/perf.dart run --out .perf/latest
 
 # Añade la medición real de la app Flutter en reposo (abre su ventana ~8 s)
-dart run tools/perf/bin/perf.dart run --app-idle --out .perf/latest
+dart run debug/engines/performance/bin/perf.dart run --app-idle --out .perf/latest
 
 # Panel Tkinter con tabla, gráficas, RSS/CPU y botones de ejecución
-python3 tools/perf/gui/perf_gui.py
+python3 debug/engines/performance/gui/perf_gui.py
 ```
 
 El contrato completo (escenarios, fórmulas, salidas y límites) está en
-[`tools/perf/README.md`](../tools/perf/README.md).
+[`debug/engines/performance/README.md`](../debug/engines/performance/README.md).
 
 ## Qué se mide
 
@@ -79,7 +79,7 @@ La GPU se reporta si el kernel expone `gpu_busy_percent`; si no, se dice
 
 ## Panel Tkinter
 
-`tools/perf/gui/perf_gui.py` abre una ventana con barra lateral de navegación:
+`debug/engines/performance/gui/perf_gui.py` abre una ventana con barra lateral de navegación:
 
 - **Resumen**: fidelidad media, donuts de veredictos, píxeles/tinta, peores
   páginas y escenarios.
@@ -133,7 +133,7 @@ Cubren DOM, scroll, JavaScript, layout, formularios, animación y canvas. El
 catálogo se regenera con:
 
 ```bash
-dart run tools/perf/bin/perf.dart list --json > tools/perf/scenarios.json
+dart run debug/engines/performance/bin/perf.dart list --json > debug/engines/performance/scenarios.json
 ```
 
 El panel muestra los **245** desde el primer arranque; los no ejecutados
@@ -164,7 +164,7 @@ Recomendaciones**, separado de los informes de cada área.
   atributos y tamaños CSS. **NativaX todavía no decodifica vídeo**: el test fija
   el placeholder `▶ video`, las dimensiones y el contrato
   `MEDIA_ERR_SRC_NOT_SUPPORTED`. No es una prueba de reproducción real.
-- **Juegos:** 25 escenarios Canvas 2D en `tools/perf` con resoluciones
+- **Juegos:** 25 escenarios Canvas 2D en `debug/engines/performance` con resoluciones
   640x360, 854x480, 1280x720, 1920x1080 y 2560x1440, y 100–5.000 partículas.
   Miden un frame de juego; el `examples/game-player` Three.js completo no se
   ejecuta en esta matriz.
@@ -193,8 +193,8 @@ Detalle por escenario y comandos:
 ## Aislamiento con Docker
 
 ```bash
-tools/perf/container/matrix.sh
-tools/perf/container/run.sh --cpus 1 --memory 1g --name low --only 'js.arrays'
+debug/engines/performance/container/matrix.sh
+debug/engines/performance/container/run.sh --cpus 1 --memory 1g --name low --only 'js.arrays'
 ```
 
 Chromium y `flutter test` corren en el mismo contenedor con `--cpus`,

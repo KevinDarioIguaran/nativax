@@ -18,7 +18,7 @@ limit.
    - arguments and results are validated;
    - host errors are generic and contain no Dart paths or stacks;
    - `app.invoke` handlers treat arguments as untrusted.
-4. Add or update an abuse test in `tools/security` for every new limit or host
+4. Add or update an abuse test in `debug/engines/security` for every new limit or host
    API.
 5. State what is not protected. There is no OS sandbox, document isolation, CSP,
    or origin policy.

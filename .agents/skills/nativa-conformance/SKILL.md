@@ -12,7 +12,7 @@ running or reporting a suite.
 
 1. Confirm the suite checkout and pinned commit. Do not use an unpinned local
    copy for a baseline claim.
-2. Run the affected runner from `tools/conformance`:
+2. Run the affected runner from `debug/engines/compatibility`:
 
 ```bash
 dart run bin/fetch_suites.dart --suite test262 --suite html5lib

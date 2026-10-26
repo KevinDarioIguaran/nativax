@@ -95,7 +95,7 @@ cd packages/nativa_render && flutter test
 cd packages/nativax && flutter test
 
 # Conformance
-cd tools/conformance
+cd debug/engines/compatibility
 dart run bin/run_test262.dart
 dart run bin/run_html5lib.dart
 dart run bin/run_url.dart

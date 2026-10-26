@@ -265,7 +265,7 @@ def build_recommendations(data: dict[str, Any]) -> list[Recommendation]:
             ),
             confidence="alta" if visual_total >= 100 else "media",
             commands=[
-                "dart run tools/visual/bin/visual_check.dart --all "
+                "dart run debug/engines/visual_comparison/bin/visual_check.dart --all "
                 "--catalog .visual/catalog.json --out .visual/latest",
             ],
         ))
@@ -289,7 +289,7 @@ def build_recommendations(data: dict[str, Any]) -> list[Recommendation]:
             ),
             confidence="alta",
             commands=[
-                "dart run tools/perf/bin/perf.dart run --out .perf/latest",
+                "dart run debug/engines/performance/bin/perf.dart run --out .perf/latest",
             ],
         ))
     if not app or app.get("status") != "ok":
@@ -305,7 +305,7 @@ def build_recommendations(data: dict[str, Any]) -> list[Recommendation]:
             action="Medir la app Linux real en una página blanca, con calentamiento y reposo.",
             acceptance="RSS pico y estable ≤250 MB y CPU ≤1 % en la app real.",
             confidence="alta",
-            commands=["dart run tools/perf/bin/perf.dart idle-app --seconds 5"],
+            commands=["dart run debug/engines/performance/bin/perf.dart idle-app --seconds 5"],
         ))
 
     # --- Memory budget and leaks ---------------------------------------------
@@ -321,7 +321,7 @@ def build_recommendations(data: dict[str, Any]) -> list[Recommendation]:
                 action="Localizar retenciones en bridge, documentos, caches y renderer antes de añadir funciones.",
                 acceptance="RSS estable ≤250 MB y CPU ≤1 % durante 5 minutos en reposo.",
                 confidence="alta",
-                commands=["dart run tools/perf/bin/perf.dart idle-app --seconds 5"],
+                commands=["dart run debug/engines/performance/bin/perf.dart idle-app --seconds 5"],
             ))
         else:
             recommendations.append(Recommendation(
@@ -362,7 +362,7 @@ def build_recommendations(data: dict[str, Any]) -> list[Recommendation]:
                 ),
                 acceptance="Cada caso vuelve a la línea base y el control retenido sigue detectándose.",
                 confidence="alta",
-                commands=["cd tools/leaks && dart run bin/leaks.dart run --profile quick"],
+                commands=["cd debug/engines/memory && dart run bin/leaks.dart run --profile quick"],
             ))
         elif any(str(row.get("status", "")).upper() == "INCONCLUSIVE" for row in leak_results):
             recommendations.append(Recommendation(
@@ -373,7 +373,7 @@ def build_recommendations(data: dict[str, Any]) -> list[Recommendation]:
                 action="Añadir contadores de recursos y repetir los casos con más batches.",
                 acceptance="Ningún caso queda INCONCLUSIVE sin una razón documentada.",
                 confidence="media",
-                commands=["cd tools/leaks && dart run bin/leaks.dart run --profile full"],
+                commands=["cd debug/engines/memory && dart run bin/leaks.dart run --profile full"],
             ))
 
     # --- Known capability gaps ------------------------------------------------
@@ -436,7 +436,7 @@ def build_recommendations(data: dict[str, Any]) -> list[Recommendation]:
                 action="Corregir el límite de confianza antes de seguir con rendimiento o compatibilidad.",
                 acceptance="0 FAIL/ERROR en la suite de seguridad; los SKIP documentados no cuentan.",
                 confidence="alta",
-                commands=["cd tools/security && dart run bin/security.dart run"],
+                commands=["cd debug/engines/security && dart run bin/security.dart run"],
             ))
 
     # --- Performance ----------------------------------------------------------
@@ -486,7 +486,7 @@ def build_recommendations(data: dict[str, Any]) -> list[Recommendation]:
                     else "media"
                 ),
                 commands=[
-                    "dart run tools/perf/bin/perf.dart run --only '^dom\\.' "
+                    "dart run debug/engines/performance/bin/perf.dart run --only '^dom\\.' "
                     "--out .perf/dom",
                 ],
             ))
@@ -515,7 +515,7 @@ def build_recommendations(data: dict[str, Any]) -> list[Recommendation]:
                 acceptance="p95 ≤16.7 ms y frame máximo ≤100 ms en los escenarios de scroll.",
                 confidence="alta" if perf_coverage >= 0.5 else "media",
                 commands=[
-                    "dart run tools/perf/bin/perf.dart run --only '^scroll\\.' "
+                    "dart run debug/engines/performance/bin/perf.dart run --only '^scroll\\.' "
                     "--out .perf/scroll",
                 ],
             ))
@@ -544,7 +544,7 @@ def build_recommendations(data: dict[str, Any]) -> list[Recommendation]:
                 "documentada de backend por plataforma."
             ),
             confidence="media" if perf_coverage < 0.5 else "alta",
-            commands=["dart run tools/perf/bin/perf.dart run --only '^js\\.' --out .perf/js"],
+            commands=["dart run debug/engines/performance/bin/perf.dart run --only '^js\\.' --out .perf/js"],
         ))
 
     game_rows = {
@@ -574,7 +574,7 @@ def build_recommendations(data: dict[str, Any]) -> list[Recommendation]:
             ),
             acceptance="Cada perfil de calidad cumple su frame p95 y su presupuesto de trabajo.",
             confidence="media" if perf_coverage < 0.5 else "alta",
-            commands=["dart run tools/perf/bin/perf.dart run --only '^game\\.' --out .perf/game"],
+            commands=["dart run debug/engines/performance/bin/perf.dart run --only '^game\\.' --out .perf/game"],
         ))
 
     # Cross-signal: DOM performance and visual layout both point at the renderer.
@@ -632,7 +632,7 @@ def build_recommendations(data: dict[str, Any]) -> list[Recommendation]:
                 acceptance="Posición ≥90 % y tinta <50 % en las páginas afectadas.",
                 confidence="alta" if visual_coverage >= 0.5 else "media",
                 commands=[
-                    "dart run tools/visual/bin/visual_check.dart --only 'pagina' "
+                    "dart run debug/engines/visual_comparison/bin/visual_check.dart --only 'pagina' "
                     "--out .visual/latest",
                 ],
             ))
@@ -997,7 +997,7 @@ def detailed_lines(data: dict[str, Any], recommendations: list[Recommendation]) 
             lines.append(f"| {_cell(prefix, 32)} | {count} |")
         lines.append(
             f"\nTotal pendiente: **{len(pending_perf)}** escenarios. Lista completa "
-            "en `tools/perf/scenarios.json`."
+            "en `debug/engines/performance/scenarios.json`."
         )
         lines.append("")
 

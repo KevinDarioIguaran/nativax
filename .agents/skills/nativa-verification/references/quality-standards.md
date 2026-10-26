@@ -42,7 +42,7 @@ cd packages/nativa_render && flutter test
 cd packages/nativax && flutter test
 
 # Analysis
-dart analyze tools/conformance
+dart analyze debug/engines/compatibility
 flutter analyze packages/nativa_render
 flutter analyze packages/nativax
 
@@ -55,12 +55,12 @@ Run `./tools/test_all.sh` with the game closed.
 ## Benchmarks and leaks
 
 - Benchmarks: warm-up, rounds, median/MAD/percentiles, checksum, metadata, and
-  comparison with threshold plus noise. See `tools/benchmark/README.md`.
+  comparison with threshold plus noise. See `debug/engines/microbenchmarks/README.md`.
 - Leaks: baseline, batches, GC, positive/negative controls, resource counters,
   and `FAIL` only with a sustained trend. High RSS is not a leak.
 - Benchmarks do not replace conformance; leaks are not declared from a single
   sample.
-- See the `tools/leaks` contract (in progress) and
+- See the `debug/engines/memory` contract (in progress) and
   `../../nativa-performance/references/performance.md`.
 
 ## Conformance
@@ -83,7 +83,7 @@ Run `./tools/test_all.sh` with the game closed.
 ## Performance
 
 - Do not optimize without measurement.
-- Benchmarks live in `tools/benchmark`; results belong in `progress/`.
+- Benchmarks live in `debug/engines/microbenchmarks`; results belong in `progress/`.
 - Bridge budget: keep a trivial call below 5 µs.
 - Frame budget: 16 ms on Linux desktop. Any operation that can exceed it must be
   asynchronous or batched.

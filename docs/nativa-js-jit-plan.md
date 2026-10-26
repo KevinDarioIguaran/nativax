@@ -108,7 +108,7 @@ refcount y GC de QuickJS. Esto mantiene el tamaño bajo y la semántica exacta.
 - El código compilado solo proviene del bytecode de QuickJS (no de entrada
   externa); no se acepta código nativo de scripts.
 - Deoptimización segura: guard checks antes de cada operación especulativa.
-- Auditoría: `tools/security` debe seguir 14 PASS / 0 FAIL.
+- Auditoría: `debug/engines/security` debe seguir 14 PASS / 0 FAIL.
 
 ## 8. Fases y entregables
 
@@ -177,7 +177,7 @@ refcount y GC de QuickJS. Esto mantiene el tamaño bajo y la semántica exacta.
 - html5lib/URL/WPT: sin regresión.
 - Binario stripped: <10 MB (objetivo <6 MB tras Fase 3).
 - Benchmarks: reportar ratios reales vs V8, no claims sin evidencia.
-- Leaks: sin retención nueva (tools/leaks).
+- Leaks: sin retención nueva (debug/engines/memory).
 - Seguridad: 14 PASS / 0 FAIL / 1 SKIP.
 - iOS: build con JIT off, intérprete intacto.
 

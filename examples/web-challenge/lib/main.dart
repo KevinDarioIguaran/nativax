@@ -27,7 +27,7 @@ class _AssetLoader extends NativaXResourceLoader {
   }
 }
 
-/// Test hook used by `tools/perf` for app-level idle measurements. When
+/// Test hook used by `debug/engines/performance` for app-level idle measurements. When
 /// NATIVAX_PERF_PAGE points to a directory, the app loads that page and its
 /// relative files instead of the bundled demo. It is inactive by default.
 class _FileLoader extends NativaXResourceLoader {

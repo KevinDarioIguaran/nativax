@@ -7,8 +7,8 @@ import 'package:nativa_render/nativa_render.dart';
 
 void main() {
   testWidgets('background slider container', (tester) async {
-    final html = File('/home/k3vin/Documents/nativax/tools/visual/fixtures/50projects50days/background-slider/index.html').readAsStringSync();
-    final css = File('/home/k3vin/Documents/nativax/tools/visual/fixtures/50projects50days/background-slider/style.css').readAsStringSync();
+    final html = File('/home/k3vin/Documents/nativax/debug/engines/visual_comparison/fixtures/50projects50days/background-slider/index.html').readAsStringSync();
+    final css = File('/home/k3vin/Documents/nativax/debug/engines/visual_comparison/fixtures/50projects50days/background-slider/style.css').readAsStringSync();
     final parsed = HtmlParser().parseDocument(html);
     final engine = StyleEngine(document: parsed.value, media: const MediaContext(width: 800, height: 900));
     engine.authorSheets = [StyleSheet.parse(css)];

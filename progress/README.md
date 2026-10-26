@@ -10,7 +10,7 @@ resumen de sesión; aquí están los números, las fases y el histórico.
 - [`conformance.md`](conformance.md): resultados de Test262/WPT/html5lib y
   brechas principales.
 - [`log.md`](log.md): histórico de sesiones y comandos ejecutados.
-- [`reports/`](reports/): informes generados por `tools/conformance`
+- [`reports/`](reports/): informes generados por `debug/engines/compatibility`
   (`test262-latest.md`, `html5lib-tokenizer-latest.md`, `wpt-*.md`) y la
   última línea base visual (`visual-50projects50days-latest.md`) y la de
   rendimiento (`perf-latest.md`). El informe consolidado de capacidades y

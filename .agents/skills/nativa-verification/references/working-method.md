@@ -27,8 +27,8 @@ Do not start without a verifiable criterion.
 
 - Prefer small, reversible changes.
 - Keep parser, DOM, CSS, renderer, runtime, and tooling separate.
-- Reuse the conventions in `tools/conformance`, `tools/benchmark`, and
-  `tools/leaks`.
+- Reuse the conventions in `debug/engines/compatibility`, `debug/engines/microbenchmarks`, and
+  `debug/engines/memory`.
 - Do not mix large refactors with a feature.
 - Document approximations and limits in the same change.
 

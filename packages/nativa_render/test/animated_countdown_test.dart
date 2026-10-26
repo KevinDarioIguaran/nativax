@@ -7,8 +7,8 @@ import 'package:nativa_render/nativa_render.dart';
 
 void main() {
   testWidgets('animated countdown center', (tester) async {
-    final html = File('/home/k3vin/Documents/nativax/tools/visual/fixtures/50projects50days/animated-countdown/index.html').readAsStringSync();
-    final css = File('/home/k3vin/Documents/nativax/tools/visual/fixtures/50projects50days/animated-countdown/style.css').readAsStringSync().replaceAll("@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap');", '');
+    final html = File('/home/k3vin/Documents/nativax/debug/engines/visual_comparison/fixtures/50projects50days/animated-countdown/index.html').readAsStringSync();
+    final css = File('/home/k3vin/Documents/nativax/debug/engines/visual_comparison/fixtures/50projects50days/animated-countdown/style.css').readAsStringSync().replaceAll("@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap');", '');
     final parsed = HtmlParser().parseDocument(html);
     final engine = StyleEngine(document: parsed.value, media: const MediaContext(width: 800, height: 900));
     engine.authorSheets = [StyleSheet.parse(css)];

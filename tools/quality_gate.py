@@ -375,14 +375,14 @@ def main():
     if args.run:
         if not args.no_visual:
             run(
-                ["dart", "run", "tools/visual/bin/visual_check.dart",
+                ["dart", "run", "debug/engines/visual_comparison/bin/visual_check.dart",
                  "--suite", "50projects50days", "--out", str(VISUAL_DIR)],
                 ROOT,
                 "visual 50projects50days",
             )
         if not args.no_perf:
             run(
-                ["dart", "run", "tools/perf/bin/perf.dart", "run", "--out", str(PERF_DIR)],
+                ["dart", "run", "debug/engines/performance/bin/perf.dart", "run", "--out", str(PERF_DIR)],
                 ROOT,
                 "performance",
             )

@@ -27,8 +27,8 @@ NATIVA
 | **NativaRender** | Activo | `packages/nativa_render` | Layout CSS, composición y widgets Flutter; consume el puente gráfico de NativaJS |
 | **NativaFlow** | Embebido | `packages/nativax/lib/src/workers.dart`, `nativa_dom_bindings/lib/src/worker_runtime.dart` | Workers, mensajería y planificación de trabajo |
 | **NativaForge** | Activo | `tools/` | Tests, conformidad, empaquetado y herramientas de desarrollo |
-| **NativaShield** | Activo | `tools/security`, `SECURITY_*` | Aislamiento, permisos, límites de recursos y auditoría |
-| **NativaBench** | Activo | `benchmarks/`, `tools/benchmark`, `tools/leaks` | Benchmarks reproducibles de ejecución, FPS, latencia, memoria y conformidad |
+| **NativaShield** | Activo | `debug/engines/security`, `SECURITY_*` | Aislamiento, permisos, límites de recursos y auditoría |
+| **NativaBench** | Activo | `benchmarks/`, `debug/engines/microbenchmarks`, `debug/engines/memory` | Benchmarks reproducibles de ejecución, FPS, latencia, memoria y conformidad |
 
 ## NativaWeb no es un paquete monolítico
 

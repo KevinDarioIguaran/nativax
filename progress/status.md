@@ -9,7 +9,7 @@ Tests focalizados en esta pasada: **14 perf + 119 visual + 78 CSS +
 
 ## Rendimiento headless — 2026-10-24
 
-- Nuevo `tools/perf` (workspace `nativa_perf`): escenarios de filas, scroll
+- Nuevo `debug/engines/performance` (workspace `nativa_perf`): escenarios de filas, scroll
   1D/2D y cargas JS en **Chromium headless por CDP** contra **NativaX
   offscreen** (`flutter test` + `tester.pump()`), con métricas de nodos,
   layout/style, heap, RSS/CPU por `/proc` y GPU si el kernel la expone.
@@ -34,7 +34,7 @@ Tests focalizados en esta pasada: **14 perf + 119 visual + 78 CSS +
   ~170–190 ms; 10.000 no completa. Browser-Bench Quick no completa en NativaX
   (timeout) frente a ~31.000 de Chromium. Cerious-Scroll real: 416 nodos
   frente a 721 (42,3 % menos). uibench: 13 frente a 153 (91,5 % menos).
-- Aislamiento **Docker** con CPU/RAM por contenedor (`tools/perf/container/`):
+- Aislamiento **Docker** con CPU/RAM por contenedor (`debug/engines/performance/container/`):
   2 CPU/2 GB → scroll 2D p95 7,8 ms PASS; 1 CPU/1 GB → p95 31,2 ms FAIL;
   0,5 CPU/768 MB → p95 167,9 ms FAIL. `js.arrays` pasa en las tres; crear
   1.000 filas falla en las tres. Son cuotas cgroup, no frecuencia real, y no
@@ -42,7 +42,7 @@ Tests focalizados en esta pasada: **14 perf + 119 visual + 78 CSS +
 - Salidas: `results.json`, `results.csv`, `report.md`, `timeline.csv`,
   `app-idle.json` y `charts/*.svg`; matriz Docker en
   `.perf/container/matrix.json`. Panel **Tkinter**
-  (`tools/perf/gui/perf_gui.py`) con barra lateral, tabla de los 245
+  (`debug/engines/performance/gui/perf_gui.py`) con barra lateral, tabla de los 245
   escenarios, motivos, ratios, RSS en el tiempo, refresco automático cada
   segundo, menú por fila para ejecutar un solo test/ver detalles, informes
   independientes por área recalculados desde los JSON y botones para ejecutar todo o medir
@@ -66,7 +66,7 @@ Tests focalizados en esta pasada: **14 perf + 119 visual + 78 CSS +
 
 ## Juicio visual headless — 2026-10-24
 
-- Nuevo `tools/visual`: compara **Chromium headless** (referencia) contra
+- Nuevo `debug/engines/visual_comparison`: compara **Chromium headless** (referencia) contra
   **NativaX offscreen** (`flutter test` + `RenderRepaintBoundary.toImage()`)
   sin abrir ventana ni usar WebView. Mide posición, layout, color, diseño
   computado, entorno y píxeles.
@@ -80,7 +80,7 @@ Tests focalizados en esta pasada: **14 perf + 119 visual + 78 CSS +
   completa de 300 queda pendiente.
 - Fixtures vendorizados: **51** páginas de
   `bradtraversy/50projects50days` @ `c92b0bc3...` (MIT) en
-  `tools/visual/fixtures/`, más `examples/test-pages`. El código de los
+  `debug/engines/visual_comparison/fixtures/`, más `examples/test-pages`. El código de los
   ejemplos viaja con el repositorio y se ejecuta tal cual.
 - Calibración del viewport: en Chromium 152 `--dump-dom` informa
   `innerHeight = ventana − 87 px` y `--screenshot` pinta a la altura de la
@@ -108,8 +108,8 @@ Tests focalizados en esta pasada: **14 perf + 119 visual + 78 CSS +
 - **No es una tasa de compatibilidad**: es una línea base visual reproducible.
   Detalle: `progress/reports/visual-50projects50days-latest.md` y
   `docs/visual-fidelity.md`.
-- `dart test` en `tools/visual`: **69 en verde** (1 skip e2e); `dart test` en
-  `tools/perf`: **12 en verde** (1 skip e2e); `dart analyze` limpio en ambos;
+- `dart test` en `debug/engines/visual_comparison`: **69 en verde** (1 skip e2e); `dart test` en
+  `debug/engines/performance`: **12 en verde** (1 skip e2e); `dart analyze` limpio en ambos;
   `flutter analyze` en `examples/web-challenge` limpio.
 - `./tools/test_all.sh` falló dos veces por el test de workers
   `wasm_rapier_test` (no relacionado con este cambio): el paquete `nativax`
@@ -259,7 +259,7 @@ Tests focalizados en esta pasada: **14 perf + 119 visual + 78 CSS +
 | Presentación WebGL | 🟡 línea base | 1280×720 DPR 1.0: shown 26,3–29,1 fps; present p95 67–74 ms; objetivo 45 fps no alcanzado |
 | Rendimiento 7× | 🔴 registrado | Rapier 180 pasos: 328,5 ms (wasm3) vs 30,7 ms (V8); gap 10,7× |
 | Ejemplo web-challenge | ✅ original | HTML/CSS/JS **sin modificar**: 46/52 comprobaciones propias en verde |
-| Seguridad | 🟢 | `tools/security`: 14 PASS / 0 FAIL / 1 SKIP |
+| Seguridad | 🟢 | `debug/engines/security`: 14 PASS / 0 FAIL / 1 SKIP |
 | Conformidad | 🟡 | Test262 97,93 %; html5lib 99,26 %; URL 74,22 %; DOM 59,36 %; CSS 50,28 %; tree 50,37 % |
 | Plataformas | 🟡 solo Linux | build Linux verificado; resto sin probar |
 
@@ -457,7 +457,7 @@ Tests focalizados en esta pasada: **14 perf + 119 visual + 78 CSS +
 
 ## Comparación con Chrome (web-challenge)
 
-`examples/web-challenge/test/screenshot_test.dart` renderiza la página con
+`debug/harness/test/screenshot_test.dart` renderiza la página con
 fuentes del sistema; con `NATIVAX_SHOT_DIR` carga los archivos originales.
 Formularios, UI, Media (canvas, SVG), CSS & render y Diagnóstico coinciden
 visualmente con Chrome salvo:
@@ -629,7 +629,7 @@ implementado); 16 páginas INVALID por excepciones de NativaX en el arnés.
 
 ```bash
 ./tools/test_all.sh
-(cd tools/security && dart run bin/security.dart run)
-(cd tools/conformance && dart run bin/run_wpt.dart --dirs dom/nodes --limit 100000)
+(cd debug/engines/security && dart run bin/security.dart run)
+(cd debug/engines/compatibility && dart run bin/run_wpt.dart --dirs dom/nodes --limit 100000)
 (cd examples/web-challenge && NATIVAX_SHOT=/tmp/shot.png NATIVAX_SHOT_DIR=<dir> flutter test test/screenshot_test.dart)
 ```

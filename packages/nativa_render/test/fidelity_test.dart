@@ -1,5 +1,5 @@
 // Geometry checks for behaviours found by comparing against Chrome with
-// tools/mirror: each expectation is the value Chrome reports for the same
+// debug/engines/visual_comparison/mirror: each expectation is the value Chrome reports for the same
 // markup (getBoundingClientRect), up to text metrics.
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';

@@ -72,7 +72,7 @@ Total verificado (sesión 1): **159 tests en verde**; tras la sesión 7 (fase 4A
 1. `nativa_render`: pubspec (flutter sdk + nativa_dom + nativa_css), renderizador, `flutter analyze` y widget tests (texto, cajas, flex, botón → evento, actualización reactiva, resize/@media, semantics).
 2. ✅ (parcial, sesión 2) `nativax`: `NativaXRuntime` (carga desde string/asset/archivo con `ResourcePolicy`, ejecución de `<script>` inline en orden, `<style>` → authorSheets, `fireLoadEvents`, TimerHost + console + logger, dispose), `NativaXView(source:)`, `FlutterHostEnvironment` (MediaQuery, Theme, locales, plataforma) y `environmentChanged()` en cambios.
 3. Ejemplos (`examples/counter`, hello, todo, forms) + `integration_test` en Linux (`flutter test -d linux`), y verificar que funciona `flutter build linux` con native assets.
-4. Benchmarks (`tools/benchmark`): parsing, estilos, layout, costo por llamada del puente JS↔Dart → optimizar el puente.
+4. Benchmarks (`debug/engines/microbenchmarks`): parsing, estilos, layout, costo por llamada del puente JS↔Dart → optimizar el puente.
 5. Docs: README, architecture, compatibility (matriz real: solo Linux verificable aquí), html/css/javascript-supported, security-model, api-reference, troubleshooting, ADRs, CHANGELOG, LICENSE y licencias de terceros.
 6. Fuera de esta máquina: Android/iOS/Windows/macOS (MSVC: QuickJS-ng necesita `/experimental:c11atomics`, ya está en el hook pero sin probar).
 

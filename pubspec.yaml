@@ -16,12 +16,13 @@ workspace:
   - examples/web-challenge
   - examples/game-player
   - examples/render-benchmark
-  - tools/conformance
-  - tools/benchmark
-  - tools/leaks
-  - tools/security
-  - tools/visual
-  - tools/perf
+  - debug/engines/compatibility
+  - debug/engines/microbenchmarks
+  - debug/engines/memory
+  - debug/engines/security
+  - debug/engines/visual_comparison
+  - debug/engines/performance
+  - debug/harness
 
 dev_dependencies:
   lints: ^6.0.0

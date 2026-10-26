@@ -112,7 +112,7 @@
 
 - El registro pasa de 17 a **100 escenarios**: 94 internos (DOM, scroll, JS,
   flex/grid/table, formularios, animación y canvas) y 6 externos resueltos.
-  El catálogo vive en `tools/perf/scenarios.json` y el panel muestra los 100
+  El catálogo vive en `debug/engines/performance/scenarios.json` y el panel muestra los 100
   desde el primer arranque, con las filas no medidas en `pendiente`.
 - `perf.dart list --json` genera ese catálogo; añadidos escenarios de
   100/250/500/2k/5k/20k/50k filas, scrolls 1D/2D/horizontal, 21 cargas JS,
@@ -127,7 +127,7 @@
   páginas, el panel los regenera en segundo plano (`perf.dart list --json` y
   `visual_check.dart --all --list --json`) y recarga la tabla.
 - Captura del panel actualizada con el contador `17/100` y la tabla de 100.
-- Verificación: 14 tests de `tools/perf` y 69 de `tools/visual`; smoke real
+- Verificación: 14 tests de `debug/engines/performance` y 69 de `debug/engines/visual_comparison`; smoke real
   de 13 escenarios JS y 11 de layout/formularios/animación, sin INVALID.
   Prueba de refresco con dos escenarios reales: la tabla pasó de 17 a 1 y
   luego a 2 medidas sin pulsar «Refrescar», conservando la fila seleccionada.
@@ -153,7 +153,7 @@
 
 ## 2026-10-24 — Suite de rendimiento headless y panel Tkinter
 
-- Nuevo paquete `tools/perf` (`nativa_perf`): Chromium headless vía CDP
+- Nuevo paquete `debug/engines/performance` (`nativa_perf`): Chromium headless vía CDP
   (`Emulation.setDeviceMetricsOverride`, `Runtime.evaluate`,
   `Performance.getMetrics`) contra NativaX offscreen (`flutter test` +
   `tester.pump()`). Mide escenario, render/frame, nodos, layout/style, heap,
@@ -175,24 +175,24 @@
   presupuesto JS; update/clear 10k agotan QuickJS; scroll 10k p95 108–206 ms;
   scroll 2D p95 6,8–8,4 ms (PASS); jsfb 1k 13,6×–21,1×; Browser-Bench Quick
   timeout; cerious 416 vs 721 nodos; uibench 13 vs 153.
-- Panel `tools/perf/gui/perf_gui.py` (Tkinter): tabla, motivos, ratios,
+- Panel `debug/engines/performance/gui/perf_gui.py` (Tkinter): tabla, motivos, ratios,
   timeline RSS, botones de ejecución e idle. Probado con captura real.
 - Comandos:
-  - `dart run tools/perf/bin/perf.dart run --app-idle --out .perf/latest`
-  - `dart run tools/perf/bin/perf.dart idle-app --seconds 5 --build`
-  - `python3 tools/perf/gui/perf_gui.py`
-  - `cd tools/perf && dart test && dart analyze`
+  - `dart run debug/engines/performance/bin/perf.dart run --app-idle --out .perf/latest`
+  - `dart run debug/engines/performance/bin/perf.dart idle-app --seconds 5 --build`
+  - `python3 debug/engines/performance/gui/perf_gui.py`
+  - `cd debug/engines/performance && dart test && dart analyze`
   - `NATIVA_PERF_E2E=1 dart test test/cdp_e2e_test.dart`
-- `tools/perf`: **12 tests** en verde (1 skip e2e); `dart analyze` limpio;
+- `debug/engines/performance`: **12 tests** en verde (1 skip e2e); `dart analyze` limpio;
   `flutter analyze` en `examples/web-challenge` limpio. El `test_all` completo
   no terminó en 0 por el test flaky `wasm_rapier_test`; `packages/nativax`
   solo pasa **30/30** y el resto de secciones se verificó por separado.
 - Detalle: `progress/reports/perf-latest.md`,
-  `docs/performance-suite.md` y `tools/perf/README.md`.
+  `docs/performance-suite.md` y `debug/engines/performance/README.md`.
 
 ## 2026-10-24 — Catálogo visual de 300 páginas
 
-- `tools/visual --all`: 300 páginas con commit pinneado y licencia clara:
+- `debug/engines/visual_comparison --all`: 300 páginas con commit pinneado y licencia clara:
   51 `50projects50days` (MIT, vendorizado), 27 `mdn/css-examples` (CC0), 67
   `mdn/learning-area` (CC0), 21 `TheOdinProject/css-exercises` (MIT) y 134
   `mdn/dom-examples` (CC0).
@@ -203,11 +203,11 @@
 - Prueba de humo de 4 páginas (una por suite nueva): todas FAIL, 39,7–65,6 %
   overall. Es una muestra, no la tasa de las 300.
 - Catálogo y fuentes: `progress/reports/visual-catalog-latest.md`.
-- `tools/visual`: **69 tests** en verde (1 skip).
+- `debug/engines/visual_comparison`: **69 tests** en verde (1 skip).
 
 ## 2026-10-24 — Matriz de rendimiento en contenedores
 
-- `tools/perf/container`: Dockerfile Debian trixie con Chromium y build tools;
+- `debug/engines/performance/container`: Dockerfile Debian trixie con Chromium y build tools;
   el repo y el SDK de Flutter se montan en sus rutas reales. `run.sh` ejecuta
   la suite con `--cpus`, `--memory`, `--network none` y UID del host.
 - `matrix.sh` corre 2 CPU/2 GB, 1 CPU/1 GB y 0,5 CPU/768 MB; `summarize.py`
@@ -223,7 +223,7 @@
 
 ## 2026-10-24 — Juicio visual headless contra Chromium
 
-- Nuevo paquete `tools/visual` (workspace `nativa_visual`): Chromium
+- Nuevo paquete `debug/engines/visual_comparison` (workspace `nativa_visual`): Chromium
   `--headless=new` como referencia y NativaX offscreen con
   `flutter test` + `RenderRepaintBoundary.toImage()`. No abre ventana.
 - Puntúa **posición** (`getBoundingClientRect` en ambos motores, tolerancia
@@ -237,12 +237,12 @@
   `elements.json/csv`, `positions.csv`, `colors.csv`, `pixels.json`.
 - Fixtures: **51** páginas de `bradtraversy/50projects50days` @
   `c92b0bc3a87fc95d44b89552b7b6a2eeb36ca481` (MIT, LICENSE y NOTICE
-  incluidos) vendorizadas en `tools/visual/fixtures/`. `--suite` las usa sin
+  incluidos) vendorizadas en `debug/engines/visual_comparison/fixtures/`. `--suite` las usa sin
   red; si faltan, descarga el archivo pinneado en `.visual/suites/`.
 - Corregido un sesgo de medición: Chromium 152 informa `innerHeight = ventana
   − 87` con `--dump-dom` pero pinta a la altura de la ventana con
   `--screenshot`. El juicio calibra el desfase, mide con `alto + desfase` y
-  captura con `alto`; `tools/visual/test/chrome_e2e_test.dart` verifica que
+  captura con `alto`; `debug/engines/visual_comparison/test/chrome_e2e_test.dart` verifica que
   una caja `100vh` centrada aparezca en las coordenadas del sondeo.
 - Robustez del arnés: `--no-pub`, timeout por página, reintento único, grupo
   de procesos (`setsid`) para no dejar `flutter_tester` colgados y
@@ -254,14 +254,14 @@
   **53,04 %**, color **45,24 %**, diseño **96,72 %**; 36.720.000 píxeles,
   6.569.980 con ΔE > 2 (17,89 % medio).
 - Comandos:
-  - `dart run tools/visual/bin/visual_check.dart --suite 50projects50days`
-  - `dart run tools/visual/bin/visual_check.dart --self-check --limit 1`
-  - `cd tools/visual && dart test && dart analyze`
+  - `dart run debug/engines/visual_comparison/bin/visual_check.dart --suite 50projects50days`
+  - `dart run debug/engines/visual_comparison/bin/visual_check.dart --self-check --limit 1`
+  - `cd debug/engines/visual_comparison && dart test && dart analyze`
   - `NATIVA_VISUAL_E2E=1 dart test test/chrome_e2e_test.dart`
-- `tools/visual`: **66 tests** en verde (1 skip e2e); `dart analyze` limpio;
+- `debug/engines/visual_comparison`: **66 tests** en verde (1 skip e2e); `dart analyze` limpio;
   `flutter analyze` en `examples/web-challenge` limpio.
 - Detalle: `progress/reports/visual-50projects50days-latest.md`,
-  `docs/visual-fidelity.md` y `tools/visual/README.md`.
+  `docs/visual-fidelity.md` y `debug/engines/visual_comparison/README.md`.
 
 ## 2026-10-20 — Sesión 1: cimientos
 
@@ -275,7 +275,7 @@
 
 ### Infraestructura
 
-- `tools/conformance` (paquete del workspace) con:
+- `debug/engines/compatibility` (paquete del workspace) con:
   - descarga pinneada de Test262, html5lib-tests y WPT (`.conformance/`),
   - runners Test262, html5lib tokenizer, WPT (adaptador testharness), WPT URL
     y WPT tree construction,
@@ -335,8 +335,8 @@
 (cd packages/nativax_dom_bindings && dart test)       # 26
 (cd packages/nativax_flutter && flutter test)         # 7
 flutter analyze packages/nativax_flutter              # limpio
-dart analyze tools/conformance                        # limpio
-(cd tools/conformance && dart run bin/run_all.dart)   # ver conformance.md
+dart analyze debug/engines/compatibility                        # limpio
+(cd debug/engines/compatibility && dart run bin/run_all.dart)   # ver conformance.md
 ```
 
 Total unitario/widget: **170 tests**.
@@ -417,7 +417,7 @@ Total unitario/widget: **170 tests**.
 
 ## 2026-10-20 — Sesión 9: suite de benchmarks
 
-- Nuevo `tools/benchmark` (workspace) con:
+- Nuevo `debug/engines/microbenchmarks` (workspace) con:
   - JS puro: aritmética, funciones, objetos/prototipos, arrays, strings,
     recursión, JSON parse/stringify, churn de objetos.
   - Puente JS→C→Dart (`bridge.noop`).
@@ -429,12 +429,12 @@ Total unitario/widget: **170 tests**.
 - Comparador con umbral y ruido (MAD/mediana × multiplicador); no declara
   regresión dentro del ruido.
 - 7 tests del runner, formato y comparación.
-- Documentación `tools/benchmark/README.md` y `docs/benchmarks.md`.
+- Documentación `debug/engines/microbenchmarks/README.md` y `docs/benchmarks.md`.
 - Total: **197 tests**.
 
 ## 2026-10-20 — Sesión 10: suite de fugas
 
-- `tools/leaks`: 18 casos de JS, DOM, listeners, timers, bindings, CSS,
+- `debug/engines/memory`: 18 casos de JS, DOM, listeners, timers, bindings, CSS,
   runtime y controles positivo/negativo.
 - Perfiles `quick/full/stress`, límites de tiempo, JSONL por lote, JSON, MD y
   comparación de revisiones.
@@ -447,13 +447,13 @@ Total unitario/widget: **170 tests**.
 
 ## 2026-10-20 — Sesión 11: auditoría de seguridad
 
-- `tools/security`: 15 casos de sandbox, bridge, XSS, límites, storage,
+- `debug/engines/security`: 15 casos de sandbox, bridge, XSS, límites, storage,
   lifecycle y hardening.
 - Corregido: `click()`/`requestSubmit()` programáticos ya no son
   `isTrusted`; el renderer usa gestos confiables.
 - Corregido: `NativaXRuntime` elimina `__nx` con `DomBindings.harden()` antes
   de ejecutar scripts; preludios conservan el host por closure.
-- Corregido: `node.release` libera listeners (detectado por `tools/leaks`).
+- Corregido: `node.release` libera listeners (detectado por `debug/engines/memory`).
 - Abierto: `__nx_dispatch`/`__nx_eventDone`/`__nx_releaseListener` siguen
   visibles en `globalThis` (severidad media; sin escape al host).
 - Documentos: `docs/security/threat-model.md`, `docs/security/audit.md`,
@@ -471,7 +471,7 @@ Total unitario/widget: **170 tests**.
 - `NativaXRuntime` elimina `__nx` con `DomBindings.harden()`.
 - Corregido `node.release` para no borrar listeners de nodos conectados;
   los desconectados sí los liberan.
-- Documentos `SECURITY_*` y `tools/security`.
+- Documentos `SECURITY_*` y `debug/engines/security`.
 - Total: **209 tests**.
 
 ## 2026-10-20 — Sesión 13: ejemplo del Web Challenge
@@ -548,7 +548,7 @@ su HTML/CSS/JS original. Se eliminó `compat.js` y el `app.js` adaptado.
 
 Bloque A — fidelidad visual medida, no a ojo:
 
-- Nueva herramienta `tools/mirror/` (`mirror.sh` + `measure.js` +
+- Nueva herramienta `debug/engines/visual_comparison/mirror/` (`mirror.sh` + `measure.js` +
   `compare.dart`): renderiza la misma página en Chrome headless (solo como
   referencia) y en NativaX, y compara la caja de cada elemento. Formularios
   pasó de 28 % a 82,7 % de cajas idénticas (±2 px).

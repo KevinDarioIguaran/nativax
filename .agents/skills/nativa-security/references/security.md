@@ -38,7 +38,7 @@ trusts none of them.
 
 ## Current audit
 
-The executable suite lives in `tools/security`. The live Linux status is in
+The executable suite lives in `debug/engines/security`. The live Linux status is in
 `progress/status.md`; the current audit reports 14 PASS, 0 FAIL, and 1 SKIP.
 See `../../../docs/security/audit.md`, `../../../docs/security/threat-model.md`,
 `../../../docs/security/test-plan.md`, and

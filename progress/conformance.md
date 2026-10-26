@@ -1,6 +1,6 @@
 # Conformidad: línea base 2026-10-24 (actualizada en la sesión V8/CSS)
 
-Los runners viven en `tools/conformance` y reutilizan suites oficiales. Los
+Los runners viven en `debug/engines/compatibility` y reutilizan suites oficiales. Los
 checkouts están pinneados y no se versionan (`.conformance/` está ignorado).
 
 ## Resultados
@@ -55,7 +55,7 @@ las corridas con timestamp también quedan en `.conformance/results/`.
 Comandos:
 
 ```bash
-cd tools/conformance
+cd debug/engines/compatibility
 dart run bin/run_wpt.dart --dirs dom/events --limit 2000
 dart run bin/run_wpt.dart --dirs css/selectors --limit 2000
 dart run bin/run_wpt.dart --dirs dom/nodes --limit 2000
@@ -171,8 +171,8 @@ esperado con atributos fallaba aunque el parser fuera correcto. Ahora se
 comparan. Comparación por test contra la corrida `2026-10-24T064649`: 116
 FAIL → PASS, 1 ERROR → PASS, 0 regresiones. 1.334 → 1.451 PASS
 (71,18 % → 77,43 %), mismo denominador (1.874 ejecutados). Comando:
-`cd tools/conformance && dart run bin/run_html_tree.dart`. Test:
-`tools/conformance/test/html_tree_runner_test.dart`.
+`cd debug/engines/compatibility && dart run bin/run_html_tree.dart`. Test:
+`debug/engines/compatibility/test/html_tree_runner_test.dart`.
 
 **Segunda corrección del runner (2026-10-25), tampoco es ganancia de
 producto.** Los elementos extranjeros se escriben `<svg foreignObject>` /

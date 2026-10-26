@@ -14,7 +14,7 @@ actually passes. A `SKIP` is not compatibility; it is declared debt.
 | [WPT](https://github.com/web-platform-tests/wpt) | DOM, events, selectors, parsing | `.conformance/suites/wpt` |
 | WPT `url/resources` | URL parsing | `.conformance/suites/wpt/url` |
 
-Checkouts are pinned in `tools/conformance/bin/fetch_suites.dart`. They are not
+Checkouts are pinned in `debug/engines/compatibility/bin/fetch_suites.dart`. They are not
 versioned (`.conformance/` is in `.gitignore`).
 
 ## Statuses
@@ -45,7 +45,7 @@ The rate excludes `SKIP`. A `SKIP` never counts as compatibility.
 ## Commands
 
 ```bash
-cd tools/conformance
+cd debug/engines/compatibility
 
 dart run bin/fetch_suites.dart --suite test262 --suite html5lib
 dart run bin/fetch_suites.dart --suite wpt

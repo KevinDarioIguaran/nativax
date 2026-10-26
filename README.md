@@ -40,7 +40,7 @@ números y pendientes:
 - [`docs/benchmarks.md`](docs/benchmarks.md) (rendimiento y comparación)
 - [`docs/performance-suite.md`](docs/performance-suite.md) (UI, scroll, memoria y panel Tkinter)
 - [`progress/reports/nativa-quality-latest.md`](progress/reports/nativa-quality-latest.md) (informe consolidado de capacidad y evidencia)
-- [`tools/leaks/README.md`](tools/leaks/README.md) (fugas, retención y ciclo de vida)
+- [`debug/engines/memory/README.md`](debug/engines/memory/README.md) (fugas, retención y ciclo de vida)
 - [`docs/security/audit.md`](docs/security/audit.md) (auditoría y hallazgos)
 - [`docs/security/threat-model.md`](docs/security/threat-model.md) (modelo de amenazas)
 - [`progress/status.md`](progress/status.md)
@@ -57,8 +57,8 @@ números y pendientes:
 | **NativaRender** | `nativa_render` | Layout CSS y renderizado Flutter |
 | **NativaFlow** | `nativax/lib/src/workers.dart` (embebido) | Workers, mensajería y concurrencia |
 | **NativaForge** | `tools/` | Tests, conformidad, empaquetado y herramientas de desarrollo |
-| **NativaShield** | `tools/security`, `SECURITY_*` | Aislamiento, permisos, límites y auditoría |
-| **NativaBench** | `benchmarks/`, `tools/benchmark`, `tools/perf`, `tools/leaks` | Benchmarks reproducibles de rendimiento y conformidad |
+| **NativaShield** | `debug/engines/security`, `SECURITY_*` | Aislamiento, permisos, límites y auditoría |
+| **NativaBench** | `benchmarks/`, `debug/engines/microbenchmarks`, `debug/engines/performance`, `debug/engines/memory` | Benchmarks reproducibles de rendimiento y conformidad |
 
 NativaWeb **no** es un paquete monolítico: es la familia de cuatro módulos
 independientes que pueden usarse por separado.
@@ -114,7 +114,7 @@ python3 tools/quality_gate.py --run
 python3 tools/quality_gate.py --json
 
 # Aislamiento por contenedor con CPU/RAM limitadas
-tools/perf/container/matrix.sh
+debug/engines/performance/container/matrix.sh
 
 # Vista previa renderizada del informe (no código fuente)
 tools/preview_report.sh
@@ -129,7 +129,7 @@ Las suites oficiales se descargan (no se versionan) y se ejecutan contra
 NativaX:
 
 ```bash
-cd tools/conformance
+cd debug/engines/compatibility
 dart run bin/fetch_suites.dart --suite test262 --suite html5lib --suite wpt
 dart run bin/run_all.dart
 ```

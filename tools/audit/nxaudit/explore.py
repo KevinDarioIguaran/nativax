@@ -48,7 +48,7 @@ def git_state() -> dict:
                                   timeout=20).stdout.strip()
         except (OSError, subprocess.TimeoutExpired):
             return ""
-    dirty = bool(run("status", "--porcelain", "--", "packages", "examples/web-challenge"))
+    dirty = bool(run("status", "--porcelain", "--", "packages", "debug/harness"))
     return {"git_commit": run("rev-parse", "--short", "HEAD") or "unknown", "git_dirty": dirty,
             "generator_version": gen.GENERATOR_VERSION}
 

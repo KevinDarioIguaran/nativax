@@ -1,7 +1,7 @@
 """Executors: NativaX (system under test) and Chromium (reference).
 
 Both run a whole batch per process start. NativaX goes through
-`examples/web-challenge/test/audit_batch_test.dart` (one flutter_tester for
+`debug/harness/test/audit_batch_test.dart` (one flutter_tester for
 the batch); Chromium loads one parent page that runs every scenario in a
 same-origin `srcdoc` iframe sized to the scenario viewport.
 
@@ -26,7 +26,7 @@ from .compile import compile_screen
 from .probe import probe_source
 
 ROOT = Path(__file__).resolve().parents[3]
-HARNESS = ROOT / "examples" / "web-challenge"
+HARNESS = ROOT / "debug" / "harness"
 V8_LIB = ROOT / "tools" / "v8-spike" / "target" / "release" / "libnx_v8.so"
 
 CHROME_FLAGS = [
