@@ -3,6 +3,7 @@ library;
 
 export 'src/analysis.dart';
 export 'src/classification.dart';
+export 'src/cases/audit_cases.dart';
 export 'src/cases/controls.dart';
 export 'src/cases/css_cases.dart';
 export 'src/cases/dom_cases.dart';

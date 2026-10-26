@@ -22,6 +22,7 @@ Future<void> _run(List<String> args) async {
   int? iterations;
   int? settleMs;
   String? only;
+  var dataset = 'product';
   String? outDir;
   String? jsonPath;
   String? jsonlPath;
@@ -40,6 +41,8 @@ Future<void> _run(List<String> args) async {
         settleMs = int.parse(args[++i]);
       case '--only':
         only = args[++i];
+      case '--dataset':
+        dataset = args[++i];
       case '--out':
         outDir = args[++i];
       case '--json':
@@ -83,7 +86,17 @@ Future<void> _run(List<String> args) async {
     minMonotonicRun: base.minMonotonicRun,
   );
 
-  final cases = allLeakCases().where((c) {
+  final source = switch (dataset) {
+    'product' => allLeakCases(),
+    'audit' => auditLeakCases(),
+    _ => null,
+  };
+  if (source == null) {
+    stderr.writeln('unknown dataset: $dataset (product|audit)');
+    exitCode = 64;
+    return;
+  }
+  final cases = source.where((c) {
     if (only == null) return true;
     return c.id.contains(only) || c.subsystem.contains(only);
   }).toList();
@@ -209,7 +222,9 @@ void _usage() {
     ..writeln('usage:')
     ..writeln('  dart run bin/leaks.dart run [--profile quick|full|stress]')
     ..writeln('    [--batches N] [--iterations N] [--settle-ms N]')
-    ..writeln('    [--only TEXT] [--list] [--out DIR]')
+    ..writeln(
+      '    [--only TEXT] [--dataset product|audit] [--list] [--out DIR]',
+    )
     ..writeln('    [--json FILE] [--jsonl FILE] [--md FILE]')
     ..writeln(
       '  dart run bin/leaks.dart compare --baseline JSON --current JSON',
