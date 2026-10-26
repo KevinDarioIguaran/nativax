@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:path/path.dart' as p;
 
 import 'result.dart';
+import 'run_output.dart';
 import 'suite_paths.dart';
 
 class ReportFiles {
@@ -57,26 +58,25 @@ class ConformanceReport {
 
   String render(RunSummary s, {RunSummary? baseline}) {
     final b = StringBuffer()
-      ..writeln('# Conformidad: ${s.suite}')
+      ..writeln('# Conformance: ${s.suite}')
       ..writeln()
-      ..writeln('- Fecha: ${s.startedAt.toUtc().toIso8601String()}')
-      ..writeln('- Duración: ${(s.durationMs / 1000).toStringAsFixed(1)} s');
-    if (s.suiteCommit != null) {
-      b.writeln('- Commit de la suite: `${s.suiteCommit}`');
-    }
+      ..writeln('- Started: ${isoWithOffset(s.startedAt)}')
+      ..writeln('- Duration: ${(s.durationMs / 1000).toStringAsFixed(1)} s')
+      ..writeln('- Runner version: $runnerVersion')
+      ..writeln('- Suite revision: ${s.suiteCommit == null ? 'unknown (not a git checkout)' : '`${s.suiteCommit}`'}');
     if (s.suiteVersion != null) {
-      b.writeln('- Versión de la suite: ${s.suiteVersion}');
+      b.writeln('- Suite version: ${s.suiteVersion}');
     }
     if (s.command != null) {
-      b.writeln('- Comando: `${s.command}`');
+      b.writeln('- Command: `${s.command}`');
     }
     b
       ..writeln('- Total: **${s.total}** tests')
-      ..writeln('- Tasa de éxito (sin SKIP): **${s.passRate.toStringAsFixed(2)} %**')
+      ..writeln('- Pass rate (SKIP excluded): **${s.passRate.toStringAsFixed(2)} %**')
       ..writeln();
 
     b
-      ..writeln('| Estado | Tests |')
+      ..writeln('| Status | Tests |')
       ..writeln('|---|---:|')
       ..writeln('| PASS | ${s.passed} |')
       ..writeln('| FAIL | ${s.failed} |')
@@ -86,7 +86,7 @@ class ConformanceReport {
 
     if (baseline != null) {
       b
-        ..writeln('## Delta contra la línea base')
+        ..writeln('## Delta against the baseline')
         ..writeln()
         ..writeln(renderDelta(baseline, s))
         ..writeln();
@@ -97,7 +97,7 @@ class ConformanceReport {
       b
         ..writeln('## $title')
         ..writeln()
-        ..writeln('| Grupo | PASS | FAIL | SKIP | ERROR | Éxito |')
+        ..writeln('| Group | PASS | FAIL | SKIP | ERROR | Pass rate |')
         ..writeln('|---|---:|---:|---:|---:|---:|');
       final entries = stats.entries.toList()
         ..sort((a, b) => b.value.total.compareTo(a.value.total));
@@ -109,26 +109,26 @@ class ConformanceReport {
         );
       }
       if (entries.length > 80) {
-        b.writeln('| _(+${entries.length - 80} grupos)_ | | | | | |');
+        b.writeln('| _(+${entries.length - 80} groups)_ | | | | | |');
       }
       b.writeln();
     }
 
-    table('Por característica', s.byFeature);
-    table('Por directorio', s.byDirectory);
+    table('By feature', s.byFeature);
+    table('By directory', s.byDirectory);
 
     final failures =
         s.results.where((r) => r.status == ResultStatus.fail).toList();
     if (failures.isNotEmpty) {
       b
-        ..writeln('## Fallos (${failures.length})')
+        ..writeln('## Failures (${failures.length})')
         ..writeln();
       for (final r in failures.take(maxFailures)) {
         b
           ..writeln('### `${r.id}`')
           ..writeln()
-          ..writeln('- Características: ${r.features.isEmpty ? 'core' : r.features.join(', ')}')
-          ..writeln('- Motivo: ${_cell(r.reason ?? '(sin motivo)')}');
+          ..writeln('- Features: ${r.features.isEmpty ? 'core' : r.features.join(', ')}')
+          ..writeln('- Reason: ${_cell(r.reason ?? '(no reason)')}');
         if (r.detail != null && r.detail!.trim().isNotEmpty) {
           final detail = r.detail!.trim();
           b
@@ -142,8 +142,8 @@ class ConformanceReport {
         b.writeln();
       }
       if (failures.length > maxFailures) {
-        b.writeln('_… y ${failures.length - maxFailures} fallos más '
-            '(ver el JSONL)._');
+        b.writeln('_… and ${failures.length - maxFailures} more failures '
+            '(see the JSONL)._');
         b.writeln();
       }
     }
@@ -151,13 +151,13 @@ class ConformanceReport {
     if (s.skipped > 0) {
       final reasons = <String, int>{};
       for (final r in s.results.where((r) => r.status == ResultStatus.skip)) {
-        final key = r.reason ?? '(sin motivo)';
+        final key = r.reason ?? '(no reason)';
         reasons[key] = (reasons[key] ?? 0) + 1;
       }
       b
-        ..writeln('## SKIP agrupados por motivo')
+        ..writeln('## SKIP grouped by reason')
         ..writeln()
-        ..writeln('| Motivo | Tests |')
+        ..writeln('| Reason | Tests |')
         ..writeln('|---|---:|');
       final sorted = reasons.entries.toList()
         ..sort((a, b) => b.value.compareTo(a.value));
@@ -169,7 +169,7 @@ class ConformanceReport {
 
     if (s.errors > 0) {
       b
-        ..writeln('## Errores del runner (${s.errors})')
+        ..writeln('## Runner errors (${s.errors})')
         ..writeln();
       for (final r in s.results
           .where((r) => r.status == ResultStatus.error)
@@ -182,9 +182,9 @@ class ConformanceReport {
     b
       ..writeln('---')
       ..writeln()
-      ..writeln('_Generado por `debug/engines/compatibility`. Un SKIP no cuenta como '
-          'compatibilidad; mide únicamente que el runner no pudo ejecutar el '
-          'test o que la característica está fuera de alcance._');
+      ..writeln('_Generated by `debug/engines/compatibility`. A SKIP never counts '
+          'as compatibility; it only records that the runner could not execute '
+          'the test or that the feature is out of scope._');
     return b.toString();
   }
 
@@ -210,11 +210,17 @@ class ConformanceReport {
       }
     }
     removed = old.keys.where((k) => !now.containsKey(k)).length;
-    return '- Corregidos: **$fixed**\n'
-        '- Regresiones: **$regressed**\n'
-        '- Siguen fallando: **$stillFailing**\n'
-        '- Nuevos en esta ejecución: **$added**\n'
-        '- Ausentes respecto a la base: **$removed**';
+    final warning = baseline.suiteCommit != current.suiteCommit
+        ? '- **Not comparable:** suite revision '
+            '`${baseline.suiteCommit ?? 'unknown'}` in the baseline, '
+            '`${current.suiteCommit ?? 'unknown'}` now\n'
+        : '';
+    return '$warning'
+        '- Fixed: **$fixed**\n'
+        '- Regressions: **$regressed**\n'
+        '- Still failing: **$stillFailing**\n'
+        '- New in this run: **$added**\n'
+        '- Missing compared with the baseline: **$removed**';
   }
 
   static String _cell(String value) => value

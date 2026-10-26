@@ -1,18 +1,23 @@
-# Conformidad de NativaX
+# NativaX conformance
 
-Runners para medir la compatibilidad real de NativaX con suites oficiales, sin
-escribir tests desde cero y sin usar un navegador.
+Runners that measure NativaX compatibility against official suites, without
+writing the tests from scratch and without a browser.
 
 ## Suites
 
-- [Test262](https://github.com/tc39/test262): lenguaje ECMAScript.
-- [html5lib-tests](https://github.com/html5lib/html5lib-tests): tokenizer HTML.
-- [WPT](https://github.com/web-platform-tests/wpt): DOM, eventos y selectores
-  mediante un adaptador `testharness.js` mínimo.
+- [Test262](https://github.com/tc39/test262): the ECMAScript language.
+- [html5lib-tests](https://github.com/html5lib/html5lib-tests): the HTML
+  tokenizer.
+- [WPT](https://github.com/web-platform-tests/wpt): DOM, events and selectors
+  through a minimal `testharness.js` adapter, the WHATWG URL fixture
+  (`url/resources/urltestdata.json`) and the tree-construction fixtures
+  (`html/syntax/parsing/resources/*.dat`).
 
-Los checkouts se descargan en `.conformance/suites/` y **no se versionan**.
+The checkouts are downloaded into `.conformance/suites/` and are **not
+committed**. `bin/fetch_suites.dart` clones pinned commits from GitHub, so it
+needs network access.
 
-## Uso
+## Usage
 
 ```bash
 cd debug/engines/compatibility
@@ -21,39 +26,99 @@ dart run bin/fetch_suites.dart --suite test262 --suite html5lib --suite wpt
 
 dart run bin/run_test262.dart
 dart run bin/run_html5lib.dart
+dart run bin/run_url.dart
+dart run bin/run_html_tree.dart
 dart run bin/run_wpt.dart --limit 400
 dart run bin/run_all.dart
 ```
 
-Cada runner escribe:
+## Output
 
-- `.conformance/results/<suite>-<timestamp>.jsonl`: un resultado por test.
-- `.conformance/results/<suite>-<timestamp>.summary.json`: agregados.
-- `.conformance/results/<suite>-<timestamp>.md`: archivo legible de la corrida
-  (ignorado por git).
-- `progress/reports/<suite>-latest.md`: último informe versionado. No se
-  versionan reportes con timestamp.
+By default each runner writes:
 
-## Estados
+- `.conformance/results/<suite>-<timestamp>.jsonl`: one result per test.
+- `.conformance/results/<suite>-<timestamp>.summary.json`: aggregates.
+- `.conformance/results/<suite>-<timestamp>.md`: readable report for the run
+  (ignored by git).
+- `progress/reports/<suite>-latest.md`: the latest committed report. Reports
+  with a timestamp are never committed.
 
-`PASS`, `FAIL`, `SKIP`, `ERROR`. Un `SKIP` nunca cuenta como compatibilidad:
-indica que el runner no puede ejecutar el test o que la característica está
-fuera de alcance, y siempre lleva un motivo.
+`<suite>` is `test262`, `html5lib-tokenizer`, `wpt-url`, `wpt-html-tree` or
+`wpt`. The timestamp in the file name is local time; the summary carries the
+zoned time.
 
-## Opciones útiles
+`--results-dir DIR` (every runner, and `run_all.dart`) writes the JSONL,
+summary and Markdown into `DIR` instead, looks for the automatic baseline in
+`DIR`, and **does not** update `progress/reports/<suite>-latest.md`. Adapters
+that collect a report directory should always pass it.
 
 ```bash
-# Test262 acotado
+dart run bin/run_url.dart --results-dir /tmp/report/compat
+dart run bin/run_all.dart --results-dir /tmp/report/compat
+```
+
+The automatic baseline is the newest `<suite>-<timestamp>.summary.json` with
+exactly that suite name (so `wpt` never picks a `wpt-url` summary). Pass
+`--baseline summary.json` to choose one.
+
+### Summary fields
+
+| Field | Meaning |
+|---|---|
+| `suite` | suite name, as above |
+| `startedAt`, `finishedAt` | ISO 8601 with UTC offset, e.g. `2026-10-26T09:15:02.123-05:00` |
+| `timeZone` | local time-zone abbreviation at `startedAt` |
+| `runnerVersion` | runner and summary-format version (`lib/src/run_output.dart`, equal to the package version); bumped whenever a change can move verdicts |
+| `suiteCommit` | git sha of the suite checkout; `null` when the suite directory is not the top of a git checkout |
+| `suiteVersion`, `command` | when known |
+| `counts`, `passRate` | per status; the pass rate excludes SKIP |
+| `results` | every result |
+
+Compare two summaries only when `suite`, `suiteCommit`, `runnerVersion` and
+`command` match; the Markdown delta flags a different suite revision as not
+comparable.
+
+## Statuses
+
+`PASS`, `FAIL`, `SKIP`, `ERROR`. A `SKIP` never counts as compatibility: it
+means the runner cannot execute the test or the feature is out of scope, and
+it always carries a reason. `ERROR` means the harness broke (missing include,
+invalid fixture JSON, runner exception), not the engine.
+
+## Runner validation
+
+`debug/datasets/compatibility` holds a small, hand-verified validation subset
+(Test262, html5lib, URL, tree construction and WPT testharness cases written
+from scratch) with the expected status of every case. The validator runs every
+runner on it and also checks that deliberately broken adapters (always PASS,
+SKIP as PASS, FAIL hidden as SKIP, ERROR as FAIL, dropped failures, a no-op
+Test262 `assert.js`, an always-pass WPT harness) are detected:
+
+```bash
+dart run bin/validate_runners.dart [--json out.json] [--markdown out.md]
+dart test
+```
+
+It needs no network. Formulas and results:
+[`../../architecture/metrics-gate-compat.md`](../../architecture/metrics-gate-compat.md).
+
+## Useful options
+
+```bash
+# Bounded Test262
 dart run bin/run_test262.dart --limit 500 --skip-features Temporal,ShadowRealm
 
-# Un archivo concreto de WPT
+# One WPT file
 dart run bin/run_wpt.dart --dirs dom/nodes --grep Element-tagName
 ```
 
-## Limitaciones del adaptador
+## Adapter limitations
 
-Ver
-[`../../.agents/skills/nativa-conformance/references/conformance.md`](../../../.agents/skills/nativa-conformance/references/conformance.md).
-En resumen:
-Test262 modules y APIs de host se saltan; html5lib se ejecuta solo desde Data
-state; WPT no soporta reftests, testdriver, workers ni el testharness completo.
+See
+[`../../../.agents/skills/nativa-conformance/references/conformance.md`](../../../.agents/skills/nativa-conformance/references/conformance.md).
+In short: Test262 module tests and host APIs (`$262.agent`, `createRealm`,
+`detachArrayBuffer`, `IsHTMLDDA`) are skipped; raw tests run verbatim in sloppy
+mode only; html5lib runs only from the Data state and DOCTYPE identifiers are
+not compared; WPT has no reftests, testdriver, workers or full
+`testharness.js`, a test that never completes is a FAIL (harness timeout), and
+`assert_implements_optional` failures are SKIP.
