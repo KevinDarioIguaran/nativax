@@ -164,10 +164,20 @@ def _impact(metric: str, direction: str, target: Any) -> dict[str, Any]:
 
 
 def _rows(payload: Any, key: str) -> list[dict]:
+    """The object entries of a result list; malformed entries are skipped."""
     if not isinstance(payload, dict):
         return []
     value = payload.get(key)
-    return value if isinstance(value, list) else []
+    if not isinstance(value, list):
+        return []
+    return [row for row in value if isinstance(row, dict)]
+
+
+def _results(payload: Any) -> list[dict] | None:
+    """`results` of a leak/security report, or None when there is no list."""
+    if not isinstance(payload, dict) or not isinstance(payload.get("results"), list):
+        return None
+    return _rows(payload, "results")
 
 
 def _num(value: Any, digits: int = 1, dash: str = "—") -> str:
@@ -510,7 +520,7 @@ def build_recommendations(
                 confidence="medium",
                 commands=[],
             ))
-    leak_results = leaks.get("results") if isinstance(leaks, dict) else None
+    leak_results = _results(leaks)
     if isinstance(leak_results, list):
         failing = [
             row for row in leak_results
@@ -609,7 +619,7 @@ def build_recommendations(
         ))
 
     # --- Security -------------------------------------------------------------
-    security_results = security.get("results") if isinstance(security, dict) else None
+    security_results = _results(security)
     if isinstance(security_results, list):
         bad = [
             row for row in security_results
@@ -1464,7 +1474,7 @@ def detailed_lines(data: dict[str, Any], recommendations: list[Recommendation]) 
         )
         lines.append("")
 
-    leak_results = leaks.get("results") if isinstance(leaks, dict) else None
+    leak_results = _results(leaks)
     lines.extend(["## Memory and leaks", ""])
     if isinstance(leak_results, list) and leak_results:
         lines.extend(["| Case | Status | Reason |", "|---|---|---|"])
@@ -1477,7 +1487,7 @@ def detailed_lines(data: dict[str, Any], recommendations: list[Recommendation]) 
     else:
         lines.extend(["There is no recent leak report in `benchmarks/leaks`.", ""])
 
-    security_results = security.get("results") if isinstance(security, dict) else None
+    security_results = _results(security)
     lines.extend(["## Security", ""])
     if isinstance(security_results, list) and security_results:
         lines.extend(["| Case | Category | Severity | Status | Observed |", "|---|---|---|---|---|"])

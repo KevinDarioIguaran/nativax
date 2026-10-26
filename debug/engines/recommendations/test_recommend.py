@@ -201,6 +201,20 @@ class RecommendationsTest(unittest.TestCase):
         self.assertIn("not measured (no before/after runs)", text)
         self.assertIn("## Consistency", text)
 
+    def test_malformed_entries_are_skipped_not_fatal(self):
+        # Regression: a non-object entry in a result list raised AttributeError.
+        data = dict(BASE)
+        data["leaks"] = {"results": ["oops", {"id": "a", "status": "FAIL"}]}
+        data["security"] = {"results": [None, {"id": "b", "status": "PASS"}]}
+        data["perf"] = {"results": ["x"]}
+        data["visual"] = {"rows": [5]}
+        recs = recommend.build_recommendations(data)
+        self.assertEqual(
+            sorted(r.id for r in recs),
+            ["leaks.cases.failing", "memory.load_peak.unmeasured"],
+        )
+        self.assertIn("## Memory and leaks", recommend.build_markdown(data))
+
 
 if __name__ == "__main__":
     unittest.main()
