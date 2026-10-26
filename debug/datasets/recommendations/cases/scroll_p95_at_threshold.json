@@ -1,0 +1,62 @@
+{
+  "id": "scroll_p95_at_threshold",
+  "description": "Scroll p95 exactly 16.7 ms.",
+  "grounds": [
+    "R12 uses strict >; acceptance is <=16.7."
+  ],
+  "input": {
+    "app_idle": {
+      "status": "ok",
+      "rss_tail_mb": 100,
+      "cpu_tail_pct": 0.2
+    },
+    "perf": {
+      "results": [
+        {
+          "scenario": "scroll.rows-10k",
+          "kind": "scroll",
+          "verdict": "PASS",
+          "nativax": {
+            "status": "ok",
+            "scenario_ms": 1,
+            "render_ms": 0,
+            "frame_ms": {
+              "p95": 16.7
+            }
+          },
+          "chromium": {
+            "status": "ok",
+            "scenario_ms": 1,
+            "render_ms": 0,
+            "frame_ms": {
+              "p95": 1
+            }
+          }
+        }
+      ]
+    }
+  },
+  "expected": [
+    "memory.load_peak.unmeasured"
+  ],
+  "must_not": [
+    "capability.game_player.unmeasured",
+    "capability.video.no_playback",
+    "leaks.cases.failing",
+    "leaks.cases.inconclusive",
+    "memory.idle.over_target",
+    "memory.idle.unmeasured",
+    "perf.coverage.missing_scenarios",
+    "perf.dom.over_target",
+    "perf.game.over_target",
+    "perf.js.over_target",
+    "perf.scroll.frame_p95_over_target",
+    "renderer.dom_layout.cross_signal",
+    "security.checks.failing",
+    "visual.color.low",
+    "visual.coverage.missing_pages",
+    "visual.ink.missing",
+    "visual.position.low"
+  ],
+  "expected_priorities": {}
+}

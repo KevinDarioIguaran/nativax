@@ -1,0 +1,47 @@
+{
+  "id": "security_fail",
+  "description": "One security check FAIL.",
+  "grounds": [
+    "R10: any FAIL/ERROR."
+  ],
+  "input": {
+    "app_idle": {
+      "status": "ok",
+      "rss_tail_mb": 100,
+      "cpu_tail_pct": 0.2
+    },
+    "security": {
+      "results": [
+        {
+          "id": "xss",
+          "status": "FAIL"
+        }
+      ]
+    }
+  },
+  "expected": [
+    "memory.load_peak.unmeasured",
+    "security.checks.failing"
+  ],
+  "must_not": [
+    "capability.game_player.unmeasured",
+    "capability.video.no_playback",
+    "leaks.cases.failing",
+    "leaks.cases.inconclusive",
+    "memory.idle.over_target",
+    "memory.idle.unmeasured",
+    "perf.coverage.missing_scenarios",
+    "perf.dom.over_target",
+    "perf.game.over_target",
+    "perf.js.over_target",
+    "perf.scroll.frame_p95_over_target",
+    "renderer.dom_layout.cross_signal",
+    "visual.color.low",
+    "visual.coverage.missing_pages",
+    "visual.ink.missing",
+    "visual.position.low"
+  ],
+  "expected_priorities": {
+    "security.checks.failing": "P0"
+  }
+}

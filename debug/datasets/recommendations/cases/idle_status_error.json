@@ -1,0 +1,35 @@
+{
+  "id": "idle_status_error",
+  "description": "Idle run exists but failed.",
+  "grounds": [
+    "R3: status != ok."
+  ],
+  "input": {
+    "app_idle": {
+      "status": "error"
+    }
+  },
+  "expected": [
+    "memory.idle.unmeasured"
+  ],
+  "must_not": [
+    "capability.game_player.unmeasured",
+    "capability.video.no_playback",
+    "leaks.cases.failing",
+    "leaks.cases.inconclusive",
+    "memory.idle.over_target",
+    "memory.load_peak.unmeasured",
+    "perf.coverage.missing_scenarios",
+    "perf.dom.over_target",
+    "perf.game.over_target",
+    "perf.js.over_target",
+    "perf.scroll.frame_p95_over_target",
+    "renderer.dom_layout.cross_signal",
+    "security.checks.failing",
+    "visual.color.low",
+    "visual.coverage.missing_pages",
+    "visual.ink.missing",
+    "visual.position.low"
+  ],
+  "expected_priorities": {}
+}

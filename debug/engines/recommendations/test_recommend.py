@@ -45,11 +45,11 @@ class RecommendationsTest(unittest.TestCase):
         data = dict(BASE)
         data["app_idle"] = {"status": "ok", "rss_tail_mb": 320, "cpu_tail_pct": 0}
         recs = recommend.build_recommendations(data)
-        self.assertTrue(any(r.priority == "P0" and r.area == "memoria" for r in recs))
+        self.assertTrue(any(r.priority == "P0" and r.area == "memory" for r in recs))
 
     def test_idle_without_load_peak_is_p2(self):
         recs = recommend.build_recommendations(BASE)
-        self.assertTrue(any(r.area == "memoria" and r.priority == "P2" for r in recs))
+        self.assertTrue(any(r.area == "memory" and r.priority == "P2" for r in recs))
 
     def test_coverage_is_reported(self):
         data = dict(BASE)
@@ -58,8 +58,8 @@ class RecommendationsTest(unittest.TestCase):
         data["visual_catalog"] = [{"id": "a"}, {"id": "b"}]
         data["perf_catalog"] = [{"id": "x"}, {"id": "y"}]
         recs = recommend.build_recommendations(data)
-        self.assertTrue(any("cobertura visual" in r.area for r in recs))
-        self.assertTrue(any("cobertura de rendimiento" in r.area for r in recs))
+        self.assertTrue(any("visual coverage" in r.area for r in recs))
+        self.assertTrue(any("performance coverage" in r.area for r in recs))
 
     def test_dom_and_layout_cross_signal(self):
         data = dict(BASE)
@@ -84,13 +84,13 @@ class RecommendationsTest(unittest.TestCase):
         data = dict(BASE)
         data["security"] = {"results": [{"id": "xss.bad", "status": "FAIL"}]}
         recs = recommend.build_recommendations(data)
-        self.assertTrue(any(r.priority == "P0" and r.area == "seguridad" for r in recs))
+        self.assertTrue(any(r.priority == "P0" and r.area == "security" for r in recs))
 
     def test_leak_failure_is_p0(self):
         data = dict(BASE)
         data["leaks"] = {"results": [{"id": "dom.leak", "status": "FAIL"}]}
         recs = recommend.build_recommendations(data)
-        self.assertTrue(any(r.priority == "P0" and r.area == "fugas" for r in recs))
+        self.assertTrue(any(r.priority == "P0" and r.area == "leaks" for r in recs))
 
     def test_detailed_sections_include_games_and_video(self):
         data = dict(BASE)
@@ -105,18 +105,194 @@ class RecommendationsTest(unittest.TestCase):
                           "status": "CONTRATO"}],
         }
         text = recommend.build_markdown(data)
-        self.assertIn("## Detalle de rendimiento", text)
-        self.assertIn("## Detalle de juegos", text)
-        self.assertIn("## Detalle de vídeo", text)
+        self.assertIn("## Performance detail", text)
+        self.assertIn("## Games detail", text)
+        self.assertIn("## Video detail", text)
         self.assertIn("game.quality-640x360-p100", text)
 
     def test_markdown_mentions_limits_and_evidence(self):
         data = dict(BASE)
         data["security"] = {"results": [{"id": "xss.bad", "status": "FAIL"}]}
         text = recommend.build_markdown(data)
-        self.assertIn("Recomendaciones automáticas", text)
-        self.assertIn("Criterio de aceptación", text)
-        self.assertIn("NativaX no decodifica", text)
+        self.assertIn("Automatic recommendations", text)
+        self.assertIn("Acceptance criterion", text)
+        self.assertIn("NativaX does not decode", text)
+
+    def test_every_recommendation_has_a_registered_id_rule_and_impact(self):
+        data = dict(BASE)
+        data["app_idle"] = {"status": "ok", "rss_tail_mb": 320, "cpu_tail_pct": 0}
+        data["security"] = {"results": [{"id": "xss.bad", "status": "FAIL"}]}
+        data["capabilities"] = {"video": False, "game_player": False}
+        recs = recommend.build_recommendations(data)
+        self.assertTrue(recs)
+        for rec in recs:
+            self.assertIn(rec.id, recommend.RULES)
+            self.assertTrue(rec.rule["conditions"])
+            self.assertTrue(rec.expected_impact)
+            self.assertIsNone(rec.measured_impact)
+        idle = next(r for r in recs if r.id == "memory.idle.over_target")
+        self.assertEqual(idle.rule["logic"], "any")
+        self.assertEqual(idle.rule["conditions"][0], {
+            "metric": "app_idle.rss_tail_mb", "op": ">",
+            "threshold": 250.0, "observed": 320.0,
+        })
+
+    def test_id_is_stable_when_numbers_change(self):
+        ids = []
+        for missing in (1, 7):
+            data = dict(BASE)
+            data["visual_catalog"] = [{"id": str(i)} for i in range(missing)]
+            recs = recommend.build_recommendations(data)
+            ids.append({r.id for r in recs if r.area == "visual coverage"})
+        self.assertEqual(ids[0], ids[1])
+        self.assertEqual(ids[0], {"visual.coverage.missing_pages"})
+
+    def test_measured_impact_compares_before_and_after(self):
+        before = dict(BASE)
+        before["app_idle"] = {"status": "ok", "rss_tail_mb": 400, "cpu_tail_pct": 0}
+        after = dict(BASE)
+        after["app_idle"] = {"status": "ok", "rss_tail_mb": 300, "cpu_tail_pct": 0}
+        recs = recommend.build_recommendations(after, before=before)
+        idle = next(r for r in recs if r.id == "memory.idle.over_target")
+        rss = idle.measured_impact[0]
+        self.assertEqual((rss["before"], rss["after"], rss["delta"]), (400.0, 300.0, -100.0))
+        self.assertTrue(rss["moved_as_expected"])
+        self.assertEqual(rss["status"], "improved")
+        cpu = idle.measured_impact[1]
+        self.assertEqual(cpu["status"], "unchanged")
+
+    def test_measured_impact_is_inconclusive_without_before_metric(self):
+        data = dict(BASE)
+        data["visual"] = {"rows": [{"page": "p", "position": 10}]}
+        recs = recommend.build_recommendations(data, before={})
+        low = next(r for r in recs if r.id == "visual.position.low")
+        self.assertEqual(low.measured_impact[0]["status"], "inconclusive")
+        self.assertIsNone(low.measured_impact[0]["moved_as_expected"])
+
+    def test_audit_reports_same_id_shared_subject_and_ordering(self):
+        make = recommend.Recommendation
+        recs = [
+            make("P1", "a", "t", id="perf.dom.over_target",
+                 rule={"conditions": [], "subjects": ["perf:x"]}),
+            make("P1", "b", "t", id="perf.game.over_target",
+                 rule={"conditions": [], "subjects": ["perf:x"]}),
+            make("P1", "c", "t", id="fix.layout", rule={"conditions": []}),
+            make("P1", "d", "t", id="fix.color", rule={"conditions": []}),
+            make("P1", "d", "t", id="fix.color", rule={"conditions": []}),
+        ]
+        rules = {
+            "fix.layout": {"ordering": [["layout", "color"]]},
+            "fix.color": {"ordering": [["color", "layout"]]},
+        }
+        report = recommend.audit(recs, rules)
+        kinds = sorted(d["kind"] for d in report["duplicates"])
+        self.assertEqual(kinds, ["same_id", "shared_subjects"])
+        self.assertEqual(
+            [(c["kind"], c["ids"]) for c in report["contradictions"]],
+            [("ordering", ["fix.color", "fix.layout"])],
+        )
+
+    def test_audit_reports_exclusive_rules(self):
+        make = recommend.Recommendation
+        recs = [
+            make("P0", "m", "t", id="memory.idle.over_target", rule={"conditions": []}),
+            make("P2", "m", "t", id="memory.load_peak.unmeasured", rule={"conditions": []}),
+        ]
+        report = recommend.audit(recs)
+        self.assertEqual(report["contradictions"][0]["kind"], "exclusive")
+
+    def test_markdown_shows_rule_id_and_unmeasured_impact(self):
+        text = recommend.build_markdown(BASE)
+        self.assertIn("**Rule:** `memory.load_peak.unmeasured`", text)
+        self.assertIn("not measured (no before/after runs)", text)
+        self.assertIn("## Consistency", text)
+
+    def test_malformed_entries_are_skipped_not_fatal(self):
+        # Regression: a non-object entry in a result list raised AttributeError.
+        data = dict(BASE)
+        data["leaks"] = {"results": ["oops", {"id": "a", "status": "FAIL"}]}
+        data["security"] = {"results": [None, {"id": "b", "status": "PASS"}]}
+        data["perf"] = {"results": ["x"]}
+        data["visual"] = {"rows": [5]}
+        recs = recommend.build_recommendations(data)
+        self.assertEqual(
+            sorted(r.id for r in recs),
+            ["leaks.cases.failing", "memory.load_peak.unmeasured"],
+        )
+        self.assertIn("## Memory and leaks", recommend.build_markdown(data))
+
+    def test_missing_visual_scores_are_not_zero(self):
+        # Regression: a category no row measured averaged to 0.0 %, so slow DOM
+        # without visual data fired the renderer cross-signal and rows without
+        # a color score fired the color rule.
+        data = dict(BASE)
+        data["perf"] = {"results": [row("dom", "dom.rows-create-1k", 100, 10)]}
+        ids = {r.id for r in recommend.build_recommendations(data)}
+        self.assertNotIn("renderer.dom_layout.cross_signal", ids)
+        data["visual"] = {"rows": [{"page": "p", "overall": 95}]}
+        ids = {r.id for r in recommend.build_recommendations(data)}
+        self.assertNotIn("renderer.dom_layout.cross_signal", ids)
+        self.assertNotIn("visual.color.low", ids)
+        self.assertIn("perf.dom.over_target", ids)
+
+    def test_cross_signal_needs_failing_dom(self):
+        # Regression: any measured DOM row, even one within target, plus low
+        # visual layout fired "the DOM scenarios exceed the work target".
+        data = dict(BASE)
+        data["perf"] = {"results": [row("dom", "dom.a", 10, 10, verdict="PASS")]}
+        data["visual"] = {"rows": [{"page": "p", "overall": 60, "position": 80,
+                                    "layout": 50, "color": 95, "design": 95}]}
+        ids = {r.id for r in recommend.build_recommendations(data)}
+        self.assertNotIn("renderer.dom_layout.cross_signal", ids)
+        data["perf"] = {"results": [row("dom", "dom.a", 100, 10)]}
+        ids = {r.id for r in recommend.build_recommendations(data)}
+        self.assertIn("renderer.dom_layout.cross_signal", ids)
+
+    def test_game_scenarios_tagged_dom_belong_to_the_game_rule(self):
+        # Regression: scenarios.json tags game profiles kind=dom, so one slow
+        # game profile fired both the DOM and the game rule (duplicate).
+        data = dict(BASE)
+        data["perf"] = {"results": [row("dom", "game.quality-640x360-p100", 100, 10)]}
+        recs = recommend.build_recommendations(data)
+        ids = {r.id for r in recs}
+        self.assertIn("perf.game.over_target", ids)
+        self.assertNotIn("perf.dom.over_target", ids)
+        self.assertEqual(recommend.audit(recs)["duplicates"], [])
+
+    def test_game3d_profiles_in_the_perf_run_are_judged(self):
+        # Regression: only game.* rows of the perf run reached the game rule;
+        # a slow game3d.* profile produced no recommendation at all.
+        data = dict(BASE)
+        data["perf"] = {"results": [row("dom", "game3d.quality-640x360-c100", 100, 10)]}
+        ids = {r.id for r in recommend.build_recommendations(data)}
+        self.assertIn("perf.game.over_target", ids)
+
+    def test_idle_ok_without_numbers_is_unmeasured_not_a_pass(self):
+        # Regression: status ok with no RSS/CPU was read as 0 MB / 0 % and
+        # reported "Idle meets the budget".
+        data = dict(BASE)
+        data["app_idle"] = {"status": "ok", "rss_tail_mb": None}
+        ids = {r.id for r in recommend.build_recommendations(data)}
+        self.assertIn("memory.idle.unmeasured", ids)
+        self.assertNotIn("memory.load_peak.unmeasured", ids)
+        self.assertNotIn("memory.idle.over_target", ids)
+        data["app_idle"] = {"status": "ok", "rss_tail_mb": "260", "cpu_tail_pct": 0}
+        ids = {r.id for r in recommend.build_recommendations(data)}
+        self.assertEqual(ids & {"memory.idle.over_target", "memory.idle.unmeasured"},
+                         {"memory.idle.over_target"})
+
+    def test_position_and_color_rules_agree_on_what_to_fix_first(self):
+        # Regression: the position rule said "fix layout before color" while
+        # the color rule said "before touching layout".
+        data = dict(BASE)
+        data["visual"] = {"rows": [{"page": "p", "overall": 50, "position": 40,
+                                    "layout": 95, "color": 40, "design": 95}]}
+        recs = recommend.build_recommendations(data)
+        ids = {r.id for r in recs}
+        self.assertLessEqual({"visual.position.low", "visual.color.low"}, ids)
+        self.assertEqual(recommend.audit(recs)["contradictions"], [])
+        color = next(r for r in recs if r.id == "visual.color.low")
+        self.assertNotIn("before touching layout", color.action)
 
 
 class LoadLatestRunTest(unittest.TestCase):

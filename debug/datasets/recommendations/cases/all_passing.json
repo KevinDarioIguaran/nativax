@@ -1,0 +1,187 @@
+{
+  "id": "all_passing",
+  "description": "Full coverage and every measurement within target.",
+  "grounds": [
+    "Every rule threshold is met; only R5 (load peak never measured) remains."
+  ],
+  "input": {
+    "app_idle": {
+      "status": "ok",
+      "rss_tail_mb": 100,
+      "cpu_tail_pct": 0.2
+    },
+    "visual": {
+      "rows": [
+        {
+          "page": "a",
+          "position": 95,
+          "layout": 95,
+          "color": 95,
+          "design": 95,
+          "overall": 95,
+          "ink_mismatch_pct": 10
+        },
+        {
+          "page": "b",
+          "position": 95,
+          "layout": 95,
+          "color": 95,
+          "design": 95,
+          "overall": 95,
+          "ink_mismatch_pct": 10
+        }
+      ]
+    },
+    "visual_catalog": [
+      {
+        "id": "a"
+      },
+      {
+        "id": "b"
+      }
+    ],
+    "perf": {
+      "results": [
+        {
+          "scenario": "dom.rows-create-1k",
+          "kind": "dom",
+          "verdict": "PASS",
+          "nativax": {
+            "status": "ok",
+            "scenario_ms": 15,
+            "render_ms": 0,
+            "frame_ms": {}
+          },
+          "chromium": {
+            "status": "ok",
+            "scenario_ms": 10,
+            "render_ms": 0,
+            "frame_ms": {
+              "p95": 1
+            }
+          }
+        },
+        {
+          "scenario": "scroll.rows-10k",
+          "kind": "scroll",
+          "verdict": "PASS",
+          "nativax": {
+            "status": "ok",
+            "scenario_ms": 5,
+            "render_ms": 0,
+            "frame_ms": {
+              "p95": 10
+            }
+          },
+          "chromium": {
+            "status": "ok",
+            "scenario_ms": 5,
+            "render_ms": 0,
+            "frame_ms": {
+              "p95": 1
+            }
+          }
+        },
+        {
+          "scenario": "js.loop",
+          "kind": "js",
+          "verdict": "PASS",
+          "nativax": {
+            "status": "ok",
+            "scenario_ms": 20,
+            "render_ms": 0,
+            "frame_ms": {}
+          },
+          "chromium": {
+            "status": "ok",
+            "scenario_ms": 10,
+            "render_ms": 0,
+            "frame_ms": {
+              "p95": 1
+            }
+          }
+        },
+        {
+          "scenario": "game.quality-640x360-p100",
+          "kind": "dom",
+          "verdict": "PASS",
+          "nativax": {
+            "status": "ok",
+            "scenario_ms": 12,
+            "render_ms": 0,
+            "frame_ms": {}
+          },
+          "chromium": {
+            "status": "ok",
+            "scenario_ms": 10,
+            "render_ms": 0,
+            "frame_ms": {
+              "p95": 1
+            }
+          }
+        }
+      ]
+    },
+    "perf_catalog": [
+      {
+        "id": "dom.rows-create-1k"
+      },
+      {
+        "id": "scroll.rows-10k"
+      },
+      {
+        "id": "js.loop"
+      },
+      {
+        "id": "game.quality-640x360-p100"
+      }
+    ],
+    "leaks": {
+      "results": [
+        {
+          "id": "l1",
+          "status": "PASS"
+        }
+      ]
+    },
+    "security": {
+      "results": [
+        {
+          "id": "s1",
+          "status": "PASS"
+        },
+        {
+          "id": "s2",
+          "status": "SKIP"
+        }
+      ]
+    },
+    "capabilities": {
+      "video": true,
+      "game_player": true
+    }
+  },
+  "expected": [
+    "memory.load_peak.unmeasured"
+  ],
+  "must_not": [
+    "capability.game_player.unmeasured",
+    "capability.video.no_playback",
+    "leaks.cases.failing",
+    "leaks.cases.inconclusive",
+    "memory.idle.over_target",
+    "memory.idle.unmeasured",
+    "perf.coverage.missing_scenarios",
+    "perf.dom.over_target",
+    "perf.game.over_target",
+    "perf.js.over_target",
+    "perf.scroll.frame_p95_over_target",
+    "renderer.dom_layout.cross_signal",
+    "security.checks.failing",
+    "visual.color.low",
+    "visual.coverage.missing_pages",
+    "visual.ink.missing",
+    "visual.position.low"
+  ],
+  "expected_priorities": {}
+}
