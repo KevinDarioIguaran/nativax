@@ -53,9 +53,11 @@ pair and to differences that are real in RGB but do not matter.
 | `antialias-noise` | unimportant | each edge pixel is mixed 15–45 % with a neighbour, imitating another rasterizer | — |
 | `tiny-important` | important | `PRICE 1.50` → `PRICE 1 50`: the 1 px decimal point disappears | glyph cell `[52,70,5,7]` |
 | `unimportant-many` | unimportant | white background → `rgb(247,247,247)` (ΔE76 2.77) on ~63 % of pixels | — |
+| `nearby-edits` | important | `TOTAL 42` → `TOTAL 47` and `PRICE 1.50` → `PRICE 1.57`; the changed glyphs are 7 px apart | glyph cells `[52,56,5,7]`, `[64,70,5,7]` |
 
 "Important" and "unimportant" are labels chosen for this audit. They are
 not facts about human perception. `antialias-noise` and `unimportant-many`
 exist to show what a plain pixel threshold cannot tell apart.
-`viewport-size` exists because the pixel comparison only covers the common
+`nearby-edits` measures what grouping costs when two independent edits sit
+close together. `viewport-size` exists because the pixel comparison only covers the common
 area; in the full pipeline the hard `screenshot-size` check catches it.

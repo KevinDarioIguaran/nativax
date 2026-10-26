@@ -101,18 +101,27 @@ of regions:
    threshold as the pixel report; equality is not masked).
 2. **Connectivity**: mask pixels are labelled into connected components with
    the 8-neighbourhood (diagonal pixels join).
-3. **Minimum area**: components with fewer than **4 pixels** are dropped.
-   They are still counted (`droppedComponents`, `droppedPixels`), so nothing
-   disappears silently. A 1-pixel change is therefore visible in the pixel
-   report but not as a region; see
-   [`metrics-visual.md`](../../architecture/metrics-visual.md).
-4. **Per region**: integer bbox `[x, y, w, h]`, pixel count, mean and max
+3. **Grouping**: components whose boxes are at most **4 px** apart
+   (Chebyshev distance between the boxes, chains followed) form one region,
+   so a moved card or a changed word is one region instead of one per
+   fragment. `components` records how many were merged.
+4. **Minimum area**: groups with fewer than **4 pixels** are dropped unless
+   their max ΔE reaches **50** (a 1 px black-on-white change is an edit, not
+   speckle). Dropped groups are still counted (`droppedComponents`,
+   `droppedPixels`), so nothing disappears silently.
+5. **Size regions**: when the captures differ in size, the strip only one of
+   them covers is a region with `kind: "size"` (it cannot be compared, but it
+   differs). Mask regions have `kind: "pixels"`.
+6. **Per region**: integer bbox `[x, y, w, h]`, pixel count, mean and max
    ΔE, and up to 8 probe elements whose rect intersects the bbox, sorted by
    bbox IoU, each with `sides` (`reference`, `actual` or both).
-5. At most 500 regions are listed (largest first, `truncated: true` beyond);
+7. At most 500 regions are listed (largest first, `truncated: true` beyond);
    the totals stay exact.
 
-The file records `mask.threshold`, `connectivity` and `minArea`.
+The file (`nativa_visual.regions/2`) records `mask.threshold`,
+`connectivity`, `mergeGap`, `strongDeltaE` and `minArea`. The values were
+chosen with the sweeps in
+[`metrics-visual.md`](../../architecture/metrics-visual.md).
 
 ### Capture environment (`environment.json`)
 

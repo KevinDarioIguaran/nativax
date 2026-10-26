@@ -429,6 +429,20 @@ List<DatasetCase> buildDataset() {
       truth: const [],
       expectation: 'no actionable region (an imperceptible tint change)',
     ),
+    DatasetCase(
+      id: 'nearby-edits',
+      kind: 'important',
+      description:
+          'Two independent edits on adjacent text lines: TOTAL 42 becomes '
+          'TOTAL 47 and PRICE 1.50 becomes PRICE 1.57. The changed glyphs are '
+          '7 px apart vertically.',
+      reference: base,
+      actual: renderPage(
+        const PageSpec(total: 'TOTAL 47', price: 'PRICE 1.57'),
+      ),
+      truth: [glyphBox(10, 56, 7), glyphBox(10, 70, 9)],
+      expectation: 'two regions, one per edit (grouping must not merge them)',
+    ),
   ];
 }
 

@@ -59,7 +59,7 @@ void main() {
   test('min-area filter drops small components and counts them', () {
     final a = solid(20, 20, 255, 255, 255);
     final b = solid(20, 20, 255, 255, 255);
-    paint(b, 0, 0, 0, 0, 0); // 1 px speckle
+    paint(b, 0, 0, 230, 230, 230); // faint 1 px speckle (deltaE < strong)
     fill(b, 10, 10, 3, 3, 0, 0, 0); // 9 px block
     final report = findRegions(deltaMap(a, b), minArea: 4);
     expect(report.maskPixels, 10);
@@ -130,10 +130,47 @@ void main() {
     for (var i = 0; i < 10; i++) {
       paint(b, i * 2, 0, 0, 0, 0);
     }
-    final report = findRegions(deltaMap(a, b), minArea: 1, maxRegions: 3);
+    final report = findRegions(
+      deltaMap(a, b),
+      minArea: 1,
+      mergeGap: -1,
+      maxRegions: 3,
+    );
     expect(report.regions, hasLength(3));
     expect(report.truncated, isTrue);
     expect(report.keptPixels, 10);
+  });
+
+  test('components closer than mergeGap form one region', () {
+    final a = solid(30, 10, 255, 255, 255);
+    final b = solid(30, 10, 255, 255, 255);
+    fill(b, 0, 0, 2, 2, 0, 0, 0);
+    fill(b, 6, 0, 2, 2, 0, 0, 0); // 4 px gap: grouped
+    fill(b, 20, 0, 2, 2, 0, 0, 0); // 12 px gap: separate
+    final report = findRegions(deltaMap(a, b), mergeGap: 4);
+    expect(report.components, 3);
+    expect(report.regions.map((r) => r.bbox.toJson()), [
+      [0, 0, 8, 2],
+      [20, 0, 2, 2],
+    ]);
+    expect(report.regions.first.components, 2);
+    expect(findRegions(deltaMap(a, b), mergeGap: -1).regions, hasLength(3));
+  });
+
+  test('pixels only one image covers become size regions', () {
+    final a = solid(12, 6, 255, 255, 255);
+    final b = solid(10, 4, 255, 255, 255);
+    final report = findRegions(deltaMap(a, b));
+    expect(report.maskPixels, 0);
+    expect(
+      [
+        for (final r in report.regions) [r.kind, ...r.bbox.toJson()],
+      ],
+      [
+        ['size', 10, 0, 2, 6],
+        ['size', 0, 4, 10, 2],
+      ],
+    );
   });
 
   test('overlay blends 50/50 and tints mask pixels', () {

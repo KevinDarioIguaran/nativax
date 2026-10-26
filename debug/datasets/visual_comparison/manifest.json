@@ -303,6 +303,35 @@
         "height": 120
       },
       "truth": []
+    },
+    {
+      "id": "nearby-edits",
+      "kind": "important",
+      "description": "Two independent edits on adjacent text lines: TOTAL 42 becomes TOTAL 47 and PRICE 1.50 becomes PRICE 1.57. The changed glyphs are 7 px apart vertically.",
+      "expectation": "two regions, one per edit (grouping must not merge them)",
+      "expectDifferent": true,
+      "reference": {
+        "width": 160,
+        "height": 120
+      },
+      "actual": {
+        "width": 160,
+        "height": 120
+      },
+      "truth": [
+        [
+          52,
+          56,
+          5,
+          7
+        ],
+        [
+          64,
+          70,
+          5,
+          7
+        ]
+      ]
     }
   ]
 }

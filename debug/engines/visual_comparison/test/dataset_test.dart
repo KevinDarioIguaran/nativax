@@ -28,6 +28,7 @@ void main() {
       'antialias-noise',
       'tiny-important',
       'unimportant-many',
+      'nearby-edits',
     ]);
   });
 
@@ -79,13 +80,44 @@ void main() {
     expect(r.falseRegions, 0);
   });
 
-  test('min-area filter hides a 1-pixel change from regions only', () {
+  test('a strong 1-pixel change survives the min-area filter', () {
     final c = cases.firstWhere((c) => c.id == 'one-pixel');
-    final filtered = evaluateCase(c, minArea: 4);
+    final r = evaluateCase(c);
+    expect(r.regionOutcome, Outcome.tp);
+    expect(r.matches.single.localized, isTrue);
+    // Without the strong-deltaE exception the filter hides it.
+    final filtered = evaluateCase(c, strongDeltaE: double.infinity);
     expect(filtered.pixelOutcome, Outcome.tp);
     expect(filtered.regionOutcome, Outcome.fn);
     expect(filtered.droppedComponents, 1);
-    expect(evaluateCase(c, minArea: 1).regionOutcome, Outcome.tp);
+  });
+
+  test('grouping joins a moved card but keeps nearby edits apart', () {
+    final shift = evaluateCase(cases.firstWhere((c) => c.id == 'layout-shift'));
+    expect(shift.matches.single.localized, isTrue);
+    expect(
+      evaluateCase(
+        cases.firstWhere((c) => c.id == 'layout-shift'),
+        mergeGap: -1,
+      ).matches.single.localized,
+      isFalse,
+    );
+    final nearby = evaluateCase(
+      cases.firstWhere((c) => c.id == 'nearby-edits'),
+    );
+    expect(nearby.regions, 2);
+    expect(nearby.matches.every((m) => m.localized), isTrue);
+    final merged = evaluateCase(
+      cases.firstWhere((c) => c.id == 'nearby-edits'),
+      mergeGap: 7,
+    );
+    expect(merged.regions, 1);
+  });
+
+  test('the strip only one capture covers is a size region', () {
+    final r = evaluateCase(cases.firstWhere((c) => c.id == 'viewport-size'));
+    expect(r.regionOutcome, Outcome.tp);
+    expect(r.matches.single.bestIou, 1);
   });
 
   test('truth outside the common area counts as a pixel false negative', () {

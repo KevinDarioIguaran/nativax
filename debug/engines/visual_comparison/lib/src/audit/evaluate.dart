@@ -137,6 +137,8 @@ CaseResult evaluateCase(
   DatasetCase c, {
   double threshold = defaultMaskThreshold,
   int minArea = defaultMinRegionArea,
+  int mergeGap = defaultMergeGap,
+  double strongDeltaE = defaultStrongDeltaE,
 }) => evaluatePair(
   id: c.id,
   kind: c.kind,
@@ -145,6 +147,8 @@ CaseResult evaluateCase(
   truth: c.truth,
   threshold: threshold,
   minArea: minArea,
+  mergeGap: mergeGap,
+  strongDeltaE: strongDeltaE,
 );
 
 CaseResult evaluatePair({
@@ -155,6 +159,8 @@ CaseResult evaluatePair({
   required List<BoxRect> truth,
   double threshold = defaultMaskThreshold,
   int minArea = defaultMinRegionArea,
+  int mergeGap = defaultMergeGap,
+  double strongDeltaE = defaultStrongDeltaE,
 }) {
   final map = deltaMap(reference, actual);
   final w = map.width, h = map.height;
@@ -196,7 +202,13 @@ CaseResult evaluatePair({
     }
   }
 
-  final report = findRegions(map, threshold: threshold, minArea: minArea);
+  final report = findRegions(
+    map,
+    threshold: threshold,
+    minArea: minArea,
+    mergeGap: mergeGap,
+    strongDeltaE: strongDeltaE,
+  );
   final matches = <TruthMatch>[];
   for (final t in truth) {
     var best = 0.0;
@@ -244,9 +256,15 @@ CaseResult evaluatePair({
 
 /// Aggregate of one parameter setting over every case.
 class SweepRow {
-  SweepRow(this.threshold, this.minArea, this.cases);
+  SweepRow(
+    this.threshold,
+    this.minArea,
+    this.cases, {
+    this.mergeGap = defaultMergeGap,
+  });
   final double threshold;
   final int minArea;
+  final int mergeGap;
   final List<CaseResult> cases;
 
   int _count(Outcome Function(CaseResult) f, Outcome o) =>
@@ -260,6 +278,7 @@ class SweepRow {
     return {
       'threshold': threshold,
       'minArea': minArea,
+      'mergeGap': mergeGap,
       'pixel': {
         'caseTp': _count((c) => c.pixelOutcome, Outcome.tp),
         'caseFp': _count((c) => c.pixelOutcome, Outcome.fp),
@@ -298,11 +317,16 @@ class SweepRow {
 const List<double> sweepThresholds = [0.5, 1, 2, 3, 5, 10, 20, 40];
 const List<int> sweepMinAreas = [1, 4, 9, 16, 64];
 
+/// -1 disables grouping (one region per connected component).
+const List<int> sweepMergeGaps = [-1, 0, 2, 4, 6, 7, 8, 12];
+
 Map<String, Object?> auditDataset(List<DatasetCase> cases) => {
   'schema': 'nativa_visual.audit/1',
   'defaults': {
     'threshold': defaultMaskThreshold,
     'minArea': defaultMinRegionArea,
+    'mergeGap': defaultMergeGap,
+    'strongDeltaE': defaultStrongDeltaE,
     'connectivity': 8,
     'localizationIou': localizationIou,
   },
@@ -318,6 +342,12 @@ Map<String, Object?> auditDataset(List<DatasetCase> cases) => {
       SweepRow(defaultMaskThreshold, m, [
         for (final c in cases) evaluateCase(c, minArea: m),
       ]).toJson(),
+  ],
+  'mergeGapSweep': [
+    for (final g in sweepMergeGaps)
+      SweepRow(defaultMaskThreshold, defaultMinRegionArea, [
+        for (final c in cases) evaluateCase(c, mergeGap: g),
+      ], mergeGap: g).toJson(),
   ],
 };
 
