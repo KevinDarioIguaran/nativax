@@ -43,11 +43,11 @@ class RecommendationsTest(unittest.TestCase):
         data = dict(BASE)
         data["app_idle"] = {"status": "ok", "rss_tail_mb": 320, "cpu_tail_pct": 0}
         recs = recommend.build_recommendations(data)
-        self.assertTrue(any(r.priority == "P0" and r.area == "memoria" for r in recs))
+        self.assertTrue(any(r.priority == "P0" and r.area == "memory" for r in recs))
 
     def test_idle_without_load_peak_is_p2(self):
         recs = recommend.build_recommendations(BASE)
-        self.assertTrue(any(r.area == "memoria" and r.priority == "P2" for r in recs))
+        self.assertTrue(any(r.area == "memory" and r.priority == "P2" for r in recs))
 
     def test_coverage_is_reported(self):
         data = dict(BASE)
@@ -56,8 +56,8 @@ class RecommendationsTest(unittest.TestCase):
         data["visual_catalog"] = [{"id": "a"}, {"id": "b"}]
         data["perf_catalog"] = [{"id": "x"}, {"id": "y"}]
         recs = recommend.build_recommendations(data)
-        self.assertTrue(any("cobertura visual" in r.area for r in recs))
-        self.assertTrue(any("cobertura de rendimiento" in r.area for r in recs))
+        self.assertTrue(any("visual coverage" in r.area for r in recs))
+        self.assertTrue(any("performance coverage" in r.area for r in recs))
 
     def test_dom_and_layout_cross_signal(self):
         data = dict(BASE)
@@ -82,13 +82,13 @@ class RecommendationsTest(unittest.TestCase):
         data = dict(BASE)
         data["security"] = {"results": [{"id": "xss.bad", "status": "FAIL"}]}
         recs = recommend.build_recommendations(data)
-        self.assertTrue(any(r.priority == "P0" and r.area == "seguridad" for r in recs))
+        self.assertTrue(any(r.priority == "P0" and r.area == "security" for r in recs))
 
     def test_leak_failure_is_p0(self):
         data = dict(BASE)
         data["leaks"] = {"results": [{"id": "dom.leak", "status": "FAIL"}]}
         recs = recommend.build_recommendations(data)
-        self.assertTrue(any(r.priority == "P0" and r.area == "fugas" for r in recs))
+        self.assertTrue(any(r.priority == "P0" and r.area == "leaks" for r in recs))
 
     def test_detailed_sections_include_games_and_video(self):
         data = dict(BASE)
@@ -103,18 +103,18 @@ class RecommendationsTest(unittest.TestCase):
                           "status": "CONTRATO"}],
         }
         text = recommend.build_markdown(data)
-        self.assertIn("## Detalle de rendimiento", text)
-        self.assertIn("## Detalle de juegos", text)
-        self.assertIn("## Detalle de vídeo", text)
+        self.assertIn("## Performance detail", text)
+        self.assertIn("## Games detail", text)
+        self.assertIn("## Video detail", text)
         self.assertIn("game.quality-640x360-p100", text)
 
     def test_markdown_mentions_limits_and_evidence(self):
         data = dict(BASE)
         data["security"] = {"results": [{"id": "xss.bad", "status": "FAIL"}]}
         text = recommend.build_markdown(data)
-        self.assertIn("Recomendaciones automáticas", text)
-        self.assertIn("Criterio de aceptación", text)
-        self.assertIn("NativaX no decodifica", text)
+        self.assertIn("Automatic recommendations", text)
+        self.assertIn("Acceptance criterion", text)
+        self.assertIn("NativaX does not decode", text)
 
 
 if __name__ == "__main__":
