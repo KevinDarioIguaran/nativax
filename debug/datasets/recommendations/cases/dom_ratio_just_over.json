@@ -1,0 +1,60 @@
+{
+  "id": "dom_ratio_just_over",
+  "description": "DOM ratio 3.01, verdict PASS.",
+  "grounds": [
+    "R11: 3.01 > 3."
+  ],
+  "input": {
+    "app_idle": {
+      "status": "ok",
+      "rss_tail_mb": 100,
+      "cpu_tail_pct": 0.2
+    },
+    "perf": {
+      "results": [
+        {
+          "scenario": "dom.a",
+          "kind": "dom",
+          "verdict": "PASS",
+          "nativax": {
+            "status": "ok",
+            "scenario_ms": 30.1,
+            "render_ms": 0,
+            "frame_ms": {}
+          },
+          "chromium": {
+            "status": "ok",
+            "scenario_ms": 10,
+            "render_ms": 0,
+            "frame_ms": {
+              "p95": 1
+            }
+          }
+        }
+      ]
+    }
+  },
+  "expected": [
+    "memory.load_peak.unmeasured",
+    "perf.dom.over_target"
+  ],
+  "must_not": [
+    "capability.game_player.unmeasured",
+    "capability.video.no_playback",
+    "leaks.cases.failing",
+    "leaks.cases.inconclusive",
+    "memory.idle.over_target",
+    "memory.idle.unmeasured",
+    "perf.coverage.missing_scenarios",
+    "perf.game.over_target",
+    "perf.js.over_target",
+    "perf.scroll.frame_p95_over_target",
+    "renderer.dom_layout.cross_signal",
+    "security.checks.failing",
+    "visual.color.low",
+    "visual.coverage.missing_pages",
+    "visual.ink.missing",
+    "visual.position.low"
+  ],
+  "expected_priorities": {}
+}

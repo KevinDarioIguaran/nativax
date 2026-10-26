@@ -1,0 +1,34 @@
+{
+  "id": "missing_all_data",
+  "description": "No data at all.",
+  "grounds": [
+    "R3: no app_idle means the idle measurement is missing.",
+    "General: missing data never produces a failure; unknown capabilities make no claim."
+  ],
+  "input": {},
+  "expected": [
+    "memory.idle.unmeasured"
+  ],
+  "must_not": [
+    "capability.game_player.unmeasured",
+    "capability.video.no_playback",
+    "leaks.cases.failing",
+    "leaks.cases.inconclusive",
+    "memory.idle.over_target",
+    "memory.load_peak.unmeasured",
+    "perf.coverage.missing_scenarios",
+    "perf.dom.over_target",
+    "perf.game.over_target",
+    "perf.js.over_target",
+    "perf.scroll.frame_p95_over_target",
+    "renderer.dom_layout.cross_signal",
+    "security.checks.failing",
+    "visual.color.low",
+    "visual.coverage.missing_pages",
+    "visual.ink.missing",
+    "visual.position.low"
+  ],
+  "expected_priorities": {
+    "memory.idle.unmeasured": "P1"
+  }
+}

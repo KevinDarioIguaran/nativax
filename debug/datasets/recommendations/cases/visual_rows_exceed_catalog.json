@@ -1,0 +1,64 @@
+{
+  "id": "visual_rows_exceed_catalog",
+  "description": "More measured rows than catalog entries.",
+  "grounds": [
+    "R1: fires only when measured < catalog; nothing is pending."
+  ],
+  "input": {
+    "app_idle": {
+      "status": "ok",
+      "rss_tail_mb": 100,
+      "cpu_tail_pct": 0.2
+    },
+    "visual": {
+      "rows": [
+        {
+          "page": "a",
+          "position": 95,
+          "layout": 95,
+          "color": 95,
+          "design": 95,
+          "overall": 95,
+          "ink_mismatch_pct": 10
+        },
+        {
+          "page": "b",
+          "position": 95,
+          "layout": 95,
+          "color": 95,
+          "design": 95,
+          "overall": 95,
+          "ink_mismatch_pct": 10
+        }
+      ]
+    },
+    "visual_catalog": [
+      {
+        "id": "a"
+      }
+    ]
+  },
+  "expected": [
+    "memory.load_peak.unmeasured"
+  ],
+  "must_not": [
+    "capability.game_player.unmeasured",
+    "capability.video.no_playback",
+    "leaks.cases.failing",
+    "leaks.cases.inconclusive",
+    "memory.idle.over_target",
+    "memory.idle.unmeasured",
+    "perf.coverage.missing_scenarios",
+    "perf.dom.over_target",
+    "perf.game.over_target",
+    "perf.js.over_target",
+    "perf.scroll.frame_p95_over_target",
+    "renderer.dom_layout.cross_signal",
+    "security.checks.failing",
+    "visual.color.low",
+    "visual.coverage.missing_pages",
+    "visual.ink.missing",
+    "visual.position.low"
+  ],
+  "expected_priorities": {}
+}

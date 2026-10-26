@@ -1,0 +1,136 @@
+{
+  "id": "conflicting_signals",
+  "description": "Idle over budget while leaks pass; security fails while perf passes.",
+  "grounds": [
+    "R4: RSS 400 > 250 even though leak cases pass.",
+    "R10: security FAIL regardless of perf."
+  ],
+  "input": {
+    "app_idle": {
+      "status": "ok",
+      "rss_tail_mb": 400,
+      "cpu_tail_pct": 0.1
+    },
+    "leaks": {
+      "results": [
+        {
+          "id": "a",
+          "status": "PASS"
+        }
+      ]
+    },
+    "security": {
+      "results": [
+        {
+          "id": "b",
+          "status": "ERROR"
+        }
+      ]
+    },
+    "perf": {
+      "results": [
+        {
+          "scenario": "dom.rows-create-1k",
+          "kind": "dom",
+          "verdict": "PASS",
+          "nativax": {
+            "status": "ok",
+            "scenario_ms": 15,
+            "render_ms": 0,
+            "frame_ms": {}
+          },
+          "chromium": {
+            "status": "ok",
+            "scenario_ms": 10,
+            "render_ms": 0,
+            "frame_ms": {
+              "p95": 1
+            }
+          }
+        },
+        {
+          "scenario": "scroll.rows-10k",
+          "kind": "scroll",
+          "verdict": "PASS",
+          "nativax": {
+            "status": "ok",
+            "scenario_ms": 5,
+            "render_ms": 0,
+            "frame_ms": {
+              "p95": 10
+            }
+          },
+          "chromium": {
+            "status": "ok",
+            "scenario_ms": 5,
+            "render_ms": 0,
+            "frame_ms": {
+              "p95": 1
+            }
+          }
+        },
+        {
+          "scenario": "js.loop",
+          "kind": "js",
+          "verdict": "PASS",
+          "nativax": {
+            "status": "ok",
+            "scenario_ms": 20,
+            "render_ms": 0,
+            "frame_ms": {}
+          },
+          "chromium": {
+            "status": "ok",
+            "scenario_ms": 10,
+            "render_ms": 0,
+            "frame_ms": {
+              "p95": 1
+            }
+          }
+        },
+        {
+          "scenario": "game.quality-640x360-p100",
+          "kind": "dom",
+          "verdict": "PASS",
+          "nativax": {
+            "status": "ok",
+            "scenario_ms": 12,
+            "render_ms": 0,
+            "frame_ms": {}
+          },
+          "chromium": {
+            "status": "ok",
+            "scenario_ms": 10,
+            "render_ms": 0,
+            "frame_ms": {
+              "p95": 1
+            }
+          }
+        }
+      ]
+    }
+  },
+  "expected": [
+    "memory.idle.over_target",
+    "security.checks.failing"
+  ],
+  "must_not": [
+    "capability.game_player.unmeasured",
+    "capability.video.no_playback",
+    "leaks.cases.failing",
+    "leaks.cases.inconclusive",
+    "memory.idle.unmeasured",
+    "memory.load_peak.unmeasured",
+    "perf.coverage.missing_scenarios",
+    "perf.dom.over_target",
+    "perf.game.over_target",
+    "perf.js.over_target",
+    "perf.scroll.frame_p95_over_target",
+    "renderer.dom_layout.cross_signal",
+    "visual.color.low",
+    "visual.coverage.missing_pages",
+    "visual.ink.missing",
+    "visual.position.low"
+  ],
+  "expected_priorities": {}
+}
