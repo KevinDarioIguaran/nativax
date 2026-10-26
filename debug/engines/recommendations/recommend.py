@@ -16,7 +16,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Iterable
 
-ROOT = Path(__file__).resolve().parent.parent
+ROOT = Path(__file__).resolve().parents[3]
 
 
 @dataclass
@@ -158,7 +158,7 @@ def collect(root: Path = ROOT) -> dict[str, Any]:
             matrix = None
     catalogs = {}
     for name, path in (
-        ("perf", root / "tools" / "perf" / "scenarios.json"),
+        ("perf", root / "debug" / "engines" / "performance" / "scenarios.json"),
         ("visual", root / ".visual" / "catalog.json"),
     ):
         if path.exists():
@@ -1151,7 +1151,7 @@ def build_markdown(data: dict[str, Any]) -> str:
         "o desde el informe **En vivo**. Para regenerarlo:",
         "",
         "```bash",
-        "python3 tools/recommend.py --out progress/reports/recommendations-latest.md",
+        "python3 debug/engines/recommendations/recommend.py --out progress/reports/recommendations-latest.md",
         "```",
         "",
     ])

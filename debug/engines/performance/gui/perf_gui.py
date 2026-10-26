@@ -39,7 +39,7 @@ VISUAL_CANDIDATES = [
     ROOT / ".visual" / "runs" / "50projects50days" / "results.json",
 ]
 PERF_RESULTS = PERF_DIR / "results.json"
-PERF_CATALOG = ROOT / "tools" / "perf" / "scenarios.json"
+PERF_CATALOG = ROOT / "debug" / "engines" / "performance" / "scenarios.json"
 RECOMMENDATIONS_REPORT = ROOT / "progress" / "reports" / "recommendations-latest.md"
 VIDEO_PROFILES = ROOT / "tools" / "video_profiles.json"
 PERF_GAME_DIR = ROOT / ".perf" / "game"
@@ -65,10 +65,10 @@ AUDIT_SELF_REPORT = ROOT / "progress" / "reports" / "audit-self-check-latest.md"
 VISUAL_HISTORY_DIR = ROOT / ".visual" / "history"
 PERF_HISTORY_DIR = ROOT / ".perf" / "history"
 PERF_CATALOG_SOURCES = [
-    ROOT / "tools" / "perf" / "lib" / "src" / "scenarios.dart",
-    ROOT / "tools" / "perf" / "lib" / "src" / "externals.dart",
+    ROOT / "debug" / "engines" / "performance" / "lib" / "src" / "scenarios.dart",
+    ROOT / "debug" / "engines" / "performance" / "lib" / "src" / "externals.dart",
 ]
-VISUAL_CATALOG_SOURCES = [ROOT / "tools" / "visual" / "lib" / "src" / "fixtures.dart"]
+VISUAL_CATALOG_SOURCES = [ROOT / "debug" / "engines" / "visual_comparison" / "lib" / "src" / "fixtures.dart"]
 CONSOLIDATED = ROOT / "progress" / "reports" / "nativa-quality-latest.md"
 
 REPORT_CHOICES = [
@@ -97,7 +97,8 @@ FONT = "Noto Sans"
 MONO = "DejaVu Sans Mono"
 SUBTLE = "#0f151d"
 
-sys.path.insert(0, str(ROOT / "tools"))
+sys.path.insert(0, str(ROOT / "debug" / "logic" / "history"))
+sys.path.insert(0, str(ROOT / "debug" / "engines" / "recommendations"))
 try:
     import history as history_engine
 except Exception:  # pragma: no cover - optional history engine
@@ -1652,7 +1653,7 @@ class Dashboard(ChartMixin):
 
     def _record_history(self, area):
         if history_engine is None:
-            messagebox.showinfo("Historial", "tools/history.py no está disponible.")
+            messagebox.showinfo("Historial", "debug/logic/history/history.py no está disponible.")
             return
         source = (
             VISUAL_DIR / "latest" / "results.json"
@@ -1672,7 +1673,7 @@ class Dashboard(ChartMixin):
 
     def _compare_history(self, area):
         if history_engine is None:
-            messagebox.showinfo("Historial", "tools/history.py no está disponible.")
+            messagebox.showinfo("Historial", "debug/logic/history/history.py no está disponible.")
             return
         try:
             result = history_engine.compare(area)
@@ -2311,7 +2312,7 @@ class Dashboard(ChartMixin):
     def build_container_image(self):
         self._start([
             "docker", "build", "-t", "nativa-perf:local",
-            str(ROOT / "tools" / "perf" / "container"),
+            str(ROOT / "debug" / "engines" / "performance" / "container"),
         ], "construir imagen nativa-perf:local")
 
     def run_container_matrix(self):
@@ -2393,7 +2394,7 @@ class Dashboard(ChartMixin):
             self.audit_tree.delete(item)
         if not summary:
             self.audit_summary.configure(
-                text="sin ejecución · python3 tools/audit/audit.py run")
+                text="sin ejecución · python3 debug/engines/bug_detection/audit.py run")
             return
         m = summary.get("metrics") or {}
         cov = (summary.get("coverage") or {}).get("componentes") or {}
@@ -2469,7 +2470,7 @@ class Dashboard(ChartMixin):
             self._append_log(f"[auditoría] {error}\n")
 
     def _audit_command(self, args, label, report=None):
-        self._start(["python3", "-u", "tools/audit/audit.py", *args], f"auditoría: {label}",
+        self._start(["python3", "-u", "debug/engines/bug_detection/audit.py", *args], f"auditoría: {label}",
                     action={"kind": "audit", "report": report})
 
     def _audit_budget(self):
@@ -2492,8 +2493,8 @@ class Dashboard(ChartMixin):
                             "self-check Chromium contra Chromium", "Auditoría · self-check")
 
     def open_audit_judge(self):
-        """Opens the full audit explorer (tools/audit/gui) in its own window."""
-        subprocess.Popen([sys.executable, str(ROOT / "tools" / "audit" / "gui" / "app.py")], cwd=ROOT,
+        """Opens the full audit explorer (debug/engines/bug_detection/gui) in its own window."""
+        subprocess.Popen([sys.executable, str(ROOT / "debug" / "engines" / "bug_detection" / "gui" / "app.py")], cwd=ROOT,
                          start_new_session=True)
 
     def _finish_audit(self, action):
@@ -3288,7 +3289,7 @@ class Dashboard(ChartMixin):
             text = (
                 "# NativaX — recomendaciones\n\n"
                 "El motor de recomendaciones no está disponible "
-                "(tools/recommend.py).\n"
+                "(debug/engines/recommendations/recommend.py).\n"
             )
         else:
             text = recommendation_engine.build_markdown(
@@ -3506,7 +3507,7 @@ class Dashboard(ChartMixin):
         def work():
             try:
                 subprocess.run(
-                    ["python3", "tools/render_report.py", str(path), "--png"],
+                    ["python3", "debug/scripts/render_report.py", str(path), "--png"],
                     cwd=ROOT,
                     capture_output=True,
                     timeout=120,
@@ -4103,7 +4104,7 @@ class Dashboard(ChartMixin):
         self.root.after(50, self._drain_log)
 
     def run_all(self):
-        self._start(["tools/quality_report.sh"], "tools/quality_report.sh")
+        self._start(["debug/scripts/quality_report.sh"], "debug/scripts/quality_report.sh")
 
     def run_visual(self):
         self._start(

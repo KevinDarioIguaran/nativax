@@ -1,14 +1,14 @@
 #!/usr/bin/env bash
 # Runs both quality suites end to end and prints the report locations.
 #
-#   tools/quality_report.sh              # 51 visual + 245 performance + app idle
-#   tools/quality_report.sh --all-visual # 300 visual + performance + app idle
-#   tools/quality_report.sh --gui        # ... and open the Tkinter dashboard
+#   debug/scripts/quality_report.sh              # 51 visual + 245 performance + app idle
+#   debug/scripts/quality_report.sh --all-visual # 300 visual + performance + app idle
+#   debug/scripts/quality_report.sh --gui        # ... and open the Tkinter dashboard
 #
 # FAIL/INVALID pages and scenarios are expected findings, not a script error;
 # the suites still write their JSON/Markdown reports.
 set -uo pipefail
-root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 cd "$root"
 
 visual_args=(--suite 50projects50days)
@@ -34,7 +34,7 @@ dart run debug/engines/performance/bin/perf.dart run \
 
 echo
 echo "=== recommendations ==="
-python3 tools/recommend.py --out progress/reports/recommendations-latest.md || true
+python3 debug/engines/recommendations/recommend.py --out progress/reports/recommendations-latest.md || true
 
 echo
 echo "Reports:"

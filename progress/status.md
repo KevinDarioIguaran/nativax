@@ -53,7 +53,7 @@ Tests focalizados en esta pasada: **14 perf + 119 visual + 78 CSS +
   Total: **300 casos nuevos**; el catálogo de rendimiento queda en **245**.
   Los tests de vídeo documentan que **no hay pipeline de reproducción**; no
   convierten el placeholder en compatibilidad. Detalle y comandos:
-  `progress/reports/test-matrix-300.md`. El motor `tools/recommend.py` genera
+  `progress/reports/test-matrix-300.md`. El motor `debug/engines/recommendations/recommend.py` genera
   informes P0/P1/P2 con evidencia, acción, criterio de aceptación y comando;
   el panel los muestra en **Informes → Recomendaciones**, y
   `quality_report.sh` los regenera automáticamente. La barra lateral incluye

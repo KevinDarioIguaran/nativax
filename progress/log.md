@@ -37,7 +37,7 @@
 
 ## 2026-10-24 — Historial de corridas y comparación
 
-- Nuevo `tools/history.py`: guarda cada corrida como JSON detallado con
+- Nuevo `debug/logic/history/history.py`: guarda cada corrida como JSON detallado con
   timestamp, commit, resumen y todas las filas.
 - Compara la última corrida con la anterior y muestra los casos que mejoraron
   o empeoraron: overall, posición, layout, color, diseño, ΔE, píxeles, tinta,
@@ -45,7 +45,7 @@
 - El panel incluye la página **Historial** con botones para registrar y
   comparar visual/perf, y auto-registra una corrida cuando termina una
   ejecución.
-- `tools/test_history.py` añade 4 tests del motor de historial.
+- `debug/logic/history/test_history.py` añade 4 tests del motor de historial.
 
 ## 2026-10-24 — Conformidad visible en el panel
 
@@ -68,7 +68,7 @@
 
 ## 2026-10-24 — Informe automático con recomendaciones
 
-- Nuevo `tools/recommend.py`: motor determinista que convierte resultados
+- Nuevo `debug/engines/recommendations/recommend.py`: motor determinista que convierte resultados
   medidos en prioridades P0/P1/P2 con evidencia, acción, criterio de aceptación
   y comando. No inventa mejoras: usa ratios, p95, cobertura y estados.
 - Reglas con señales cruzadas: DOM+lento y layout/posición visual bajo →
@@ -79,7 +79,7 @@
   `progress/reports/recommendations-latest.md` automáticamente. El informe
   detallado incluye tabla por escenario, causas raíz por página, tablas de
   juegos y vídeo, cobertura pendiente y procedencia.
-- Tests: `tools/test_recommend.py` (8) y `recommend.py --self-check`.
+- Tests: `debug/engines/recommendations/test_recommend.py` (8) y `recommend.py --self-check`.
 - Límites explícitos en el informe: vídeo sin pipeline, juego Three.js no
   ejecutado, RSS del arnés distinto del app idle.
 
@@ -199,7 +199,7 @@
 - Descubrimiento recursivo y listas de inclusión; las suites externas se
   descargan en `.visual/suites/` (~270 MB, ignorado por git).
 - `--all --list` devuelve exactamente 300. Se añadió botón **Visual 300** al
-  panel y `tools/quality_report.sh --all-visual`.
+  panel y `debug/scripts/quality_report.sh --all-visual`.
 - Prueba de humo de 4 páginas (una por suite nueva): todas FAIL, 39,7–65,6 %
   overall. Es una muestra, no la tasa de las 300.
 - Catálogo y fuentes: `progress/reports/visual-catalog-latest.md`.
@@ -823,9 +823,9 @@ B4 — WebAssembly con wasm3:
 - `GlSurfaces` conserva una ventana móvil de 240 intervalos y latencias de
   decode y expone los percentiles. Test nuevo:
   `packages/nativax_js/test/gl_stats_test.dart`.
-- `tools/summarize_metrics.py` agrupa por corrida/condición y soporta
+- `debug/engines/performance/game_player/summarize_metrics.py` agrupa por corrida/condición y soporta
   `--skip`, `--last` y `--buffer`; no usa el promedio de FPS como criterio.
-- `tools/bench_game_player.sh` lanza una corrida release con ventana fija,
+- `debug/engines/performance/game_player/bench_game_player.sh` lanza una corrida release con ventana fija,
   autostart y metrics.
 - `NATIVAX_FIXED_WINDOW=1` (solo benchmark) fija la ventana a 1280×720; sin el
   flag el reproductor sigue siendo redimensionable.

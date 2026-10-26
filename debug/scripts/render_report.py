@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Render a Markdown report to a readable HTML page (preview, not source).
 
-    python3 tools/render_report.py progress/reports/nativa-quality-latest.md
-    python3 tools/render_report.py --open progress/reports/perf-latest.md
+    python3 debug/scripts/render_report.py progress/reports/nativa-quality-latest.md
+    python3 debug/scripts/render_report.py --open progress/reports/perf-latest.md
 
 The HTML is written to .perf/preview/<name>.html and local images/links are
 resolved to absolute file:// URLs so it works from any directory.
@@ -17,7 +17,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(__file__).resolve().parents[2]
 PREVIEW_DIR = ROOT / ".perf" / "preview"
 
 

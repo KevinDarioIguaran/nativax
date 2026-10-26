@@ -13,7 +13,7 @@ import subprocess
 from datetime import datetime
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parent.parent
+ROOT = Path(__file__).resolve().parents[3]
 VISUAL_DIR = ROOT / ".visual"
 PERF_DIR = ROOT / ".perf"
 

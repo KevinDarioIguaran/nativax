@@ -13,7 +13,7 @@ import json
 import subprocess
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[3]
+ROOT = Path(__file__).resolve().parents[4]
 
 # Component type -> HTML lowering and structural rules. `executable: False`
 # marks a type that exists in the schema but cannot run in the offscreen
@@ -245,7 +245,7 @@ TEXT_SAMPLES = {
 def css_support(cache: Path | None = None) -> dict:
     """Asks nativa_css which property names it parses (`isSupportedProperty`).
 
-    The answer comes from the real registry through `tools/audit/dart/
+    The answer comes from the real registry through `debug/engines/bug_detection/dart/
     css_support.dart`; it is cached per source mtime so a run does not pay a
     Dart start each time. Returns `{"source": ..., "properties": {name: bool}}`.
     """
@@ -259,7 +259,7 @@ def css_support(cache: Path | None = None) -> dict:
             return cached
     except (OSError, ValueError, KeyError):
         pass
-    script = ROOT / "tools" / "audit" / "dart" / "css_support.dart"
+    script = ROOT / "debug" / "engines" / "bug_detection" / "dart" / "css_support.dart"
     result = subprocess.run(
         ["dart", "--packages=.dart_tool/package_config.json", str(script),
          *names],

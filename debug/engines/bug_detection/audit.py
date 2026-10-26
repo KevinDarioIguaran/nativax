@@ -1,17 +1,17 @@
 #!/usr/bin/env python3
 """NativaX JSON interface audit — command line.
 
-  python3 tools/audit/audit.py run --budget 200 --batch 40 --seed 1
-  python3 tools/audit/audit.py benchmark --budget 80      # deliberate faults
-  python3 tools/audit/audit.py self-check --budget 40     # Chromium vs Chromium
-  python3 tools/audit/audit.py reanalyze .audit/runs/<run>   # oracles only
-  python3 tools/audit/audit.py generate --family random --count 20 --out DIR
-  python3 tools/audit/audit.py validate FILE...
-  python3 tools/audit/audit.py html SCENARIO.json
-  python3 tools/audit/audit.py replay .audit/latest/issues/NX-XXXXXXXX.json
-  python3 tools/audit/audit.py verify NX-XXXXXXXX
-  python3 tools/audit/audit.py promote NX-XXXXXXXX
-  python3 tools/audit/audit.py catalog
+  python3 debug/engines/bug_detection/audit.py run --budget 200 --batch 40 --seed 1
+  python3 debug/engines/bug_detection/audit.py benchmark --budget 80      # deliberate faults
+  python3 debug/engines/bug_detection/audit.py self-check --budget 40     # Chromium vs Chromium
+  python3 debug/engines/bug_detection/audit.py reanalyze .audit/runs/<run>   # oracles only
+  python3 debug/engines/bug_detection/audit.py generate --family random --count 20 --out DIR
+  python3 debug/engines/bug_detection/audit.py validate FILE...
+  python3 debug/engines/bug_detection/audit.py html SCENARIO.json
+  python3 debug/engines/bug_detection/audit.py replay .audit/latest/issues/NX-XXXXXXXX.json
+  python3 debug/engines/bug_detection/audit.py verify NX-XXXXXXXX
+  python3 debug/engines/bug_detection/audit.py promote NX-XXXXXXXX
+  python3 debug/engines/bug_detection/audit.py catalog
 
 Outputs: .audit/runs/<run>/ (results.jsonl, summary.{json,md}, metrics.json,
 coverage.json, issues/NX-*.{json,md}), copied to .audit/latest/, and

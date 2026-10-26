@@ -1,4 +1,4 @@
-// Batch executor for the JSON interface audit (tools/audit). Skipped unless
+// Batch executor for the JSON interface audit (debug/engines/bug_detection). Skipped unless
 // NATIVAX_AUDIT_MANIFEST points at a manifest written by `nxaudit`:
 //
 //   {

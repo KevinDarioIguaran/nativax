@@ -5,10 +5,10 @@ Runs (or reuses) the visual judge, the performance suite and the compatibility
 suites, compares the result with a saved baseline and prints a machine-readable
 verdict. Designed for an AI/CI to answer "is it better or worse?" without a UI.
 
-    python3 tools/quality_gate.py --run          # full run + comparison
-    python3 tools/quality_gate.py                # reuse latest artifacts
-    python3 tools/quality_gate.py --no-compat    # visual + performance only
-    python3 tools/quality_gate.py --json         # JSON on stdout
+    python3 debug/engines/quality_gate/quality_gate.py --run          # full run + comparison
+    python3 debug/engines/quality_gate/quality_gate.py                # reuse latest artifacts
+    python3 debug/engines/quality_gate/quality_gate.py --no-compat    # visual + performance only
+    python3 debug/engines/quality_gate/quality_gate.py --json         # JSON on stdout
 
 Exit codes: 0 = equal/better or baseline created, 2 = regression, 3 = missing
 measurements. The detailed snapshot is written to
@@ -25,7 +25,7 @@ import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(__file__).resolve().parents[3]
 VISUAL_DIR = ROOT / ".visual" / "latest"
 VISUAL_FALLBACK = ROOT / ".visual" / "runs" / "50projects50days"
 PERF_DIR = ROOT / ".perf" / "latest"
@@ -168,7 +168,7 @@ def compat_snapshot():
 def run_compat(mode):
     if mode == "none":
         return
-    cwd = ROOT / "tools" / "conformance"
+    cwd = ROOT / "debug" / "engines" / "compatibility"
     if not (ROOT / ".conformance" / "suites").exists():
         print("[gate] compatibility suites not downloaded; skipping")
         return
@@ -397,7 +397,7 @@ def main():
     }
     if not snapshot["visual"] and not snapshot["perf"]:
         print("[gate] no measurements found", file=sys.stderr)
-        print("Run: python3 tools/quality_gate.py --run", file=sys.stderr)
+        print("Run: python3 debug/engines/quality_gate/quality_gate.py --run", file=sys.stderr)
         return 3
 
     baseline = load_json(baseline_path)

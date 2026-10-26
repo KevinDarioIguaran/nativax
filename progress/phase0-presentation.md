@@ -19,9 +19,9 @@ petición del usuario se dejó una versión estable y se guardó el progreso.
   percentiles por ventana de 2 s y salida JSONL.
 - `packages/nativa_js/lib/src/quickjs_engine.dart`: `GlSurfaces` conserva
   intervalos de presentación y latencias de decode; expone p50/p95/p99.
-- `tools/summarize_metrics.py`: agrupa por corrida y condición, con filtros
+- `debug/engines/performance/game_player/summarize_metrics.py`: agrupa por corrida y condición, con filtros
   `--skip`, `--last` y `--buffer`; no usa el promedio de FPS como veredicto.
-- `tools/bench_game_player.sh`: corrida reproducible con ventana fija, metrics
+- `debug/engines/performance/game_player/bench_game_player.sh`: corrida reproducible con ventana fija, metrics
   y autostart.
 - `examples/game-player/linux/runner/my_application.cc`: flag de medición
   `NATIVAX_FIXED_WINDOW=1`; no cambia el comportamiento normal.
@@ -109,10 +109,10 @@ A/B. El backdrop sigue activo por defecto y el flag es solo de medición.
 flutter build linux --release
 
 # Una corrida de 36 s; el script fija ventana y activa metrics
-tools/bench_game_player.sh base_r1 36
+debug/engines/performance/game_player/bench_game_player.sh base_r1 36
 
 # Resumen de la ventana estable
-python3 tools/summarize_metrics.py \
+python3 debug/engines/performance/game_player/summarize_metrics.py \
   /tmp/opencode/nativax-metrics/base_r1.jsonl \
   --skip 2 --last 15 --buffer 1280x720
 ```

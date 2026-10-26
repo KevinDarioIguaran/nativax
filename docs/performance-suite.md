@@ -147,7 +147,7 @@ página sin esperar al final.
 
 ## Informe con recomendaciones
 
-`python3 tools/recommend.py --out progress/reports/recommendations-latest.md`
+`python3 debug/engines/recommendations/recommend.py --out progress/reports/recommendations-latest.md`
 genera un informe determinista con prioridades **P0/P1/P2**, evidencia medida,
 acción, criterio de aceptación y comando. El informe incluye detalle por
 escenario (ratio, p95/max, nodos, RSS y siguiente acción), detalle visual con
@@ -210,9 +210,9 @@ contenedor».
 ## Compuerta sin UI (IA/CI)
 
 ```bash
-python3 tools/quality_gate.py --run      # visual + rendimiento + compatibilidad
-python3 tools/quality_gate.py            # reutiliza artefactos existentes
-python3 tools/quality_gate.py --json     # JSON limpio
+python3 debug/engines/quality_gate/quality_gate.py --run      # visual + rendimiento + compatibilidad
+python3 debug/engines/quality_gate/quality_gate.py            # reutiliza artefactos existentes
+python3 debug/engines/quality_gate/quality_gate.py --json     # JSON limpio
 ```
 
 Códigos de salida: `0` = igual/mejor o base creada, `2` = regresión,
@@ -222,8 +222,8 @@ Códigos de salida: `0` = igual/mejor o base creada, `2` = regresión,
 ## Vista previa del informe
 
 ```bash
-tools/preview_report.sh                 # informe consolidado
-tools/preview_report.sh progress/reports/perf-latest.md
+debug/scripts/preview_report.sh                 # informe consolidado
+debug/scripts/preview_report.sh progress/reports/perf-latest.md
 ```
 
 Renderiza Markdown a HTML y lo abre. También está disponible dentro del panel

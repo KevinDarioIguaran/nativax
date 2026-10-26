@@ -24,6 +24,11 @@ for ex in "$root"/examples/*/; do
   (cd "$ex" && flutter test)
 done
 
+echo "=== debug harness ==="
+# Offscreen harnesses used by the debug engines; their tests are env-gated
+# and skip here, so this checks that the package builds and analyzes.
+(cd "$root/debug/harness" && flutter analyze && flutter test)
+
 echo "=== conformance analyze ==="
 (cd "$root/debug/engines/compatibility" && dart analyze)
 
@@ -58,4 +63,4 @@ echo "=== perf analyze ==="
 (cd "$root/debug/engines/performance" && dart analyze)
 
 echo "=== python tooling syntax and recommendation tests ==="
-(cd "$root" && python3 -m py_compile tools/quality_gate.py tools/render_report.py tools/recommend.py tools/run_video_contract.py tools/history.py tools/test_architecture.py debug/engines/performance/gui/perf_gui.py debug/engines/performance/container/summarize.py tools/audit/audit.py tools/audit/gui/app.py && python3 tools/test_recommend.py && python3 tools/test_video_manifest.py && python3 tools/test_history.py && python3 tools/test_architecture.py && python3 tools/audit/test_audit.py && python3 tools/audit/gui/test_gui.py)
+(cd "$root" && python3 -m py_compile debug/engines/quality_gate/quality_gate.py debug/scripts/render_report.py debug/engines/recommendations/recommend.py tools/run_video_contract.py debug/logic/history/history.py tools/test_architecture.py debug/engines/performance/gui/perf_gui.py debug/engines/performance/container/summarize.py debug/engines/bug_detection/audit.py debug/engines/bug_detection/gui/app.py && python3 debug/engines/recommendations/test_recommend.py && python3 tools/test_video_manifest.py && python3 debug/logic/history/test_history.py && python3 tools/test_architecture.py && python3 debug/engines/bug_detection/test_audit.py && python3 debug/engines/bug_detection/gui/test_gui.py)

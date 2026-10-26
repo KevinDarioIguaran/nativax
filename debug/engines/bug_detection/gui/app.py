@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Juez de auditoría JSON — visual explorer for the reports `nxaudit` writes.
 
-  python3 tools/audit/gui/app.py [--root .audit] [--unit PATH]
+  python3 debug/engines/bug_detection/gui/app.py [--root .audit] [--unit PATH]
 
 Every run folder is an independent report. The folder tree on the left
 navigates any folder layout; opening a report loads only that report, and
@@ -9,7 +9,7 @@ every section shows only its data. Two reports are compared only in the
 explicit Comparación view, which keeps both origins labelled.
 
 The GUI never writes inside a report folder. Actions that run the engine
-(run, replay, verify, promote) call `tools/audit/audit.py` and say so.
+(run, replay, verify, promote) call `debug/engines/bug_detection/audit.py` and say so.
 """
 from __future__ import annotations
 
@@ -763,7 +763,7 @@ class App:
         self.show("inspector")
 
     def open_scenario_file(self):
-        p = filedialog.askopenfilename(initialdir=str(ROOT / "tools" / "audit" / "regressions"),
+        p = filedialog.askopenfilename(initialdir=str(ROOT / "debug" / "engines" / "bug_detection" / "regressions"),
                                        filetypes=[("JSON", "*.json")])
         if not p:
             return
@@ -1836,7 +1836,7 @@ class App:
                                 on_open=lambda r: self.unit and self.unit.issues().get(r["issue_id"]) and
                                 self.open_issue(r["issue_id"]))
         self.reg_ledger.pack(fill="both", expand=True)
-        label(f, "Casos en tools/audit/regressions/ (se ejecutan en cada auditoría)", fg=FG, bold=True).pack(anchor="w")
+        label(f, "Casos en debug/engines/bug_detection/regressions/ (se ejecutan en cada auditoría)", fg=FG, bold=True).pack(anchor="w")
         self.reg_files = Table(f, [("file", "Archivo", 300, "w"), ("scenario_id", "Escenario", 300, "w"),
                                    ("objective", "Objetivo", 500, "w")], height=8, on_open=self._open_reg_file)
         self.reg_files.pack(fill="both", expand=True)
@@ -1849,7 +1849,7 @@ class App:
         self.reg_note.configure(text=(f"ledger: {home}/ledger.json — registro del motor compartido por los informes de "
                                       f"esa carpeta ({len(rows)} entradas)") if got.ok else
                                 f"ledger no disponible ({got.error})")
-        reg = ROOT / "tools" / "audit" / "regressions"
+        reg = ROOT / "debug" / "engines" / "bug_detection" / "regressions"
         files = []
         for p in sorted(reg.glob("*.json")) if reg.exists() else []:
             g = store.read_json(p)
@@ -1943,7 +1943,7 @@ class App:
 
     # --------------------------------------------------------------- execute
     def _build_execute(self, f):
-        self.header(f, "Ejecutar el motor", "lanza tools/audit/audit.py; los informes nuevos aparecen en su carpeta")
+        self.header(f, "Ejecutar el motor", "lanza debug/engines/bug_detection/audit.py; los informes nuevos aparecen en su carpeta")
         form = tk.Frame(f, bg=BG)
         form.pack(fill="x")
         self.exec_mode = ttk.Combobox(form, values=["run", "benchmark", "self-check"], width=12, state="readonly")
@@ -1995,7 +1995,7 @@ class App:
         if confirm and not messagebox.askyesno("Motor", f"{label_text}\n\nEsta operación del motor actualiza el "
                                                         "informe del defecto y el ledger. ¿Continuar?"):
             return
-        cmd = [sys.executable, "-u", str(ROOT / "tools" / "audit" / "audit.py"), *args]
+        cmd = [sys.executable, "-u", str(ROOT / "debug" / "engines" / "bug_detection" / "audit.py"), *args]
         try:
             self.process = subprocess.Popen(cmd, cwd=ROOT, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True,
                                             bufsize=1, start_new_session=True)

@@ -2,10 +2,10 @@
 """Tests for the audit GUI (data layer, diff, widgets and every section).
 
 Fixture reports are produced by the real engine (`Explorer`) with the
-deterministic fake backends of `tools/audit/test_audit.py`, so the GUI is
+deterministic fake backends of `debug/engines/bug_detection/test_audit.py`, so the GUI is
 tested against the engine's actual file formats.
 
-  python3 tools/audit/gui/test_gui.py
+  python3 debug/engines/bug_detection/gui/test_gui.py
 """
 from __future__ import annotations
 

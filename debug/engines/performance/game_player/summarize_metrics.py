@@ -7,8 +7,8 @@ cadence. This script groups records by run label and by condition (the label
 without the `_rN` suffix) and prints medians and worst-case values.
 
 Usage:
-    python3 tools/summarize_metrics.py /tmp/metrics.jsonl
-    python3 tools/summarize_metrics.py /tmp/*.jsonl --csv /tmp/summary.csv
+    python3 debug/engines/performance/game_player/summarize_metrics.py /tmp/metrics.jsonl
+    python3 debug/engines/performance/game_player/summarize_metrics.py /tmp/*.jsonl --csv /tmp/summary.csv
 """
 
 from __future__ import annotations

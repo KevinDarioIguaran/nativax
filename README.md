@@ -105,19 +105,19 @@ void main() => runApp(const MaterialApp(
 ## Calidad visual y rendimiento
 
 ```bash
-tools/quality_report.sh          # 51 páginas visuales + 270 escenarios + app idle
-tools/quality_report.sh --all-visual  # 300 páginas visuales
-tools/quality_report.sh --gui    # y abre el panel Tkinter
+debug/scripts/quality_report.sh          # 51 páginas visuales + 270 escenarios + app idle
+debug/scripts/quality_report.sh --all-visual  # 300 páginas visuales
+debug/scripts/quality_report.sh --gui    # y abre el panel Tkinter
 
 # Compuerta sin UI para IA/CI (visual + rendimiento + compatibilidad)
-python3 tools/quality_gate.py --run
-python3 tools/quality_gate.py --json
+python3 debug/engines/quality_gate/quality_gate.py --run
+python3 debug/engines/quality_gate/quality_gate.py --json
 
 # Aislamiento por contenedor con CPU/RAM limitadas
 debug/engines/performance/container/matrix.sh
 
 # Vista previa renderizada del informe (no código fuente)
-tools/preview_report.sh
+debug/scripts/preview_report.sh
 ```
 
 Informe consolidado:

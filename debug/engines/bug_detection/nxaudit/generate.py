@@ -10,7 +10,7 @@ Families:
   schema_invalid deliberately broken scenario JSON (must be rejected)
   interaction    handlers + click/type/Tab/resize/rebuild with assertions
   mutation       one recorded edit applied to an executed scenario
-  regression     minimized cases saved under tools/audit/regressions
+  regression     minimized cases saved under debug/engines/bug_detection/regressions
 """
 from __future__ import annotations
 

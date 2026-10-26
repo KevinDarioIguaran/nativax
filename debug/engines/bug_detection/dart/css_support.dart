@@ -2,7 +2,7 @@
 // command line. Run from the repository root with the workspace config:
 //
 //   dart --packages=.dart_tool/package_config.json \
-//     tools/audit/dart/css_support.dart width padding box-sizing
+//     debug/engines/bug_detection/dart/css_support.dart width padding box-sizing
 import 'dart:convert';
 
 import 'package:nativa_css/nativa_css.dart';

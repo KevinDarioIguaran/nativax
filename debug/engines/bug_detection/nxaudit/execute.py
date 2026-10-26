@@ -25,7 +25,7 @@ from pathlib import Path
 from .compile import compile_screen
 from .probe import probe_source
 
-ROOT = Path(__file__).resolve().parents[3]
+ROOT = Path(__file__).resolve().parents[4]
 HARNESS = ROOT / "debug" / "harness"
 V8_LIB = ROOT / "tools" / "v8-spike" / "target" / "release" / "libnx_v8.so"
 

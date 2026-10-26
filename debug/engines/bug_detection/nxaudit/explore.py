@@ -34,7 +34,7 @@ from .minimize import minimize
 from .report import build_issue_report, llm_brief, summary_markdown, write_json, write_text
 from .schema import check_scenario
 
-ROOT = Path(__file__).resolve().parents[3]
+ROOT = Path(__file__).resolve().parents[4]
 AUDIT = ROOT / ".audit"
 LEDGER = AUDIT / "ledger.json"
 EXEC_FAMILIES = ["basic", "combinatorial", "random", "adversarial", "invalid", "interaction",

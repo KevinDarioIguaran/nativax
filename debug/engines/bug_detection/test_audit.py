@@ -3,7 +3,7 @@
 replaced by a deterministic fake that "renders" a scenario into a probe, and
 deliberate faults are injected into its observations.
 
-  python3 tools/audit/test_audit.py
+  python3 debug/engines/bug_detection/test_audit.py
 """
 from __future__ import annotations
 

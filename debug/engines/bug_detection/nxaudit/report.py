@@ -26,7 +26,7 @@ def build_issue_report(issue: dict, diagnosis: dict, *, run_id: str, scenarios: 
     minimal = (minimization or {}).get("scenario") if (minimization or {}).get("reproduced") else None
     loc = dict(diagnosis["location"])
     loc["minimal_json_path"] = _path_in(minimal, f.get("element_id")) if minimal else None
-    replay = f"python3 tools/audit/audit.py replay .audit/latest/issues/{issue['issue_id']}.json"
+    replay = f"python3 debug/engines/bug_detection/audit.py replay .audit/latest/issues/{issue['issue_id']}.json"
     hyps = diagnosis["hypotheses"]
     confirmed = any(h["status"] == "confirmed" for h in hyps)
     expected, actual = f.get("expected"), f.get("actual")
@@ -91,7 +91,7 @@ def build_issue_report(issue: dict, diagnosis: dict, *, run_id: str, scenarios: 
         ],
         "constraints": CONSTRAINTS,
         "regression_tests": [
-            "Add the minimal scenario to tools/audit/regressions/ (audit.py promote) so every run replays it.",
+            "Add the minimal scenario to debug/engines/bug_detection/regressions/ (audit.py promote) so every run replays it.",
             f"Add a package test in the {issue['subsystem']} package that reproduces the minimal case "
             "without Chromium.",
             "Run ./tools/test_all.sh and the visual judge suite.",
@@ -133,7 +133,7 @@ def _difference(f):
 
 def _steps(scenario, f):
     env = scenario.get("environment") or {}
-    steps = [f"Compile the scenario JSON to HTML (tools/audit/nxaudit/compile.py) and load it in NativaXView "
+    steps = [f"Compile the scenario JSON to HTML (debug/engines/bug_detection/nxaudit/compile.py) and load it in NativaXView "
              f"at {env.get('viewport_width', 360)}x{env.get('viewport_height', 640)} CSS px, DPR 1",
              f"Wait {env.get('wait_ms', 300)} ms of pumped frames and run the shared probe (__nxProbe)"]
     for i, a in enumerate(scenario.get("actions") or []):

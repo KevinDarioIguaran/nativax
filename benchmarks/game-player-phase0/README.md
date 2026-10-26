@@ -8,7 +8,7 @@ completo en `progress/phase0-presentation.md`.
 - `baseline_fixed_1280x720.jsonl`: 50 ventanas de 2 s con ventana fija de
   1280×720 y DPR 1.0. Se descartaron las 2 primeras ventanas y se resumieron
   las últimas 15 (30 s).
-- `summary_baseline.txt`: salida de `tools/summarize_metrics.py` con
+- `summary_baseline.txt`: salida de `debug/engines/performance/game_player/summarize_metrics.py` con
   `--skip 2 --last 15 --buffer 1280x720`.
 - `exploratory_no_backdrop.jsonl`: corrida exploratoria con
   `NATIVAX_NO_BACKDROP=1`. **No es un A/B válido**: la ventana cambió a
@@ -39,8 +39,8 @@ implementó la textura nativa; el reproductor queda en el camino estable
 cd examples/game-player
 flutter build linux --release
 cd ../..
-tools/bench_game_player.sh base_r1 36
-python3 tools/summarize_metrics.py \
+debug/engines/performance/game_player/bench_game_player.sh base_r1 36
+python3 debug/engines/performance/game_player/summarize_metrics.py \
   /tmp/opencode/nativax-metrics/base_r1.jsonl \
   --skip 2 --last 15 --buffer 1280x720
 ```

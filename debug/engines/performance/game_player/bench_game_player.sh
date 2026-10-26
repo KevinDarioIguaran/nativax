@@ -2,14 +2,14 @@
 # Benchmark one NativaX game-player run with fixed geometry and JSONL metrics.
 #
 # Usage:
-#   tools/bench_game_player.sh base_r1 [seconds]
-#   NATIVAX_NO_BACKDROP=1 tools/bench_game_player.sh nobd_r1 [seconds]
+#   debug/engines/performance/game_player/bench_game_player.sh base_r1 [seconds]
+#   NATIVAX_NO_BACKDROP=1 debug/engines/performance/game_player/bench_game_player.sh nobd_r1 [seconds]
 #
 # The player bundle must have been built in release mode. This script is
 # measurement tooling: it never modifies the game bundle.
 set -euo pipefail
 
-ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../../.." && pwd)"
 BUNDLE="$ROOT/examples/game-player/build/linux/x64/release/bundle"
 BIN="$BUNDLE/nativax_game_player"
 LABEL="${1:?usage: $0 <label> [seconds]}"

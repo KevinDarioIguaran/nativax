@@ -1,14 +1,14 @@
 # Juez de auditoría JSON — interfaz
 
-Visual explorer for the reports written by `tools/audit` (`nxaudit`). It only
+Visual explorer for the reports written by `debug/engines/bug_detection` (`nxaudit`). It only
 reads, organises and displays them. It runs no LLM and fills in no data. The
 "Instrucciones" tab shows the brief that `nxaudit/report.py` builds from a
 deterministic template.
 
 ```bash
-python3 tools/audit/gui/app.py                       # root: .audit/
-python3 tools/audit/gui/app.py --root /path/to/reports --unit /path/to/reports/x/run-7
-python3 tools/audit/gui/test_gui.py                  # data layer, diff, widgets, every section
+python3 debug/engines/bug_detection/gui/app.py                       # root: .audit/
+python3 debug/engines/bug_detection/gui/app.py --root /path/to/reports --unit /path/to/reports/x/run-7
+python3 debug/engines/bug_detection/gui/test_gui.py                  # data layer, diff, widgets, every section
 ```
 
 It also opens from the main panel: **Auditoría JSON → Abrir el juez**.
@@ -56,7 +56,7 @@ mean:
 | `issues/NX-*.md` | template brief | Defecto → Instrucciones |
 | `benchmark.json` / `self-check.json` | detection/localization scores | Resumen (metrics table, source labelled), Archivos |
 | `<home>/ledger.json` | status, first/last seen, fixed_at | Regresiones, Centro de defectos, Defecto F |
-| `tools/audit/regressions/*.json` | promoted minimal cases | Regresiones → Inspector |
+| `debug/engines/bug_detection/regressions/*.json` | promoted minimal cases | Regresiones → Inspector |
 
 ## Not available (shown as such, never invented)
 
@@ -81,7 +81,7 @@ mean:
   updates that issue's report in `.audit/latest` and the ledger, and it is
   disabled for any other report.
 - **Promover:** `audit.py promote <issue.json>`. It writes to
-  `tools/audit/regressions/`.
+  `debug/engines/bug_detection/regressions/`.
 - **Ejecutar el motor:** `run` / `benchmark` / `self-check` with their flags.
 
 The output of each action is shown live. The folder tree reloads when it ends.

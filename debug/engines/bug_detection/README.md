@@ -13,19 +13,19 @@ real HTML document; every element carries `id`, `data-nx` (its JSON path, e.g.
 back to the exact JSON node.
 
 ```bash
-python3 tools/audit/audit.py run --budget 400 --batch 50 --seed 2   # real audit
-python3 tools/audit/audit.py benchmark --budget 120                 # deliberate faults
-python3 tools/audit/audit.py self-check --budget 80                 # Chromium vs Chromium
-python3 tools/audit/audit.py reanalyze .audit/runs/<run>            # oracles only, no execution
-python3 tools/audit/audit.py replay  .audit/latest/issues/NX-XXXXXXXX.json
-python3 tools/audit/audit.py verify  NX-XXXXXXXX                    # after a fix
-python3 tools/audit/audit.py promote NX-XXXXXXXX                    # minimal case -> regressions/
-python3 tools/audit/audit.py generate --family random --count 20 --out /tmp/s
-python3 tools/audit/audit.py validate /tmp/s/*.json
-python3 tools/audit/audit.py html scenario.json                     # compiled HTML
-python3 tools/audit/audit.py catalog                                # nativa_css support check
-python3 tools/audit/test_audit.py                                   # engine tests (no browser)
-python3 tools/audit/gui/app.py                                      # visual explorer (see gui/README.md)
+python3 debug/engines/bug_detection/audit.py run --budget 400 --batch 50 --seed 2   # real audit
+python3 debug/engines/bug_detection/audit.py benchmark --budget 120                 # deliberate faults
+python3 debug/engines/bug_detection/audit.py self-check --budget 80                 # Chromium vs Chromium
+python3 debug/engines/bug_detection/audit.py reanalyze .audit/runs/<run>            # oracles only, no execution
+python3 debug/engines/bug_detection/audit.py replay  .audit/latest/issues/NX-XXXXXXXX.json
+python3 debug/engines/bug_detection/audit.py verify  NX-XXXXXXXX                    # after a fix
+python3 debug/engines/bug_detection/audit.py promote NX-XXXXXXXX                    # minimal case -> regressions/
+python3 debug/engines/bug_detection/audit.py generate --family random --count 20 --out /tmp/s
+python3 debug/engines/bug_detection/audit.py validate /tmp/s/*.json
+python3 debug/engines/bug_detection/audit.py html scenario.json                     # compiled HTML
+python3 debug/engines/bug_detection/audit.py catalog                                # nativa_css support check
+python3 debug/engines/bug_detection/test_audit.py                                   # engine tests (no browser)
+python3 debug/engines/bug_detection/gui/app.py                                      # visual explorer (see gui/README.md)
 ```
 
 The Tkinter panel (`debug/engines/performance/gui/perf_gui.py`) has an **Auditoría JSON**

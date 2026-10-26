@@ -10,7 +10,7 @@ import '../lib/src/suite_paths.dart';
 /// `dart run bin/fetch_suites.dart --suite test262 --suite html5lib --suite wpt`
 Future<void> main(List<String> args) async {
   final root = findRepoRoot();
-  final dir = p.join(root, 'tools', 'conformance');
+  final dir = p.join(root, 'debug', 'engines', 'compatibility');
   var failed = false;
   Future<void> run(String bin, List<String> extra) async {
     stdout.writeln('\n=== $bin ===');

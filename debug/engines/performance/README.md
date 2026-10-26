@@ -22,14 +22,14 @@ dart run debug/engines/performance/bin/perf.dart idle-app --seconds 5 --build
 python3 debug/engines/performance/gui/perf_gui.py
 
 # Both quality suites end to end
-tools/quality_report.sh --gui
+debug/scripts/quality_report.sh --gui
 
 # Headless quality gate (visual + performance + compatibility)
-python3 tools/quality_gate.py --run
-python3 tools/quality_gate.py --json
+python3 debug/engines/quality_gate/quality_gate.py --run
+python3 debug/engines/quality_gate/quality_gate.py --json
 
 # Rendered Markdown preview
-tools/preview_report.sh
+debug/scripts/preview_report.sh
 ```
 
 ## Scenarios
@@ -169,7 +169,7 @@ debug/engines/performance/gui/run_gui.sh
 
 ## Recommendations
 
-`python3 tools/recommend.py --out progress/reports/recommendations-latest.md`
+`python3 debug/engines/recommendations/recommend.py --out progress/reports/recommendations-latest.md`
 builds a deterministic P0/P1/P2 report with measured evidence, an action, an
 acceptance criterion and a command. It is rule-based and coverage-aware, not a
 black-box model. `quality_report.sh` runs it automatically; the dashboard shows
