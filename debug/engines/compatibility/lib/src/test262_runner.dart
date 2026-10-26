@@ -6,6 +6,7 @@ import 'package:path/path.dart' as p;
 import 'package:yaml/yaml.dart';
 
 import 'result.dart';
+import 'run_output.dart';
 
 /// Minimal, dependency-free parser for Test262's `/*--- ... ---*/`
 /// frontmatter. YAML is parsed with `package:yaml`; the metadata is copied to
@@ -151,26 +152,12 @@ class Test262Runner {
       startedAt: started,
       durationMs: clock.elapsedMilliseconds,
       results: results,
-      suiteCommit: _gitHead(),
+      suiteCommit: suiteRevision(options.suitePath),
       command: 'run_test262 ${options.directories.join(' ')}'
           '${options.limit == null ? '' : ' --limit ${options.limit}'}',
     );
   }
 
-  String? _gitHead() {
-    try {
-      final result = Process.runSync(
-        'git',
-        ['rev-parse', 'HEAD'],
-        workingDirectory: options.suitePath,
-        runInShell: false,
-      );
-      if (result.exitCode != 0) return null;
-      return (result.stdout as String).trim();
-    } on ProcessException {
-      return null;
-    }
-  }
 
   Future<TestResult> _runFile(File file) async {
     final id = p.relative(file.path, from: p.join(options.suitePath, 'test'));

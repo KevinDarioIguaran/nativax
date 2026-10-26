@@ -28,16 +28,20 @@ Future<void> main(List<String> args) async {
     }
   }
 
-  if (args.isNotEmpty) {
-    stderr.writeln('run_all takes no arguments; use the individual runners '
-        'to pass options.');
+  // Only --results-dir is forwarded; use the individual runners for other
+  // options.
+  final extra = <String>[];
+  if (args.length == 2 && args[0] == '--results-dir') {
+    extra.addAll(['--results-dir', p.absolute(args[1])]);
+  } else if (args.isNotEmpty) {
+    stderr.writeln('usage: dart run bin/run_all.dart [--results-dir DIR]');
     exitCode = 64;
     return;
   }
-  await run('run_html5lib.dart', const []);
-  await run('run_html_tree.dart', const []);
-  await run('run_url.dart', const []);
-  await run('run_test262.dart', const []);
-  await run('run_wpt.dart', const []);
+  await run('run_html5lib.dart', extra);
+  await run('run_html_tree.dart', extra);
+  await run('run_url.dart', extra);
+  await run('run_test262.dart', extra);
+  await run('run_wpt.dart', extra);
   if (failed) exitCode = 1;
 }

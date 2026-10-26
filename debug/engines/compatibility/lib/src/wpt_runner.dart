@@ -10,6 +10,7 @@ import 'package:path/path.dart' as p;
 
 import 'headless_layout.dart';
 import 'result.dart';
+import 'run_output.dart';
 import 'wpt_shim.dart';
 
 class WptRunOptions {
@@ -108,7 +109,7 @@ class WptRunner {
       startedAt: started,
       durationMs: clock.elapsedMilliseconds,
       results: results,
-      suiteCommit: _gitHead(),
+      suiteCommit: suiteRevision(options.suitePath),
       command:
           'run_wpt ${options.directories.join(' ')}'
           '${options.limit == null ? '' : ' --limit ${options.limit}'}',
@@ -437,18 +438,6 @@ for (const el of document.querySelectorAll('[id]')) {
     durationMs: durationMs,
   );
 
-  String? _gitHead() {
-    try {
-      final result = Process.runSync('git', [
-        'rev-parse',
-        'HEAD',
-      ], workingDirectory: options.suitePath);
-      if (result.exitCode != 0) return null;
-      return (result.stdout as String).trim();
-    } on ProcessException {
-      return null;
-    }
-  }
 }
 
 class _Subtest {

@@ -6,6 +6,7 @@ import 'package:nativa_html/nativa_html.dart';
 import 'package:path/path.dart' as p;
 
 import 'result.dart';
+import 'run_output.dart';
 
 class HtmlTreeRunOptions {
   const HtmlTreeRunOptions({
@@ -55,6 +56,7 @@ class HtmlTreeRunner {
       startedAt: started,
       durationMs: clock.elapsedMilliseconds,
       results: results,
+      suiteCommit: suiteRevision(options.suitePath),
       command:
           'run_html_tree${options.limit == null ? '' : ' --limit ${options.limit}'}',
     );

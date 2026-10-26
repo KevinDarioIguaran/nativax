@@ -1,6 +1,6 @@
 name: nativa_conformance
 description: Conformance runners for NativaX (Test262, html5lib-tests, WPT subset).
-version: 0.1.0
+version: 0.2.0
 publish_to: none
 resolution: workspace
 

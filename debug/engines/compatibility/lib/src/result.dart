@@ -1,5 +1,7 @@
 import 'dart:convert';
 
+import 'run_output.dart';
+
 /// Outcome of one conformance test.
 ///
 /// The four states are deliberately strict:
@@ -166,9 +168,15 @@ class RunSummary {
 
   Map<String, Object?> toJson() => {
         'suite': suite,
-        'startedAt': startedAt.toIso8601String(),
+        'startedAt': isoWithOffset(startedAt),
+        'finishedAt':
+            isoWithOffset(startedAt.add(Duration(milliseconds: durationMs))),
+        'timeZone': startedAt.timeZoneName,
         'durationMs': durationMs,
-        if (suiteCommit != null) 'suiteCommit': suiteCommit,
+        'runnerVersion': runnerVersion,
+        // Git sha of the suite checkout; null when the suite directory is
+        // not the top of a checkout (for example vendored fixtures).
+        'suiteCommit': suiteCommit,
         if (suiteVersion != null) 'suiteVersion': suiteVersion,
         if (command != null) 'command': command,
         'counts': byStatus,
