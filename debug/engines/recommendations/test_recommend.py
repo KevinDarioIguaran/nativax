@@ -242,6 +242,17 @@ class RecommendationsTest(unittest.TestCase):
         ids = {r.id for r in recommend.build_recommendations(data)}
         self.assertIn("renderer.dom_layout.cross_signal", ids)
 
+    def test_game_scenarios_tagged_dom_belong_to_the_game_rule(self):
+        # Regression: scenarios.json tags game profiles kind=dom, so one slow
+        # game profile fired both the DOM and the game rule (duplicate).
+        data = dict(BASE)
+        data["perf"] = {"results": [row("dom", "game.quality-640x360-p100", 100, 10)]}
+        recs = recommend.build_recommendations(data)
+        ids = {r.id for r in recs}
+        self.assertIn("perf.game.over_target", ids)
+        self.assertNotIn("perf.dom.over_target", ids)
+        self.assertEqual(recommend.audit(recs)["duplicates"], [])
+
 
 if __name__ == "__main__":
     unittest.main()

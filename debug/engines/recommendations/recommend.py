@@ -103,7 +103,7 @@ RULES: dict[str, dict[str, Any]] = {
     },
     "perf.dom.over_target": {
         "priority": "P1", "area": "DOM / layout",
-        "fires_when": f"any ok dom scenario with {OVER_TARGET_CRITERION}",
+        "fires_when": f"any ok non-game dom scenario with {OVER_TARGET_CRITERION}",
     },
     "perf.scroll.frame_p95_over_target": {
         "priority": "P1", "area": "scroll / frames",
@@ -206,6 +206,13 @@ def _ratio(row: dict) -> float | None:
 def _ratio_label(row: dict) -> str:
     ratio = _ratio(row)
     return f"{ratio:.2f}×" if ratio is not None else "—"
+
+
+GAME_PREFIXES = ("game.", "game3d.")
+
+
+def _is_game(row: dict) -> bool:
+    return str(row.get("scenario", "")).startswith(GAME_PREFIXES)
 
 
 def _over_target(row: dict) -> bool:
@@ -659,7 +666,9 @@ def build_recommendations(
             reverse=True,
         )
 
-    dom_rows = worst(category.get("dom", []))
+    # Game profiles are tagged kind=dom in scenarios.json; perf.game.over_target
+    # owns them, so the DOM rule does not restate them.
+    dom_rows = worst(row for row in category.get("dom", []) if not _is_game(row))
     dom_failing = [row for row in dom_rows if _over_target(row)]
     if dom_failing:
         failing = dom_failing
@@ -681,7 +690,8 @@ def build_recommendations(
             expected_impact=[_impact("perf.dom.over_target_count", "decrease", 0)],
             title="The dominant cost is in DOM and layout, not pure JS",
             evidence=evidence + [
-                f"{len(failing)} DOM scenarios are above the 3× target.",
+                f"{len(failing)} DOM scenarios are over target "
+                f"(verdict FAIL/WARN or >{WORK_RATIO_TARGET:g}×).",
             ],
             action=(
                 "Batch DOM mutations, avoid recomputing layout per node and "
@@ -984,6 +994,7 @@ def measure(data: dict[str, Any]) -> dict[str, Any]:
         return [row for row in ok_rows if str(row.get("kind") or "?") == name]
 
     scroll = kind("scroll")
+    dom = [row for row in kind("dom") if not _is_game(row)]
     metrics: dict[str, Any] = {
         "visual.coverage.measured_pages": len(visual_rows),
         "visual.coverage.unmeasured_pages": max(visual_total - len(visual_rows), 0),
@@ -996,8 +1007,8 @@ def measure(data: dict[str, Any]) -> dict[str, Any]:
         "leaks.failing_count": _status_count(data.get("leaks"), {"FAIL", "ERROR"}),
         "leaks.inconclusive_count": _status_count(data.get("leaks"), {"INCONCLUSIVE"}),
         "security.failing_count": _status_count(data.get("security"), {"FAIL", "ERROR"}),
-        "perf.dom.measured_rows": len(kind("dom")),
-        "perf.dom.over_target_count": sum(1 for row in kind("dom") if _over_target(row)),
+        "perf.dom.measured_rows": len(dom),
+        "perf.dom.over_target_count": sum(1 for row in dom if _over_target(row)),
         "perf.scroll.p95_over_target_count": sum(
             1 for row in scroll
             if (_p95(row) or 0) > FRAME_P95_TARGET_MS
