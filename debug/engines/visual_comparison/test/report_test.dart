@@ -162,6 +162,64 @@ void main() {
     expect(csv.split('\n').length, greaterThan(1));
   });
 
+  test('artifacts add overlay.png, regions.json and environment.json', () {
+    final directory = Directory.systemTemp.createTempSync(
+      'nativa-visual-evidence-',
+    );
+    addTearDown(() => directory.deleteSync(recursive: true));
+    final reference = solid(20, 20, 255, 255, 255);
+    final actual = solid(20, 20, 255, 255, 255);
+    for (var y = 4; y < 8; y++) {
+      for (var x = 4; x < 10; x++) {
+        actual.rgba[(y * 20 + x) * 4 + 1] = 0;
+      }
+    }
+    final report = PageReport(
+      page: const PageSource(
+        id: 'suite/page',
+        suite: 'suite',
+        entry: '/tmp/index.html',
+        directory: '/tmp',
+      ),
+      viewportWidth: 20,
+      viewportHeight: 20,
+      scheme: 'light',
+      artifactsDir: directory.path,
+      checks: const [],
+      chromeProbe: probe(),
+      nativaProbe: probe(),
+      evaluation: evaluate(
+        chromeProbe: probe(),
+        chromeImage: reference,
+        nativaProbe: probe(),
+        nativaImage: actual,
+        checks: const [],
+      ),
+      environment: const {'schema': 'nativa_visual.environment/1'},
+    );
+    report.writeArtifacts(chromeImage: reference, nativaImage: actual);
+    final overlay = decodePng(
+      File('${directory.path}/overlay.png').readAsBytesSync(),
+    );
+    expect([overlay.width, overlay.height], [20, 20]);
+    final regions =
+        jsonDecode(File('${directory.path}/regions.json').readAsStringSync())
+            as Map;
+    expect(regions['page'], 'suite/page');
+    expect(regions['connectivity'], 8);
+    expect(regions['minArea'], 4);
+    final region = (regions['regions'] as List).single as Map;
+    expect(region['bbox'], [4, 4, 6, 4]);
+    expect(region['pixels'], 24);
+    expect((region['elements'] as List).single['path'], 'html:1>body:1>div:1');
+    final environment =
+        jsonDecode(
+              File('${directory.path}/environment.json').readAsStringSync(),
+            )
+            as Map;
+    expect(environment['schema'], 'nativa_visual.environment/1');
+  });
+
   test('run report writes Markdown, JSON and summary CSV', () {
     final directory = Directory.systemTemp.createTempSync('nativa-visual-run-');
     addTearDown(() => directory.deleteSync(recursive: true));
@@ -222,11 +280,20 @@ void main() {
     expect(results['columns'], contains('mean_delta_e'));
     expect(results['columns'], contains('ink_mismatch_pct'));
     expect(results['columns'], contains('diff_png'));
+    // Existing columns keep their order; evidence columns are appended.
+    final columns = (results['columns'] as List).cast<String>();
+    expect(columns.indexOf('failure'), 29);
+    expect(columns.sublist(30), [
+      'overlay_png',
+      'regions_json',
+      'environment_json',
+    ]);
     expect(results['rows'], hasLength(1));
     final row = (results['rows'] as List).single as Map;
     expect(row['page'], 'suite/page');
     expect(row['verdict'], 'PASS');
     expect(row['position'], 100);
     expect(row['pixels'], 400);
+    expect(row['regions_json'], '/tmp/none/regions.json');
   });
 }

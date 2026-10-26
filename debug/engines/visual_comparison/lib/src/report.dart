@@ -5,6 +5,7 @@ import 'color.dart';
 import 'model.dart';
 import 'pixels.dart';
 import 'png.dart';
+import 'regions.dart';
 import 'score.dart';
 import 'styles.dart';
 
@@ -23,6 +24,7 @@ class PageReport {
     this.nativaDuration,
     this.failure,
     this.notes = const [],
+    this.environment,
   });
 
   final PageSource page;
@@ -40,6 +42,9 @@ class PageReport {
   /// Fatal harness failure (no reference or no NativaX render).
   final String? failure;
   final List<String> notes;
+
+  /// Content of `environment.json`; null keeps an existing file (`--resume`).
+  final Map<String, Object?>? environment;
 
   Verdict get verdict => evaluation?.verdict ?? Verdict.invalid;
   double? get overall => evaluation?.overall;
@@ -273,10 +278,32 @@ class PageReport {
     File(
       '${dir.path}/report.json',
     ).writeAsStringSync(const JsonEncoder.withIndent('  ').convert(toJson()));
+    final env = environment;
+    if (env != null) {
+      File(
+        '${dir.path}/environment.json',
+      ).writeAsStringSync(const JsonEncoder.withIndent('  ').convert(env));
+    }
     final eval = evaluation;
     if (eval == null) return;
 
     File('${dir.path}/diff.png').writeAsBytesSync(encodePng(eval.pixels.diff));
+    if (chromeImage != null && nativaImage != null) {
+      final map = deltaMap(chromeImage, nativaImage);
+      final regions = findRegions(
+        map,
+        referenceElements: chromeProbe?.elements ?? const [],
+        actualElements: nativaProbe?.elements ?? const [],
+      );
+      File('${dir.path}/regions.json').writeAsStringSync(
+        const JsonEncoder.withIndent(
+          '  ',
+        ).convert({'page': page.id, ...regions.toJson()}),
+      );
+      File('${dir.path}/overlay.png').writeAsBytesSync(
+        encodePng(overlayImage(chromeImage, nativaImage, map)),
+      );
+    }
     File('${dir.path}/pixels.json').writeAsStringSync(
       const JsonEncoder.withIndent('  ').convert({
         'totals': eval.pixels.totals.toJson(),
@@ -729,6 +756,9 @@ class RunReport {
       'diff_png',
       'elements_json',
       'failure',
+      'overlay_png',
+      'regions_json',
+      'environment_json',
     ],
     'rows': [
       for (final page in pages)
@@ -769,6 +799,9 @@ class RunReport {
             'diff_png': '${page.artifactsDir}/diff.png',
             'elements_json': '${page.artifactsDir}/elements.json',
             'failure': page.failure,
+            'overlay_png': '${page.artifactsDir}/overlay.png',
+            'regions_json': '${page.artifactsDir}/regions.json',
+            'environment_json': '${page.artifactsDir}/environment.json',
           };
         }(),
     ],

@@ -17,7 +17,13 @@ class ChromeOutcome {
     required this.screenshotPath,
     required this.probeJsonPath,
     required this.frameDelta,
+    required this.startedAt,
+    required this.finishedAt,
   });
+
+  /// Wall-clock start and end of this capture (measurement + screenshot).
+  final DateTime startedAt;
+  final DateTime finishedAt;
 
   final ProbeSnapshot probe;
   final RasterImage screenshot;
@@ -107,6 +113,13 @@ addEventListener('load', function () {
   }
 }
 
+/// `--virtual-time-budget` (ms) given to both the measurement and the
+/// screenshot run.
+const int chromeVirtualTimeBudgetMs = 2000;
+
+/// Flags shared by every headless Chromium run, recorded in `environment.json`.
+const List<String> chromeBaseFlags = _baseFlags;
+
 const List<String> _baseFlags = [
   '--headless=new',
   '--disable-gpu',
@@ -163,7 +176,7 @@ Future<ChromeOutcome> renderWithChrome({
   Future<ProbeSnapshot> measure(int windowHeight) async {
     final dom = await runProcess(executable, [
       ...flags(windowHeight),
-      '--virtual-time-budget=2000',
+      '--virtual-time-budget=$chromeVirtualTimeBudgetMs',
       '--dump-dom',
       Uri.file(index.path).toString(),
     ], timeout: timeout);
@@ -237,7 +250,7 @@ Future<ChromeOutcome> renderWithChrome({
 
     final shot = await runProcess(executable, [
       ...flags(height),
-      '--virtual-time-budget=2000',
+      '--virtual-time-budget=$chromeVirtualTimeBudgetMs',
       '--screenshot=${screenshot.path}',
       Uri.file(index.path).toString(),
     ], timeout: timeout);
@@ -258,11 +271,14 @@ Future<ChromeOutcome> renderWithChrome({
         '${probe.viewportWidth}x${probe.viewportHeight}',
       );
     }
+    final finished = DateTime.now();
     return ChromeOutcome(
       probe: probe,
       screenshot: raw.crop(probe.viewportWidth, probe.viewportHeight),
       rawScreenshot: raw,
-      duration: DateTime.now().difference(started),
+      duration: finished.difference(started),
+      startedAt: started,
+      finishedAt: finished,
       stderr: _tail(shot.stderr),
       screenshotPath: screenshot.path,
       probeJsonPath: probeJson.path,
