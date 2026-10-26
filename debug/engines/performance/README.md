@@ -142,15 +142,21 @@ navigation and the same dark/typographic language as the HTML report:
 - **Idle**: real app RSS/CPU versus the 250 MB / 1 % targets and the sample
   timeline.
 - **Informes**: one independent report per area — **Rendimiento**,
-  **Visual**, **Juegos**, **Conformidad**, **Auditoría JSON** (plus its fault
-  benchmark and self-check) and **Recomendaciones**; none mixes another area's
+  **Visual**, **Juegos**, **Conformidad** and **Recomendaciones**; none mixes another area's
   data. A finished live run opens its own report. Panel-built reports are
   rebuilt from the current JSON data and rendered as an HTML capture. During a run the text refreshes
   without launching Chromium; the capture is regenerated when the run ends.
   The historical reports remain available as manual snapshots.
-- **Historial**: every run can be stored as detailed JSON in
-  `debug/artifacts/visual/history` and `debug/artifacts/perf/history`; the dashboard compares the last two
-  runs and shows per-case deltas.
+- **Historial**: answers "did it improve or get worse?" for visual fidelity
+  and performance. Every finished run is recorded as JSON in
+  `debug/artifacts/visual/history` and `debug/artifacts/perf/history`. The page
+  compares the latest run with the latest earlier run that measured the same
+  set of pages/scenarios (runs of another size are skipped and counted), shows
+  a large IMPROVED / WORSE / SAME / NOT COMPARABLE verdict with the numbers in
+  words, a trend chart over those runs (green segments = better, red = worse)
+  and a chart of the pages/scenarios that changed most. Changes below 0.5
+  overall points (visual) or 5 % of the work ratio (performance) count as the
+  same (measurement noise).
 - **Row actions**: right-click a scenario/page (or use **Acciones ▾**) to view
   details or run only that test/page. The single result is merged into the
   table and the detail opens automatically.

@@ -15,7 +15,7 @@ python3 debug/engines/bug_detection/gui/app.py \
 python3 debug/engines/bug_detection/gui/test_gui.py
 ```
 
-It also opens from the main dashboard: **Auditoría JSON → Abrir el juez**.
+It is started from the command line only; the main dashboard does not show the audit.
 
 ## Reports are independent folders
 

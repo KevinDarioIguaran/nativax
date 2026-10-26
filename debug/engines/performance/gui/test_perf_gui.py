@@ -4,6 +4,7 @@ import json
 import shutil
 import sys
 import tempfile
+import types
 import unittest
 from pathlib import Path
 
@@ -190,6 +191,83 @@ class WiringTest(unittest.TestCase):
              ).read_text())
         self.assertEqual(schema["$id"],
                          "nativax/diagnostic-run-manifest@1.1")
+
+
+class _Widget:
+    def __init__(self):
+        self.options = {}
+        self.items = []
+
+    def configure(self, **kw):
+        self.options.update(kw)
+
+    def cget(self, key):
+        return self.options.get(key)
+
+    def delete(self, *_):
+        self.items = []
+
+    def winfo_width(self):
+        return 600
+
+    def winfo_height(self):
+        return 200
+
+    def __getattr__(self, name):
+        if name.startswith("create_"):
+            return lambda *a, **k: self.items.append((name, k.get("text")))
+        raise AttributeError(name)
+
+
+class HistoryVerdictTest(unittest.TestCase):
+    """The history page says improved / worse / same / not comparable from
+    the recorded runs, comparing only runs that measured the same set."""
+
+    def setUp(self):
+        self.tmp = Path(tempfile.mkdtemp(prefix="nativax-history-"))
+        self.addCleanup(shutil.rmtree, self.tmp, True)
+
+    def runs(self, specs):
+        out = []
+        for i, (pages, overall, rows) in enumerate(specs):
+            path = self.tmp / f"2026102{i}T1000{i:02d}.json"
+            path.write_text(json.dumps({"rows": [{"page": p, "overall": v} for p, v in rows.items()]}))
+            out.append({"file": str(path), "recorded_at": path.stem, "git_commit": f"c{i}",
+                        "summary": {"pages": pages, "mean_overall": overall, "pass": 0, "fail": 0}})
+        return out
+
+    def verdict(self, runs):
+        dash = types.SimpleNamespace(
+            history_sections={"visual": {k: _Widget() for k in ("verdict", "detail", "trend", "changes")}},
+            _short_date=perf_gui.Dashboard._short_date,
+            HISTORY_VISUAL_POINTS=perf_gui.Dashboard.HISTORY_VISUAL_POINTS,
+            HISTORY_PERF_RELATIVE=perf_gui.Dashboard.HISTORY_PERF_RELATIVE,
+            _append_log=lambda _t: None)
+        dash._draw_trend = lambda *a, **k: perf_gui.Dashboard._draw_trend(dash, *a, **k)
+        dash._draw_changes = lambda *a, **k: perf_gui.Dashboard._draw_changes(dash, *a, **k)
+        perf_gui.Dashboard._history_area(dash, "visual", runs, key="mean_overall", count_key="pages",
+                                         higher_better=True, unit=" %", item_key="overall")
+        sec = dash.history_sections["visual"]
+        return sec["verdict"].cget("text"), sec["detail"].cget("text"), sec["changes"].items
+
+    def test_improved_worse_same(self):
+        better = self.runs([(2, 70.0, {"a": 60, "b": 80}), (2, 75.0, {"a": 70, "b": 80})])
+        verdict, detail, changes = self.verdict(better)
+        self.assertEqual(verdict, "MEJORÓ")
+        self.assertIn("70.00 % → 75.00 %", detail)
+        self.assertTrue(any(text == "+10.00 %" for _, text in changes))
+        worse = self.runs([(2, 75.0, {"a": 70, "b": 80}), (2, 60.0, {"a": 40, "b": 80})])
+        self.assertEqual(self.verdict(worse)[0], "EMPEORÓ")
+        same = self.runs([(2, 75.0, {"a": 70, "b": 80}), (2, 75.3, {"a": 70.6, "b": 80})])
+        self.assertEqual(self.verdict(same)[0], "IGUAL")
+
+    def test_only_runs_of_the_same_set_are_compared(self):
+        mixed = self.runs([(2, 70.0, {"a": 60, "b": 80}), (1, 99.0, {"a": 99}), (2, 75.0, {"a": 70, "b": 80})])
+        verdict, detail, _ = self.verdict(mixed)
+        self.assertEqual(verdict, "MEJORÓ")          # 70 -> 75, the 1-page run is skipped
+        self.assertIn("1 corrida(s) de otro tamaño se omiten", detail)
+        alone = self.runs([(2, 70.0, {"a": 60, "b": 80}), (1, 99.0, {"a": 99})])
+        self.assertEqual(self.verdict(alone)[0], "SIN DATOS SUFICIENTES")
 
 
 if __name__ == "__main__":

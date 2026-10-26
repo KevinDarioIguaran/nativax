@@ -36,7 +36,6 @@ ARTIFACTS = ROOT / "debug" / "artifacts"
 VISUAL_ROOT = ARTIFACTS / "visual"
 PERF_ROOT = ARTIFACTS / "perf"
 CONFORMANCE_DIR = ARTIFACTS / "conformance"
-AUDIT_DIR = ARTIFACTS / "audit"
 VISUAL_DIR = VISUAL_ROOT / "latest"
 PERF_DIR = PERF_ROOT / "latest"
 VISUAL_CANDIDATES = [
@@ -59,12 +58,6 @@ LIVE_DIR = PERF_ROOT / "live"
 PERF_REPORT = LIVE_DIR / "report-perf.md"
 VISUAL_REPORT = LIVE_DIR / "report-visual.md"
 GAMES_REPORT = LIVE_DIR / "report-games.md"
-AUDIT_LATEST = AUDIT_DIR / "latest"
-AUDIT_SUMMARY = AUDIT_LATEST / "summary.json"
-AUDIT_LEDGER = AUDIT_DIR / "ledger.json"
-AUDIT_REPORT = ROOT / "progress" / "reports" / "audit-latest.md"
-AUDIT_BENCH_REPORT = ROOT / "progress" / "reports" / "audit-benchmark-latest.md"
-AUDIT_SELF_REPORT = ROOT / "progress" / "reports" / "audit-self-check-latest.md"
 VISUAL_HISTORY_DIR = VISUAL_ROOT / "history"
 PERF_HISTORY_DIR = PERF_ROOT / "history"
 PERF_CATALOG_SOURCES = [
@@ -96,8 +89,7 @@ AREA_REPORTS = {
 }
 
 REPORT_CHOICES = [
-    "Rendimiento", "Visual", "Juegos", "Conformidad", "Auditoría JSON",
-    "Auditoría · fallos inyectados", "Auditoría · self-check", "Recomendaciones",
+    "Rendimiento", "Visual", "Juegos", "Conformidad", "Recomendaciones",
     "Histórico consolidado", "Histórico visual", "Histórico rendimiento",
     "Histórico quality gate",
 ]
@@ -874,7 +866,6 @@ class Dashboard(ChartMixin):
             ("games", "▣", "Videojuegos"),
             ("idle", "◷", "Idle"),
             ("container", "❏", "Contenedores"),
-            ("audit", "⚑", "Auditoría JSON"),
             ("reports", "▥", "Informes"),
             ("history", "▨", "Historial"),
         ]
@@ -920,7 +911,6 @@ class Dashboard(ChartMixin):
         self._button(bar, "▶ Ejecutar todo", self.run_all, ACCENT, "#07101f")
         self._button(bar, "▶ Tests visuales", self.run_visual_live, PANEL2, FG)
         self._button(bar, "▶ Rendimiento", self.run_perf_live, PANEL2, FG)
-        self._button(bar, "▶ Auditoría JSON", self.run_audit, PANEL2, FG)
         self._button(bar, "Idle app", self.run_idle, PANEL2, FG)
         self._button(bar, "Refrescar", self.reload, PANEL2, FG)
         self.stop_button = self._button(bar, "■ Detener", self.stop, "#3a2026", RED)
@@ -935,7 +925,7 @@ class Dashboard(ChartMixin):
         self.page_host.pack(fill="both", expand=True, padx=18, pady=(2, 4))
         self.pages = {}
         for key in ("summary", "perf", "visual", "conformance", "video", "games",
-                    "history", "idle", "container", "audit", "reports"):
+                    "history", "idle", "container", "reports"):
             frame = tk.Frame(self.page_host, bg=BG)
             self.pages[key] = frame
         self.tab_summary = self.pages["summary"]
@@ -948,7 +938,6 @@ class Dashboard(ChartMixin):
         self.tab_container = self.pages["container"]
         self.tab_reports = self.pages["reports"]
         self.tab_history = self.pages["history"]
-        self.tab_audit = self.pages["audit"]
 
         self._build_summary()
         self._build_perf()
@@ -961,7 +950,6 @@ class Dashboard(ChartMixin):
             if hasattr(self, btn):
                 self.buttons.append(getattr(self, btn))
         self._build_container()
-        self._build_audit()
         self._build_reports()
         self._build_history()
 
@@ -999,8 +987,6 @@ class Dashboard(ChartMixin):
             CONFORMANCE_REPORT,
             VISUAL_HISTORY_DIR,
             PERF_HISTORY_DIR,
-            AUDIT_SUMMARY,
-            AUDIT_LEDGER,
             *sorted((ROOT / "progress" / "reports").glob("*-latest.md")),
         ]
         state = []
@@ -1554,135 +1540,223 @@ class Dashboard(ChartMixin):
 
     # --------------------------------------------------------------- history
     def _build_history(self):
+        """History page: did each area improve or get worse, in plain words
+        and charts. Data comes from the recorded runs (history.py)."""
         tab = self.tab_history
         self._page_header(
             tab, "Historial",
-            "Corridas guardadas con datos detallados en JSON y comparación.",
+            "¿Mejoró o empeoró? Cada corrida terminada se guarda sola; aquí se "
+            "compara la última con la anterior y se ve la evolución.",
         )
         top = tk.Frame(tab, bg=BG)
-        top.pack(fill="x", pady=(4, 6))
-        tk.Label(top, text="Historial", bg=BG, fg=FG,
-                 font=(FONT, 11, "bold")).pack(side="left")
-        self.history_summary = tk.Label(top, text="", bg=BG, fg=MUTED,
-                                       font=(FONT, 9))
-        self.history_summary.pack(side="left", padx=10)
+        top.pack(fill="x", pady=(2, 4))
+        self.history_summary = tk.Label(top, text="", bg=BG, fg=MUTED, font=(FONT, 9))
+        self.history_summary.pack(side="left")
         for label, command in (
-            ("Registrar visual", lambda: self._record_history("visual")),
-            ("Registrar perf", lambda: self._record_history("perf")),
-            ("Comparar visual", lambda: self._compare_history("visual")),
-            ("Comparar perf", lambda: self._compare_history("perf")),
+            ("Guardar corrida visual actual", lambda: self._record_history("visual")),
+            ("Guardar corrida de rendimiento actual", lambda: self._record_history("perf")),
         ):
             tk.Button(
                 top, text=label, command=command, bg=PANEL2, fg=FG,
                 activebackground=HOVER, relief="flat", bd=0,
                 highlightthickness=0, padx=8, pady=3, font=(FONT, 9, "bold"),
             ).pack(side="right", padx=2)
+        self.history_sections = {}
+        for area, title in (("visual", "Fidelidad visual"), ("perf", "Rendimiento")):
+            box = tk.Frame(tab, bg=PANEL, padx=12, pady=8)
+            box.pack(fill="both", expand=True, pady=(4, 4))
+            head = tk.Frame(box, bg=PANEL)
+            head.pack(fill="x")
+            tk.Label(head, text=title, bg=PANEL, fg=FG, font=(FONT, 12, "bold")).pack(side="left")
+            verdict = tk.Label(head, text="", bg=PANEL, fg=MUTED, font=(FONT, 14, "bold"))
+            verdict.pack(side="left", padx=14)
+            detail = tk.Label(box, text="", bg=PANEL, fg=FG, font=(FONT, 10), justify="left",
+                              anchor="w", wraplength=1150)
+            detail.pack(fill="x", pady=(2, 6))
+            charts = tk.Frame(box, bg=PANEL)
+            charts.pack(fill="both", expand=True)
+            trend = tk.Canvas(charts, bg=PANEL, height=200, highlightthickness=0)
+            trend.pack(side="left", fill="both", expand=True, padx=(0, 6))
+            changes = tk.Canvas(charts, bg=PANEL, height=200, highlightthickness=0)
+            changes.pack(side="left", fill="both", expand=True)
+            trend.bind("<Configure>", lambda _e: self._fill_history())
+            self.history_sections[area] = {"verdict": verdict, "detail": detail,
+                                           "trend": trend, "changes": changes}
 
-        visual_frame = tk.Frame(tab, bg=BG)
-        visual_frame.pack(fill="x", pady=(4, 8))
-        tk.Label(visual_frame, text="Visual", bg=BG, fg=FG,
-                 font=(FONT, 10, "bold")).pack(anchor="w")
-        columns = ("date", "commit", "pages", "pass", "fail", "overall", "delta")
-        self.history_visual_tree = ttk.Treeview(
-            visual_frame, columns=columns, show="headings", selectmode="browse",
-            height=6,
-        )
-        for column, label, width, anchor in [
-            ("date", "Fecha", 150, "w"),
-            ("commit", "Commit", 90, "w"),
-            ("pages", "Páginas", 80, "e"),
-            ("pass", "PASS", 70, "e"),
-            ("fail", "FAIL", 70, "e"),
-            ("overall", "Overall", 80, "e"),
-            ("delta", "Δ overall", 90, "e"),
-        ]:
-            self.history_visual_tree.heading(column, text=label)
-            self.history_visual_tree.column(column, width=width, anchor=anchor)
-        self.history_visual_tree.pack(fill="x")
+    # Thresholds below which a change is "the same" (measurement noise).
+    HISTORY_VISUAL_POINTS = 0.5     # mean overall score, percentage points
+    HISTORY_PERF_RELATIVE = 0.05    # mean work ratio, relative change
 
-        perf_frame = tk.Frame(tab, bg=BG)
-        perf_frame.pack(fill="x", pady=(4, 8))
-        tk.Label(perf_frame, text="Rendimiento", bg=BG, fg=FG,
-                 font=(FONT, 10, "bold")).pack(anchor="w")
-        columns = ("date", "commit", "scenarios", "pass", "warn", "fail", "ratio", "delta")
-        self.history_perf_tree = ttk.Treeview(
-            perf_frame, columns=columns, show="headings", selectmode="browse",
-            height=6,
-        )
-        for column, label, width, anchor in [
-            ("date", "Fecha", 150, "w"),
-            ("commit", "Commit", 90, "w"),
-            ("scenarios", "Escenarios", 90, "e"),
-            ("pass", "PASS", 70, "e"),
-            ("warn", "WARN", 70, "e"),
-            ("fail", "FAIL", 70, "e"),
-            ("ratio", "Ratio", 80, "e"),
-            ("delta", "Δ ratio", 90, "e"),
-        ]:
-            self.history_perf_tree.heading(column, text=label)
-            self.history_perf_tree.column(column, width=width, anchor=anchor)
-        self.history_perf_tree.pack(fill="x")
-
-        self.history_detail = tk.Text(
-            tab, height=12, bg=PANEL, fg=FG, relief="flat", wrap="word",
-            padx=10, pady=8, font=(MONO, 9),
-        )
-        self.history_detail.pack(fill="both", expand=True, pady=(4, 0))
-        self.history_detail.configure(state="disabled")
-        self.history_note = tk.Label(
-            tab, text="Cada corrida se guarda como JSON detallado en "
-                     "debug/artifacts/visual/history y debug/artifacts/perf/history. Comparar muestra los casos "
-                     "que empeoraron o mejoraron.",
-            bg=BG, fg=MUTED, anchor="w", font=(FONT, 9), wraplength=1100,
-        )
-        self.history_note.pack(fill="x", pady=(6, 0))
+    @staticmethod
+    def _short_date(value):
+        text = str(value or "")
+        return f"{text[6:8]}/{text[4:6]} {text[9:11]}:{text[11:13]}" if len(text) >= 13 else text or "—"
 
     def _fill_history(self):
-        if not hasattr(self, "history_visual_tree"):
+        if not hasattr(self, "history_sections"):
             return
         visual = (self.history or {}).get("visual", [])
         perf = (self.history or {}).get("perf", [])
-        for tree in (self.history_visual_tree, self.history_perf_tree):
-            for item in tree.get_children():
-                tree.delete(item)
-        previous_overall = None
-        for index, run in enumerate(visual):
-            summary = run.get("summary") or {}
-            overall = summary.get("mean_overall")
-            delta = None
-            if previous_overall is not None and isinstance(overall, (int, float)):
-                delta = overall - previous_overall
-            previous_overall = overall if isinstance(overall, (int, float)) else previous_overall
-            self.history_visual_tree.insert("", "end", values=(
-                run.get("recorded_at", "—"),
-                run.get("git_commit", "—"),
-                summary.get("pages", "—"),
-                summary.get("pass", "—"),
-                summary.get("fail", "—"),
-                _num(overall, 2),
-                _num(delta, 3) if delta is not None else "—",
-            ))
-        previous_ratio = None
-        for index, run in enumerate(perf):
-            summary = run.get("summary") or {}
-            ratio = summary.get("mean_work_ratio")
-            delta = None
-            if previous_ratio is not None and isinstance(ratio, (int, float)):
-                delta = ratio - previous_ratio
-            previous_ratio = ratio if isinstance(ratio, (int, float)) else previous_ratio
-            self.history_perf_tree.insert("", "end", values=(
-                run.get("recorded_at", "—"),
-                run.get("git_commit", "—"),
-                summary.get("scenarios", "—"),
-                summary.get("pass", "—"),
-                summary.get("warn", "—"),
-                summary.get("fail", "—"),
-                _num(ratio, 3),
-                _num(delta, 3) if delta is not None else "—",
-            ))
         self.history_summary.configure(
-            text=f"{len(visual)} corridas visuales · {len(perf)} de rendimiento"
+            text=f"{len(visual)} corridas visuales guardadas · {len(perf)} de rendimiento"
         )
+        self._history_area("visual", visual, key="mean_overall", count_key="pages",
+                           higher_better=True, unit=" %", item_key="overall")
+        self._history_area("perf", perf, key="mean_work_ratio", count_key="scenarios",
+                           higher_better=False, unit="x", item_key="work_ratio")
+
+    def _history_area(self, area, runs, *, key, count_key, higher_better, unit, item_key):
+        sec = self.history_sections[area]
+        what = "páginas" if area == "visual" else "escenarios"
+        # Only runs that measured the same set as the latest one are compared
+        # and drawn: a run of 15 scenarios says nothing about one of 270.
+        size = (runs[-1].get("summary") or {}).get(count_key) if runs else None
+        same = [r for r in runs if (r.get("summary") or {}).get(count_key) == size]
+        others = len(runs) - len(same)
+        runs = same
+        points = [(self._short_date(r.get("recorded_at")), (r.get("summary") or {}).get(key)) for r in runs]
+        self._draw_trend(
+            sec["trend"],
+            ("Fidelidad visual media por corrida (más alto es mejor)" if higher_better
+             else "Coste de NativaX frente a Chromium por corrida (más bajo es mejor)"),
+            points, higher_better, unit)
+        scope = (f"Se comparan solo corridas que midieron los mismos {size} {what}"
+                 + (f" ({others} corrida(s) de otro tamaño se omiten)." if others else ".")) if size else ""
+        if len(runs) < 2:
+            sec["verdict"].configure(text="SIN DATOS SUFICIENTES", fg=MUTED)
+            sec["detail"].configure(text=(
+                f"Hace falta otra corrida completa de los mismos {size} {what} para saber si mejoró o "
+                f"empeoró. Ejecuta los tests desde la barra superior. {scope}" if size else
+                "Hace falta terminar al menos dos corridas para comparar. Ejecuta los tests desde la "
+                "barra superior."))
+            self._draw_changes(sec["changes"], "Qué cambió", [], higher_better, unit)
+            return
+        prev, last = runs[-2].get("summary") or {}, runs[-1].get("summary") or {}
+        p, c = prev.get(key), last.get(key)
+        n_prev, n_last = prev.get(count_key), last.get(count_key)
+        if not isinstance(p, (int, float)) or not isinstance(c, (int, float)):
+            sec["verdict"].configure(text="NO MEDIDO", fg=MUTED)
+            sec["detail"].configure(text="Una de las dos corridas no tiene la media calculada.")
+        elif n_prev != n_last:
+            sec["verdict"].configure(text="NO COMPARABLE", fg=YELLOW)
+            sec["detail"].configure(text=(
+                f"La corrida anterior midió {n_prev} {what} y la última {n_last}: la media no es "
+                f"comparable porque no se midió lo mismo."))
+        else:
+            delta = c - p
+            if higher_better:
+                threshold = self.HISTORY_VISUAL_POINTS
+                better = delta > threshold
+                worse = delta < -threshold
+                change = f"{p:.2f} % → {c:.2f} % ({delta:+.2f} puntos)"
+            else:
+                threshold = abs(p) * self.HISTORY_PERF_RELATIVE
+                better = delta < -threshold
+                worse = delta > threshold
+                pct = (delta / p * 100) if p else 0
+                change = f"{p:.2f}x → {c:.2f}x ({pct:+.1f} %)"
+            verdict, color = ("MEJORÓ", GREEN) if better else ("EMPEORÓ", RED) if worse else ("IGUAL", MUTED)
+            counts = " · ".join(
+                f"{label} {prev.get(k, '—')} → {last.get(k, '—')}"
+                for k, label in (("pass", "PASS"), ("warn", "WARN"), ("fail", "FAIL")) if k in last)
+            sec["verdict"].configure(text=verdict, fg=color)
+            sec["detail"].configure(text=(
+                f"{'Media' if higher_better else 'Coste medio'}: {change}. {counts}. "
+                f"Comparado: {self._short_date(runs[-2].get('recorded_at'))} "
+                f"({runs[-2].get('git_commit') or '—'}) → {self._short_date(runs[-1].get('recorded_at'))} "
+                f"({runs[-1].get('git_commit') or '—'}). Un cambio menor que "
+                + (f"{self.HISTORY_VISUAL_POINTS} puntos" if higher_better
+                   else f"{int(self.HISTORY_PERF_RELATIVE * 100)} %")
+                + f" se cuenta como igual (ruido de medición). {scope}"))
+        items = []
+        if history_engine is not None:
+            # The same two runs the verdict compares (same measured set).
+            try:
+                older = json.loads(Path(runs[-2]["file"]).read_text())
+                newer = json.loads(Path(runs[-1]["file"]).read_text())
+                diff = (history_engine._visual_delta if area == "visual"
+                        else history_engine._perf_delta)(older, newer)
+                items = [(d["id"], d.get(item_key)) for d in diff
+                         if isinstance(d.get(item_key), (int, float)) and d.get(item_key) != 0]
+            except Exception as error:  # noqa: BLE001 - logged, chart says no data
+                items = []
+                self._append_log(f"historial {area}: {error}\n")
+        self._draw_changes(sec["changes"], f"Qué {what} mejoraron (verde) o empeoraron (rojo)",
+                           items, higher_better, unit)
+
+    def _draw_trend(self, canvas, title, points, higher_better, unit):
+        canvas.delete("all")
+        width = max(canvas.winfo_width(), 380)
+        height = max(canvas.winfo_height(), 180)
+        canvas.create_text(10, 10, anchor="nw", text=title, fill=MUTED, font=(FONT, 9, "bold"))
+        measured = [(i, label, v) for i, (label, v) in enumerate(points) if isinstance(v, (int, float))]
+        if not measured:
+            canvas.create_text(width / 2, height / 2, text="Todavía no hay corridas guardadas", fill=MUTED)
+            return
+        values = [v for _, _, v in measured]
+        lo, hi = min(values), max(values)
+        pad = (hi - lo) * 0.15 or abs(hi) * 0.05 or 1
+        lo, hi = lo - pad, hi + pad
+        left, top, right, bottom = 54, 34, width - 16, height - 34
+        n = max(len(points) - 1, 1)
+        def xy(i, v):
+            return left + (right - left) * (i / n if len(points) > 1 else 0.5), bottom - (v - lo) / (hi - lo) * (bottom - top)
+        for frac in (0, 0.5, 1):
+            y = bottom - frac * (bottom - top)
+            canvas.create_line(left, y, right, y, fill="#1c2530")
+            canvas.create_text(left - 6, y, anchor="e", text=f"{lo + (hi - lo) * frac:.1f}", fill=MUTED,
+                               font=(FONT, 7))
+        prev = None
+        for i, label, v in measured:
+            x, y = xy(i, v)
+            if prev is not None:
+                better = (v > prev[2]) if higher_better else (v < prev[2])
+                same = abs(v - prev[2]) < 1e-9
+                canvas.create_line(prev[0], prev[1], x, y, width=3,
+                                   fill=MUTED if same else (GREEN if better else RED))
+            prev = (x, y, v)
+        step = max(1, len(measured) // 8)
+        for k, (i, label, v) in enumerate(measured):
+            x, y = xy(i, v)
+            last = k == len(measured) - 1
+            canvas.create_oval(x - 4, y - 4, x + 4, y + 4, fill=ACCENT if last else FG, outline="")
+            if last or k % step == 0:
+                canvas.create_text(x, y - 10, text=f"{v:.2f}{unit}", fill=FG, font=(FONT, 8, "bold"))
+                canvas.create_text(x, bottom + 14, text=label, fill=MUTED, font=(FONT, 7))
+
+    def _draw_changes(self, canvas, title, items, higher_better, unit):
+        """Diverging bars: improvements to the right in green, regressions to
+        the left in red, the 7 largest of each."""
+        canvas.delete("all")
+        width = max(canvas.winfo_width(), 380)
+        height = max(canvas.winfo_height(), 180)
+        canvas.create_text(10, 10, anchor="nw", text=title, fill=MUTED, font=(FONT, 9, "bold"))
+        if not items:
+            canvas.create_text(width / 2, height / 2, text="Sin cambios medidos entre las dos últimas corridas",
+                               fill=MUTED)
+            return
+        signed = [(name, v if higher_better else -v) for name, v in items]   # >0 means better
+        better = sorted((x for x in signed if x[1] > 0), key=lambda x: -x[1])[:7]
+        worse = sorted((x for x in signed if x[1] < 0), key=lambda x: x[1])[:7]
+        canvas.create_text(width - 12, 10, anchor="ne", fill=MUTED, font=(FONT, 8),
+                           text=f"mejoraron {sum(1 for _, v in signed if v > 0)} · "
+                                f"empeoraron {sum(1 for _, v in signed if v < 0)}")
+        rows = worse[::-1] + better
+        top, row_h = 32, max(12, min(20, (height - 40) // max(1, len(rows))))
+        mid = width * 0.62
+        scale = max(abs(v) for _, v in rows) or 1
+        span = min(width - mid - 70, mid - 230)
+        for i, (name, v) in enumerate(rows):
+            y = top + i * row_h + row_h / 2
+            length = span * abs(v) / scale
+            color = GREEN if v > 0 else RED
+            x0, x1 = (mid, mid + length) if v > 0 else (mid - length, mid)
+            canvas.create_rectangle(x0, y - row_h / 2 + 2, x1, y + row_h / 2 - 2, fill=color, outline="")
+            raw = v if higher_better else -v
+            canvas.create_text(x1 + 4 if v > 0 else x0 - 4, y, anchor="w" if v > 0 else "e",
+                               text=f"{raw:+.2f}{unit}", fill=FG, font=(FONT, 7))
+            canvas.create_text(10, y, anchor="w", text=str(name)[-34:], fill=FG, font=(FONT, 8))
+        canvas.create_line(mid, top - 4, mid, top + len(rows) * row_h, fill=MUTED)
 
     def _record_history(self, area):
         if history_engine is None:
@@ -1699,35 +1773,6 @@ class Dashboard(ChartMixin):
             self._append_log(f"historial: {error}\n")
         self.history = self._load_history()
         self._fill_history()
-
-    def _compare_history(self, area):
-        if history_engine is None:
-            messagebox.showinfo("Historial", "debug/logic/history/history.py no está disponible.")
-            return
-        try:
-            result = history_engine.compare(area)
-        except Exception as error:
-            self._append_log(f"historial: {error}\n")
-            return
-        lines = [
-            f"Área: {result['area']}",
-            f"Anterior: {result['previous']} ({result['previous_commit']})",
-            f"Actual:   {result['current']} ({result['current_commit']})",
-            "",
-            "Resumen:",
-        ]
-        lines.extend(history_engine._summary_delta_text(
-            result["summary_previous"], result["summary_current"]
-        ))
-        lines.extend(["", f"Casos cambiados: {len(result['deltas'])}", ""])
-        for delta in result["deltas"][:40]:
-            lines.append(json.dumps(delta, ensure_ascii=False))
-        if len(result["deltas"]) > 40:
-            lines.append(f"... y {len(result['deltas']) - 40} más")
-        self.history_detail.configure(state="normal")
-        self.history_detail.delete("1.0", "end")
-        self.history_detail.insert("1.0", "\n".join(lines))
-        self.history_detail.configure(state="disabled")
 
     def _record_history_if_needed(self):
         if history_engine is None:
@@ -2347,200 +2392,11 @@ class Dashboard(ChartMixin):
         self._start(["debug/engines/performance/container/matrix.sh"], "matriz Docker")
 
     # -------------------------------------------------------------- reports
-    # ---------------------------------------------------------- JSON audit
-    def _build_audit(self):
-        tab = self.tab_audit
-        self._page_header(
-            tab, "Auditoría JSON",
-            "Pantallas JSON generadas y ejecutadas en NativaX y en Chromium (referencia); "
-            "defectos agrupados, reproducidos, minimizados y con instrucciones para corregirlos.",
-        )
-        top = tk.Frame(tab, bg=BG)
-        top.pack(fill="x", pady=(4, 6))
-        tk.Label(top, text="Escenarios", bg=BG, fg=MUTED, font=(FONT, 9)).pack(side="left")
-        self.audit_budget = tk.Spinbox(top, from_=10, to=100000, increment=10, width=7,
-                                       bg=PANEL2, fg=FG, buttonbackground=PANEL2,
-                                       insertbackground=FG, relief="flat")
-        self.audit_budget.delete(0, "end")
-        self.audit_budget.insert(0, "200")
-        self.audit_budget.pack(side="left", padx=(6, 10))
-        for text, command in (("▶ Auditar", self.run_audit),
-                              ("Fallos inyectados", self.run_audit_benchmark),
-                              ("Self-check", self.run_audit_selfcheck),
-                              ("Abrir el juez (explorador completo)", self.open_audit_judge)):
-            button = tk.Button(top, text=text, command=command, bg=PANEL2, fg=FG,
-                               activebackground=HOVER, relief="flat", bd=0,
-                               highlightthickness=0, padx=10, pady=4,
-                               font=(FONT, 9, "bold"))
-            button.pack(side="left", padx=(0, 6))
-            self.buttons.append(button)
-        self.audit_summary = tk.Label(top, text="", bg=BG, fg=MUTED, font=(FONT, 9),
-                                      justify="left")
-        self.audit_summary.pack(side="left", padx=10)
-
-        panes = tk.PanedWindow(tab, orient="horizontal", bg=BG, sashwidth=6,
-                               bd=0, sashrelief="flat")
-        panes.pack(fill="both", expand=True)
-        left = tk.Frame(panes, bg=BG)
-        panes.add(left, stretch="always")
-        columns = ("issue", "severity", "kind", "subsystem", "component", "property",
-                   "count", "minimized", "repro", "novelty")
-        self.audit_tree = ttk.Treeview(left, columns=columns, show="headings",
-                                       selectmode="browse")
-        for column, label, width, anchor in [
-            ("issue", "Issue", 100, "w"), ("severity", "Gravedad", 70, "w"),
-            ("kind", "Tipo", 80, "w"), ("subsystem", "Subsistema", 92, "w"),
-            ("component", "Componente", 100, "w"), ("property", "Propiedad", 130, "w"),
-            ("count", "Ocurr.", 52, "e"), ("minimized", "Min.", 40, "c"),
-            ("repro", "Repro", 46, "c"), ("novelty", "Novedad", 70, "w"),
-        ]:
-            self.audit_tree.heading(column, text=label)
-            self.audit_tree.column(column, width=width, anchor=anchor)
-        scroll = ttk.Scrollbar(left, orient="vertical", command=self.audit_tree.yview)
-        self.audit_tree.configure(yscrollcommand=scroll.set)
-        self.audit_tree.pack(side="left", fill="both", expand=True)
-        scroll.pack(side="left", fill="y")
-        for severity, color in (("critical", RED), ("high", RED), ("medium", YELLOW),
-                                ("low", MUTED), ("info", PURPLE)):
-            self.audit_tree.tag_configure(severity, foreground=color)
-        self.audit_tree.tag_configure("odd", background=SUBTLE)
-        self.audit_tree.bind("<<TreeviewSelect>>", self._on_audit_select)
-        self.audit_tree.bind("<Button-3>", self._audit_context_menu)
-        right = tk.Frame(panes, bg=PANEL, width=640)
-        panes.add(right, stretch="never")
-        right.pack_propagate(False)
-        self.audit_detail = MarkdownView(right)
-        self.audit_detail.pack(fill="both", expand=True)
-        self._audit_selected = None
-
-    def _fill_audit(self):
-        if not hasattr(self, "audit_tree"):
-            return
-        summary = _load_json(AUDIT_SUMMARY)
-        selected = self.audit_tree.selection()
-        for item in self.audit_tree.get_children():
-            self.audit_tree.delete(item)
-        if not summary:
-            self.audit_summary.configure(
-                text="sin ejecución · python3 debug/engines/bug_detection/audit.py run")
-            return
-        m = summary.get("metrics") or {}
-        cov = (summary.get("coverage") or {}).get("componentes") or {}
-        props = (summary.get("coverage") or {}).get("propiedades") or {}
-        self.audit_summary.configure(text=(
-            f"{summary.get('run_id')} · {m.get('executed', 0)} ejecutados · "
-            f"{m.get('verified', 0)} verificados · {m.get('rejected', 0)} rechazados · "
-            f"{m.get('unique_issues', 0)} defectos únicos ({m.get('new_issues', 0)} nuevos, "
-            f"{m.get('regressions', 0)} regresiones) · {m.get('minimized', 0)} minimizados · "
-            f"componentes {cov.get('verified', 0)}/{cov.get('universe', '—')} · "
-            f"propiedades {props.get('verified', 0)}/{props.get('universe', '—')} · "
-            f"{m.get('wall_s', 0):.0f} s"))
-        for index, issue in enumerate(summary.get("issues") or []):
-            tags = [issue.get("severity", "")]
-            if index % 2:
-                tags.append("odd")
-            repro = issue.get("reproducible")
-            self.audit_tree.insert("", "end", iid=issue["issue_id"], tags=tuple(tags), values=(
-                issue["issue_id"], issue.get("severity"), issue.get("kind"),
-                issue.get("subsystem"), ", ".join((issue.get("component_types") or [])[:3]) or "—",
-                issue.get("property") or "—", issue.get("count"),
-                "sí" if issue.get("minimized") else "no",
-                "—" if repro is None else ("sí" if repro else "no"),
-                issue.get("novelty"),
-            ))
-        keep = selected[0] if selected and self.audit_tree.exists(selected[0]) else None
-        children = self.audit_tree.get_children()
-        if keep or children:
-            self.audit_tree.selection_set(keep or children[0])
-
-    def _on_audit_select(self, _event=None):
-        selection = self.audit_tree.selection()
-        if not selection:
-            return
-        issue_id = selection[0]
-        if issue_id == self._audit_selected:
-            return
-        self._audit_selected = issue_id
-        path = AUDIT_LATEST / "issues" / f"{issue_id}.md"
-        try:
-            self.audit_detail.render(path.read_text(), path.parent)
-        except OSError:
-            self.audit_detail.render(f"# {issue_id}\n\nNo existe `{path}`.", ROOT)
-
-    def _audit_context_menu(self, event):
-        row = self.audit_tree.identify_row(event.y)
-        if not row:
-            return
-        self.audit_tree.selection_set(row)
-        menu = tk.Menu(self.root, tearoff=0, bg=PANEL2, fg=FG, activebackground=HOVER)
-        issue_dir = AUDIT_LATEST / "issues"
-        menu.add_command(label="Copiar instrucciones para el LLM",
-                         command=lambda: self._copy_file(issue_dir / f"{row}.md"))
-        menu.add_command(label="Copiar informe JSON",
-                         command=lambda: self._copy_file(issue_dir / f"{row}.json"))
-        menu.add_separator()
-        menu.add_command(label="Reproducir (replay)", command=lambda: self._audit_command(
-            ["replay", str(issue_dir / f"{row}.json")], f"replay {row}"))
-        menu.add_command(label="Verificar corrección", command=lambda: self._audit_command(
-            ["verify", row], f"verificar {row}"))
-        menu.add_command(label="Promover a regresión", command=lambda: self._audit_command(
-            ["promote", row], f"promover {row}"))
-        menu.add_separator()
-        menu.add_command(label="Abrir carpeta de la auditoría",
-                         command=lambda: subprocess.Popen(["xdg-open", str(AUDIT_LATEST)]))
-        menu.tk_popup(event.x_root, event.y_root)
-
-    def _copy_file(self, path: Path):
-        try:
-            self._copy_text(path.read_text())
-            self._append_log(f"[auditoría] copiado {path.name}\n")
-        except OSError as error:
-            self._append_log(f"[auditoría] {error}\n")
-
-    def _audit_command(self, args, label, report=None):
-        self._start(["python3", "-u", "debug/engines/bug_detection/audit.py", *args], f"auditoría: {label}",
-                    action={"kind": "audit", "report": report})
-
-    def _audit_budget(self):
-        try:
-            return max(10, int(self.audit_budget.get()))
-        except (ValueError, AttributeError):
-            return 200
-
-    def run_audit(self):
-        self._show_page("audit")
-        self._audit_command(["run", "--budget", str(self._audit_budget())],
-                            f"auditoría JSON ({self._audit_budget()} escenarios)", "Auditoría JSON")
-
-    def run_audit_benchmark(self):
-        self._audit_command(["benchmark", "--budget", str(min(self._audit_budget(), 400))],
-                            "benchmark de fallos inyectados", "Auditoría · fallos inyectados")
-
-    def run_audit_selfcheck(self):
-        self._audit_command(["self-check", "--budget", str(min(self._audit_budget(), 200))],
-                            "self-check Chromium contra Chromium", "Auditoría · self-check")
-
-    def open_audit_judge(self):
-        """Opens the full audit explorer (debug/engines/bug_detection/gui) in its own window."""
-        subprocess.Popen([sys.executable, str(ROOT / "debug" / "engines" / "bug_detection" / "gui" / "app.py")], cwd=ROOT,
-                         start_new_session=True)
-
-    def _finish_audit(self, action):
-        self._audit_selected = None
-        self._last_data_sig = None
-        self._refresh_data()
-        report = action.get("report")
-        if report:
-            self.report_choice.set(report)
-            self._show_page("reports")
-        else:
-            self._show_page("audit")
-
     def _build_reports(self):
         tab = self.tab_reports
         self._page_header(tab, "Informes",
-                          "Un informe independiente por área: rendimiento, visual, juegos, "
-                          "conformidad y auditoría no se mezclan.")
+                          "Un informe independiente por área: rendimiento, visual, juegos "
+                          "y conformidad no se mezclan.")
         top = tk.Frame(tab, bg=BG)
         top.pack(fill="x", pady=(4, 6))
         tk.Label(top, text="Informe", bg=BG, fg=FG,
@@ -2575,7 +2431,6 @@ class Dashboard(ChartMixin):
         self._fill_history()
         self._fill_idle()
         self._fill_container()
-        self._fill_audit()
         self._load_report()
         self._draw_summary()
         self._draw_perf_charts()
@@ -2603,7 +2458,6 @@ class Dashboard(ChartMixin):
         self._draw_visual_charts()
         self._draw_idle()
         self._draw_container()
-        self._fill_audit()
         path = self._write_selected_report()
         if path is not None:
             try:
@@ -3277,9 +3131,6 @@ class Dashboard(ChartMixin):
             "Rendimiento": PERF_REPORT,
             "Visual": VISUAL_REPORT,
             "Juegos": GAMES_REPORT,
-            "Auditoría JSON": AUDIT_REPORT,
-            "Auditoría · fallos inyectados": AUDIT_BENCH_REPORT,
-            "Auditoría · self-check": AUDIT_SELF_REPORT,
             "Recomendaciones": RECOMMENDATIONS_REPORT,
             "Conformidad": CONFORMANCE_REPORT,
             "Histórico consolidado": CONSOLIDATED,
@@ -3368,7 +3219,7 @@ class Dashboard(ChartMixin):
             "# NativaX — informe de fidelidad visual",
             "",
             f"**Generado:** {self._now()} desde `results.json` del juez visual. "
-            "Solo fidelidad visual; rendimiento, juegos y auditoría tienen su propio informe.",
+            "Solo fidelidad visual; rendimiento y juegos tienen su propio informe.",
             "",
             "| Medida | Valor |",
             "|---|---|",
@@ -4172,9 +4023,6 @@ class Dashboard(ChartMixin):
                 action = None
             if action and action.get("kind") == "game_live":
                 self._finish_game_live()
-                action = None
-            if action and action.get("kind") == "audit":
-                self._finish_audit(action)
                 action = None
             if action:
                 try:

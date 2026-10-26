@@ -28,11 +28,10 @@ python3 debug/engines/bug_detection/test_audit.py                               
 python3 debug/engines/bug_detection/gui/app.py                                      # visual explorer (see gui/README.md)
 ```
 
-The Tkinter panel (`debug/engines/performance/gui/perf_gui.py`) has an **Auditoría JSON**
-page (run, fault benchmark, self-check, issue table, LLM brief, replay /
-verify / promote from the row menu) and the reports **Auditoría JSON**,
-**Auditoría · fallos inyectados** and **Auditoría · self-check**, separate from
-the performance, visual and games reports.
+The audit is meant for AI-assisted debugging, so it is not part of the
+Tkinter dashboard: run it from the command line (above) or through
+`python3 debug/run.py audit ...`, and read its reports under
+`debug/artifacts/audit/`.
 
 ## Pipeline
 
