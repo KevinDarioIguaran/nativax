@@ -135,7 +135,7 @@ RULES: dict[str, dict[str, Any]] = {
     "visual.color.low": {
         "priority": "P1", "area": "color",
         "fires_when": "visual rows present and mean color < 60",
-        "ordering": [["color", "layout"]],
+        "ordering": [["layout", "color"]],
     },
 }
 
@@ -932,7 +932,10 @@ def build_recommendations(
                 expected_impact=[_impact("visual.mean_color", "increase", 90)],
                 title="Computed color diverges from the reference render",
                 evidence=[f"Mean color {categories['Color']:.1f} %."],
-                action="Review inheritance, currentColor, gradients and filters before touching layout.",
+                action=(
+                    "Review inheritance, currentColor, gradients and filters; "
+                    "when position or layout is also low, fix layout first."
+                ),
                 acceptance="Mean color ≥90 % on the measured pages.",
                 confidence="medium",
                 commands=[],
@@ -1103,14 +1106,18 @@ def attach_measured_impact(
         rec.measured_impact = entries
 
 
-def audit(recommendations: list[Recommendation]) -> dict[str, list[dict[str, Any]]]:
+def audit(
+    recommendations: list[Recommendation],
+    rules: dict[str, dict[str, Any]] | None = None,
+) -> dict[str, list[dict[str, Any]]]:
     """Deterministic duplicate and contradiction report for one run.
 
     Duplicates: the same rule id twice, or two rules citing the same subject
     (scenario, page, case). Contradictions: two rules declared exclusive in
     RULES, opposite fix-first ordering claims, or the same metric observed
-    with different values.
+    with different values. `rules` overrides the registry (for tests).
     """
+    rules = RULES if rules is None else rules
     duplicates: list[dict[str, Any]] = []
     contradictions: list[dict[str, Any]] = []
     counts: dict[str, int] = {}
@@ -1132,7 +1139,7 @@ def audit(recommendations: list[Recommendation]) -> dict[str, list[dict[str, Any
                 duplicates.append({
                     "kind": "shared_subjects", "ids": pair, "subjects": shared,
                 })
-            spec_a, spec_b = RULES.get(pair[0], {}), RULES.get(pair[1], {})
+            spec_a, spec_b = rules.get(pair[0], {}), rules.get(pair[1], {})
             if pair[1] in spec_a.get("exclusive", []) or pair[0] in spec_b.get("exclusive", []):
                 contradictions.append({"kind": "exclusive", "ids": pair})
             claims_a = {tuple(c) for c in spec_a.get("ordering", [])}

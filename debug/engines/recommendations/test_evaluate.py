@@ -57,15 +57,13 @@ class EvaluatorTest(unittest.TestCase):
         self.assertEqual(report["cases"][0]["missed"], ["memory.idle.unmeasured"])
 
     def test_priority_mismatch_and_contradiction_fail_the_case(self):
-        cases = [{"id": "x", "input": {"case": "x"},
-                  "expected": ["visual.position.low", "visual.color.low"],
-                  "expected_priorities": {"visual.position.low": "P0"}}]
-        report = evaluate.evaluate(cases, fake_engine({
-            "x": ["visual.position.low", "visual.color.low"],
-        }))
+        fired = ["memory.idle.over_target", "memory.load_peak.unmeasured"]
+        cases = [{"id": "x", "input": {"case": "x"}, "expected": fired,
+                  "expected_priorities": {"memory.idle.over_target": "P0"}}]
+        report = evaluate.evaluate(cases, fake_engine({"x": fired}))
         case = report["cases"][0]
         self.assertEqual(case["priority_mismatches"][0]["actual"], "P1")
-        self.assertEqual(case["contradictions"][0]["kind"], "ordering")
+        self.assertEqual(case["contradictions"][0]["kind"], "exclusive")
         self.assertFalse(case["pass"])
 
 
@@ -94,6 +92,14 @@ class DatasetTest(unittest.TestCase):
             with self.subTest(rule=rule):
                 self.assertTrue(any(rule in c["expected"] for c in self.cases))
                 self.assertTrue(any(rule in c["must_not"] for c in self.cases))
+
+
+    def test_engine_is_clean_on_the_dataset(self):
+        report = evaluate.evaluate(self.cases)
+        findings = [case for case in report["cases"] if not case["pass"]]
+        self.assertEqual(findings, [])
+        summary = report["summary"]
+        self.assertEqual((summary["precision"], summary["recall"]), (1.0, 1.0))
 
 
 if __name__ == "__main__":

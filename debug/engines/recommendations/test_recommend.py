@@ -174,16 +174,20 @@ class RecommendationsTest(unittest.TestCase):
                  rule={"conditions": [], "subjects": ["perf:x"]}),
             make("P1", "b", "t", id="perf.game.over_target",
                  rule={"conditions": [], "subjects": ["perf:x"]}),
-            make("P1", "c", "t", id="visual.position.low", rule={"conditions": []}),
-            make("P1", "d", "t", id="visual.color.low", rule={"conditions": []}),
-            make("P1", "d", "t", id="visual.color.low", rule={"conditions": []}),
+            make("P1", "c", "t", id="fix.layout", rule={"conditions": []}),
+            make("P1", "d", "t", id="fix.color", rule={"conditions": []}),
+            make("P1", "d", "t", id="fix.color", rule={"conditions": []}),
         ]
-        report = recommend.audit(recs)
+        rules = {
+            "fix.layout": {"ordering": [["layout", "color"]]},
+            "fix.color": {"ordering": [["color", "layout"]]},
+        }
+        report = recommend.audit(recs, rules)
         kinds = sorted(d["kind"] for d in report["duplicates"])
         self.assertEqual(kinds, ["same_id", "shared_subjects"])
         self.assertEqual(
             [(c["kind"], c["ids"]) for c in report["contradictions"]],
-            [("ordering", ["visual.color.low", "visual.position.low"])],
+            [("ordering", ["fix.color", "fix.layout"])],
         )
 
     def test_audit_reports_exclusive_rules(self):
@@ -274,6 +278,19 @@ class RecommendationsTest(unittest.TestCase):
         ids = {r.id for r in recommend.build_recommendations(data)}
         self.assertEqual(ids & {"memory.idle.over_target", "memory.idle.unmeasured"},
                          {"memory.idle.over_target"})
+
+    def test_position_and_color_rules_agree_on_what_to_fix_first(self):
+        # Regression: the position rule said "fix layout before color" while
+        # the color rule said "before touching layout".
+        data = dict(BASE)
+        data["visual"] = {"rows": [{"page": "p", "overall": 50, "position": 40,
+                                    "layout": 95, "color": 40, "design": 95}]}
+        recs = recommend.build_recommendations(data)
+        ids = {r.id for r in recs}
+        self.assertLessEqual({"visual.position.low", "visual.color.low"}, ids)
+        self.assertEqual(recommend.audit(recs)["contradictions"], [])
+        color = next(r for r in recs if r.id == "visual.color.low")
+        self.assertNotIn("before touching layout", color.action)
 
 
 if __name__ == "__main__":
