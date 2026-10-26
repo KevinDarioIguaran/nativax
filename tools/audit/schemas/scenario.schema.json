@@ -1,0 +1,422 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "nativax-audit/scenario/1.0",
+  "title": "NativaX JSON interface audit scenario",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "scenario_id",
+    "title",
+    "category",
+    "objective",
+    "source",
+    "seed",
+    "screen",
+    "environment",
+    "preconditions",
+    "actions",
+    "assertions",
+    "expected",
+    "limits",
+    "tags"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "1.0"
+    },
+    "scenario_id": {
+      "type": "string",
+      "pattern": "^[a-z0-9_]+(\\.[a-z0-9_-]+)+$",
+      "maxLength": 160
+    },
+    "title": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200
+    },
+    "category": {
+      "enum": [
+        "valid",
+        "boundary",
+        "invalid_content",
+        "schema_invalid"
+      ],
+      "description": "valid/boundary: legal screens; invalid_content: legal JSON carrying CSS/HTML a browser must drop; schema_invalid: deliberately broken scenario JSON that the validator must reject before execution"
+    },
+    "family": {
+      "enum": [
+        "basic",
+        "combinatorial",
+        "random",
+        "adversarial",
+        "invalid",
+        "schema_invalid",
+        "interaction",
+        "mutation",
+        "regression",
+        "minimized"
+      ]
+    },
+    "objective": {
+      "type": "string",
+      "minLength": 1
+    },
+    "source": {
+      "type": "object",
+      "required": [
+        "kind"
+      ],
+      "properties": {
+        "kind": {
+          "enum": [
+            "generator",
+            "mutation",
+            "regression",
+            "minimization",
+            "manual"
+          ]
+        },
+        "generator": {
+          "type": "string"
+        },
+        "generator_version": {
+          "type": "string"
+        },
+        "parent": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "mutations": {
+          "type": "array"
+        }
+      }
+    },
+    "seed": {
+      "type": [
+        "integer",
+        "null"
+      ]
+    },
+    "screen": {
+      "$ref": "#/$defs/node"
+    },
+    "environment": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "viewport_width": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 4000
+        },
+        "viewport_height": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 4000
+        },
+        "wait_ms": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 5000
+        },
+        "style_mode": {
+          "enum": [
+            "sheet",
+            "inline"
+          ]
+        },
+        "body_margin": {
+          "type": "string"
+        },
+        "font_family": {
+          "type": "string"
+        },
+        "extra_css": {
+          "type": "string",
+          "maxLength": 20000
+        }
+      }
+    },
+    "preconditions": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "actions": {
+      "type": "array",
+      "maxItems": 40,
+      "items": {
+        "type": "object",
+        "required": [
+          "op"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "op": {
+            "enum": [
+              "click",
+              "key",
+              "rebuild",
+              "resize",
+              "script",
+              "type",
+              "wait"
+            ]
+          },
+          "target": {
+            "type": "string"
+          },
+          "text": {
+            "type": "string",
+            "maxLength": 2000
+          },
+          "key": {
+            "type": "string"
+          },
+          "width": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 4000
+          },
+          "height": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 4000
+          },
+          "js": {
+            "type": "string",
+            "maxLength": 4000
+          },
+          "wait_ms": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 5000
+          }
+        }
+      }
+    },
+    "assertions": {
+      "type": "array",
+      "maxItems": 200,
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "target",
+          "property",
+          "operator"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "target": {
+            "type": "string"
+          },
+          "property": {
+            "enum": [
+              "checked",
+              "events",
+              "exists",
+              "focused",
+              "overflow_x",
+              "overflow_y",
+              "rect.height",
+              "rect.width",
+              "rect.x",
+              "rect.y",
+              "style",
+              "text",
+              "value",
+              "visible"
+            ]
+          },
+          "style_property": {
+            "type": "string"
+          },
+          "operator": {
+            "enum": [
+              "equals",
+              "approx",
+              "lt",
+              "lte",
+              "gt",
+              "gte",
+              "contains",
+              "not_equals"
+            ]
+          },
+          "expected": {},
+          "tolerance": {
+            "type": "number",
+            "minimum": 0
+          },
+          "state": {
+            "type": "string",
+            "description": "probe state label; default: last"
+          },
+          "oracle": {
+            "enum": [
+              "absolute",
+              "reference"
+            ],
+            "description": "absolute: checked on NativaX alone; reference: expected value is taken from Chromium"
+          }
+        }
+      }
+    },
+    "expected": {
+      "type": "object",
+      "properties": {
+        "no_crash": {
+          "type": "boolean"
+        },
+        "no_script_errors": {
+          "type": "boolean"
+        },
+        "reference_parity": {
+          "type": "boolean"
+        },
+        "lifecycle_stable": {
+          "type": "boolean"
+        }
+      }
+    },
+    "limits": {
+      "type": "object",
+      "properties": {
+        "max_nodes": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 5000
+        },
+        "max_depth": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 200
+        },
+        "max_ms": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "max_rss_growth_kb": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    "tags": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "uniqueItems": true
+    }
+  },
+  "$defs": {
+    "node": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "type",
+        "id"
+      ],
+      "properties": {
+        "type": {
+          "enum": [
+            "button",
+            "checkbox",
+            "column",
+            "container",
+            "form",
+            "grid",
+            "heading",
+            "image",
+            "inline_text",
+            "input",
+            "link",
+            "list",
+            "list_item",
+            "row",
+            "screen",
+            "scroll",
+            "select",
+            "spacer",
+            "stack",
+            "text",
+            "textarea"
+          ]
+        },
+        "id": {
+          "type": "string",
+          "pattern": "^[A-Za-z][A-Za-z0-9_-]{0,63}$"
+        },
+        "text": {
+          "type": "string",
+          "maxLength": 20000
+        },
+        "style": {
+          "type": "object",
+          "maxProperties": 64,
+          "additionalProperties": {
+            "type": "string",
+            "maxLength": 400
+          }
+        },
+        "attrs": {
+          "type": "object",
+          "maxProperties": 16
+        },
+        "on": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "array",
+            "maxItems": 8,
+            "items": {
+              "type": "object",
+              "required": [
+                "do"
+              ],
+              "properties": {
+                "do": {
+                  "enum": [
+                    "set_text",
+                    "increment",
+                    "set_style",
+                    "toggle_hidden",
+                    "append_text",
+                    "remove"
+                  ]
+                },
+                "target": {
+                  "type": "string"
+                },
+                "text": {
+                  "type": "string"
+                },
+                "property": {
+                  "type": "string"
+                },
+                "value": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "children": {
+          "type": "array",
+          "maxItems": 400,
+          "items": {
+            "$ref": "#/$defs/node"
+          }
+        }
+      }
+    }
+  }
+}

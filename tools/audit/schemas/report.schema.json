@@ -1,0 +1,114 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "nativax-audit/report/1.0",
+  "title": "NativaX audit issue report (one defect, for an LLM or a human to fix)",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["report_version", "issue_id", "run_id", "scenario_id", "status", "novelty", "severity",
+               "confidence", "classification", "location", "system", "expected", "actual", "difference",
+               "reproduction", "evidence", "root_cause", "investigation", "fix_requirements",
+               "regression_tests", "acceptance_criteria", "verification", "occurrences"],
+  "properties": {
+    "report_version": {"const": "1.0"},
+    "issue_id": {"type": "string", "pattern": "^NX-[0-9A-F]{8}$"},
+    "run_id": {"type": "string"},
+    "scenario_id": {"type": "string"},
+    "fingerprint": {"type": "string"},
+    "status": {"enum": ["failed", "oracle_conflict"]},
+    "novelty": {"enum": ["new", "known", "regression"],
+                "description": "new: never seen; known: open in the issue ledger; regression: was marked fixed and reappeared"},
+    "severity": {"enum": ["critical", "high", "medium", "low", "info"]},
+    "confidence": {
+      "type": "object", "required": ["level", "basis"], "additionalProperties": false,
+      "properties": {"level": {"enum": ["high", "medium", "low"]}, "basis": {"type": "string"}},
+      "description": "Rule-based level (see diagnose._confidence); not a calibrated probability"
+    },
+    "classification": {
+      "type": "object", "required": ["kind", "subsystem", "component_type", "property", "stage"],
+      "additionalProperties": false,
+      "properties": {
+        "kind": {"type": "string"}, "subsystem": {"type": "string"},
+        "component_type": {"type": ["string", "null"]}, "component_types": {"type": "array", "items": {"type": "string"}},
+        "property": {"type": ["string", "null"]}, "stage": {"type": "string"}
+      }
+    },
+    "location": {
+      "type": "object", "required": ["screen_id", "element_id", "json_path", "source_file", "symbol", "line"],
+      "additionalProperties": false,
+      "properties": {
+        "screen_id": {"type": ["string", "null"]}, "element_id": {"type": ["string", "null"]},
+        "json_path": {"type": ["string", "null"]}, "minimal_json_path": {"type": ["string", "null"]},
+        "source_file": {"type": ["string", "null"]}, "symbol": {"type": ["string", "null"]},
+        "line": {"type": ["integer", "null"]}, "basis": {"type": ["string", "null"]}
+      }
+    },
+    "system": {
+      "type": "object", "required": ["git_commit", "git_dirty", "generator_version", "engine"],
+      "properties": {
+        "git_commit": {"type": "string"}, "git_dirty": {"type": "boolean"},
+        "generator_version": {"type": ["string", "null"]}, "engine": {"type": ["string", "null"]},
+        "reference": {"type": "string"}, "environment": {"type": "object"}
+      }
+    },
+    "expected": {}, "actual": {}, "difference": {},
+    "reproduction": {
+      "type": "object", "required": ["seed", "steps", "scenario", "minimal_scenario", "command", "minimized"],
+      "properties": {
+        "seed": {"type": ["integer", "null"]}, "family": {"type": ["string", "null"]},
+        "steps": {"type": "array", "items": {"type": "string"}},
+        "scenario": {"type": "object"}, "minimal_scenario": {"type": ["object", "null"]},
+        "minimal_html": {"type": ["string", "null"]},
+        "actions": {"type": "array"}, "command": {"type": "string"},
+        "minimized": {"type": "boolean"}, "minimization": {"type": ["object", "null"]},
+        "reproducible": {"type": ["boolean", "null"], "description": "null: not re-run yet"}
+      }
+    },
+    "evidence": {
+      "type": "object", "required": ["finding", "assertion_id", "message", "artifacts"],
+      "properties": {
+        "finding": {"type": "object"}, "assertion_id": {"type": ["string", "null"]},
+        "message": {"type": "string"}, "consequential_findings": {"type": "integer"},
+        "stack": {"type": "array"}, "artifacts": {"type": "array", "items": {"type": "string"}}
+      }
+    },
+    "root_cause": {
+      "type": "object", "required": ["status", "hypotheses"], "additionalProperties": false,
+      "properties": {
+        "status": {"enum": ["confirmed", "unconfirmed", "not_applicable"]},
+        "hypotheses": {"type": "array", "items": {
+          "type": "object", "required": ["statement", "status", "evidence_for", "evidence_against"],
+          "properties": {"statement": {"type": "string"}, "status": {"enum": ["confirmed", "unconfirmed", "rejected"]},
+                         "evidence_for": {"type": "array"}, "evidence_against": {"type": "array"}}}},
+        "alternatives_to_rule_out": {"type": "array", "items": {"type": "string"}}
+      }
+    },
+    "investigation": {
+      "type": "object", "required": ["first_target", "next_checks", "files_to_inspect"],
+      "properties": {
+        "first_target": {"type": ["string", "null"]},
+        "next_checks": {"type": "array", "items": {"type": "string"}},
+        "files_to_inspect": {"type": "array", "items": {
+          "type": "object", "required": ["file", "basis"],
+          "properties": {"file": {"type": "string"}, "line": {"type": ["integer", "null"]},
+                         "match": {"type": ["string", "null"]}, "basis": {"type": "string"}}}}
+      }
+    },
+    "fix_requirements": {"type": "array", "items": {"type": "string"}},
+    "constraints": {"type": "array", "items": {"type": "string"}},
+    "regression_tests": {"type": "array", "items": {"type": "string"}},
+    "acceptance_criteria": {"type": "array", "items": {"type": "string"}},
+    "verification": {
+      "type": "object", "required": ["fix_applied", "reproduction_passed", "regression_passed"],
+      "properties": {
+        "fix_applied": {"type": "boolean"}, "reproduction_passed": {"type": ["boolean", "null"]},
+        "regression_passed": {"type": ["boolean", "null"]}, "verified_at": {"type": ["string", "null"]},
+        "command": {"type": "string"}
+      }
+    },
+    "occurrences": {
+      "type": "object", "required": ["scenarios", "count"],
+      "properties": {"scenarios": {"type": "array", "items": {"type": "string"}}, "count": {"type": "integer"},
+                     "families": {"type": "array", "items": {"type": "string"}}}
+    }
+  }
+}

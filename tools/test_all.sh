@@ -58,4 +58,4 @@ echo "=== perf analyze ==="
 (cd "$root/tools/perf" && dart analyze)
 
 echo "=== python tooling syntax and recommendation tests ==="
-(cd "$root" && python3 -m py_compile tools/quality_gate.py tools/render_report.py tools/recommend.py tools/run_video_contract.py tools/history.py tools/test_architecture.py tools/perf/gui/perf_gui.py tools/perf/container/summarize.py && python3 tools/test_recommend.py && python3 tools/test_video_manifest.py && python3 tools/test_history.py && python3 tools/test_architecture.py)
+(cd "$root" && python3 -m py_compile tools/quality_gate.py tools/render_report.py tools/recommend.py tools/run_video_contract.py tools/history.py tools/test_architecture.py tools/perf/gui/perf_gui.py tools/perf/container/summarize.py tools/audit/audit.py tools/audit/gui/app.py && python3 tools/test_recommend.py && python3 tools/test_video_manifest.py && python3 tools/test_history.py && python3 tools/test_architecture.py && python3 tools/audit/test_audit.py && python3 tools/audit/gui/test_gui.py)

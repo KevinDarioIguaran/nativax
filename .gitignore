@@ -22,3 +22,7 @@ benchmarks/security/
 
 # Performance suite runs, fetched suites and app idle measurements.
 .perf/
+.audit/
+
+# Python bytecode from the tooling.
+__pycache__/
