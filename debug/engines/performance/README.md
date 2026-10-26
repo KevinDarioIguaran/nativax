@@ -34,7 +34,7 @@ tools/preview_report.sh
 
 ## Scenarios
 
-The registry contains **245 scenarios**: 239 built-in and 6 resolved external
+The registry contains **270 scenarios**: 264 built-in and 6 resolved external
 benchmarks (Browser-Bench, js-framework-benchmark, Cerious-Scroll and uibench).
 They cover DOM, scroll, pure JS, flex/grid/table layout, forms, animation and
 canvas. The checked-in `scenarios.json` drives the dashboard's pending rows; it
@@ -133,7 +133,7 @@ navigation and the same dark/typographic language as the HTML report:
 
 - **Resumen**: fidelity mean, visual/perf verdict donuts, pixel and ink
   statistics, worst pages and scenarios.
-- **Rendimiento**: all 245 scenarios (pending until measured), per-op details,
+- **Rendimiento**: all 270 scenarios (pending until measured), per-op details,
   log-scale work chart, RSS timeline and reasons. The table, cards and charts
   refresh automatically while a run is active.
 - **Fidelidad visual**: all 300 catalog pages (51 measured, the rest pending),
@@ -165,7 +165,7 @@ debug/engines/performance/gui/run_gui.sh
 
 ![Dashboard summary](../../../progress/reports/perf-gui.png)
 
-![Performance table with 245 scenarios](../../../progress/reports/perf-gui-perf.png)
+![Performance table of the scenario catalog](../../../progress/reports/perf-gui-perf.png)
 
 ## Recommendations
 

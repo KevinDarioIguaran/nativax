@@ -103,13 +103,13 @@ void main() {
     expect(externalSuiteById('millionrows')!.fetchHint, contains('npm'));
   });
 
-  test('scenario catalog exposes exactly 245 unique scenarios', () {
+  test('scenario catalog exposes exactly 270 unique scenarios', () {
     final file = File('${Directory.current.path}/scenarios.json');
     expect(file.existsSync(), isTrue);
     final rows = jsonDecode(file.readAsStringSync()) as List;
-    expect(rows, hasLength(245));
-    expect(rows.map((row) => row['id']).toSet(), hasLength(245));
-    expect(builtInScenarios, hasLength(239));
+    expect(rows, hasLength(270));
+    expect(rows.map((row) => row['id']).toSet(), hasLength(270));
+    expect(builtInScenarios, hasLength(264));
     expect(rows.first['id'], 'idle.blank');
     expect(
       rows.map((row) => row['id']),

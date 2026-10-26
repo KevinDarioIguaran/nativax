@@ -123,11 +123,11 @@ La GPU se reporta si el kernel expone `gpu_busy_percent`; si no, se dice
 
 ![Panel Tkinter: resumen](../progress/reports/perf-gui.png)
 
-![Tabla de los 245 escenarios](../progress/reports/perf-gui-perf.png)
+![Tabla del catálogo de escenarios](../progress/reports/perf-gui-perf.png)
 
 ## Catálogo de escenarios
 
-El registro contiene **245 escenarios**: 239 internos y 6 benchmarks externos
+El registro contiene **270 escenarios**: 264 internos y 6 benchmarks externos
 resueltos (Browser-Bench, js-framework-benchmark, Cerious-Scroll y uibench).
 Cubren DOM, scroll, JavaScript, layout, formularios, animación y canvas. El
 catálogo se regenera con:
@@ -136,7 +136,7 @@ catálogo se regenera con:
 dart run debug/engines/performance/bin/perf.dart list --json > debug/engines/performance/scenarios.json
 ```
 
-El panel muestra los **245** desde el primer arranque; los no ejecutados
+El panel muestra los **270** desde el primer arranque; los no ejecutados
 aparecen como `pendiente`. Si `scenarios.dart` o `externals.dart` cambian, el
 panel regenera `scenarios.json` en segundo plano; el catálogo visual hace lo
 mismo cuando cambia `fixtures.dart`. La tabla se actualiza automáticamente cada segundo

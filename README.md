@@ -105,7 +105,7 @@ void main() => runApp(const MaterialApp(
 ## Calidad visual y rendimiento
 
 ```bash
-tools/quality_report.sh          # 51 páginas visuales + 245 escenarios + app idle
+tools/quality_report.sh          # 51 páginas visuales + 270 escenarios + app idle
 tools/quality_report.sh --all-visual  # 300 páginas visuales
 tools/quality_report.sh --gui    # y abre el panel Tkinter
 
