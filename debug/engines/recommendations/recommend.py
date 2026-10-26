@@ -660,50 +660,47 @@ def build_recommendations(
         )
 
     dom_rows = worst(category.get("dom", []))
-    if dom_rows:
-        failing = [
-            row for row in dom_rows
-            if _over_target(row)
+    dom_failing = [row for row in dom_rows if _over_target(row)]
+    if dom_failing:
+        failing = dom_failing
+        top = failing[:3]
+        evidence = [
+            f"{row.get('scenario')}: {_ratio_label(row)} "
+            f"({_work(row, 'nativax'):.1f} vs {_work(row, 'chromium'):.1f} ms)"
+            for row in top
         ]
-        if failing:
-            top = failing[:3]
-            evidence = [
-                f"{row.get('scenario')}: {_ratio_label(row)} "
-                f"({_work(row, 'nativax'):.1f} vs {_work(row, 'chromium'):.1f} ms)"
-                for row in top
-            ]
-            recommendations.append(Recommendation(
-                priority="P1",
-                area="DOM / layout",
-                id="perf.dom.over_target",
-                rule=_rule(
-                    [_cond("perf.dom.over_target_count", ">", 0, len(failing))],
-                    criterion=OVER_TARGET_CRITERION,
-                    subjects=[f"perf:{row.get('scenario')}" for row in failing],
-                ),
-                expected_impact=[_impact("perf.dom.over_target_count", "decrease", 0)],
-                title="The dominant cost is in DOM and layout, not pure JS",
-                evidence=evidence + [
-                    f"{len(failing)} DOM scenarios are above the 3× target.",
-                ],
-                action=(
-                    "Batch DOM mutations, avoid recomputing layout per node and "
-                    "make style/layout incremental per subtree."
-                ),
-                acceptance=(
-                    "Creating 1k rows ≤3× Chromium, 10k within budget and "
-                    "no maximum frame >100 ms."
-                ),
-                confidence=(
-                    "high"
-                    if len(failing) >= 3 and perf_coverage >= 0.5
-                    else "medium"
-                ),
-                commands=[
-                    "dart run debug/engines/performance/bin/perf.dart run --only '^dom\\.' "
-                    "--out .perf/dom",
-                ],
-            ))
+        recommendations.append(Recommendation(
+            priority="P1",
+            area="DOM / layout",
+            id="perf.dom.over_target",
+            rule=_rule(
+                [_cond("perf.dom.over_target_count", ">", 0, len(failing))],
+                criterion=OVER_TARGET_CRITERION,
+                subjects=[f"perf:{row.get('scenario')}" for row in failing],
+            ),
+            expected_impact=[_impact("perf.dom.over_target_count", "decrease", 0)],
+            title="The dominant cost is in DOM and layout, not pure JS",
+            evidence=evidence + [
+                f"{len(failing)} DOM scenarios are above the 3× target.",
+            ],
+            action=(
+                "Batch DOM mutations, avoid recomputing layout per node and "
+                "make style/layout incremental per subtree."
+            ),
+            acceptance=(
+                "Creating 1k rows ≤3× Chromium, 10k within budget and "
+                "no maximum frame >100 ms."
+            ),
+            confidence=(
+                "high"
+                if len(failing) >= 3 and perf_coverage >= 0.5
+                else "medium"
+            ),
+            commands=[
+                "dart run debug/engines/performance/bin/perf.dart run --only '^dom\\.' "
+                "--out .perf/dom",
+            ],
+        ))
 
     scroll_rows = worst(category.get("scroll", []))
     if scroll_rows:
@@ -808,7 +805,7 @@ def build_recommendations(
     categories = _visual_categories(visual_rows)
     layout_mean = categories.get("Layout")
     position_mean = categories.get("Position")
-    if dom_rows and layout_mean is not None and position_mean is not None and (
+    if dom_failing and layout_mean is not None and position_mean is not None and (
         layout_mean < 90 and position_mean < 90
     ):
         recommendations.append(Recommendation(
@@ -816,7 +813,7 @@ def build_recommendations(
             area="renderer",
             id="renderer.dom_layout.cross_signal",
             rule=_rule([
-                _cond("perf.dom.measured_rows", ">", 0, len(dom_rows)),
+                _cond("perf.dom.over_target_count", ">", 0, len(dom_failing)),
                 _cond("visual.mean_layout", "<", 90, categories.get("Layout")),
                 _cond("visual.mean_position", "<", 90, categories.get("Position")),
             ]),

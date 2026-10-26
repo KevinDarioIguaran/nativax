@@ -229,6 +229,19 @@ class RecommendationsTest(unittest.TestCase):
         self.assertNotIn("visual.color.low", ids)
         self.assertIn("perf.dom.over_target", ids)
 
+    def test_cross_signal_needs_failing_dom(self):
+        # Regression: any measured DOM row, even one within target, plus low
+        # visual layout fired "the DOM scenarios exceed the work target".
+        data = dict(BASE)
+        data["perf"] = {"results": [row("dom", "dom.a", 10, 10, verdict="PASS")]}
+        data["visual"] = {"rows": [{"page": "p", "overall": 60, "position": 80,
+                                    "layout": 50, "color": 95, "design": 95}]}
+        ids = {r.id for r in recommend.build_recommendations(data)}
+        self.assertNotIn("renderer.dom_layout.cross_signal", ids)
+        data["perf"] = {"results": [row("dom", "dom.a", 100, 10)]}
+        ids = {r.id for r in recommend.build_recommendations(data)}
+        self.assertIn("renderer.dom_layout.cross_signal", ids)
+
 
 if __name__ == "__main__":
     unittest.main()
