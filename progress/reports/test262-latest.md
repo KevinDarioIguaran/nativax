@@ -1,7 +1,7 @@
 # Conformance: test262
 
-- Started: 2026-10-26T19:49:32.413036+00:00
-- Duration: 74.5 s
+- Started: 2026-10-26T20:26:57.305840+00:00
+- Duration: 92.6 s
 - Runner version: 0.2.0
 - Suite revision: `d53ebc8b1931d9f1541e43d59650776e4b766248`
 - Command: `run_test262 test/language/expressions test/language/statements test/language/types test/language/literals`
@@ -14,6 +14,14 @@
 | FAIL | 47 |
 | SKIP | 1108 |
 | ERROR | 0 |
+
+## Delta against the baseline
+
+- Fixed: **0**
+- Regressions: **0**
+- Still failing: **47**
+- New in this run: **0**
+- Missing compared with the baseline: **0**
 
 ## By feature
 

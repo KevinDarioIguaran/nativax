@@ -44,7 +44,6 @@
 
 #include "cutils.h"
 #include "list.h"
-#define ENABLE_DUMPS
 #include "quickjs.h"
 #include "nativax_jit.h"
 #include "libregexp.h"
@@ -83,7 +82,10 @@
 #define __extension__
 #endif
 
-#ifndef NDEBUG
+/* NativaX: dump facilities are opt-in via NATIVAX_QJS_DUMPS. Upstream
+   enables them in every non-NDEBUG build, which adds list bookkeeping to
+   every string allocation/free and costs ~3-10% on string-heavy paths. */
+#if defined(NATIVAX_QJS_DUMPS) && !defined(NDEBUG)
 #define ENABLE_DUMPS
 #endif
 
