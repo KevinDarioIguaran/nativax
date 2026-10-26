@@ -60,7 +60,8 @@ class LeakCriteria {
   final double plateauRatio;
 
   /// With an explicit release sample, growth "returned" when the release
-  /// value is below this fraction of the peak growth over the baseline.
+  /// value is below this fraction of the last batch's growth over the
+  /// baseline (what the release step itself freed).
   final double releaseRetainFraction;
 
   /// Minimum Theil-Sen slope per batch (effect size) for each channel kind.
@@ -400,11 +401,14 @@ ChannelAnalysis classifyChannel(
   final spread = trendSeries.reduce(math.max) - trendSeries.reduce(math.min);
   final tailSpread = tail.reduce(math.max) - tail.reduce(math.min);
   final growth = trendSeries.last - trendSeries.first;
-  final peakGrowth = peak - baseline;
+  // The release step is judged against the level just before it (the last
+  // batch), not the peak: a series that merely fell back from an earlier
+  // peak did not return anything on release.
+  final heldBeforeRelease = last - baseline;
   final returned =
       release != null &&
-      peakGrowth > 0 &&
-      release - baseline < criteria.releaseRetainFraction * peakGrowth;
+      heldBeforeRelease > 0 &&
+      release - baseline < criteria.releaseRetainFraction * heldBeforeRelease;
   final stillGrowing =
       tailSen >= criteria.plateauRatio * sen && tailSen >= minSlope;
   final p = trend.pValue.toStringAsPrecision(3);
@@ -431,10 +435,10 @@ ChannelAnalysis classifyChannel(
       '${release == null ? 'after every per-batch release' : 'after the explicit release'}',
     );
   }
-  if (returned && peakGrowth >= floor) {
+  if (returned && heldBeforeRelease >= floor) {
     return classified(
       LeakClass.boundedHighUsage,
-      'held ${_fmt(peakGrowth, kind)} at peak and returned on release',
+      'held ${_fmt(heldBeforeRelease, kind)} before release and returned it',
     );
   }
   if (trend.pValue < criteria.suspectAlpha &&

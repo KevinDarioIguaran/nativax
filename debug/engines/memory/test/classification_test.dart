@@ -97,6 +97,21 @@ void main() {
       );
     });
 
+    test('a fall from an earlier peak is not a return on release', () {
+      // Regression (audit.control.noisy_engine): no release step ran, the
+      // release sample equals the last batch, and the series had peaked
+      // earlier. Comparing the release to the peak called it "returned".
+      expect(
+        _classOf(
+          _samples(
+            engine: [154265, 731536, 663974, 667294, 357704, 379616],
+            releaseEngine: 379616,
+          ),
+        ),
+        LeakClass.inconclusive,
+      );
+    });
+
     test('growth below the effect-size floor is only suspected', () {
       expect(
         _classOf(
