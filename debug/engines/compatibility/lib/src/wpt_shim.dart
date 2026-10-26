@@ -183,7 +183,8 @@ globalThis.assert_readonly = (o, p, m) => {
 };
 globalThis.assert_unreached = (m) => { throw new AssertionError(m || 'unreached'); };
 globalThis.assert_implements = (v, m) => assert(!!v, m || 'required feature is not implemented');
-globalThis.assert_implements_optional = () => {};
+// testharness.js reports PRECONDITION_FAILED here; the runner maps it to SKIP.
+globalThis.assert_implements_optional = (v, m) => { if (!v) throw new PreconditionError(m || 'optional feature is not implemented'); };
 globalThis.assert_precondition = (v, m) => { if (!v) throw new PreconditionError(m); };
 globalThis.assert_throws_js = (ctor, fn, m) => {
   try { fn(); } catch (e) {

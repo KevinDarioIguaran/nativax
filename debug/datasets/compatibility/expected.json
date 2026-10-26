@@ -1,0 +1,347 @@
+{
+ "description": "Hand-verified expected outcomes for the NativaX conformance runners. Each status is derived from the cited spec rule or from a deliberately wrong fixture, not from a runner run.",
+ "cases": [
+  {
+   "suite": "test262",
+   "id": "validation/pass-same-value.js",
+   "expected": "PASS",
+   "why": "1 + 1 === 2 (ECMA-262 ApplyStringOrNumericBinaryOperator); valid in both modes."
+  },
+  {
+   "suite": "test262",
+   "id": "validation/fail-float-sum.js",
+   "expected": "FAIL",
+   "why": "0.1 + 0.2 is 0.30000000000000004 in binary64; the assertion is deliberately wrong."
+  },
+  {
+   "suite": "test262",
+   "id": "validation/pass-include.js",
+   "expected": "PASS",
+   "why": "compareArray.js is present in harness/ and the mapped array equals [2,4,6]."
+  },
+  {
+   "suite": "test262",
+   "id": "validation/error-missing-include.js",
+   "expected": "ERROR",
+   "why": "The include file does not exist: a harness problem, not an engine verdict."
+  },
+  {
+   "suite": "test262",
+   "id": "validation/pass-negative-parse.js",
+   "expected": "PASS",
+   "why": "`var = 1` is a grammar error, so a parse-phase SyntaxError is raised before evaluation."
+  },
+  {
+   "suite": "test262",
+   "id": "validation/fail-negative-parse-runtime-throw.js",
+   "expected": "FAIL",
+   "why": "The source parses; the SyntaxError is thrown at runtime, which does not satisfy phase: parse."
+  },
+  {
+   "suite": "test262",
+   "id": "validation/pass-negative-runtime.js",
+   "expected": "PASS",
+   "why": "null.x throws TypeError (ToObject on null)."
+  },
+  {
+   "suite": "test262",
+   "id": "validation/fail-negative-wrong-type.js",
+   "expected": "FAIL",
+   "why": "RangeError is thrown where TypeError is expected."
+  },
+  {
+   "suite": "test262",
+   "id": "validation/pass-only-strict.js",
+   "expected": "PASS",
+   "why": "PutValue on an unresolvable reference throws ReferenceError in strict mode code; requires a real strict run."
+  },
+  {
+   "suite": "test262",
+   "id": "validation/pass-no-strict.js",
+   "expected": "PASS",
+   "why": "with is legal in sloppy code and resolves v from the object."
+  },
+  {
+   "suite": "test262",
+   "id": "validation/fail-sloppy-only-without-flag.js",
+   "expected": "FAIL",
+   "why": "No flags means both modes run; with is an early SyntaxError in strict mode code."
+  },
+  {
+   "suite": "test262",
+   "id": "validation/pass-raw-strict-directive.js",
+   "expected": "PASS",
+   "why": "raw: evaluated verbatim; the leading directive makes `public` a reserved word, so a parse SyntaxError occurs."
+  },
+  {
+   "suite": "test262",
+   "id": "validation/pass-async.js",
+   "expected": "PASS",
+   "why": "The promise reaction calls $DONE() with no argument."
+  },
+  {
+   "suite": "test262",
+   "id": "validation/fail-async-done-error.js",
+   "expected": "FAIL",
+   "why": "$DONE is called with an error."
+  },
+  {
+   "suite": "test262",
+   "id": "validation/fail-async-no-done.js",
+   "expected": "FAIL",
+   "why": "$DONE is never called; the async timeout must be a FAIL."
+  },
+  {
+   "suite": "test262",
+   "id": "validation/skip-module.js",
+   "expected": "SKIP",
+   "why": "flags: [module] is outside the global-script bridge (documented runner limitation)."
+  },
+  {
+   "suite": "test262",
+   "id": "validation/skip-host-agent.js",
+   "expected": "SKIP",
+   "why": "$262.agent is a host-only API (documented runner limitation)."
+  },
+  {
+   "suite": "test262",
+   "id": "validation/skip-tco.js",
+   "expected": "SKIP",
+   "why": "tail-call-optimization is a documented QuickJS-ng engine gap."
+  },
+  {
+   "suite": "html5lib-tokenizer",
+   "id": "validation.test#0 [tests] pass: start tag (HTML 13.2.5.6 tag open, 13.2.5.8 tag name)",
+   "expected": "PASS",
+   "why": "start tag (HTML 13.2.5.6 tag open, 13.2.5.8 tag name)"
+  },
+  {
+   "suite": "html5lib-tokenizer",
+   "id": "validation.test#1 [tests] pass: uppercase tag name is lowercased (13.2.5.8)",
+   "expected": "PASS",
+   "why": "uppercase tag name is lowercased (13.2.5.8)"
+  },
+  {
+   "suite": "html5lib-tokenizer",
+   "id": "validation.test#2 [tests] pass: quoted attribute value (13.2.5.36)",
+   "expected": "PASS",
+   "why": "quoted attribute value (13.2.5.36)"
+  },
+  {
+   "suite": "html5lib-tokenizer",
+   "id": "validation.test#3 [tests] pass: self-closing flag (13.2.5.40)",
+   "expected": "PASS",
+   "why": "self-closing flag (13.2.5.40)"
+  },
+  {
+   "suite": "html5lib-tokenizer",
+   "id": "validation.test#4 [tests] pass: comment (13.2.5.43-13.2.5.50)",
+   "expected": "PASS",
+   "why": "comment (13.2.5.43-13.2.5.50)"
+  },
+  {
+   "suite": "html5lib-tokenizer",
+   "id": "validation.test#5 [tests] pass: named character reference in data (13.2.5.72)",
+   "expected": "PASS",
+   "why": "named character reference in data (13.2.5.72)"
+  },
+  {
+   "suite": "html5lib-tokenizer",
+   "id": "validation.test#6 [tests] fail: deliberately wrong expectation, tag names are lowercased",
+   "expected": "FAIL",
+   "why": "deliberately wrong expectation, tag names are lowercased"
+  },
+  {
+   "suite": "html5lib-tokenizer",
+   "id": "validation.test#7 [tests] fail: deliberately wrong expectation, attribute value is y not z",
+   "expected": "FAIL",
+   "why": "deliberately wrong expectation, attribute value is y not z"
+  },
+  {
+   "suite": "html5lib-tokenizer",
+   "id": "validation.test#8 [tests] skip: DOCTYPE identifiers are not exposed to the runner",
+   "expected": "SKIP",
+   "why": "DOCTYPE identifiers are not exposed to the runner"
+  },
+  {
+   "suite": "html5lib-tokenizer",
+   "id": "validation.test#9 [tests] skip: non-Data initial state",
+   "expected": "SKIP",
+   "why": "non-Data initial state"
+  },
+  {
+   "suite": "html5lib-tokenizer",
+   "id": "validation.test#0 [xmlViolationTests] skip: xmlViolation mode is not implemented",
+   "expected": "SKIP",
+   "why": "xmlViolation mode is not implemented by the runner."
+  },
+  {
+   "suite": "html5lib-tokenizer",
+   "id": "zz-broken.test",
+   "expected": "ERROR",
+   "why": "The fixture file is not valid JSON: a harness problem."
+  },
+  {
+   "suite": "wpt-url",
+   "id": "#0 \"http://example.com/a/../b\"",
+   "expected": "PASS",
+   "why": "Path normalization removes the a/.. segment (URL Standard path state, double-dot segment)."
+  },
+  {
+   "suite": "wpt-url",
+   "id": "#1 \"c?q=1#h\" base=\"http://example.com/a/b\"",
+   "expected": "PASS",
+   "why": "Relative path replaces the last base segment; query and fragment are kept."
+  },
+  {
+   "suite": "wpt-url",
+   "id": "#2 \"HTTP://EXAMPLE.COM:80/\"",
+   "expected": "PASS",
+   "why": "Scheme and host are lowercased; the default port 80 is removed."
+  },
+  {
+   "suite": "wpt-url",
+   "id": "#3 \"https://user:pw@example.com:8443/p\"",
+   "expected": "PASS",
+   "why": "Userinfo and a non-default port are preserved."
+  },
+  {
+   "suite": "wpt-url",
+   "id": "#4 \"http://[::1\"",
+   "expected": "PASS",
+   "why": "An unterminated IPv6 literal is a host parse failure, and the fixture expects failure."
+  },
+  {
+   "suite": "wpt-url",
+   "id": "#5 \"relative\"",
+   "expected": "PASS",
+   "why": "A relative input without a base is a failure, and the fixture expects failure."
+  },
+  {
+   "suite": "wpt-url",
+   "id": "#6 \"http://example.com/x\"",
+   "expected": "FAIL",
+   "why": "Deliberately wrong fixture: pathname is /x, the fixture says /y."
+  },
+  {
+   "suite": "wpt-url",
+   "id": "#7 \"http://example.com/\"",
+   "expected": "FAIL",
+   "why": "Deliberately wrong fixture: the URL is valid but the fixture expects failure."
+  },
+  {
+   "suite": "wpt-html-tree",
+   "id": "validation.dat#0",
+   "expected": "PASS",
+   "why": "A p start tag closes an open p element (HTML in body, \"p\" start tag)."
+  },
+  {
+   "suite": "wpt-html-tree",
+   "id": "validation.dat#1",
+   "expected": "PASS",
+   "why": "Adoption agency algorithm reconstructs <i> after </b>."
+  },
+  {
+   "suite": "wpt-html-tree",
+   "id": "validation.dat#2",
+   "expected": "PASS",
+   "why": "A tr in table inserts an implied tbody."
+  },
+  {
+   "suite": "wpt-html-tree",
+   "id": "validation.dat#3",
+   "expected": "FAIL",
+   "why": "Deliberately wrong tree: the element is p, not div."
+  },
+  {
+   "suite": "wpt-html-tree",
+   "id": "validation.dat#4",
+   "expected": "SKIP",
+   "why": "#script-off fixtures need a scripting flag the parser does not have."
+  },
+  {
+   "suite": "wpt-html-tree",
+   "id": "validation.dat#5",
+   "expected": "SKIP",
+   "why": "A foreign (svg) fragment context is skipped by the runner."
+  },
+  {
+   "suite": "wpt",
+   "id": "validation/pass-tagname.html",
+   "expected": "PASS",
+   "why": "createElement in an HTML document gives an uppercase tagName."
+  },
+  {
+   "suite": "wpt",
+   "id": "validation/pass-append-child.html",
+   "expected": "PASS",
+   "why": "appendChild sets parentNode and childNodes."
+  },
+  {
+   "suite": "wpt",
+   "id": "validation/pass-async-done.html",
+   "expected": "PASS",
+   "why": "The async test finishes from a timer via step_func_done."
+  },
+  {
+   "suite": "wpt",
+   "id": "validation/fail-wrong-assert.html",
+   "expected": "FAIL",
+   "why": "assert_equals(2, 3) fails."
+  },
+  {
+   "suite": "wpt",
+   "id": "validation/fail-one-of-two.html",
+   "expected": "FAIL",
+   "why": "One of two subtests fails; a file passes only when every subtest passes."
+  },
+  {
+   "suite": "wpt",
+   "id": "validation/fail-script-error.html",
+   "expected": "FAIL",
+   "why": "An uncaught top-level error is a harness ERROR in testharness.js, which is not a pass."
+  },
+  {
+   "suite": "wpt",
+   "id": "validation/fail-promise-reject.html",
+   "expected": "FAIL",
+   "why": "A rejected promise_test is a subtest FAIL."
+  },
+  {
+   "suite": "wpt",
+   "id": "validation/fail-async-timeout.html",
+   "expected": "FAIL",
+   "why": "An async_test that never completes times out in testharness.js; a timeout is not a pass."
+  },
+  {
+   "suite": "wpt",
+   "id": "validation/skip-precondition.html",
+   "expected": "SKIP",
+   "why": "assert_implements_optional(false) yields PRECONDITION_FAILED in testharness.js, mapped to SKIP, never PASS."
+  },
+  {
+   "suite": "wpt",
+   "id": "validation/skip-reftest.html",
+   "expected": "SKIP",
+   "why": "A reftest without testharness needs a renderer comparison."
+  },
+  {
+   "suite": "wpt",
+   "id": "validation/skip-module.html",
+   "expected": "SKIP",
+   "why": "Module scripts are outside the FFI bridge."
+  },
+  {
+   "suite": "wpt",
+   "id": "validation/skip-testdriver.html",
+   "expected": "SKIP",
+   "why": "testdriver.js needs WebDriver automation."
+  },
+  {
+   "suite": "wpt",
+   "id": "validation/skip-no-tests.html",
+   "expected": "SKIP",
+   "why": "No subtest runs; the runner records it as SKIP, not PASS."
+  }
+ ]
+}

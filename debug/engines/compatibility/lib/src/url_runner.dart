@@ -8,6 +8,7 @@ import 'package:nativa_js/nativa_js.dart';
 import 'package:path/path.dart' as p;
 
 import 'result.dart';
+import 'run_output.dart';
 
 class UrlRunOptions {
   const UrlRunOptions({required this.suitePath, this.limit});
@@ -91,6 +92,7 @@ class UrlRunner {
       startedAt: started,
       durationMs: clock.elapsedMilliseconds,
       results: results,
+      suiteCommit: suiteRevision(options.suitePath),
       command: 'run_url${options.limit == null ? '' : ' --limit ${options.limit}'}',
     );
   }

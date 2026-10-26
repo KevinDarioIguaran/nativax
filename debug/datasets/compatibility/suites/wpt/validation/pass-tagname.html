@@ -1,0 +1,10 @@
+<!doctype html>
+<meta charset="utf-8">
+<script src="/resources/testharness.js"></script>
+<script src="/resources/testharnessreport.js"></script>
+<title>pass-tagname</title>
+<script>
+test(() => {
+  assert_equals(document.createElement("div").tagName, "DIV");
+}, "createElement in an HTML document uppercases tagName (DOM 4.9 qualified name)");
+</script>

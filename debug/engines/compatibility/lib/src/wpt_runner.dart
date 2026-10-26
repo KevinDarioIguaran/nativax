@@ -10,6 +10,7 @@ import 'package:path/path.dart' as p;
 
 import 'headless_layout.dart';
 import 'result.dart';
+import 'run_output.dart';
 import 'wpt_shim.dart';
 
 class WptRunOptions {
@@ -20,9 +21,14 @@ class WptRunOptions {
     this.grep,
     this.timeout = const Duration(seconds: 20),
     this.verbose = false,
+    this.harnessSource = wptShim,
   });
 
   final String suitePath;
+
+  /// The `testharness.js` replacement evaluated before the test scripts.
+  /// Only the runner validation swaps it (for a deliberately broken one).
+  final String harnessSource;
 
   /// Directories relative to the WPT checkout, e.g. `dom/nodes`.
   final List<String> directories;
@@ -103,7 +109,7 @@ class WptRunner {
       startedAt: started,
       durationMs: clock.elapsedMilliseconds,
       results: results,
-      suiteCommit: _gitHead(),
+      suiteCommit: suiteRevision(options.suitePath),
       command:
           'run_wpt ${options.directories.join(' ')}'
           '${options.limit == null ? '' : ' --limit ${options.limit}'}',
@@ -221,6 +227,7 @@ class WptRunner {
     final completed = Completer<void>();
     final subtests = <_Subtest>[];
     final scriptErrors = <String>[];
+    var timedOut = false;
     try {
       engine = QuickJsEngine(
         JavaScriptEngineConfig(
@@ -292,7 +299,7 @@ class WptRunner {
         ),
         styleEngine: styleEngine,
       )..install();
-      e.evaluate(wptShim, filename: '<wpt:testharness>');
+      e.evaluate(options.harnessSource, filename: '<wpt:testharness>');
       e.evaluate(r'''
 for (const el of document.querySelectorAll('[id]')) {
   const id = el.id;
@@ -323,6 +330,9 @@ for (const el of document.querySelectorAll('[id]')) {
           completed.future,
           Future<void>.delayed(options.timeout),
         ]);
+        // testharness.js reports TIMEOUT for tests that never finish; it is
+        // never a pass, even when every reported subtest passed.
+        timedOut = !completed.isCompleted && scriptErrors.isEmpty;
       }
     } on JavaScriptException catch (err) {
       scriptErrors.add('${err.name}: ${err.message}');
@@ -347,6 +357,10 @@ for (const el of document.querySelectorAll('[id]')) {
     }
     clock.stop();
 
+    if (timedOut) {
+      scriptErrors.add('harness timeout after '
+          '${options.timeout.inMilliseconds} ms: not every test completed');
+    }
     if (subtests.isEmpty && scriptErrors.isEmpty) {
       return _result(
         id,
@@ -424,18 +438,6 @@ for (const el of document.querySelectorAll('[id]')) {
     durationMs: durationMs,
   );
 
-  String? _gitHead() {
-    try {
-      final result = Process.runSync('git', [
-        'rev-parse',
-        'HEAD',
-      ], workingDirectory: options.suitePath);
-      if (result.exitCode != 0) return null;
-      return (result.stdout as String).trim();
-    } on ProcessException {
-      return null;
-    }
-  }
 }
 
 class _Subtest {

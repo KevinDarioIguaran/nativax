@@ -127,7 +127,7 @@ Nothing is deleted automatically: evidence is only lost when someone calls
 | `bug_detection/audit.py gen` | `--out <dir>` (required) | — | |
 | `bug_detection/audit.py run/reanalyze` | none | `debug/artifacts/audit/runs/<run>` + `debug/artifacts/audit/latest` + `progress/reports/audit-*.md` | already per-run; report paths hardcoded |
 | `recommendations/recommend.py` | `--out <file>` | `progress/reports/recommendations-latest.md` | |
-| `quality_gate/quality_gate.py` | `--out-dir <dir>` **(added in phase 4)** | `progress/reports` | it was the only engine with no output flag |
+| `quality_gate/quality_gate.py` | `--out <dir>` (alias `--out-dir`) | nothing is written unless asked; `--legacy-outputs` rewrites `progress/reports/quality-gate-latest.*` | writes `gate.json`, `gate.md`, `snapshot.json` |
 | `logic/history/history.py record` | `--out <dir>` | per-area `history/` | |
 | `scripts/render_report.py` | `--out <file>` | next to the input | |
 | `performance/gui/perf_gui.py` | no flag | `debug/artifacts/perf/live/report-*.md`, `progress/reports/conformance-latest.md` | constants at the top of the file |
@@ -161,10 +161,11 @@ the sibling JSONL through `resultsFile`; historical summaries with embedded
   report from fresh data, copies evidence + report into a run and logs
   `[archivo] <área> (<status>): debug/artifacts/runs/...`. Wired: visual (3 buttons + live),
   perf (2 + live), games, games3d, and `quality_report.sh` (`visual` + `perf`).
-- `quality_gate.py`: `--out-dir` writes `quality-gate.json` / `.md` anywhere;
-  `write_reports()` is a separate function so tests can verify output without
-  running the suites. Running the gate no longer has to rewrite the tracked
-  `progress/reports/quality-gate-latest.*`.
+- `quality_gate.py`: `--out DIR` (alias `--out-dir`) writes `gate.json`, `gate.md` and
+  `snapshot.json`; with no flag nothing is written, so running the gate never
+  rewrites the tracked `progress/reports/quality-gate-latest.*` unless
+  `--legacy-outputs` is passed (statuses and formulas:
+  `metrics-gate-compat.md`).
 - Fixed in passing (real bug): `perf_gui` recorded visual history from
   `.visual/latest/latest/results.json`, which does not exist, so the visual
   history never recorded anything. Both call sites now use

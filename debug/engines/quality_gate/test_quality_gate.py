@@ -1,187 +1,184 @@
-"""Tests for the headless quality gate: verdicts and report output."""
-import contextlib
-import hashlib
-import io
+#!/usr/bin/env python3
+"""Tests for the quality gate: per-metric judgment, comparability,
+aggregation of repeated runs, outputs, and the constructed dataset.
+
+    python3 debug/engines/quality_gate/test_quality_gate.py
+"""
+from __future__ import annotations
+
+import copy
 import json
-import shutil
 import sys
 import tempfile
 import unittest
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent))
-import quality_gate
+HERE = Path(__file__).resolve().parent
+sys.path.insert(0, str(HERE))
 
-ROOT = quality_gate.ROOT
-TRACKED = (
-    ROOT / "progress" / "reports" / "quality-gate-latest.json",
-    ROOT / "progress" / "reports" / "quality-gate-latest.md",
-)
+import evaluate_gate  # noqa: E402
+import gate_compare as g  # noqa: E402
+import quality_gate  # noqa: E402
 
 
-def snapshot(overall=80.0, rss=200.0, pass_pages=40, fail_pages=5, pass_rate=75.0):
-    return {
-        "generated_at": "2026-10-25T12:00:00+00:00",
-        "visual": {
-            "source": "x",
-            "pages": pass_pages + fail_pages,
-            "verdicts": {"PASS": pass_pages, "WARN": 0, "FAIL": fail_pages,
-                         "INVALID": 0},
-            "categories": {"overall": overall, "position": overall,
-                           "layout": overall, "color": overall,
-                           "design": overall},
-            "pixels": 1000,
-            "mismatched_pixels": 100,
-            "mismatched_pct": 10.0,
-            "mean_delta_e": 2.0,
-            "mean_ink_pct": 10.0,
-            "images": 90,
-            "worst": [],
-        },
-        "perf": {
-            "scenarios": 10,
-            "verdicts": {"PASS": 7, "WARN": 1, "FAIL": 2, "INVALID": 0},
-            "work": {"list.1000": 100.0},
-            "ratios": {"list.1000": 1.5},
-            "idle": {"rss_mb": rss, "cpu_pct": 0.5, "gpu_pct": None,
-                     "status": "ok"},
-        },
-        "compat": {"test262": {"suite": "test262", "passRate": 70.0,
-                               "counts": {}, "command": None,
-                               "startedAt": None, "path": "x"}},
-        "baseline_path": "x",
-    }
+def base():
+    return copy.deepcopy(evaluate_gate.load_pairs()[0]["baseline"])
 
 
-def file_hashes():
-    out = {}
-    for path in TRACKED:
-        try:
-            out[str(path)] = hashlib.sha256(path.read_bytes()).hexdigest()
-        except OSError:
-            out[str(path)] = None
-    return out
+class JudgeTest(unittest.TestCase):
+    def test_below_min_effect_is_unchanged(self):
+        self.assertEqual(g.judge(g.VISUAL_SCORE, 80.0, 80.4)[0], "unchanged")
+
+    def test_direction_lower_is_better(self):
+        self.assertEqual(g.judge(g.PERF_WORK, 100.0, 50.0)[0], "improved")
+        self.assertEqual(g.judge(g.PERF_WORK, 100.0, 200.0)[0], "regressed")
+
+    def test_relative_tolerance_scales_with_value(self):
+        # 10 % of 1000 ms is 100 ms: a 60 ms change is unchanged.
+        self.assertEqual(g.judge(g.PERF_WORK, 1000.0, 1060.0)[0], "unchanged")
+
+    def test_within_noise_is_inconclusive(self):
+        status, numbers = g.judge(g.PERF_WORK, 100.0, 115.0, (10.0, 1), (10.0, 1))
+        self.assertEqual(status, "inconclusive")
+        self.assertAlmostEqual(numbers["noise_threshold"], 3 * (200 ** 0.5))
+
+    def test_more_runs_shrink_the_noise_term(self):
+        self.assertEqual(g.judge(g.PERF_WORK, 100.0, 115.0, (10.0, 25), (10.0, 25))[0], "regressed")
 
 
-class CompareTest(unittest.TestCase):
-    def test_no_baseline_is_baseline(self):
-        result = quality_gate.compare(snapshot(), None)
-        self.assertEqual(result["verdict"], "BASELINE")
+class ComparabilityTest(unittest.TestCase):
+    def test_same_context_is_comparable(self):
+        ok, reasons, _ = g.comparability(base(), base(), "visual")
+        self.assertTrue(ok, reasons)
 
-    def test_identical_snapshot_is_equal(self):
-        snap = snapshot()
-        baseline = dict(snap)
-        result = quality_gate.compare(snap, baseline)
-        self.assertEqual(result["verdict"], "EQUAL")
-        self.assertEqual(result["regressions"], [])
+    def test_key_on_one_side_only_is_not_comparable(self):
+        current = base()
+        current["context"]["visual"]["extra"] = 1
+        ok, reasons, _ = g.comparability(base(), current, "visual")
+        self.assertFalse(ok)
+        self.assertIn("extra: not recorded in the baseline", reasons)
 
-    def test_only_improvement_is_better(self):
-        baseline = snapshot(overall=70.0, rss=240.0, pass_pages=30,
-                            fail_pages=15, pass_rate=60.0)
-        result = quality_gate.compare(snapshot(overall=80.0, rss=200.0,
-                                                pass_pages=40, fail_pages=5,
-                                                pass_rate=75.0), baseline)
-        self.assertEqual(result["verdict"], "BETTER")
-        self.assertTrue(result["improvements"])
-        self.assertEqual(result["regressions"], [])
+    def test_compat_total_comes_from_counts(self):
+        current = base()
+        current["compat"]["url"]["counts"]["SKIP"] = 5
+        self.assertFalse(g.comparability(base(), current, "compatibility/url")[0])
+        self.assertTrue(g.comparability(base(), current, "compatibility/test262")[0])
 
-    def test_only_regression_is_worse(self):
-        baseline = snapshot(overall=80.0, rss=200.0, pass_pages=40,
-                            fail_pages=5, pass_rate=75.0)
-        result = quality_gate.compare(snapshot(overall=70.0, rss=240.0,
-                                                pass_pages=30, fail_pages=15,
-                                                pass_rate=60.0), baseline)
-        self.assertEqual(result["verdict"], "WORSE")
-
-    def test_mixed_changes_are_mixed(self):
-        baseline = snapshot(overall=80.0, rss=200.0, pass_pages=40,
-                            fail_pages=5, pass_rate=75.0)
-        # Better visual, worse idle.
-        current = snapshot(overall=85.0, rss=240.0, pass_pages=45,
-                           fail_pages=0, pass_rate=80.0)
-        result = quality_gate.compare(current, baseline)
-        self.assertEqual(result["verdict"], "MIXED")
-        self.assertTrue(result["regressions"])
-        self.assertTrue(result["improvements"])
-
-    def test_non_comparable_metrics_are_skipped_not_guessed(self):
-        baseline = snapshot()
-        baseline["visual"] = None
-        result = quality_gate.compare(snapshot(), baseline)
-        # No visual numbers on either side: nothing is invented.
-        self.assertTrue(all(c["area"] != "visual" for c in result["changes"]))
+    def test_unrecorded_keys_are_reported_as_unverified(self):
+        old = base()
+        old.pop("context")
+        ok, _, unverified = g.comparability(old, copy.deepcopy(old), "visual")
+        self.assertTrue(ok)
+        self.assertIn("catalog_digest", unverified)
 
 
-class ReportOutputTest(unittest.TestCase):
+class AggregateTest(unittest.TestCase):
+    def test_mean_and_sample_sd(self):
+        runs = []
+        for value in (90.0, 100.0, 110.0):
+            snapshot = base()
+            snapshot["perf"]["work"]["s1-scroll"] = value
+            runs.append(snapshot)
+        merged = g.aggregate(runs)
+        self.assertEqual(merged["perf"]["work"]["s1-scroll"], 100.0)
+        self.assertEqual(merged["noise"]["performance/s1-scroll"], {"sd": 10.0, "n": 3})
+        self.assertEqual(merged["repeats"], 3)
+
+    def test_different_contexts_are_refused(self):
+        other = base()
+        other["context"]["global"]["environment_class"] = "elsewhere"
+        with self.assertRaises(ValueError):
+            g.aggregate([base(), other])
+
+
+class VerdictTest(unittest.TestCase):
+    def test_precedence(self):
+        self.assertEqual(g.overall({"regressed": 1, "not_comparable": 3}), "regressed")
+        self.assertEqual(g.overall({"improved": 2, "not_comparable": 1}), "not_comparable")
+        self.assertEqual(g.overall({"improved": 1, "inconclusive": 4}), "improved")
+        self.assertEqual(g.overall({"inconclusive": 1}), "inconclusive")
+        self.assertEqual(g.overall({}), "unchanged")
+
+    def test_every_status_is_reachable_in_the_dataset(self):
+        seen = {p["expected"]["verdict"] for p in evaluate_gate.load_pairs()}
+        self.assertTrue(set(g.STATUSES) <= seen, seen)
+
+
+class DatasetTest(unittest.TestCase):
+    def test_pairs_json_is_up_to_date(self):
+        sys.path.insert(0, str(evaluate_gate.DATASET))
+        import build_pairs  # noqa: E402
+        on_disk = json.loads((evaluate_gate.DATASET / "pairs.json").read_text())["pairs"]
+        self.assertEqual(json.loads(json.dumps(build_pairs.PAIRS)), on_disk)
+
+    def test_new_gate_matches_every_expectation(self):
+        result = evaluate_gate.evaluate(evaluate_gate.load_pairs(), evaluate_gate.run_new)
+        self.assertEqual(result["wrong_verdicts"], [])
+        self.assertEqual(result["metric_correct"], result["metric_judgments"])
+
+    def test_legacy_gate_is_worse_on_the_same_pairs(self):
+        pairs = evaluate_gate.load_pairs()
+        new = evaluate_gate.evaluate(pairs, evaluate_gate.run_new)
+        legacy = evaluate_gate.evaluate(pairs, evaluate_gate.run_legacy)
+        self.assertLess(legacy["verdict_accuracy"], new["verdict_accuracy"])
+
+
+class OutputTest(unittest.TestCase):
     def setUp(self):
-        self.tmp = Path(tempfile.mkdtemp(prefix="nativax-gate-"))
-        self.addCleanup(shutil.rmtree, self.tmp, True)
+        self.tmp = Path(tempfile.mkdtemp())
+        pair = evaluate_gate.load_pairs()[1]  # visual-real-gain
+        self.baseline = self.tmp / "baseline.json"
+        self.current = self.tmp / "current.json"
+        self.baseline.write_text(json.dumps(pair["baseline"]))
+        self.current.write_text(json.dumps(pair["current"]))
+        self.legacy = [quality_gate.LEGACY_JSON, quality_gate.LEGACY_MD, quality_gate.BASELINE_DEFAULT]
+        self.before = {p: (p.stat().st_mtime_ns if p.exists() else None) for p in self.legacy}
 
-    def test_write_reports_targets_the_given_directory(self):
-        snap = snapshot()
-        comparison = quality_gate.compare(snap, None)
-        json_path, md_path = quality_gate.write_reports(self.tmp / "out", snap,
-                                                        comparison)
-        self.assertEqual(json_path.parent, self.tmp / "out")
-        self.assertTrue(json_path.exists())
-        self.assertTrue(md_path.exists())
-        data = json.loads(json_path.read_text())
-        self.assertEqual(data["comparison"]["verdict"], "BASELINE")
-        self.assertIn("BASELINE", md_path.read_text())
+    def tearDown(self):
+        after = {p: (p.stat().st_mtime_ns if p.exists() else None) for p in self.legacy}
+        self.assertEqual(self.before, after, "a tracked report was modified")
 
-    def test_main_writes_only_to_out_dir_and_keeps_tracked_reports(self):
-        before = file_hashes()
-        snap = snapshot()
+    def gate(self, *extra):
+        import contextlib
+        import io
+        with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
+            return quality_gate.main(["--baseline", str(self.baseline),
+                                      "--current", str(self.current), *extra])
 
-        def fake_visual():
-            return snap["visual"]
+    def test_default_writes_nothing(self):
+        self.assertEqual(self.gate(), 0)
+        self.assertEqual(sorted(p.name for p in self.tmp.iterdir()), ["baseline.json", "current.json"])
 
-        def fake_perf():
-            return snap["perf"]
+    def test_out_dir(self):
+        out = self.tmp / "report"
+        self.assertEqual(self.gate("--out", str(out)), 0)
+        result = json.loads((out / "gate.json").read_text())
+        self.assertEqual(result["comparison"]["verdict"], "improved")
+        self.assertTrue((out / "gate.md").read_text().startswith("# Quality gate"))
+        self.assertTrue((out / "snapshot.json").exists())
 
-        def fake_compat():
-            return snap["compat"]
+    def test_write_baseline_is_explicit(self):
+        target = self.tmp / "new-baseline.json"
+        self.gate("--write-baseline", str(target))
+        self.assertEqual(json.loads(target.read_text())["visual"]["categories"]["overall"], 82.0)
 
-        originals = (quality_gate.visual_snapshot, quality_gate.perf_snapshot,
-                     quality_gate.compat_snapshot)
-        quality_gate.visual_snapshot = fake_visual
-        quality_gate.perf_snapshot = fake_perf
-        quality_gate.compat_snapshot = fake_compat
-        try:
-            out_dir = self.tmp / "runs" / "gate"
-            baseline = self.tmp / "baseline.json"
-            with contextlib.redirect_stdout(io.StringIO()):
-                code = quality_gate.main([
-                    "--json", "--compat", "none",
-                    "--baseline", str(baseline),
-                    "--out-dir", str(out_dir),
-                ])
-            self.assertEqual(code, 0)
-            self.assertTrue((out_dir / "quality-gate-latest.json").exists())
-            self.assertTrue((out_dir / "quality-gate-latest.md").exists())
-            self.assertTrue(baseline.exists())
+    def test_exit_codes(self):
+        data = json.loads(self.current.read_text())
+        data["context"]["global"]["environment_class"] = "elsewhere"
+        self.current.write_text(json.dumps(data))
+        self.assertEqual(self.gate(), 4)
+        data = json.loads(self.baseline.read_text())
+        data["visual"]["categories"]["overall"] = 90.0
+        self.baseline.write_text(json.dumps(data))
+        self.current.write_text(json.dumps(data | {"visual": dict(data["visual"], categories=dict(
+            data["visual"]["categories"], overall=85.0))}))
+        self.assertEqual(self.gate(), 2)
 
-            # Worse run against that baseline: exit 2 and reports in out_dir.
-            worse = snapshot(overall=60.0, rss=240.0, pass_pages=20,
-                             fail_pages=25, pass_rate=50.0)
-
-            quality_gate.visual_snapshot = lambda: worse["visual"]
-            quality_gate.perf_snapshot = lambda: worse["perf"]
-            quality_gate.compat_snapshot = lambda: worse["compat"]
-            with contextlib.redirect_stdout(io.StringIO()):
-                code = quality_gate.main([
-                    "--json", "--compat", "none",
-                    "--baseline", str(baseline),
-                    "--out-dir", str(out_dir),
-                ])
-            self.assertEqual(code, 2)
-            data = json.loads((out_dir / "quality-gate-latest.json").read_text())
-            self.assertEqual(data["comparison"]["verdict"], "WORSE")
-        finally:
-            (quality_gate.visual_snapshot, quality_gate.perf_snapshot,
-             quality_gate.compat_snapshot) = originals
-        self.assertEqual(file_hashes(), before,
-                         "the gate must not rewrite tracked progress/reports")
+    def test_save_baseline_needs_legacy_flag(self):
+        import contextlib
+        import io
+        with self.assertRaises(SystemExit), contextlib.redirect_stderr(io.StringIO()):
+            quality_gate.main(["--save-baseline"])
 
 
 if __name__ == "__main__":

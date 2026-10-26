@@ -1,0 +1,27 @@
+{"tests": [
+{"description": "pass: start tag (HTML 13.2.5.6 tag open, 13.2.5.8 tag name)",
+ "input": "<a>", "output": [["StartTag", "a", {}]]},
+{"description": "pass: uppercase tag name is lowercased (13.2.5.8)",
+ "input": "<DIV>x</DIV>", "output": [["StartTag", "div", {}], ["Character", "x"], ["EndTag", "div"]]},
+{"description": "pass: quoted attribute value (13.2.5.36)",
+ "input": "<a href='x'>", "output": [["StartTag", "a", {"href": "x"}]]},
+{"description": "pass: self-closing flag (13.2.5.40)",
+ "input": "<br/>", "output": [["StartTag", "br", {}, true]]},
+{"description": "pass: comment (13.2.5.43-13.2.5.50)",
+ "input": "<!--c-->", "output": [["Comment", "c"]]},
+{"description": "pass: named character reference in data (13.2.5.72)",
+ "input": "a&amp;b", "output": [["Character", "a&b"]]},
+{"description": "fail: deliberately wrong expectation, tag names are lowercased",
+ "input": "<A>", "output": [["StartTag", "A", {}]]},
+{"description": "fail: deliberately wrong expectation, attribute value is y not z",
+ "input": "<a b=y>", "output": [["StartTag", "a", {"b": "z"}]]},
+{"description": "skip: DOCTYPE identifiers are not exposed to the runner",
+ "input": "<!DOCTYPE html>", "output": [["DOCTYPE", "html", null, null, true]]},
+{"description": "skip: non-Data initial state",
+ "initialStates": ["RCDATA state"], "lastStartTag": "title",
+ "input": "<b>", "output": [["Character", "<b>"]]}
+],
+"xmlViolationTests": [
+{"description": "skip: xmlViolation mode is not implemented",
+ "input": "a￿b", "output": [["Character", "a�b"]]}
+]}

@@ -5,6 +5,7 @@ import 'package:nativa_html/nativa_html.dart';
 import 'package:path/path.dart' as p;
 
 import 'result.dart';
+import 'run_output.dart';
 
 class Html5libRunOptions {
   const Html5libRunOptions({
@@ -60,7 +61,7 @@ class Html5libRunner {
         final kind = entry.key;
         for (var i = 0; i < list.length; i++) {
           final test = (list[i] as Map).cast<String, Object?>();
-          final description = test['description']?.toString() ?? '(sin descripción)';
+          final description = test['description']?.toString() ?? '(no description)';
           final id = '$name#$i [$kind] $description';
           if (options.limit != null && results.length >= options.limit!) {
             break;
@@ -75,7 +76,7 @@ class Html5libRunner {
       startedAt: started,
       durationMs: clock.elapsedMilliseconds,
       results: results,
-      suiteCommit: _gitHead(),
+      suiteCommit: suiteRevision(options.suitePath),
       command:
           'run_html5lib${options.limit == null ? '' : ' --limit ${options.limit}'}',
     );
@@ -172,19 +173,6 @@ class Html5libRunner {
     );
   }
 
-  String? _gitHead() {
-    try {
-      final result = Process.runSync(
-        'git',
-        ['rev-parse', 'HEAD'],
-        workingDirectory: options.suitePath,
-      );
-      if (result.exitCode != 0) return null;
-      return (result.stdout as String).trim();
-    } on ProcessException {
-      return null;
-    }
-  }
 }
 
 List<Object?> _tokenToJson(Token token) => switch (token) {

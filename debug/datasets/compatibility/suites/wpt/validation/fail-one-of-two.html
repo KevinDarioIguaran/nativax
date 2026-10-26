@@ -1,0 +1,9 @@
+<!doctype html>
+<meta charset="utf-8">
+<script src="/resources/testharness.js"></script>
+<script src="/resources/testharnessreport.js"></script>
+<title>fail-one-of-two</title>
+<script>
+test(() => { assert_true(true); }, "passes");
+test(() => { assert_false(true); }, "deliberately fails");
+</script>
