@@ -30,6 +30,7 @@ class LeakRunner {
           reason: 'safety limit: ${error.message}',
           samples: context.samples,
           durationMs: watch.elapsedMilliseconds,
+          truth: test.truth,
         );
       } catch (error, stack) {
         watch.stop();
@@ -43,6 +44,7 @@ class LeakRunner {
           samples: context.samples,
           durationMs: watch.elapsedMilliseconds,
           evidence: ['$stack'],
+          truth: test.truth,
         );
       }
       results.add(result);

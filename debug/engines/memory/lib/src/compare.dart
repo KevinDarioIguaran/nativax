@@ -59,12 +59,12 @@ String renderLeakComparison(
   required String current,
 }) {
   final b = StringBuffer()
-    ..writeln('# Comparación de fugas')
+    ..writeln('# Leak comparison')
     ..writeln()
-    ..writeln('- Base: `$baseline`')
-    ..writeln('- Actual: `$current`')
+    ..writeln('- Baseline: `$baseline`')
+    ..writeln('- Current: `$current`')
     ..writeln()
-    ..writeln('| Caso | Antes | Ahora | Cambio |')
+    ..writeln('| Case | Before | After | Change |')
     ..writeln('|---|---|---|---|');
   for (final change in changes) {
     b.writeln('| `${change.id}` | '
@@ -75,6 +75,6 @@ String renderLeakComparison(
       changes.where((c) => c.status == 'regression').length;
   b
     ..writeln()
-    ..writeln('Regresiones confirmadas: **$regressions**');
+    ..writeln('Confirmed regressions: **$regressions**');
   return b.toString();
 }

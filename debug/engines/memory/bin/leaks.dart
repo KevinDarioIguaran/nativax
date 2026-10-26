@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:nativa_leaks/leaks.dart';
@@ -13,6 +14,10 @@ Future<void> main(List<String> args) async {
     await _compare(args.sublist(1));
     return;
   }
+  if (args.first == 'evaluate') {
+    await _evaluate(args.sublist(1));
+    return;
+  }
   _usage();
   exitCode = 64;
 }
@@ -23,6 +28,7 @@ Future<void> _run(List<String> args) async {
   int? iterations;
   int? settleMs;
   String? only;
+  var dataset = 'product';
   String? outDir;
   String? jsonPath;
   String? jsonlPath;
@@ -41,6 +47,8 @@ Future<void> _run(List<String> args) async {
         settleMs = int.parse(args[++i]);
       case '--only':
         only = args[++i];
+      case '--dataset':
+        dataset = args[++i];
       case '--out':
         outDir = args[++i];
       case '--json':
@@ -84,7 +92,17 @@ Future<void> _run(List<String> args) async {
     minMonotonicRun: base.minMonotonicRun,
   );
 
-  final cases = allLeakCases().where((c) {
+  final source = switch (dataset) {
+    'product' => allLeakCases(),
+    'audit' => auditLeakCases(),
+    _ => null,
+  };
+  if (source == null) {
+    stderr.writeln('unknown dataset: $dataset (product|audit)');
+    exitCode = 64;
+    return;
+  }
+  final cases = source.where((c) {
     if (only == null) return true;
     return c.id.contains(only) || c.subsystem.contains(only);
   }).toList();
@@ -140,8 +158,9 @@ Future<void> _run(List<String> args) async {
 
   for (final r in results) {
     stdout.writeln(
-      '  ${r.status.label.padRight(13)} ${r.id.padRight(26)} '
-      '${r.reason}',
+      '  ${r.status.label.padRight(13)} '
+      '${(r.classification?.leakClass.label ?? '-').padRight(19)}'
+      '${r.id.padRight(26)} ${r.reason}',
     );
   }
   final fail = results.where((r) => r.status == LeakStatus.fail).length;
@@ -203,6 +222,83 @@ Future<void> _compare(List<String> args) async {
   if (changes.any((c) => c.status == 'regression')) exitCode = 2;
 }
 
+/// Runs the ground-truth dataset `--repeats` times in this process (or loads
+/// existing reports with `--input`) and scores the classifier.
+Future<void> _evaluate(List<String> args) async {
+  var profileName = 'quick';
+  var repeats = 3;
+  String? outDir;
+  final inputs = <String>[];
+  for (var i = 0; i < args.length; i++) {
+    switch (args[i]) {
+      case '--profile':
+        profileName = args[++i];
+      case '--repeats':
+        repeats = int.parse(args[++i]);
+      case '--out':
+        outDir = args[++i];
+      case '--input':
+        inputs.add(args[++i]);
+      case '-h' || '--help':
+        _usage();
+        return;
+      default:
+        stderr.writeln('unknown argument: ${args[i]}');
+        exitCode = 64;
+        return;
+    }
+  }
+  final profile = switch (profileName) {
+    'quick' => LeakProfile.quick,
+    'full' => LeakProfile.full,
+    'stress' => LeakProfile.stress,
+    _ => null,
+  };
+  if (profile == null) {
+    stderr.writeln('unknown profile: $profileName (quick|full|stress)');
+    exitCode = 64;
+    return;
+  }
+  final root = findLeakRepoRoot();
+  final output = outDir ?? p.join(root, 'debug', 'benchmarks', 'leaks', 'evaluation');
+  final runs = <LeakRun>[];
+  if (inputs.isNotEmpty) {
+    runs.addAll(inputs.map(loadLeakRun));
+  } else {
+    for (var r = 1; r <= repeats; r++) {
+      stdout.writeln('repeat $r/$repeats (profile ${profile.name})');
+      final results = await LeakRunner(profile).run(auditLeakCases());
+      final run = LeakRun(
+        metadata: collectLeakMetadata(
+          repoRoot: root,
+          profile: profile.name,
+          command: 'leaks evaluate ${args.join(' ')}'.trim(),
+        ),
+        results: results,
+      );
+      writeLeakReport(run, outputDir: p.join(output, 'repeat-$r'));
+      runs.add(run);
+    }
+  }
+  final evaluation = evaluateLeakRuns(runs);
+  Directory(output).createSync(recursive: true);
+  final json = p.join(output, 'evaluation.json');
+  final md = p.join(output, 'evaluation.md');
+  File(json).writeAsStringSync(
+    const JsonEncoder.withIndent('  ').convert(evaluation.toJson()),
+  );
+  final text = renderLeakEvaluation(
+    evaluation,
+    title: inputs.isNotEmpty ? '${inputs.length} reports' : profile.name,
+  );
+  File(md).writeAsStringSync(text);
+  stdout
+    ..write(text)
+    ..writeln()
+    ..writeln('JSON: $json')
+    ..writeln('MD:   $md');
+}
+
 List<LeakCase> allLeakCases() => [
   releaseControl(),
   retainedControl(),
@@ -218,10 +314,16 @@ void _usage() {
     ..writeln('usage:')
     ..writeln('  dart run bin/leaks.dart run [--profile quick|full|stress]')
     ..writeln('    [--batches N] [--iterations N] [--settle-ms N]')
-    ..writeln('    [--only TEXT] [--list] [--out DIR]')
+    ..writeln(
+      '    [--only TEXT] [--dataset product|audit] [--list] [--out DIR]',
+    )
     ..writeln('    [--json FILE] [--jsonl FILE] [--md FILE]')
     ..writeln(
       '  dart run bin/leaks.dart compare --baseline JSON --current JSON',
     )
-    ..writeln('    [--md FILE]');
+    ..writeln('    [--md FILE]')
+    ..writeln(
+      '  dart run bin/leaks.dart evaluate [--profile quick|full|stress]',
+    )
+    ..writeln('    [--repeats N] [--out DIR] [--input REPORT_JSON ...]');
 }

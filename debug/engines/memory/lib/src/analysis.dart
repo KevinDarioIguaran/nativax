@@ -3,6 +3,7 @@ import 'dart:math' as math;
 
 import 'package:path/path.dart' as p;
 
+import 'classification.dart';
 import 'model.dart';
 
 class LeakResult {
@@ -19,6 +20,8 @@ class LeakResult {
     this.evidence = const [],
     this.reproduce = '',
     this.extra = const {},
+    this.classification,
+    this.truth,
   });
 
   final String id;
@@ -34,6 +37,12 @@ class LeakResult {
   final String reproduce;
   final Map<String, Object?> extra;
 
+  /// Evidence class (`proven_leak`, ...). Null for SKIP/ERROR results.
+  final LeakClassification? classification;
+
+  /// Ground truth, only for dataset cases.
+  final LeakTruth? truth;
+
   Map<String, Object?> toJson() => {
         'id': id,
         'subsystem': subsystem,
@@ -47,6 +56,8 @@ class LeakResult {
         'reproduce': reproduce,
         'samples': [for (final s in samples) s.toJson()],
         if (extra.isNotEmpty) 'extra': extra,
+        if (classification != null) 'classification': classification!.toJson(),
+        if (truth != null) 'truth': truth!.toJson(),
       };
 }
 
@@ -148,6 +159,7 @@ class LeakRun {
                     timers: (m['timers'] as num?)?.toInt(),
                     targets: (m['targets'] as num?)?.toInt(),
                     activeRuntimes: (m['activeRuntimes'] as num?)?.toInt(),
+                    release: m['phase'] == 'release',
                     extra: (m['extra'] as Map?)?.cast<String, Object?>() ??
                         const {},
                   );
@@ -158,15 +170,37 @@ class LeakRun {
             evidence: (map['evidence'] as List?)?.cast<String>() ?? const [],
             reproduce: map['reproduce'] as String? ?? '',
             extra: (map['extra'] as Map?)?.cast<String, Object?>() ?? const {},
+            classification:
+                LeakClassification.fromJson(map['classification']),
+            truth: _truthFromJson(map['truth']),
           );
         }).toList(),
       );
 }
 
+LeakTruth? _truthFromJson(Object? json) {
+  if (json is! Map) return null;
+  return LeakTruth(
+    leaks: json['leaks'] as bool? ?? false,
+    expected: json['expected'] as String? ?? '',
+    rationale: json['rationale'] as String? ?? '',
+  );
+}
+
 /// Analyzes the batch series. It never uses a single OS RSS sample as proof:
 /// resource counters and a sustained trend are required for FAIL.
-LeakResult analyzeLeak(LeakCase test, LeakContext context, int durationMs) {
-  final samples = context.samples;
+///
+/// `status` is the legacy verdict and is computed exactly as before over the
+/// batch samples; `classification` is the evidence class from
+/// [classifyLeak], which also uses the explicit release sample.
+LeakResult analyzeLeak(
+  LeakCase test,
+  LeakContext context,
+  int durationMs, {
+  LeakCriteria criteria = const LeakCriteria(),
+}) {
+  final classification = classifyLeak(context.samples, criteria: criteria);
+  final samples = context.samples.where((s) => !s.release).toList();
   if (samples.length < 3) {
     return LeakResult(
       id: test.id,
@@ -175,8 +209,10 @@ LeakResult analyzeLeak(LeakCase test, LeakContext context, int durationMs) {
       expectation: test.expectation,
       status: LeakStatus.inconclusive,
       reason: 'not enough samples (${samples.length})',
-      samples: samples,
+      samples: context.samples,
       durationMs: durationMs,
+      classification: classification,
+      truth: test.truth,
     );
   }
   final usesEngine = samples.any((s) => (s.engineBytes ?? 0) > 0);
@@ -191,10 +227,16 @@ LeakResult analyzeLeak(LeakCase test, LeakContext context, int durationMs) {
   final slope = _slope(series);
   final increases = _monotonicIncreases(series);
   final resourceDeltas = <String, int>{};
+  // Counter growth is measured from the first batch, not from the baseline:
+  // the first batch pays one-time setup (for example the `document.body`
+  // wrapper), and a single step that never grows again is not sustained
+  // growth. `resourceDeltas` keeps the baseline delta for the report.
+  final resourceTrend = <String, int>{};
   void delta(String name, int? Function(LeakSample) read) {
     final values = samples.map(read).whereType<int>().toList();
     if (values.length == samples.length) {
       resourceDeltas[name] = values.last - values.first;
+      resourceTrend[name] = values.last - values[1];
     }
   }
 
@@ -204,7 +246,7 @@ LeakResult analyzeLeak(LeakCase test, LeakContext context, int durationMs) {
   delta('targets', (s) => s.targets);
   delta('activeRuntimes', (s) => s.activeRuntimes);
 
-  final resourceLeak = resourceDeltas.values
+  final resourceLeak = resourceTrend.values
       .any((d) => d > context.profile.resourceGrowthThreshold);
   final resourceEvidence = resourceDeltas.isNotEmpty && !resourceLeak;
   final sustainedMemory =
@@ -271,12 +313,12 @@ LeakResult analyzeLeak(LeakCase test, LeakContext context, int durationMs) {
     expectation: test.expectation,
     status: status,
     reason: reason,
-    samples: samples,
+    samples: context.samples,
     durationMs: durationMs,
     thresholdBytes: threshold,
     evidence: [
       if (usesEngine) 'heap QuickJS (JS_ComputeMemoryUsage)'
-      else 'RSS del proceso (Dart ProcessInfo.currentRss)',
+      else 'process RSS (Dart ProcessInfo.currentRss)',
       trend,
       if (resourceDeltas.isNotEmpty)
         'resource deltas: ${resourceDeltas.entries.map((e) => '${e.key}=${e.value}').join(', ')}',
@@ -287,6 +329,8 @@ LeakResult analyzeLeak(LeakCase test, LeakContext context, int durationMs) {
       'usesEngineMemory': usesEngine,
       'resourceDeltas': resourceDeltas,
     },
+    classification: classification,
+    truth: test.truth,
   );
 }
 
