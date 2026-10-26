@@ -130,8 +130,9 @@ Future<void> _run(List<String> args) async {
 
   for (final r in results) {
     stdout.writeln(
-      '  ${r.status.label.padRight(13)} ${r.id.padRight(26)} '
-      '${r.reason}',
+      '  ${r.status.label.padRight(13)} '
+      '${(r.classification?.leakClass.label ?? '-').padRight(19)}'
+      '${r.id.padRight(26)} ${r.reason}',
     );
   }
   final fail = results.where((r) => r.status == LeakStatus.fail).length;

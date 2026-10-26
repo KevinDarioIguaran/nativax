@@ -2,6 +2,7 @@
 library;
 
 export 'src/analysis.dart';
+export 'src/classification.dart';
 export 'src/cases/controls.dart';
 export 'src/cases/css_cases.dart';
 export 'src/cases/dom_cases.dart';
@@ -12,3 +13,4 @@ export 'src/compare.dart';
 export 'src/model.dart';
 export 'src/report.dart';
 export 'src/runner.dart';
+export 'src/stats.dart';

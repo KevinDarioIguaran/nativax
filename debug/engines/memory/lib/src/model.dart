@@ -69,6 +69,7 @@ class LeakSample {
     this.timers,
     this.targets,
     this.activeRuntimes,
+    this.release = false,
     this.extra = const {},
   });
 
@@ -81,10 +82,15 @@ class LeakSample {
   final int? timers;
   final int? targets;
   final int? activeRuntimes;
+
+  /// True for the sample taken after the explicit release step that follows
+  /// the last batch ([LeakContext.sampleRelease]). It is not a batch sample.
+  final bool release;
   final Map<String, Object?> extra;
 
   Map<String, Object?> toJson() => {
         'batch': batch,
+        if (release) 'phase': 'release',
         'rssBytes': rssBytes,
         'maxRssBytes': maxRssBytes,
         if (engineBytes != null) 'engineBytes': engineBytes,
@@ -97,6 +103,30 @@ class LeakSample {
       };
 }
 
+/// Ground truth of a dataset case, known by construction.
+class LeakTruth {
+  const LeakTruth({
+    required this.leaks,
+    required this.expected,
+    required this.rationale,
+  });
+
+  /// True when the workload retains memory or resources by construction.
+  final bool leaks;
+
+  /// Class a correct detector should report, given the evidence the case
+  /// exposes (`proven_leak`, `suspected_leak`, `bounded_high_usage`,
+  /// `no_leak`, `inconclusive`).
+  final String expected;
+  final String rationale;
+
+  Map<String, Object?> toJson() => {
+        'leaks': leaks,
+        'expected': expected,
+        'rationale': rationale,
+      };
+}
+
 class LeakCase {
   const LeakCase({
     required this.id,
@@ -104,6 +134,7 @@ class LeakCase {
     required this.scenario,
     required this.expectation,
     required this.run,
+    this.truth,
   });
 
   final String id;
@@ -113,6 +144,9 @@ class LeakCase {
   /// `released`, `retained` (positive control) or `bounded` (cache).
   final String expectation;
   final Future<void> Function(LeakContext context) run;
+
+  /// Set only for ground-truth dataset cases (`audit.*`).
+  final LeakTruth? truth;
 }
 
 class LeakContext {
@@ -138,6 +172,7 @@ class LeakContext {
     int? targets,
     int? activeRuntimes,
     Map<String, Object?> extra = const {},
+    bool release = false,
   }) async {
     checkBudget();
     if (profile.settle > Duration.zero) {
@@ -153,9 +188,31 @@ class LeakContext {
       timers: timers,
       targets: targets,
       activeRuntimes: activeRuntimes,
+      release: release,
       extra: extra,
     ));
   }
+
+  /// Records the sample taken after the case's release step (drop the
+  /// references a correct program would drop, then GC). A leak survives it.
+  Future<void> sampleRelease({
+    int? engineBytes,
+    int? nodes,
+    int? listeners,
+    int? timers,
+    int? targets,
+    int? activeRuntimes,
+  }) =>
+      sample(
+        samples.isEmpty ? 0 : samples.last.batch + 1,
+        engineBytes: engineBytes,
+        nodes: nodes,
+        listeners: listeners,
+        timers: timers,
+        targets: targets,
+        activeRuntimes: activeRuntimes,
+        release: true,
+      );
 
   Future<void> gc([QuickJsEngine? engine]) async {
     engine?.collectGarbage();
