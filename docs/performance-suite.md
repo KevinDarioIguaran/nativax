@@ -1,242 +1,234 @@
-# Rendimiento y respuesta de NativaX
+# Performance suite
 
-Este apartado mide si NativaX **rinde y responde como un navegador** sin usar
-WebView, Chromium embebido, CEF ni Electron. Chromium es solo el instrumento de
-referencia; los dos motores ejecutan la misma página y el mismo JavaScript.
+The performance suite asks whether NativaX stays fast, responsive, and within
+its memory budget while rendering the same page and JavaScript as headless
+Chromium. Chromium is only the measuring instrument; nothing browser-like is
+embedded in NativaX.
 
-Es independiente del juicio visual (`debug/engines/visual_comparison`): allí se pregunta *¿se ve
-igual?*; aquí, *¿se mantiene fluido, responde y cabe en memoria?*
+This is separate from the visual judge: visual fidelity asks *does it look the
+same?*; this suite asks *how much time, memory, and frame work does it cost?*
 
-## Comandos
+## Run it
 
 ```bash
-# Escenarios internos + benchmarks externos vendorizados
-dart run debug/engines/performance/bin/perf.dart run --out .perf/latest
+# Registered DOM/scroll/JS scenarios + vendored external benchmarks
+dart run debug/engines/performance/bin/perf.dart run \
+  --out debug/artifacts/perf/latest
 
-# Añade la medición real de la app Flutter en reposo (abre su ventana ~8 s)
-dart run debug/engines/performance/bin/perf.dart run --app-idle --out .perf/latest
+# Also measure the real Flutter Linux app idle (opens its window)
+dart run debug/engines/performance/bin/perf.dart run --app-idle \
+  --out debug/artifacts/perf/latest
 
-# Panel Tkinter con tabla, gráficas, RSS/CPU y botones de ejecución
+# Only the desktop app on a blank page
+dart run debug/engines/performance/bin/perf.dart idle-app --seconds 5 --build
+
+# Dashboard: summary, performance, visual, idle, reports, history
 python3 debug/engines/performance/gui/perf_gui.py
 ```
 
-El contrato completo (escenarios, fórmulas, salidas y límites) está en
-[`debug/engines/performance/README.md`](../debug/engines/performance/README.md).
+The engine contract, complete scenario table, and output schema are in
+[`../debug/engines/performance/README.md`](../debug/engines/performance/README.md).
+Offscreen measurements run through `flutter test`; the idle target is the real
+Flutter Linux app, not the test harness.
 
-## Qué se mide
+## What is measured
 
-| Métrica | Chromium | NativaX |
+| Metric | Chromium | NativaX |
 |---|---|---|
-| Tiempo del escenario | `performance.now()` en la página | tiempo de evaluación JS |
-| Trabajo de frame | `LayoutDuration + RecalcStyleDuration` (CDP) | coste de `tester.pump()` offscreen |
-| Nodos | `getElementsByTagName('*').length` | idéntico |
-| Heap | `JSHeapUsedSize` | no expuesto |
-| RSS / CPU | PSS/CPU de `/proc` para todo el árbol | idéntico |
-| GPU | `gpu_busy_percent` si el kernel lo expone | idéntico |
-| Puntuación propia de la página | `window.__lastRun` | idéntica |
+| Scenario/workload time | in-page `performance.now()` | JS evaluation wall time |
+| Frame/render work | `LayoutDuration + RecalcStyleDuration` (CDP) | offscreen `tester.pump()` cost |
+| Node count | `getElementsByTagName('*').length` | same |
+| Heap | `JSHeapUsedSize` | not exposed (`—`) |
+| RSS/CPU | PSS/CPU of the process tree from `/proc` | same |
+| GPU busy | `/sys/class/drm/.../gpu_busy_percent` when exposed | same |
+| Page score | `window.__lastRun` when exposed | same |
 
-`Trabajo = escenario + render`. El frame de Chromium es layout/style del hilo
-principal; el de NativaX es un pump offscreen. Están relacionados, pero no son
-el mismo reloj: el cociente es una señal de regresión, no FPS.
+`Work = scenario + render`. Chromium's frame number is main-thread layout/style;
+NativaX's is build/layout/paint in an offscreen pump. They are related clocks,
+not the same clock. The ratio is a regression signal, not FPS.
 
-## Objetivos
+## Targets and verdicts
 
-- Frame p95 de NativaX en scroll ≤ **16,7 ms**; ningún frame > **100 ms**.
-- Trabajo NativaX / Chromium ≤ **3×** (no se aplica a scroll: el compositor de
-  Chromium puede tardar menos de 1 ms y el cociente no tendría sentido).
-- Nodos dentro del **5 %** de Chromium.
-- App de escritorio en reposo: RSS ≤ **250 MB** y CPU ≤ **1 %**.
-- `PASS` si cumple todo, `WARN` con un fallo, `FAIL` con dos o más. Un frame de
-  más de 100 ms es `FAIL` directo.
-- Un fallo del motor o del arnés es `FAIL`; nunca se convierte en `PASS`.
+- NativaX scroll frame p95 **≤ 16.7 ms**; no frame **> 100 ms**.
+- NativaX / Chromium work ratio **≤ 3×** for non-scroll work. Scroll ratios are
+  informational because Chromium's compositor can be sub-millisecond.
+- Node count within **5 %** of Chromium.
+- Desktop app idle: RSS **≤ 250 MB**, CPU **≤ 1 %**.
+- `PASS` if all checks hold; `WARN` for one miss; `FAIL` for two or more. Any
+  frame over 100 ms is a direct `FAIL`.
+- A failed engine or harness is `FAIL`, never a silent `PASS`.
+- `idle.blank` is the offscreen harness baseline (includes the test runner); it
+  is not the real-app 250 MB target.
 
-## Benchmarks integrados
+## Registered scenarios
 
-- **js-framework-benchmark** (Apache-2.0): implementación oficial vanilla
-  keyed, vendorizada. Crear 1.000/10.000 filas, limpiar.
-- **Browser-Bench** (MIT): ejecución Quick de la propia página y lectura de su
-  puntuación.
-- **Cerious-Scroll** (MIT): página real de benchmark, carga y scroll.
-- **uibench** (sin licencia): se descarga en `.perf/suites/`, no se
-  redistribuye.
-- **million-rows-benchmark** (sin licencia): requiere build npm; se documenta
-  como opcional y no se ejecuta por defecto.
-- **PassMark 2D HTML Scroll**: página propietaria no redistribuible;
-  `scroll.2d-tiles` reproduce el mismo trabajo 2D y lo cita.
-- Escenarios internos de filas, scroll 1D/2D y cargas JS modelados sobre esos
-  benchmarks.
-
-## App en reposo (250 MB / 0 % CPU)
-
-El objetivo es del **proceso de la app**, no del arnés de test. La app Linux de
-`examples/web-challenge` acepta `NATIVAX_PERF_PAGE` y carga una página blanca
-desde disco. `idle-app` compila el bundle release si hace falta, la abre, espera
-3 s de calentamiento + 5 s de reposo, muestrea PSS/CPU y la cierra. El resultado
-se escribe en `.perf/app-idle.json` y aparece en el informe y en el panel.
-
-La GPU se reporta si el kernel expone `gpu_busy_percent`; si no, se dice
-`not exposed` en vez de inventar un número.
-
-## Panel Tkinter
-
-`debug/engines/performance/gui/perf_gui.py` abre una ventana con barra lateral de navegación:
-
-- **Resumen**: fidelidad media, donuts de veredictos, píxeles/tinta, peores
-  páginas y escenarios.
-- **Rendimiento**: tabla completa, detalle por operación, barras de trabajo en
-  escala logarítmica, RSS en el tiempo y motivos.
-- **Fidelidad visual**: 300 páginas (51 medidas y el resto pendientes), barras
-  por categoría, píxeles/color, peores causas y miniaturas de
-  Chromium/NativaX/diferencia.
-- **Conformidad**: Test262, html5lib, URL, WPT DOM/CSS/tree con botones para
-  ejecutar cada suite y tabla PASS/FAIL/SKIP/ERROR. Se refresca con los
-  resultados de `.conformance/results`.
-- **Vídeo**: 25 perfiles 360p–2160p, estado del contrato y aviso explícito de
-  que **no hay reproducción real**; botón para relanzar los tests de contrato.
-- **Videojuegos**: 25 perfiles Canvas 2D + 25 3D, tabla de resultados y botón
-  para ejecutar cada lote. No es el game-player Three.js completo.
-- **Vídeo**: 25 perfiles 360p–2160p, estado del contrato y aviso explícito de
-  que **no hay reproducción real**; botón para relanzar los tests de contrato.
-- **Juegos**: 25 perfiles Canvas 2D por resolución/partículas, tabla de
-  resultados y botón para ejecutar el lote de juegos. No es el game-player
-  Three.js completo.
-- **Idle**: RSS/CPU reales frente a 250 MB / 1 % y muestras.
-- **Informes**: un informe independiente por área — **Rendimiento**
-  (`.perf/live/report-perf.md`), **Visual** (`report-visual.md`), **Juegos**
-  (`report-games.md`), **Conformidad**, **Auditoría JSON** y **Recomendaciones**;
-  ninguno mezcla datos de otra área. Los generados por el panel se recalculan desde
-  `results.json`, `app-idle.json` y la matriz cada vez que cambian los datos;
-  se muestra como captura del HTML real (misma tipografía, tablas y colores)
-  y con scroll. Durante una ejecución se muestra el texto actualizado sin
-  lanzar Chromium; al terminar se genera la captura. Los informes
-  **Histórico …** quedan como snapshots manuales.
-- **Historial**: guarda cada corrida como JSON detallado en `.visual/history`
-  y `.perf/history`, compara la última con la anterior y muestra los casos que
-  mejoraron o empeoraron en posición, layout, color, diseño, ΔE, ratio, p95
-  y RSS.
-- **Acciones por fila**: clic derecho en un escenario o página (o el botón
-  **Acciones ▾**) abre un menú para **ver detalles** o **ejecutar solo ese
-  test/página**. Al terminar, el resultado se fusiona en la tabla sin borrar
-  los demás y se abre el detalle.
-- Botones para ejecutar todo, solo visual, solo rendimiento, idle real,
-  refrescar o detener; registro en la propia ventana.
-
-![Panel Tkinter: resumen](../progress/reports/perf-gui.png)
-
-![Tabla del catálogo de escenarios](../progress/reports/perf-gui-perf.png)
-
-## Catálogo de escenarios
-
-El registro contiene **270 escenarios**: 264 internos y 6 benchmarks externos
-resueltos (Browser-Bench, js-framework-benchmark, Cerious-Scroll y uibench).
-Cubren DOM, scroll, JavaScript, layout, formularios, animación y canvas. El
-catálogo se regenera con:
+The registry contains **270 scenarios**: 264 built-in and 6 resolved external
+benchmarks. They cover DOM rows, 1D/2D scroll, pure JS, flex/grid/table layout,
+forms, animation, canvas, and idle. The checked-in `scenarios.json` drives the
+dashboard's pending rows; it is regenerated with:
 
 ```bash
-dart run debug/engines/performance/bin/perf.dart list --json > debug/engines/performance/scenarios.json
+dart run debug/engines/performance/bin/perf.dart list --json \
+  > debug/engines/performance/scenarios.json
 ```
 
-El panel muestra los **270** desde el primer arranque; los no ejecutados
-aparecen como `pendiente`. Si `scenarios.dart` o `externals.dart` cambian, el
-panel regenera `scenarios.json` en segundo plano; el catálogo visual hace lo
-mismo cuando cambia `fixtures.dart`. La tabla se actualiza automáticamente cada segundo
-cuando `results.json`, `app-idle.json`, la matriz Docker o el catálogo cambian,
-también si la ejecución se lanzó fuera del panel. Cada escenario escribe un
-snapshot atómico de `results.json`, así que los resultados aparecen página a
-página sin esperar al final.
+Representative workloads:
 
-## Informe con recomendaciones
+| Scenario | Workload |
+|---|---|
+| `dom.rows-create-1k` / `10k` | Append rows and force layout |
+| `dom.rows-update-10k` | Update every tenth row |
+| `dom.rows-remove-10k` | Clear 10k rows |
+| `scroll.rows-10k` | Scroll and lay out 10k rows |
+| `scroll.2d-tiles` | 900 gradient tiles, 2D scroll |
+| `js.arrays/objects/strings/json` | Pure JS workloads |
+| `idle.blank` | Blank-page offscreen baseline |
+| `external.browserbench-quick` | Browser-Bench Quick Run |
+| `external.jsfb-create-1k/10k`, `-clear` | Vanilla keyed js-framework-benchmark |
+| `external.cerious-load-scroll` | Real Cerious-Scroll page |
+| `external.uibench-load-scroll` | uibench load/scroll |
+| `external.millionrows-load-scroll` | Only when built manually |
 
-`python3 debug/engines/recommendations/recommend.py --out progress/reports/recommendations-latest.md`
-genera un informe determinista con prioridades **P0/P1/P2**, evidencia medida,
-acción, criterio de aceptación y comando. El informe incluye detalle por
-escenario (ratio, p95/max, nodos, RSS y siguiente acción), detalle visual con
-causas raíz por página, tablas de juegos y vídeo, cobertura pendiente por suite
-y procedencia de los datos. No es una caja negra ni inventa
-porcentajes: si falta cobertura lo declara y baja la confianza. `quality_report.sh`
-lo regenera después de las suites, y el panel lo muestra en **Informes →
-Recomendaciones**, separado de los informes de cada área.
+Vendored fixtures and licenses live in `debug/engines/performance/fixtures/`.
+Unlicensed suites are downloaded under `debug/artifacts/perf/suites/` and are
+not redistributed. PassMark's 2D HTML Scroll is proprietary;
+`scroll.2d-tiles` reproduces the workload and cites it.
 
-## Vídeo y juegos por calidad
+## Last recorded baseline
 
-- **Vídeo:** 25 tests de contrato en `packages/nativa_render/test/video_quality_test.dart`
-  cubren 360p, 480p, 720p, 1080p, 1440p, 2160p, retrato, cuadrado, ultrawide,
-  atributos y tamaños CSS. **NativaX todavía no decodifica vídeo**: el test fija
-  el placeholder `▶ video`, las dimensiones y el contrato
-  `MEDIA_ERR_SRC_NOT_SUPPORTED`. No es una prueba de reproducción real.
-- **Juegos:** 25 escenarios Canvas 2D en `debug/engines/performance` con resoluciones
-  640x360, 854x480, 1280x720, 1920x1080 y 2560x1440, y 100–5.000 partículas.
-  Miden un frame de juego; el `examples/game-player` Three.js completo no se
-  ejecuta en esta matriz.
+The last recorded full measurement is **2026-10-24**, Chrome
+152.0.7977.82 headless, viewport 800×900, network blocked, animations frozen.
+It measured **17 of 270 registered scenarios**: **5 PASS, 2 WARN, 10 FAIL,
+0 INVALID**. This is one baseline, not a full-suite rate.
 
-## Línea base medida (2026-10-24)
+| Scenario | Verdict | NativaX ms | Chromium ms | Ratio | Frame p95 | Frame max |
+|---|---|---:|---:|---:|---:|---:|
+| `idle.blank` | PASS | 0.0 | 0.0 | — | — | — |
+| `dom.rows-create-1k` | FAIL | 512.0 | 31.4 | 16.33× | 130.6 | 130.6 |
+| `dom.rows-create-10k` | FAIL | — | 263.1 | — | — | — |
+| `dom.rows-update-10k` | FAIL | — | 29.0 | — | — | — |
+| `dom.rows-remove-10k` | WARN | 161.5 | 6.7 | 23.96× | 98.7 | 98.7 |
+| `scroll.rows-10k` | FAIL | 2357.5 | 1.2 | 1964.60×* | 199.0 | 234.0 |
+| `scroll.2d-tiles` | PASS | 192.8 | 1.2 | 160.69×* | 8.5 | 74.1 |
+| `js.arrays` | PASS | 108.1 | 45.7 | 2.37× | 4.6 | 4.6 |
+| `js.objects` | PASS | 46.3 | 16.3 | 2.84× | 5.2 | 5.2 |
+| `js.strings` | PASS | 20.3 | 13.8 | 1.47× | 5.1 | 5.1 |
+| `js.json` | WARN | 133.9 | 36.0 | 3.72× | 4.9 | 4.9 |
+| `external.browserbench-quick` | FAIL | 14780.1 | 11281.4 | 1.31× | 1330.0 | 1330.0 |
+| `external.jsfb-create-1k` | FAIL | 3723.4 | 118.0 | 31.55× | 272.6 | 272.6 |
+| `external.cerious-load-scroll` | FAIL | 149.7 | 0.2 | 748.62× | 27.9 | 49.9 |
+| `external.uibench-load-scroll` | FAIL | 11.4 | 0.5 | 22.75× | 0.2 | 4.1 |
 
-App Linux en reposo, página blanca: **105,0 MB de RSS y 0,00 % de CPU**
-(objetivo 250 MB / 1 %). GPU no expuesta por el kernel en esta máquina.
+`*` Scroll ratios are informational; the frame p95/max target is the real
+criterion.
 
-Última pasada medida: **17 escenarios** (de los 245 definidos), con
-**4–5 PASS, 2–4 WARN, 9–10 FAIL, 0 INVALID** (última: 5/2/10).
+The desktop app on a blank page measured **105.0 MB RSS and 0.00 % CPU**
+(peak sample 25.45 % CPU during startup/measurement). GPU was not exposed by
+the kernel, so it is reported as `not exposed`, not invented.
 
-- JS puro (`arrays`, `objects`, `strings`, `json`): PASS, 0,4×–2,4×.
-- Crear 1.000 filas: 312–356 ms vs 70–76 ms (4,4×–4,7×, WARN).
-- Crear 10.000 filas: 6,6–8,2 s vs ~245 ms, o timeout del presupuesto JS (FAIL).
-- Actualizar/limpiar 10.000 filas: presupuesto de QuickJS agotado (FAIL).
-- Scroll de 10.000 filas: p95 108–206 ms y frame máximo 128–230 ms (FAIL).
-- Scroll 2D de 900 teselas: p95 6,8–8,4 ms, nodos idénticos (PASS).
-- js-framework-benchmark vanilla 1.000 filas: 13,6×–21,1× y frame de ~170–190 ms (FAIL).
-- Browser-Bench Quick: Chromium 31.176; NativaX no completa (FAIL).
-- Cerious-Scroll real: 416 vs 721 nodos; uibench 13 vs 153 (FAIL).
+Stable findings:
 
-Detalle por escenario y comandos:
-[`progress/reports/perf-latest.md`](../progress/reports/perf-latest.md).
+- Pure JS arrays/objects/strings pass; JSON oscillates between PASS and WARN.
+  QuickJS is not the CPU bottleneck for these cases.
+- Creating 1k rows is roughly 4–16× slower across passes; 10k rows time out or
+  take 6.6–8.2 s.
+- Updating/clearing 10k rows in one JS call exhausts the QuickJS execution
+  budget. That is a real runtime limit, not a harness retry.
+- 10k-row scroll has 108–234 ms p95 frames; the UI visibly stalls.
+- 900-tile 2D scroll has 6.8–8.5 ms p95 and matching node counts; that path can
+  be smooth.
+- Vanilla js-framework-benchmark 1k is 13.6–31.5× slower and leaves a
+  ~170–273 ms frame; 10k does not complete.
+- Cerious/uibench do not initialize the same set of nodes (416 vs 721; 13 vs
+  153), so their ratios include a workload difference.
 
-## Aislamiento con Docker
+The per-scenario report is
+[`../progress/reports/perf-latest.md`](../progress/reports/perf-latest.md). It
+was generated before the documentation-language switch and still contains
+Spanish labels; the raw run files remain the canonical evidence.
+
+## Outputs
+
+```text
+debug/artifacts/perf/latest/
+├── results.json
+├── results.csv
+├── report.md
+├── timeline.csv
+├── app-idle.json
+├── charts/
+└── pages/<scenario>/{chromium,nativax}.json
+```
+
+Each scenario writes an atomic `results.json` snapshot, so the dashboard follows
+a run live. Runs are not FPS promises and are not conformance rates.
+
+## Dashboard and reports
+
+`python3 debug/engines/performance/gui/perf_gui.py` provides:
+
+- summary, visual/perf verdicts, pixels/ink, worst pages/scenarios;
+- all 270 scenarios, pending until measured, with RSS timeline and reasons;
+- the 300-page visual catalog (51 measured, the rest pending);
+- real app idle versus the 250 MB / 1 % target;
+- independent reports for performance, visual, games, conformance, JSON audit,
+  and recommendations;
+- run history comparison and per-row actions to run one scenario/page.
+
+Generated reports:
+
+```bash
+python3 debug/engines/recommendations/recommend.py \
+  --out progress/reports/recommendations-latest.md
+debug/scripts/preview_report.sh
+```
+
+`recommend.py` is deterministic and coverage-aware. It reports missing data as
+missing; it is not an LLM recommendation.
+
+## Quality gate
+
+```bash
+python3 debug/engines/quality_gate/quality_gate.py --run
+python3 debug/engines/quality_gate/quality_gate.py
+python3 debug/engines/quality_gate/quality_gate.py --json
+```
+
+Exit codes: `0` equal/better or baseline created, `2` regression, `3` missing
+measurements. It writes `progress/reports/quality-gate-latest.md` and `.json`.
+A missing measurement is not a pass.
+
+## Container isolation
 
 ```bash
 debug/engines/performance/container/matrix.sh
-debug/engines/performance/container/run.sh --cpus 1 --memory 1g --name low --only 'js.arrays'
+debug/engines/performance/container/run.sh \
+  --cpus 1 --memory 1g --name low --only 'js.arrays'
 ```
 
-Chromium y `flutter test` corren en el mismo contenedor con `--cpus`,
-`--memory` y `--network none`. El panel permite elegir CPU (0,25–4), RAM
-(512 MB–4 GB), nombre y lista de tests antes de lanzar un contenedor a medida. La imagen se construye una vez y monta Flutter y
-el repo en sus rutas reales. Resultados en `.perf/container/` y sección
-**Contenedores** del panel. Son cuotas cgroup, no frecuencia real; no hay
-estresores concurrentes ni soak tests. El RSS de esa tabla es el **PSS del
-arnés** `flutter test` (694–720 MB), no la app; el idle real de la app es
-**105 MB / 0 % CPU**. En el panel se muestra como «RSS arnés / RAM del
-contenedor».
+Chromium and `flutter test` run in one Docker container with `--cpus`,
+`--memory`, and `--network none`. Limits are cgroup quotas, not real CPU
+frequency changes. The RSS in the container table is the **test harness** PSS
+(694–720 MB), not the real app; the app idle measurement is the 105 MB figure
+above.
 
-## Compuerta sin UI (IA/CI)
+## Boundaries and limitations
 
-```bash
-python3 debug/engines/quality_gate/quality_gate.py --run      # visual + rendimiento + compatibilidad
-python3 debug/engines/quality_gate/quality_gate.py            # reutiliza artefactos existentes
-python3 debug/engines/quality_gate/quality_gate.py --json     # JSON limpio
-```
+- Offscreen frames are CPU build/layout/paint, not GPU rasterization or display
+  refresh.
+- Network is blocked for both engines; external resources are absent.
+- Heap is only reported for Chromium.
+- A single pass varies; compare medians/trends, not one millisecond.
+- The JS execution budget is part of the runtime. Work that exceeds it in one
+  call is a runtime failure, not a benchmark artifact.
+- There is no V8 performance baseline.
+- No CI workflow runs this suite automatically.
+- No WebView, Chromium runtime, CEF, or Electron is linked into NativaX.
 
-Códigos de salida: `0` = igual/mejor o base creada, `2` = regresión,
-`3` = faltan mediciones. Escribe `progress/reports/quality-gate-latest.md` y
-`.json`.
+## Related
 
-## Vista previa del informe
-
-```bash
-debug/scripts/preview_report.sh                 # informe consolidado
-debug/scripts/preview_report.sh progress/reports/perf-latest.md
-```
-
-Renderiza Markdown a HTML y lo abre. También está disponible dentro del panel
-Tkinter en la sección **Informes**.
-
-## Límites declarados
-
-- Los frames offscreen son CPU (build/layout/paint), no rasterización GPU ni
-  refresco de pantalla.
-- La red está bloqueada en ambos motores.
-- El heap solo lo reporta Chromium.
-- Crear 10.000 filas en una sola llamada JS agota el presupuesto de ejecución
-  de QuickJS y se reporta como fallo real del runtime.
-- Los números de una sola pasada tienen varianza; el cociente sirve para
-  detectar regresiones, no como medida absoluta de FPS.
-- No es una tasa de compatibilidad.
+- [`benchmarks.md`](benchmarks.md)
+- [`debugging.md`](debugging.md)
+- [`visual-fidelity.md`](visual-fidelity.md)
+- [`../debug/engines/performance/README.md`](../debug/engines/performance/README.md)
+- [`../progress/reports/perf-latest.md`](../progress/reports/perf-latest.md)

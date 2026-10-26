@@ -1,159 +1,183 @@
-# NativaX security audit
+# Security audit
 
-Fecha: 2026-10-20. Alcance: Linux x86_64, Dart JIT, QuickJS-ng 0.17.0, paquetes
-`nativa_js`, `nativa_dom`, `nativa_dom_bindings`, `nativa_html`,
-`nativa_css` y runtime público.
+**Snapshot:** 2026-10-26, `HEAD` `f47240e`, Linux x86_64, Dart 3.13.0 (JIT),
+QuickJS-ng 0.17.0. Scope: `nativa_js`, `nativa_dom`, `nativa_dom_bindings`,
+`nativa_html`, `nativa_css`, and the public runtime.
 
-Este informe **no** declara que NativaX sea “100 % seguro” ni “a prueba de
-exploits”. Recoge lo comprobado y lo que queda abierto.
+This is not a declaration that NativaX is “100 % secure” or exploit-proof. It
+records the tested cases, the fixes, and the residual risks.
 
-## Resultado de la suite
-
-Comando:
+## Suite result
 
 ```bash
 cd debug/engines/security
 dart run bin/security.dart run
 ```
 
-Resultado real: **14 PASS, 0 FAIL, 1 SKIP, 0 ERROR** (15 casos).
+Latest recorded run `debug/benchmarks/security/20261026T024956Z-f47240e/`:
 
-- `internal.callback_globals` pasó a `PASS` al corregir S-04.
-- `SKIP`: `platform.flutter_resource_policy` (requiere harness Flutter).
-- JSON/Markdown en `benchmarks/security/` (ignorado por git).
+| PASS | FAIL | SKIP | ERROR | Total |
+|---:|---:|---:|---:|---:|
+| 44 | 0 | 1 | 0 | 45 |
 
-## Hallazgos
+The SKIP is `platform.flutter_resource_policy`: it needs a Flutter harness and
+cannot run in the pure Dart CLI. The run covers QuickJS only; V8 is not part of
+this suite.
 
-### S-01 — Click y submit programáticos se marcaban como `isTrusted` (corregido)
+A PASS means the **specific attack case** did not produce the unauthorized
+effect. It does not prove the category is safe.
 
-- **Severidad:** alta (si la app usa `isTrusted` para exigir gesto real).
-- **Causa:** `Element.click()` y `requestSubmit()` ponían `isTrusted = true`
-  siempre.
-- **Reproducción:** listener de click comprobaba `event.isTrusted` tras
-  `button.click()`; era `true`.
-- **Corrección:** `click({bool trusted = false})` y
-  `requestSubmit({bool trusted = false})`. El renderer pasa `trusted: true`
-  solo desde gestos reales. `el.click` del puente JS usa `trusted: false`.
-- **Regresión:** `events.programmatic_click_not_trusted` y
+## Findings
+
+### S-01 — Programmatic click/submit were marked trusted (fixed)
+
+- **Severity:** high if the host trusts `isTrusted` as proof of a user gesture.
+- **Cause:** `Element.click()` and `requestSubmit()` always set
+  `isTrusted = true`.
+- **Reproduction:** a click listener observed `isTrusted == true` after
+  `button.click()`.
+- **Fix:** `click({bool trusted = false})` and
+  `requestSubmit({bool trusted = false})`; the renderer passes `trusted: true`
+  only for real host gestures.
+- **Regression:** `events.programmatic_click_not_trusted`,
   `events.programmatic_submit_not_trusted`.
 
-### S-02 — El puente `__nx.host` quedaba accesible a scripts (corregido en runtime)
+### S-02 — Raw `__nx.host` bridge reachable from scripts (fixed in runtime)
 
-- **Severidad:** media.
-- **Causa:** el preludio usaba `__nx.host` y lo dejaba en `globalThis`.
-- **Impacto:** un script podía invocar operaciones internas por nombre
-  (`node.release`, `style.*`, `app.invoke`, etc.). No otorgaba acceso a OS,
-  pero ampliaba la superficie y permitía autodaño/DoS.
-- **Corrección:** `DomBindings.harden()` elimina `__nx` después de instalar
-  timers/console/DOM. Los preludios conservan la referencia en su closure.
-  `NativaXRuntime` lo llama antes de ejecutar scripts.
-- **Límite:** usuarios que usan `DomBindings` directamente deben llamar a
-  `harden()` manualmente. Está documentado.
-- **Regresión:** `bridge.raw_host_hardened`.
+- **Severity:** medium.
+- **Cause:** the prelude left `__nx.host` on `globalThis`.
+- **Impact:** a script could invoke internal operations by name
+  (`node.release`, `style.*`, `app.invoke`, etc.). It did not expose the OS, but
+  it widened the surface and enabled self-DoS.
+- **Fix:** `DomBindings.harden()` removes `__nx` after installing
+  timers/console/DOM; preludes keep the reference in closures. `NativaXRuntime`
+  calls it before page scripts.
+- **Limit:** direct users of `DomBindings` must call `harden()` themselves.
+- **Regression:** `bridge.raw_host_hardened`.
 
-### S-03 — Listeners retenidos al liberar un wrapper (corregido)
+### S-03 — Listeners retained after wrapper release (fixed)
 
-- **Severidad:** media (retención/DoS).
-- **Causa:** `node.release` eliminaba el target del mapa pero no sus listeners.
-- **Corrección:** al liberar el wrapper se llama `removeAllEventListeners()`.
-- **Regresión:** `dom.detached_listeners` de `debug/engines/memory`.
+- **Severity:** medium (retention/DoS).
+- **Cause:** `node.release` removed the target from the map but not its
+  listeners.
+- **Fix:** release calls `removeAllEventListeners()`.
+- **Regression:** `dom.detached_listeners` in the leak suite.
 
-### S-04 — Callbacks internos `__nx_*` visibles en `globalThis` (corregido)
+### S-04 — Internal `__nx_*` callbacks visible on `globalThis` (fixed)
 
-- **Severidad:** media.
-- **Evidencia original:** tras `harden()`, `Object.getOwnPropertyNames(globalThis)`
-  contenía `__nx_dispatch`, `__nx_eventDone`, `__nx_releaseListener`.
-- **Impacto original:** un script podía forjar callbacks de evento, liberar
-  listeners por id, disparar timers antes de tiempo y, con las APIs nuevas,
-  falsificar respuestas de red o mensajes de WebSocket/Worker.
-- **Corrección:** el puente C (`nativax_bridge.c`) guarda un registro privado
-  de callbacks en `NxRuntime` (`__nx_register`, capturado y borrado por el
-  preludio del host). `callGlobal` consulta primero ese registro. Los
-  preludios registran ahí sus callbacks (`__nx_dispatch`, `__nx_fireTimer`,
-  `__nx_async`, `__nx_ws`, `__nx_worker`, `__nx_mo`, `__nx_conn`, ...) y
-  `harden()` elimina `__nx.register` junto con `__nx.host`.
-- **Regresión:** `internal.callback_globals` (ahora verifica que no haya
-  globals `__nx_*` y que no se puedan invocar).
+- **Severity:** medium.
+- **Original evidence:** after `harden()`, `Object.getOwnPropertyNames(globalThis)`
+  contained `__nx_dispatch`, `__nx_eventDone`, and `__nx_releaseListener`.
+- **Original impact:** a script could forge event callbacks, release listeners
+  by id, fire timers early, and with later APIs forge network/WebSocket/worker
+  responses.
+- **Fix:** the C bridge keeps a private callback registry in `NxRuntime`
+  (`__nx_register`, captured and deleted by the host prelude). `callGlobal`
+  checks that registry first. `harden()` removes `__nx.register` and
+  `__nx.host`.
+- **Regression:** `internal.callback_globals` (now verifies no `__nx_*` global
+  is reachable/invocable).
 
-### S-09 — APIs de plataforma añadidas (red, portapapeles, workers)
+### S-09 — Platform APIs added after the first audit
 
-- **Red:** `fetch`, `XMLHttpRequest` y `WebSocket` pasan por
-  `NativaXNetwork`; el valor por defecto (`DeniedNetwork`) lo deniega todo.
-  `IoNetwork` exige una función `allow(Uri)` del host (lista blanca) y limita
-  las respuestas a 32 MB.
-- **Portapapeles y vibración:** requieren activación transitoria del usuario
-  (gesto confiable en los últimos 5 s), como en los navegadores.
-- **Workers:** cada uno es un motor QuickJS separado con presupuesto propio;
-  máximo 16 por documento; solo URLs `blob:`/`data:` (sin red).
-- **Presupuesto JS:** el runtime usa 10 s por tarea (antes 1 s) para no
-  cortar páginas reales; una tarea larga sigue bloqueando la UI (ver S-06).
-- **Identidad de wrappers:** los nodos conectados retienen su wrapper
-  (antes podía recolectarse y perder estado); se liberan al desconectarse.
+- **Network:** `fetch`, XHR, and WebSocket go through `NativaXNetwork`. The
+  default `DeniedNetwork` denies all. `IoNetwork(allow: ...)` requires a host
+  allow callback and caps bodies at 32 MiB by default. It is not CORS, cookies,
+  certificate pinning, or a redirect re-check.
+- **Clipboard/vibration:** require a transient user activation (a trusted
+  gesture within the last 5 s).
+- **Workers:** each worker is a separate QuickJS engine with its own budget;
+  at most 16 per document. Worker load/fetch is subject to the host resource
+  and network policy.
+- **JS budget:** the runtime default is 10 s per entry (previously 1 s), so real
+  pages are not cut off. A long task still blocks the UI; see S-06.
+- **Wrapper identity:** connected nodes retain their wrapper; disconnected
+  wrappers are released.
 
-### S-05 — `javascript:` en navegación (abierto, bajo)
+### S-05 — `javascript:` navigation reaches the host (open, low)
 
-- **Severidad:** baja.
-- **Evidencia:** `xss.javascript_url_not_executed` confirma que el código no se
-  ejecuta; el `href` llega a `Document.onNavigate`.
-- **Riesgo:** si la app usa ese href para abrir un navegador, WebView o
-  ejecutar acciones, puede introducir XSS fuera de NativaX.
-- **Remediación:** el host debe validar esquemas y destinos en `onNavigate`.
-  Añadir una política de URL por defecto en una fase posterior.
+- **Severity:** low inside NativaX.
+- **Evidence:** `xss.javascript_url_not_executed` confirms the code does not
+  execute; the `href` string reaches `Document.onNavigate`.
+- **Risk:** if the host opens that URL in an external browser/WebView or treats
+  it as an app action, it can introduce XSS outside NativaX.
+- **Remediation:** validate schemes/destinations in `onNavigate`; add a default
+  URL policy in a later phase.
 
-### S-06 — Presupuesto JS no interrumpe trabajo Dart del host (residual)
+### S-06 — JS budget does not interrupt Dart host work (residual)
 
-- **Severidad:** media (DoS).
-- **Causa:** el timeout de QuickJS interrumpe bytecode, no una llamada síncrona
-  a un host function que esté ejecutando trabajo Dart pesado (por ejemplo
-  `innerHTML` enorme o `app.invoke`).
-- **Mitigación actual:** límites de entrada/nodos y responsabilidad del host.
-- **Pendiente:** límites de tiempo para operaciones host, o ejecución en
-  isolate/proceso aislado.
+- **Severity:** medium (DoS).
+- **Cause:** the QuickJS timeout interrupts bytecode, not a synchronous host
+  function doing heavy Dart work (for example a huge `innerHTML` or
+  `app.invoke`).
+- **Current mitigation:** input/node limits and host responsibility.
+- **Pending:** time limits for host operations or execution in an isolated
+  process/OS sandbox.
 
-### S-07 — Sin sandbox del sistema operativo (arquitectura)
+### S-07 — No OS sandbox (architecture)
 
-- NativaX ejecuta JS en el proceso de la app. Un fallo de QuickJS, FFI o del
-  host puede afectar al proceso completo.
-- **No se declara aislamiento OS.** Para contenido no confiable de terceros se
-  requiere un proceso separado y permisos del sistema operativo.
+NativaX executes JavaScript in the app process. A QuickJS, FFI, renderer, or
+host bug can affect the whole process. There is no OS-level isolation claim.
+Untrusted third-party content should run in a separate OS-sandboxed process
+with narrow permissions.
 
-### S-08 — Carga de recursos (no verificada en Flutter)
+### S-08 — Flutter resource policy not verified in this CLI
 
-- `NativaXRuntime` usa `NativaXDenyAllResources` por defecto.
-- La política real depende del `NativaXResourceLoader` que inyecte la app:
-  validación de esquema, redirecciones, red privada, tamaño, TLS, etc.
-- La prueba Flutter de denegación/cancelación queda **SKIP** en esta CLI.
+The default runtime resource loader is `NativaXDenyAllResources`; the real
+policy depends on the injected `NativaXResourceLoader` (scheme validation,
+redirects, private network, size, TLS). The Flutter denial/cancellation case is
+SKIP here and must be run separately.
 
-## Controles verificados
+### V8 is outside this run
 
-- Sin `process`, `require`, `File`, `Platform`, `fetch`, `XMLHttpRequest`,
-  `WebSocket`, `Deno`, `Bun`, `dart` ni `__nx_host` en scripts.
-- `innerHTML`/`insertAdjacentHTML` no ejecutan scripts.
-- IDs falsos producen excepción y el runtime sigue funcionando.
-- Dos engines no comparten globals.
-- Bucle infinito interrumpido (~51 ms con presupuesto de 50 ms).
-- Límite de microtareas (`MicrotaskLimitError`).
-- Límite de entrada del parser HTML.
-- Cuota de `localStorage`.
-- Engine dispuesto rechaza evaluación.
-- Click/submit programáticos no son confiables; gestos del host sí.
+The security suite exercises QuickJS. V8 currently does **not** enforce the
+execution budget, `maxJobsPerDrain`, or `maxStackBytes`, and has no host
+WebAssembly/SharedArrayBuffer/WebGL path. Do not transfer QuickJS limit results
+to V8. A hostile-content deployment should force QuickJS or isolate the
+process at the OS level until V8 limits and a V8 security run exist.
 
-## Riesgo residual
+## Verified controls
 
-- S-05, S-06 y S-07 permanecen.
-- No se ha probado Android, iOS, Windows ni macOS.
-- No hay fuzzing de seguridad ni pruebas de red locales en esta iteración.
-- No se ha auditado la cadena de suministro con SAST/SCA.
+- No `process`, `require`, `File`, `Directory`, `Platform`, `fetch`,
+  `XMLHttpRequest`, `WebSocket`, `Deno`, `Bun`, `dart`, or raw `__nx.host` in
+  scripts.
+- `innerHTML`/`insertAdjacentHTML` do not execute inserted scripts/handlers.
+- `javascript:` URLs do not execute in the runtime.
+- Forged ids throw and the runtime remains alive.
+- Two engines do not share globals.
+- An infinite loop is interrupted by the QuickJS budget (test uses 50 ms).
+- A self-rescheduling microtask hits `MicrotaskLimitError`; remaining jobs stay
+  queued.
+- Oversized parser input and storage quota fail with typed errors.
+- A disposed engine rejects evaluation.
+- Programmatic click/submit are untrusted; host gestures are trusted.
 
-## Cómo reproducir
+## Residual risk
+
+- S-05, S-06, and S-07 remain open.
+- V8 lacks tested/enforced time, job, and stack limits.
+- No Android, iOS, Windows, or macOS run.
+- No security fuzzing or local-network penetration testing in this iteration.
+- No SAST/SCA/supply-chain audit.
+- QuickJS is not a formally verified interpreter.
+- The renderer and Flutter widget tree are not a security boundary.
+
+## Reproduce
 
 ```bash
 cd debug/engines/security
 dart run bin/security.dart run
 dart run bin/security.dart run --only internal.callback_globals
+dart run bin/security.dart run --only limits.infinite_loop_interrupted
 ```
 
+Regression tests also live in `packages/nativa_dom/test`,
+`packages/nativa_dom_bindings/test`, and `debug/engines/memory`.
 
-Las correcciones tienen tests de regresión en la suite y en
-`packages/nativa_dom/test`, `packages/nativa_dom_bindings/test` y
-`debug/engines/memory`.
+## Related
+
+- [`threat-model.md`](threat-model.md)
+- [`test-plan.md`](test-plan.md)
+- [`platform-matrix.md`](platform-matrix.md)
+- [`../internals/limits-and-memory.md`](../internals/limits-and-memory.md)
+- [`../architecture/javascript-engines.md`](../architecture/javascript-engines.md)

@@ -9,13 +9,13 @@ actually passes. A `SKIP` is not compatibility; it is declared debt.
 
 | Suite | What it measures | Where it lives |
 |---|---|---|
-| [Test262](https://github.com/tc39/test262) | ECMAScript language and built-ins | `.conformance/suites/test262` |
-| [html5lib-tests](https://github.com/html5lib/html5lib-tests) | HTML tokenizer and tree construction | `.conformance/suites/html5lib-tests` |
-| [WPT](https://github.com/web-platform-tests/wpt) | DOM, events, selectors, parsing | `.conformance/suites/wpt` |
-| WPT `url/resources` | URL parsing | `.conformance/suites/wpt/url` |
+| [Test262](https://github.com/tc39/test262) | ECMAScript language and built-ins | `debug/artifacts/conformance/suites/test262` |
+| [html5lib-tests](https://github.com/html5lib/html5lib-tests) | HTML tokenizer and tree construction | `debug/artifacts/conformance/suites/html5lib-tests` |
+| [WPT](https://github.com/web-platform-tests/wpt) | DOM, events, selectors, parsing | `debug/artifacts/conformance/suites/wpt` |
+| WPT `url/resources` | URL parsing | `debug/artifacts/conformance/suites/wpt/url` |
 
 Checkouts are pinned in `debug/engines/compatibility/bin/fetch_suites.dart`. They are not
-versioned (`.conformance/` is in `.gitignore`).
+versioned (`debug/artifacts/conformance/` is in `.gitignore`).
 
 ## Statuses
 
@@ -57,8 +57,8 @@ dart run bin/run_wpt.dart --limit 200
 dart run bin/run_html_tree.dart
 ```
 
-Raw results go to `.conformance/results/*.jsonl` and `*.summary.json`. Dated
-Markdown archives also stay in `.conformance/results/` and are ignored by git.
+Raw results go to `debug/artifacts/conformance/results/*.jsonl` and `*.summary.json`. Dated
+Markdown archives also stay in `debug/artifacts/conformance/results/` and are ignored by git.
 Only `progress/reports/<suite>-latest.md` is versioned.
 
 ## Known runner limitations

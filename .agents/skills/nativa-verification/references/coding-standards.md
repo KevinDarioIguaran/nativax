@@ -40,6 +40,8 @@
 
 ## Documentation
 
-- `docs/status.md` is the session summary; `progress/` is the source of truth.
-- ADRs belong in `docs/adr/` (pending) and are linked from `.agents/`.
+- `docs/status.md` is the stable maturity view; `progress/status.md` is the live
+  session state and `progress/log.md` is the chronological record.
+- Architecture decision records are not maintained yet; decisions live in the
+  relevant `docs/architecture/` page. Do not add an empty ADR tree.
 - Every new limitation is documented the same day.

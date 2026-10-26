@@ -1,7 +1,7 @@
 # NativaX — informe de capacidad y evidencia
 
 Fecha: 2026-10-24. Este documento consolida las dos herramientas nuevas:
-`tools/visual` (fidelidad visual) y `tools/perf` (rendimiento, memoria y
+`debug/engines/visual_comparison` (fidelidad visual) y `debug/engines/performance` (rendimiento, memoria y
 respuesta). Todo se mide **sin WebView, sin Chromium embebido, sin CEF y sin
 Electron**. Chromium solo se usa como referencia externa headless.
 
@@ -30,7 +30,7 @@ de filas, actualización masiva y scroll largo todavía no**.
 
 ## 2. Qué puede hacer el sistema
 
-### 2.1 Juicio visual headless (`tools/visual`)
+### 2.1 Juicio visual headless (`debug/engines/visual_comparison`)
 
 Compara la misma página renderizada por Chromium headless y por NativaX
 offscreen (`flutter test` + `RenderRepaintBoundary`) y emite un veredicto por
@@ -59,12 +59,12 @@ Fixtures vendorizados: **51 páginas** de `bradtraversy/50projects50days`
 (commit `c92b0bc3…`, MIT), más `examples/test-pages`.
 
 ```bash
-dart run tools/visual/bin/visual_check.dart --suite 50projects50days
-dart run tools/visual/bin/visual_check.dart --self-check --limit 1
-dart run tools/visual/bin/visual_check.dart examples/test-pages/form.html
+dart run debug/engines/visual_comparison/bin/visual_check.dart --suite 50projects50days
+dart run debug/engines/visual_comparison/bin/visual_check.dart --self-check --limit 1
+dart run debug/engines/visual_comparison/bin/visual_check.dart examples/test-pages/form.html
 ```
 
-### 2.2 Suite de rendimiento (`tools/perf`)
+### 2.2 Suite de rendimiento (`debug/engines/performance`)
 
 Compara Chromium (vía CDP) contra NativaX offscreen y mide:
 
@@ -90,7 +90,7 @@ dart run tools/perf/bin/perf.dart idle-app --seconds 5 --build
 dart run tools/perf/bin/perf.dart fetch --source uibench
 ```
 
-### 2.3 Panel Tkinter (`tools/perf/gui/perf_gui.py`)
+### 2.3 Panel Tkinter (`debug/engines/performance/gui/perf_gui.py`)
 
 Ventana de escritorio con barra lateral y el mismo lenguaje visual del
 informe HTML:
@@ -115,7 +115,7 @@ informe HTML:
 - **Acciones por fila**: clic derecho o botón **Acciones ▾** para ver detalles
   o ejecutar un solo escenario/página; el resultado se fusiona en la tabla y
   se abre el detalle.
-- **Informe con recomendaciones**: `tools/recommend.py` convierte los datos
+- **Informe con recomendaciones**: `debug/engines/recommendations/recommend.py` convierte los datos
   medidos en prioridades P0/P1/P2 con evidencia, acción, criterio de aceptación
   y comando; está en **Informes → Recomendaciones** y en **En vivo**;
   `quality_report.sh` lo regenera al final.
@@ -131,7 +131,7 @@ informe HTML:
 
 
 ```bash
-python3 tools/perf/gui/perf_gui.py
+python3 debug/engines/performance/gui/perf_gui.py
 ```
 
 ### 2.4 Todo junto
@@ -255,16 +255,16 @@ NativaX contra las suites oficiales que puede ejecutar su adaptador.
 
 ```bash
 # Reutiliza artefactos existentes y compara contra la base
-python3 tools/quality_gate.py
+python3 debug/engines/quality_gate/quality_gate.py
 
 # Corre todo (visual + rendimiento + compatibilidad rápida)
-python3 tools/quality_gate.py --run
+python3 debug/engines/quality_gate/quality_gate.py --run
 
 # JSON limpio para parsear
-python3 tools/quality_gate.py --json
+python3 debug/engines/quality_gate/quality_gate.py --json
 
 # Guardar una nueva base
-python3 tools/quality_gate.py --run --save-baseline
+python3 debug/engines/quality_gate/quality_gate.py --run --save-baseline
 ```
 
 Códigos de salida: `0` = igual/mejor o base creada, `2` = regresión,
@@ -279,7 +279,7 @@ tools/preview_report.sh progress/reports/perf-latest.md
 ```
 
 Abre HTML renderizado en el navegador por defecto. También existe el panel
-Tkinter (`tools/perf/gui/run_gui.sh`).
+Tkinter (`debug/engines/performance/gui/run_gui.sh`).
 
 ## 3.8 Aislamiento con contenedores (CPU/RAM)
 
@@ -326,9 +326,9 @@ estresores concurrentes, soak tests largos ni comparación visual bajo carga.
 ## 5. Mapa de archivos
 
 ```
-tools/visual/                 juez visual (Dart, fixtures 50projects50days)
+debug/engines/visual_comparison/                 juez visual (Dart, fixtures 50projects50days)
 tools/perf/                   suite de rendimiento (Dart + CDP)
-tools/perf/gui/perf_gui.py    panel Tkinter
+debug/engines/performance/gui/perf_gui.py    panel Tkinter
 tools/perf/fixtures/          js-framework-benchmark, Browser-Bench, Cerious
 docs/visual-fidelity.md       contrato visual en español
 docs/performance-suite.md     contrato de rendimiento en español
@@ -342,8 +342,8 @@ progress/reports/perf-latest.md
 
 ## 6. Verificación
 
-- `tools/visual`: **66 tests** en verde (1 skip e2e), analyze limpio.
-- `tools/perf`: **12 tests** en verde (1 skip e2e), analyze limpio.
+- `debug/engines/visual_comparison`: **66 tests** en verde (1 skip e2e), analyze limpio.
+- `debug/engines/performance`: **12 tests** en verde (1 skip e2e), analyze limpio.
 - `examples/web-challenge`: `flutter analyze` limpio; tests en verde.
 - En esta pasada: **14 perf + 119 visual + 78 CSS + 4 security + 10 leaks + 25 vídeo + 9 recomendaciones + 3 manifiesto de vídeo + 90 fuzz** en verde. El `test_all` completo mantiene un flake ajeno en `wasm_rapier_test`.
 - `./tools/test_all.sh` no terminó en 0 en dos intentos por el test flaky

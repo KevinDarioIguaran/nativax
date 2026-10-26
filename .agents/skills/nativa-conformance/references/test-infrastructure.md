@@ -21,8 +21,9 @@ tools/
 ```
 
 `progress/reports/` stores only the latest readable report per suite. Raw
-results and dated Markdown archives go to ignored directories (`.conformance/`,
-`benchmarks/results/`, `benchmarks/leaks/`, `benchmarks/security/`).
+results and dated Markdown archives go to ignored directories
+(`debug/artifacts/conformance/`, `debug/benchmarks/microbench/`,
+`debug/benchmarks/leaks/`, `debug/benchmarks/security/`).
 
 ## Execution profiles
 

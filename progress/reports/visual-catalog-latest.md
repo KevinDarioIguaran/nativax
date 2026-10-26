@@ -17,7 +17,7 @@ páginas** en `--all` (303 si se añaden las 3 locales).
 
 Las suites externas se descargan en `.visual/suites/` (ignorado por git) con
 commit pinneado; no se redistribuyen. `50projects50days` sigue vendorizado en
-`tools/visual/fixtures/` con su LICENSE.
+`debug/engines/visual_comparison/fixtures/` con su LICENSE.
 
 ## Categorías cubiertas
 
@@ -35,16 +35,16 @@ commit pinneado; no se redistribuyen. `50projects50days` sigue vendorizado en
 
 ```bash
 # Ver el catálogo
-dart run tools/visual/bin/visual_check.dart --all --list
+dart run debug/engines/visual_comparison/bin/visual_check.dart --all --list
 
 # Ejecutar las 300
-dart run tools/visual/bin/visual_check.dart --all
+dart run debug/engines/visual_comparison/bin/visual_check.dart --all
 
 # Una suite concreta
-dart run tools/visual/bin/visual_check.dart --suite mdn-dom-examples
+dart run debug/engines/visual_comparison/bin/visual_check.dart --suite mdn-dom-examples
 
 # 50projects50days + test-pages (línea base de 51)
-dart run tools/visual/bin/visual_check.dart --suite 50projects50days
+dart run debug/engines/visual_comparison/bin/visual_check.dart --suite 50projects50days
 ```
 
 En el panel Tkinter: botón **Visual 300** (o **Solo visual** para las 51).

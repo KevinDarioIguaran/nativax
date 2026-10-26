@@ -1,28 +1,42 @@
 # Security platform matrix
 
-NativaX solo puede declarar una plataforma como verificada si la suite se
-ejecutó en ese entorno real.
+NativaX may claim a platform as verified only after the security suite runs on
+that real environment. Passing on Linux is not evidence for mobile or desktop
+targets with different sandbox, FFI, threading, and native-asset behavior.
 
-| Plataforma | Build | Suite seguridad | Aislamiento OS | Estado |
+| Platform | Build | Security suite | OS isolation | Status |
 |---|---|---|---|---|
-| Linux x86_64 | Sí | **Sí (13 PASS / 1 FAIL / 1 SKIP)** | No | Parcial |
-| Android | No | No | No | **No verificado** |
-| iOS | No | No | No | **No verificado** |
-| Windows | No | No | No | **No verificado** |
-| macOS | No | No | No | **No verificado** |
+| Linux x86_64 | Yes | **Yes: 44 PASS / 0 FAIL / 1 SKIP** | No | **Partial** |
+| Android | Not verified here | No | No | **Unknown** |
+| iOS | Not verified here | No | No | **Unknown** |
+| Windows | Not verified here | No | No | **Unknown** |
+| macOS | Not verified here | No | No | **Unknown** |
 
-## Diferencias que deben probarse por plataforma
+The Linux run is `debug/benchmarks/security/20261026T024956Z-f47240e/`
+(2026-10-25). It uses QuickJS-ng 0.17.0. V8 is not exercised by the suite and
+does not enforce the execution/job/stack limits described for QuickJS. A Linux
+desktop build can choose V8, so the security status of the default desktop
+page-engine path is **not covered by this matrix**.
 
-- Rutas, sistema de archivos y carga de bibliotecas nativas.
-- Permisos de manifiesto/entitlements y sandbox de la app.
-- TLS, certificados y almacenamiento seguro.
-- Hilos, isolates, pila disponible y FFI.
-- Entrada táctil, teclado, foco, IME y accesibilidad.
-- Ciclo de vida (suspender/reanudar, orientación, memoria).
-- QuickJS/native assets en MSVC (`/experimental:c11atomics`) y iOS sin JIT.
+## Why each platform needs its own run
 
-## Regla
+- native library loading and path resolution;
+- app sandbox, manifest/entitlements, and file permissions;
+- TLS roots, certificate storage, and secure storage;
+- isolates/threads, native stack size, and FFI ABI;
+- touch, keyboard, focus, IME, and accessibility input;
+- suspend/resume, orientation, memory pressure, and process death;
+- QuickJS native assets and V8 cdylib packaging (MSVC atomics on Windows,
+  no JIT on iOS, Android page size and ABI splits).
 
-No se declara una plataforma “segura” por pasar tests en Linux. La ausencia de
-pruebas en Android/iOS/Windows/macOS se registra como **no verificado**, no
-como `PASS`.
+## Rule
+
+Do not turn “not tested” into PASS. The only verified row is Linux x86_64, and
+even that row has no OS sandbox and one Flutter-only SKIP. Everything else is
+unknown for security purposes.
+
+## Related
+
+- [`audit.md`](audit.md)
+- [`test-plan.md`](test-plan.md)
+- [`../architecture/platform-support.md`](../architecture/platform-support.md)

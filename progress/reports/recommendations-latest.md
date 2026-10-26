@@ -81,7 +81,7 @@ dart run tools/perf/bin/perf.dart run --only '^js\.' --out .perf/js
 **Comando:**
 
 ```bash
-dart run tools/visual/bin/visual_check.dart --only 'pagina' --out .visual/latest
+dart run debug/engines/visual_comparison/bin/visual_check.dart --only 'pagina' --out .visual/latest
 ```
 
 ### P1 · juegos — Los perfiles de juego Canvas 2D quedan por encima del presupuesto
@@ -168,7 +168,7 @@ dart run tools/perf/bin/perf.dart run --only '^scroll\.' --out .perf/scroll
 **Comando:**
 
 ```bash
-dart run tools/visual/bin/visual_check.dart --all --catalog .visual/catalog.json --out .visual/latest
+dart run debug/engines/visual_comparison/bin/visual_check.dart --all --catalog .visual/catalog.json --out .visual/latest
 ```
 
 ### P2 · juegos — Falta medir el game-player Three.js completo
@@ -710,5 +710,5 @@ Total pendiente: **290** páginas. Lista completa en `.visual/catalog.json`.
 El panel puede mostrar este contenido desde **Informes → Recomendaciones** o desde el informe **En vivo**. Para regenerarlo:
 
 ```bash
-python3 tools/recommend.py --out progress/reports/recommendations-latest.md
+python3 debug/engines/recommendations/recommend.py --out progress/reports/recommendations-latest.md
 ```

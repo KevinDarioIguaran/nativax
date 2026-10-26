@@ -1,171 +1,250 @@
-# CSS y layout soportados
+# CSS and layout support
 
-NativaX implementa CSS con su propio motor (cascada + layout en
-RenderObjects de Flutter). No es un motor de navegador completo: esta página
-define qué se pinta como en un navegador, qué se aproxima y qué falta.
+NativaX implements CSS with its own parser, cascade, and layout in Flutter
+render objects. It is not a browser CSS engine and it is not a wrapper around
+one. This page describes what is parsed, what is painted, and what is only
+accepted for compatibility.
 
-La referencia de calidad es la comparación visual contra Chrome sin ventana:
-`debug/engines/visual_comparison` (Chromium headless contra NativaX offscreen, con puntuaciones de
-posición, layout, color, diseño y píxeles). Ver
-[`visual-fidelity.md`](visual-fidelity.md). El arnés histórico
-`debug/harness/test/screenshot_test.dart` sigue sirviendo para
-capturas puntuales.
+The visual quality reference is the headless Chromium comparison in
+`debug/engines/visual_comparison`; see [`visual-fidelity.md`](visual-fidelity.md).
+The latest 51-page baseline is **52.59 %** mean overall and is not a CSS
+compatibility percentage.
 
-## Selectores y cascada
+## Selectors and cascade
 
-- Tipo, `.clase`, `#id`, `*`, atributos (todos los operadores, flags `i`/`s`),
-  combinadores (` `, `>`, `+`, `~`).
-- Pseudoclases estructurales: `:first/last/only-child`, `:nth-child`,
-  `:nth-last-child` (con `of S`), `:first/last/only-of-type`,
-  `:nth-of-type`, `:nth-last-of-type`, `:empty`, `:root`, `:scope` (raíz).
-- Lógicas: `:not`, `:is`, `:where`, `:has` (relativo).
-- De estado (se recalculan al cambiar el estado): `:hover`, `:active`,
-  `:focus`, `:focus-visible`, `:focus-within`, `:target`, `:checked`,
-  `:disabled`, `:enabled`, `:required`, `:optional`, `:read-only`,
-  `:read-write`, `:placeholder-shown`, `:valid`, `:invalid`, `:user-valid`,
-  `:user-invalid`, `:in-range`, `:out-of-range`, `:indeterminate`,
-  `:default`, `:open`, `:modal`, `:defined`, `:link`, `:any-link`.
-- Otras: `:dir()`, `:lang()`, `:heading`. `:visited` nunca coincide.
-- Pseudoelementos: `::before`, `::after` (con `content`: cadenas, `attr()`,
-  comillas), `::placeholder`, `::backdrop`. Se aceptan (sin efecto)
-  `::marker`, `::selection`, `::first-line`, `::first-letter`, `::part()`,
-  `::slotted()` y prefijos `-webkit-`/`-moz-`.
-- Especificidad, `!important`, capas UA/autor/inline, herencia,
-  `inherit`/`initial`/`unset`, variables `--x` con `var()` y fallback.
-- Atributos de presentación SVG (`fill="red"`) como reglas de autor de
-  especificidad 0.
+Supported selector surface:
+
+- type, class, id, universal, attribute selectors (common operators and `i`/`s`
+  flags), and combinators (` `, `>`, `+`, `~`);
+- structural pseudo-classes: `:first/last/only-child`,
+  `:nth-child`/`:nth-last-child` (including `of S`),
+  `:first/last/only-of-type`, `:nth-of-type`/`:nth-last-of-type`, `:empty`,
+  `:root`, `:scope`;
+- logical: `:not`, `:is`, `:where`, `:has` (relative);
+- state: `:hover`, `:active`, `:focus`, `:focus-visible`, `:focus-within`,
+  `:target`, `:checked`, `:disabled`, `:enabled`, `:required`, `:optional`,
+  `:read-only`, `:read-write`, `:placeholder-shown`, `:valid`, `:invalid`,
+  `:user-valid`, `:user-invalid`, `:in-range`, `:out-of-range`,
+  `:indeterminate`, `:default`, `:open`, `:modal`, `:defined`, `:link`,
+  `:any-link`;
+- other: `:dir()`, `:lang()`, `:heading`; `:visited` never matches;
+- pseudo-elements: `::before`, `::after` (`content` strings, `attr()`, quote
+  keywords), `::placeholder`, `::backdrop`; `::marker`, `::selection`,
+  `::first-line`, `::first-letter`, `::part()`, `::slotted()` and vendor-prefixed
+  forms are accepted but inert;
+- specificity, `!important`, UA/author/inline origins, inheritance,
+  `inherit`/`initial`/`unset`, `var()` with fallback;
+- SVG presentation attributes as author rules with specificity 0.
+
+`@layer` is parsed and flattened in source order. It is **not** a full cascade
+layer implementation with ordering/reversal. Unknown selectors/at-rules produce
+warnings where the parser can recognize them; they do not become styles.
 
 ## At-rules
 
-- `@media` (anidado): `width`, `height`, `orientation`,
-  `prefers-color-scheme`, `prefers-reduced-motion`, `resolution`.
-- `@supports` (`and`, `or`, `not`, `selector()`), evaluado al parsear.
-- `@keyframes` (también `-webkit-`).
-- `@layer` se aplana en orden de aparición (sin precedencia de capas).
-- No soportados: `@font-face` (las fuentes las registra la app Flutter),
-  `@import`, `@container`, `@property`, `@page`.
+| At-rule | Support | Limits |
+|---|---|---|
+| `@media` | width, height, orientation, `prefers-color-scheme`, `prefers-reduced-motion`, resolution | Nested conditions; no `hover`/`pointer`/`container` queries |
+| `@supports` | `and`/`or`/`not`, declarations, `selector()` | Evaluated against the supported property/value contract |
+| `@keyframes` | Standard + `-webkit-` | Web Animations API not implemented |
+| `@layer` | Parsed/flattened | No layer precedence |
+| `@font-face` | `font-family`, `src`, `font-weight`, `font-style`, `font-display` | Resource bytes via host; WOFF containers need SFNT fallback |
+| `@import` | **Not supported** | Use a host loader/concatenation |
+| `@container` | **Not supported** | No container queries |
+| `@property` | **Not supported** | No registered custom-property animation |
+| `@page` | **Not supported** | No print layout |
 
-## Valores
+## Values
 
-- Longitudes `px`, `%`, `em`, `rem`, `vw`, `vh` y absolutas (`pt`, `cm`,
-  ...). `calc()`, `min()`, `max()` y `clamp()` (los `%` se resuelven en
-  layout contra el bloque contenedor).
-- Colores: 148 nombres, hex (3/4/6/8), `rgb()`/`rgba()`/`hsl()`/`hsla()`
-  (sintaxis con comas y moderna), `transparent`, `currentcolor`.
-- `env(safe-area-inset-*)` resuelve a `0px` o al fallback.
+- Lengths: `px`, `%`, `em`, `rem`, `vw`, `vh`, absolute units (`pt`, `cm`, ...).
+- Math: `calc()`, `min()`, `max()`, `clamp()`; percentages resolve in layout
+  against the containing block where specified.
+- Colors: named colors, 3/4/6/8-digit hex, `rgb()`/`rgba()`/`hsl()`/`hsla()`
+  (comma and modern syntax), `transparent`, `currentcolor`.
+- `env(safe-area-inset-*)` resolves to the fallback or `0px`; there is no live
+  safe-area integration in the CSS layer.
+- Custom properties and fallbacks are supported; values are token-preserving,
+  not typed at declaration time.
 
-## Modelo de caja
+## Box model
 
-- `width`/`height`/`min-*`/`max-*`, `box-sizing`, `margin` (incl. `auto`),
-  `padding`, `border` (ancho, color y estilo `solid`, `dashed`, `dotted`,
-  `double`; `groove`/`ridge`/`inset`/`outset` se pintan sólidos).
-- `border-radius` (también en %), `outline` (+ `outline-offset`).
-- Fondos: color, imagen (`cover`), `linear-gradient`, `radial-gradient`,
-  `conic-gradient` y `repeating-*` con la geometría de CSS. Con varias capas
-  se pinta la primera imagen. `background-size/position/repeat` se aceptan
-  sin efecto.
-- `box-shadow` (varias sombras; `inset` no se pinta), `opacity`,
-  `visibility: hidden` (conserva el espacio), `filter` (`blur`,
-  `brightness`, `contrast`, `grayscale`, `invert`, `opacity`, `saturate`,
-  `sepia`, `hue-rotate`, `drop-shadow`), `backdrop-filter: blur()`.
-- `transform`: `translate*`, `scale*`, `rotate`, `skew*`, `matrix`; con
-  origen en el centro; `%` relativo a la propia caja. Las funciones 3D se
-  proyectan a 2D (`perspective` sin efecto).
-- `overflow` `hidden`/`clip` recorta; `auto`/`scroll` crea scroll vertical,
-  y horizontal solo para contenido intrínsecamente ancho (flex, grid,
-  `white-space: pre/nowrap`).
-- Colapso de márgenes entre hermanos y a través de cajas vacías. Sin colapso
-  padre/hijo.
+- `width`, `height`, `min-*`, `max-*`, `box-sizing`.
+- margins (including `auto`), padding, borders (width/style/color/radius).
+- `border-radius` in lengths/percentages; `outline` and `outline-offset`.
+- `overflow`/`overflow-x`/`overflow-y`: `hidden`/`clip` clip; `auto`/`scroll`
+  creates a vertical scroll container; horizontal scrolling is limited to
+  intrinsically wide content.
+- `box-shadow` (multiple; `inset` shadows are not painted), `opacity`,
+  `visibility` (`hidden` preserves space), `filter`, `backdrop-filter: blur()`.
+- `transform`: translate/scale/rotate/skew/matrix; 3D functions project to 2D;
+  `transform-origin` is currently accepted but inert (origin is the center).
+- Margins collapse between siblings and through empty boxes; parent/child
+  collapse is not implemented.
+- `float`, `clear`, multi-column, `writing-mode`, `direction`, `unicode-bidi`,
+  `table-layout`, `border-collapse`, and `border-spacing` are accepted/inert or
+  parsed without a full layout implementation.
 
-## Display y layout
+## Backgrounds and effects
 
-- `display`: `block`, `inline`, `inline-block`, `flex`, `inline-flex`,
-  `grid`, `inline-grid`, `list-item`, `contents`, `none`, `flow-root`,
-  sintaxis de dos valores (`inline flex`). Las tablas se aproximan
-  (`table-row` como flex).
-- **Flexbox**: dirección (incl. `reverse`), `wrap`, `gap`, grow/shrink/basis
-  con congelación por min-content, `justify-content`, `align-items`,
-  `align-self`, márgenes `auto`, `order`. Una sola línea toma el tamaño
-  transversal del contenedor (`min-height` centra/estira). Sin
-  `align-content`; `baseline` se trata como `flex-start`.
-- **Grid**: `grid-template-columns/rows` con `px`, `%`, `calc()`, `fr`,
-  `auto`, `min-content`, `max-content`, `fit-content()`, `minmax()`,
-  `repeat()` (incl. `auto-fill`/`auto-fit` con colapso), pistas implícitas
-  (`grid-auto-rows/columns`), `grid-template-areas`, colocación por líneas
-  (negativas, `span`, nombres de área), auto-placement por filas o columnas,
-  `gap`, `justify/align-items`, `justify/align-self`,
-  `justify/align-content`. Sin `subgrid` ni `dense`.
-- **Posicionamiento**: `relative`, `absolute` (respecto al padre),
-  `fixed` (capa del viewport), `sticky` (respecto al contenedor de scroll
-  más cercano, limitado por el bloque contenedor), `z-index` (también para
-  elementos posicionados en flujo).
+- background color, gradients (`linear`, `radial`, `conic`, repeating) and
+  images;
+- `background-size` (`auto`, `cover`, `contain`, explicit lengths/percentages),
+  `background-position` (keywords/percentages/offsets), and
+  `background-repeat` for the first layer;
+- multiple background layers are parsed, but the renderer paints the first
+  image layer;
+- gradient geometry is implemented by the renderer; `background-attachment`,
+  `background-clip`, `background-origin`, `mask`, `clip-path`, and
+  `mix-blend-mode` are inert;
+- border styles `solid`, `dashed`, `dotted`, `double`; `groove`/`ridge`/`inset`/
+  `outset` are painted solid (diagnostic-worthy approximation).
 
-## Texto
+## Display and layout
 
-- `font-family` (fallbacks), `font-size`, `font-weight`, `font-style`,
-  shorthand `font` (incl. `font: inherit`), `line-height`, `letter-spacing`.
+| `display` | State |
+|---|---|
+| `block`, `inline`, `inline-block`, `flow-root` | Implemented |
+| `flex`, `inline-flex` | Implemented subset |
+| `grid`, `inline-grid` | Implemented subset |
+| `list-item`, `contents`, `none` | Implemented |
+| two-value syntax (`inline flex`) | Parsed |
+| `table`, `table-row`, `table-cell`, etc. | **Approximate**: UA sheet makes rows flex and cells flex items; no table formatting context |
+
+### Flexbox
+
+Direction including reverse, wrapping, `gap`, grow/shrink/basis with
+min-content freezing, `justify-content`, `align-items`, `align-self`,
+`align-content` for wrapped lines, auto margins, and `order` are implemented.
+`baseline` alignment is approximated. It does not implement every intrinsic
+sizing and baseline combination from the spec.
+
+### Grid
+
+Explicit/implicit tracks, `px`/`%`/`calc`/`fr`/`auto`/`min-content`/
+`max-content`/`fit-content()`/`minmax()`/`repeat()` (including auto-fill/
+auto-fit), named areas, line placement, spans, negative lines, gaps, and
+alignment are implemented. `subgrid` and `dense` are not. Intrinsic sizing
+edge cases diverge.
+
+### Positioning
+
+- `relative`, `absolute` (containing block), `fixed` (viewport layer), `sticky`
+  (nearest scroll container, bounded by containing block).
+- `z-index` participates in stacking for positioned content.
+- Virtualized regions may change geometry; see below.
+
+## Text and fonts
+
+- `font-family` fallback, `font-size`, `font-weight`, `font-style`, `font`
+  shorthand, `line-height`, `letter-spacing`.
 - `text-align`, `white-space`, `text-transform`, `text-decoration-*`,
-  `text-shadow`, `text-overflow: ellipsis` (con `nowrap` + `overflow`).
-- Los elementos inline con padding/borde/fondo redondeado se pintan como
-  cajas atómicas (no se parten entre líneas).
-- Aceptadas sin efecto: `word-break`, `overflow-wrap`, `hyphens`,
-  `text-indent`, `font-variant*`, `vertical-align`.
+  `text-shadow`, `text-overflow: ellipsis` with `nowrap` + overflow.
+- `vertical-align: sub`/`super` (and `<sub>`/`<sup>`) shifts the run; other
+  vertical-align values are limited.
+- Inline elements with padding, borders, or rounded backgrounds paint as atomic
+  boxes and do not split across lines.
+- `word-break`, `overflow-wrap`, `hyphens`, `text-indent`, `font-variant*`,
+  `font-feature-settings`, `font-stretch`, `text-wrap`, `line-clamp`, and
+  `writing-mode`/`direction` do not implement full browser behavior.
+- Shaping, bidi, and Unicode line breaking are delegated to Flutter/Skia. NativaX
+  does not implement its own text stack.
+- `@font-face` is supported for SFNT TTF/OTF loaded through the resource loader;
+  WOFF/WOFF2 containers are not accepted directly and may use a sibling
+  `.ttf`/`.otf` probe.
 
-## Transiciones y animaciones
+## Transitions and animations
 
-- `transition` (propiedades concretas o `all`) y `@keyframes` con
-  `animation` (duración, retardo, `iteration-count` incl. `infinite`,
-  `direction`, `fill-mode`, `play-state`, `animation-timing-function` por
-  keyframe).
-- Easing: `linear`, `ease*`, `cubic-bezier()`, `steps()`, `step-*`.
-- Se interpolan longitudes, números, colores, `transform` y `box-shadow`;
-  lo demás cambia de forma discreta a mitad de camino.
-- Eventos `transitionrun/start/end` y `animationstart/iteration/end`.
-- Las propiedades heredadas animadas no se propagan a los descendientes.
+- `transition` and `@keyframes`/`animation` duration, delay, iteration
+  (including infinite), direction, fill mode, play state, and timing function.
+- Easing: `linear`, `ease*`, `cubic-bezier()`, `steps()`, step keywords.
+- Interpolates lengths, numbers, colors, transforms, and shadows; other
+  properties switch discretely.
+- `transitionrun/start/end`, `animationstart/iteration/end` events are emitted.
+- Animated inherited properties do not propagate to descendants.
+- Web Animations API/animation composition/timeline are not implemented.
 
-## SVG en línea
+## Inline SVG
 
-- `svg` con `viewBox` (`xMidYMid meet`), `width`/`height`.
-- `rect` (con `rx/ry`), `circle`, `ellipse`, `line`, `polyline`, `polygon`,
-  `path` (todos los comandos), `text` (con `text-anchor` y
-  `dominant-baseline`), `g` con `transform`.
-- `fill`, `stroke`, `stroke-width`, `stroke-dasharray`, `stroke-linecap`,
-  `stroke-linejoin`, `fill-rule`, `*-opacity`, desde atributos o CSS.
-- Los clics llegan a la figura bajo el puntero.
-- Sin gradientes/patrones SVG (`url(#id)` usa el color de respaldo), `use`,
-  `clipPath`, `mask`, `filter`, `marker` ni `foreignObject`.
+- `svg` with `viewBox` (`xMidYMid meet`), width/height.
+- `rect` (rx/ry), `circle`, `ellipse`, `line`, `polyline`, `polygon`, `path`
+  (all commands), `text` with anchor/baseline, `g` with transform.
+- fill/stroke, width, dash array, linecap/linejoin, fill rule, opacity, from CSS
+  or presentation attributes.
+- Pointer hit testing on figures.
+- No SVG gradients/patterns via `url(#id)`, `use`, `clipPath`, `mask`, filters,
+  markers, or `foreignObject`. This is a small SVG renderer, not a browser SVG
+  engine.
 
-## Formularios
+## Forms and controls
 
-- Texto (ancho por `size`), `password`, `email`, `number`, `tel`, `url`,
-  `search`, `textarea` (`rows`/`cols`), `checkbox`, `radio`, `range`
-  (slider), `color` (selector), `date`/`time`/`datetime-local`/`month`/
-  `week` (selectores nativos), `file` (botón; sin selector de archivos),
-  `select` simple y `multiple`/`size` (lista), `fieldset` con `legend` sobre
-  el borde, `button`, `label`.
-- `accent-color`, `::placeholder`. Range, checkbox y radio ignoran fondo y
-  borde del autor (como con `appearance: auto`).
-- Validación de restricciones completa (ver JavaScript).
+Text/password/email/number/tel/url/search, textarea, checkbox/radio, range,
+color, date/time/datetime-local/month/week, file (button; no picker), select
+(single/multiple/size), fieldset/legend, button, and label are rendered with
+Flutter controls. `accent-color` and `::placeholder` are supported. Range,
+checkbox, and radio ignore authored background/border like
+`appearance: auto`. See [`guides/forms-and-navigation.md`](guides/forms-and-navigation.md)
+for the missing file picker and validation caveats.
 
-## Otros elementos
+## Images, canvas, media, dialogs
 
-- `img` mediante `NativaXImageResolver`, `object-fit`, `alt`.
-- `canvas` con contexto 2D (ver JavaScript).
-- `video`, `audio`, `iframe`: se reserva su espacio con un marcador; no hay
-  reproducción multimedia ni documentos anidados.
-- `details`/`summary` (abre y cierra), `dialog` (`show`, `showModal` en la
-  capa superior con `::backdrop`, `Escape` lo cierra).
+- `img` requires `NativaXImageResolver`; `object-fit`/`alt` are handled by the
+  renderer. A null image is a broken placeholder plus diagnostic.
+- `<canvas>` is a real 2D canvas subset; it is not WebGL.
+- `<video>`, `<audio>`, `<iframe>` reserve space with a placeholder; no playback
+  or nested document.
+- `<details>`/`<summary>` open/close; `<dialog>` supports `show`, `showModal`,
+  top layer, backdrop, Escape, and focus containment. Dialog is DOM-rendered,
+  not an OS window.
 
-## Interacción
+## Interaction
 
-- Puntero: `:hover`, `:active`, cursor, clic con coordenadas (`clientX`,
-  `offsetX`, ...), `dblclick`, `contextmenu` (clic derecho o pulsación larga),
-  arrastrar y soltar HTML5 (`draggable`, `dataTransfer`).
-- Teclado: `keydown`/`keyup` en el elemento con foco.
-- Scroll: `scroll`, `scrollIntoView`, `scrollTo`, `scroll-padding-top`.
+- Pointer: `:hover`, `:active`, cursor, click coordinates, double click, context
+  menu (right click/long press), and HTML5 drag/drop where the host input path
+  provides it.
+- Keyboard: `keydown`/`keyup` on the focused element; IME/composition is
+  platform-dependent and not conformance-tested.
+- Scroll: `scroll`, `scrollIntoView`, `scrollTo`, `scroll-padding-top` (the CSS
+  property is accepted but inert in the parser list).
+- Focus order, screen-reader semantics, and text scaling are not browser parity.
 
-## Diagnóstico
+## Virtualization and CSS
 
-`NativaXDocumentView.onDiagnostic` recibe aproximaciones (imagen no resuelta,
-etc.), deduplicadas por montaje. Las advertencias del parser CSS se reportan
-desde el runtime.
+Large block/flex/grid containers can virtualize at **24 child slots**. Offscreen
+elements may have no render object and use estimated geometry; absolute children,
+complex inline runs, generated content, and fixed overlays can disable
+virtualization. `data-nativa-virtual="false"` / `data-nv-virtual="false"` opts
+out. Do not combine virtualization with code that requires exact offscreen
+geometry.
+
+## Diagnostics
+
+`NativaXDocumentView.onDiagnostic` receives renderer approximations and
+unresolved images, deduplicated per mount. CSS parser warnings are available from
+the parser/sheet. The renderer does not throw on a visual approximation.
+
+## Explicitly not supported
+
+- Full CSS tables, floats, multi-column layout, writing modes/bidi text layout.
+- Container queries, `@import`, `@property`, print styles.
+- CSS subgrid/dense packing and full intrinsic sizing.
+- SVG gradients/patterns/clip paths/masks/filters/`use`.
+- A complete CSSOM/Web Animations API.
+- Browser pixel parity. The visual suite measures a subset of pages.
+
+## Evidence
+
+- CSS tests: `packages/nativa_css/test/css_test.dart`, `media_matrix_test.dart`,
+  `style_cache_test.dart`, `fuzz_test.dart`.
+- Renderer tests: `packages/nativa_render/test/`.
+- Conformance: WPT CSS selectors **70.56 %** (127 PASS / 53 FAIL / 348 SKIP).
+- Visual: 51 pages, 52.59 % mean overall (6 PASS / 5 WARN / 40 FAIL).
+- Performance: see [`performance-suite.md`](performance-suite.md); layout
+  performance is not a conformance result.
+
+## Related
+
+- [`internals/html-dom-css.md`](internals/html-dom-css.md)
+- [`architecture/rendering.md`](architecture/rendering.md)
+- [`visual-fidelity.md`](visual-fidelity.md)
+- [`html-supported.md`](html-supported.md)
+- [`javascript-supported.md`](javascript-supported.md)

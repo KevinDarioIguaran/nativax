@@ -1,81 +1,98 @@
-# Tarea: precisión de vídeo y juegos
+# Task: video and game precision
 
-Objetivo: medir vídeo y juegos con el mismo nivel de evidencia que el juicio
-visual y el suite de rendimiento: capturas, métricas por perfil, límites y
-recomendaciones. No se promete reproducción de vídeo ni soporte del game-player
-completo hasta que la medición exista.
+Goal: measure video and games with the same evidence standard as the visual
+judge and performance suite: captures, per-profile metrics, limits, and
+recommendations. NativeX does not promise video playback or full game-player
+support until that measurement exists.
 
-## Vídeo
+## Video
 
-Estado actual: NativaX no decodifica vídeo. El renderer muestra un placeholder
-`▶ video`, el DOM reporta `MEDIA_ERR_SRC_NOT_SUPPORTED`, `canPlayType` devuelve
-`""` y `play()` rechaza con `NotSupportedError`.
+Current state: NativaX does not decode video. The renderer shows a `▶ video`
+placeholder, the DOM reports `MEDIA_ERR_SRC_NOT_SUPPORTED`, `canPlayType`
+returns `""`, and `play()` rejects with `NotSupportedError`.
 
-Tarea 1. Mantener el contrato de vídeo medible:
-- 25 perfiles de resolución: 360p, 480p, 720p, 1080p, 1440p, 2160p, retrato,
-  cuadrado, ultrawide y atributos CSS.
-- Verificar placeholder, caja, aspect ratio, `videoWidth/videoHeight = 0`,
-  `readyState = 0`, `networkState = 3`, `error.code = 4`.
-- Comando: `cd packages/nativa_render && flutter test test/video_quality_test.dart`
-- Aceptación: 25/25 PASS sin afirmar playback.
+### Task 1 — keep the video contract measurable
 
-Tarea 2. Añadir un pipeline multimedia antes de medir reproducción real:
-- Decoder, audio, reloj, seek, controles y superficie de render.
-- Medir frame drop, CPU, RSS y sincronización a 360p, 720p y 1080p.
-- Aceptación: playback real con audio y seek; error explícito para formatos no
-  soportados.
+- 25 resolution profiles: 360p, 480p, 720p, 1080p, 1440p, 2160p, portrait,
+  square, ultrawide, and CSS attributes.
+- Verify placeholder, box, aspect ratio, `videoWidth/videoHeight = 0`,
+  `readyState = 0`, `networkState = 3`, and `error.code = 4`.
+- Command: `cd packages/nativa_render && flutter test test/video_quality_test.dart`.
+- Acceptance: 25/25 PASS without claiming playback.
 
-Tarea 3. Añadir medición visual de vídeo:
-- Comparar el placeholder/layout contra Chromium con el juez visual.
-- Aceptación: posición/layout/color/diseño medidos, con `INVALID` si la
-  comparación no es válida.
+### Task 2 — add a media pipeline before measuring playback
 
-## Juegos
+- Decoder, audio, clock, seek, controls, and render surface.
+- Measure frame drop, CPU, RSS, and synchronization at 360p, 720p, and 1080p.
+- Acceptance: real playback with audio and seek; an explicit error for
+  unsupported formats.
 
-Estado actual: 25 escenarios Canvas 2D y 25 WebGL 3D definidos; los 50 están
-medidos y dan WARN. El `examples/game-player` Three.js completo no se ejecuta
-en esta matriz.
+### Task 3 — add visual measurement for video
 
-Tarea 4. Medir perfiles de juego por calidad:
-- 2D: 640x360, 854x480, 1280x720, 1920x1080, 2560x1440.
-- 3D: las mismas resoluciones con 100–5.000 cubos.
-- Partículas/cubos: 100, 500, 1.000, 2.500 y 5.000.
-- Métricas: frame p95, frame máximo, trabajo, nodos, RSS y CPU.
-- Comando: `dart run debug/engines/performance/bin/perf.dart run --only '^game' --out .perf/game`
-- Aceptación: cada perfil tiene frame p95 y RSS medidos; no se ocultan WARN.
+- Compare placeholder/layout with Chromium through the visual judge.
+- Acceptance: position/layout/color/design measured, with `INVALID` when the
+  comparison is not valid.
 
-Tarea 5. Medir el game-player real:
-- Ejecutar `examples/game-player` con `NATIVAX_GAME_DPR=0.5/1.0/1.5/2.0`.
-- Capturar métricas y RSS de la app, no solo el arnés.
-- Aceptación: cada perfil de calidad tiene frame p95, RSS y CPU medidos.
+## Games
 
-Tarea 6. Añadir regresión visual de juegos:
-- Capturas del canvas a cada calidad.
-- Comparar contra Chromium cuando sea válido.
-- Aceptación: diferencias de layout/pintura detectadas por el juez.
+Current state: the performance registry defines 25 Canvas 2D and 25 WebGL 3D
+scenarios. Historical task notes report all 50 measured with `WARN`; there is no
+current full run in this checkout, so re-run before quoting that. The complete
+`examples/game-player` Three.js bundle is not executed by that matrix.
 
-## Memoria y nativo
+### Task 4 — measure game profiles by quality
 
-Tarea 7. Medir RSS pico de la app real bajo carga:
-- Páginas pesadas, 1k/10k/50k filas, scroll y navegación repetida.
-- Aceptación: RSS pico ≤250 MB y sin tendencia creciente en 24 h.
+- 2D: 640×360, 854×480, 1280×720, 1920×1080, 2560×1440.
+- 3D: the same resolutions with 100–5,000 cubes.
+- Particles/cubes: 100, 500, 1,000, 2,500, 5,000.
+- Metrics: frame p95, maximum frame, work, nodes, RSS, and CPU.
+- Command:
 
-Tarea 8. Guardia de arquitectura:
-- Fallar si aparece WebView, CEF, Chromium embebido, Electron o servidor HTTP
-  de presentación.
-- Aceptación: test automático en CI.
+  ```bash
+  dart run debug/engines/performance/bin/perf.dart run \
+    --only '^game' --out debug/artifacts/perf/game
+  ```
 
-## Precisión compartida
+- Acceptance: every profile has measured frame p95 and RSS; WARN is not hidden.
 
-Para que vídeo y juegos tengan la misma precisión que el juicio visual, cada
-medición debe incluir:
-- viewport y DPR,
-- captura o golden,
-- métricas de frame,
-- RSS/CPU,
-- nodos y recursos,
-- estado del entorno,
-- motivo del veredicto,
-- límites y lo que no se midió.
+### Task 5 — measure the real game player
 
-No se debe convertir un placeholder en compatibilidad ni un SKIP en éxito.
+- Run `examples/game-player` with `NATIVAX_GAME_DPR=0.5/1.0/1.5/2.0`.
+- Capture metrics and RSS for the app, not only the offscreen harness.
+- Acceptance: every quality profile has measured frame p95, RSS, and CPU.
+
+### Task 6 — add game visual regression
+
+- Canvas captures at each quality level.
+- Compare with Chromium where the comparison is valid.
+- Acceptance: layout/paint differences are detected by the judge.
+
+## Memory and native
+
+### Task 7 — measure peak RSS under load
+
+- Heavy pages, 1k/10k/50k rows, scroll, and repeated navigation.
+- Acceptance: peak RSS ≤ 250 MB and no growing trend over 24 h.
+
+### Task 8 — architecture guard
+
+- Fail if a WebView, CEF, embedded Chromium, Electron, or presentation HTTP
+  server appears.
+- Acceptance: an automated gate. The repository has no CI workflow yet, so the
+  guard runs through `tools/test_all.sh`/architecture tests until CI exists.
+
+## Shared precision
+
+Every measurement must include:
+
+- viewport and DPR;
+- capture or golden;
+- frame metrics;
+- RSS/CPU;
+- nodes and resources;
+- environment state;
+- verdict reason;
+- limits and what was not measured.
+
+A placeholder, a WARN, or a skipped profile is not a playback or game-support
+claim.

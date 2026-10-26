@@ -64,5 +64,5 @@ Es el **proceso real de la app Flutter Linux**, no el arnés `flutter test`. El 
 
 ```bash
 dart run tools/perf/bin/perf.dart run --app-idle --out .perf/latest
-python3 tools/perf/gui/perf_gui.py
+python3 debug/engines/performance/gui/perf_gui.py
 ```

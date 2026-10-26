@@ -101,6 +101,10 @@ dart run bin/run_html5lib.dart
 dart run bin/run_url.dart
 dart run bin/run_wpt.dart
 dart run bin/run_html_tree.dart
+
+# Bounded AI context (indexes, runs, conformance, docs, token estimates)
+python3 debug/run.py context brief --budget 2000
+python3 debug/run.py context index
 ```
 
 ## References
@@ -109,4 +113,5 @@ dart run bin/run_html_tree.dart
 - `docs/nativa-family.md`: family names, package map, extraction criteria.
 - `progress/status.md`: live state and numbers.
 - `progress/conformance.md`: suite baselines and gaps.
+- `docs/information-architecture.md`: formats, schemas, indexes, and context policy.
 - `docs/security/audit.md`, `docs/security/threat-model.md`: security model.

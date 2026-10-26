@@ -1,41 +1,48 @@
-# Tareas de test pendientes
+# Pending test tasks
 
-Estas tareas no se pueden cerrar con tests rápidos o en esta máquina. Se dejan
-como pendientes explícitas.
+These tasks cannot be closed with quick tests or on this machine. They remain
+explicit gaps rather than implied coverage.
 
-## Memoria y ciclo de vida
-- Soak de 24–72 h con medición de RSS, heap, timers, listeners, wrappers,
-  documentos y contextos.
-- Medición de RSS pico de la app real con páginas pesadas.
-- Controles positivo/negativo en plataformas reales.
-- Pruebas de create/destroy masivo y navegación repetida.
+## Memory and lifecycle
 
-## Plataforma
-- Compilar y probar Android, iOS, Linux, Windows y macOS.
-- DPI, orientación, teclado, accesibilidad, fuentes y entrada táctil.
-- No afirmar soporte sin evidencia de compilación y ejecución.
+- 24–72 h soak with RSS, heap, timers, listeners, wrappers, documents, and
+  contexts measured.
+- Peak RSS of the real app with heavy pages.
+- Positive and negative controls on real platforms.
+- Massive create/destroy and repeated navigation stress.
+
+## Platform
+
+- Build and test Android, iOS, Linux, Windows, and macOS.
+- DPI, orientation, keyboard, accessibility, fonts, and touch input.
+- Do not claim support without compile-and-run evidence.
 
 ## Visual
-- Golden images por plataforma y tolerancias explícitas.
-- Fuzzing HTML/CSS con minimización y semilla fija.
-- Regresión visual con miles de nodos, texto largo, imágenes y actualizaciones.
-- Comprobación de animaciones y frame stability.
 
-## Video y juegos
-- Pipeline multimedia real (decoder, audio, seek, controles).
-- Ejecución del game-player Three.js completo con `NATIVAX_GAME_DPR`.
-- Capturas golden de canvas por calidad.
+- Golden images per platform with explicit tolerances.
+- HTML/CSS fuzzing with minimization and a fixed seed.
+- Visual regression with thousands of nodes, long text, images, and updates.
+- Animation and frame-stability checks.
 
-## Arquitectura y seguridad
-- Fuzzing de JS/DOM/CSS/HTML con minimización.
-- Pruebas de agotamiento de RAM/CPU/descriptores.
-- Carreras de carga/destrucción y reentrancia.
-- Validación de licencias y dependencias.
+## Video and games
 
-## Conformidad
-- Ejecutar las suites completas y actualizar tasas sin SKIP.
-- WPT completo, no solo `dom/nodes` y `css/selectors`.
+- Real media pipeline (decoder, audio, seek, controls).
+- Run the complete Three.js game player with `NATIVAX_GAME_DPR`.
+- Golden canvas captures per quality profile.
 
-## Regla
-Un test que solo aumenta un contador no cuenta como madurez. Cada tarea
-pendiente necesita comando, métrica, límite y evidencia reproducible.
+## Architecture and security
+
+- JS/DOM/CSS/HTML fuzzing with minimization.
+- RAM/CPU/descriptor exhaustion tests.
+- Load/destroy races and reentrancy.
+- License and dependency validation.
+
+## Conformance
+
+- Run the complete suites and update rates without converting SKIP to PASS.
+- Full WPT, not only `dom/nodes` and `css/selectors`.
+
+## Rule
+
+A test that only increments a counter does not establish maturity. Every pending
+task needs a command, metric, limit, and reproducible evidence.

@@ -1,286 +1,195 @@
-# Mapa de Chromium para la virtualización de NativaX
+# Chromium mapping for the owned renderer
 
-Este documento fija la referencia técnica que se usó para diseñar la
-virtualización del renderer de NativaX. No se copia código de Chromium ni se
-introduce Blink: se trasladan los mecanismos y sus invariantes al renderer
-propio (`nativa_render`).
+This is a design-reference map, not a claim that NativaX embeds Blink or
+Chromium. No Chromium code is copied. The mechanisms inform `nativa_render` and
+`nativa_css`; Chromium is also the external measurement instrument for the
+visual suite.
 
-Chromium consultado: `chromium/src` en `refs/heads/main`, 2026-10-23.
-Rutas relativas a `third_party/blink/renderer/`.
+Reference: `chromium/src` at `refs/heads/main`, inspected 2026-10-23. Paths below
+are relative to `third_party/blink/renderer/`.
 
-## 1. Bloquear estilo, layout, prepaint y paint de un subárbol
+## 1. Locking style/layout/paint for a subtree
 
-**Problema NativaX.** El documento tiene 10.000 filas, pero el viewport solo
-muestra ~20. Hoy cada fila tiene estilo computado, un `RenderObject`, layout y
-paint aunque esté a 2.000.000 px de distancia.
+**Problem:** a 10,000-row document has style, render objects, layout, and paint
+for rows millions of pixels away.
 
-**Chromium.** `core/display_lock/display_lock_context.h` define
-`DisplayLockContext` y cuatro decisiones por fase:
+**Chromium:** `core/display_lock/display_lock_context.h` defines
+`DisplayLockContext` with per-phase decisions
+`ShouldStyleChildren()`, `ShouldLayoutChildren()`, `ShouldPrePaintChildren()`,
+and `ShouldPaintChildren()`. `Lock()`/`Unlock()` change state, and
+`content-visibility` requests it via `SetRequestedState()`. Display-lock
+utilities prevent forcing a locked ancestor.
 
-- `ShouldStyleChildren()`
-- `ShouldLayoutChildren()`
-- `ShouldPrePaintChildren()`
-- `ShouldPaintChildren()`
+**NativaX:** `CssVirtualBlock` is the container lock. Outside the culling window
+it builds no widgets, so there is no Flutter `Element`, render object, layout,
+or style call. The block still exists as a CSS box; its height is composed from
+measured and estimated row heights. The decision happens before visiting
+children, at the style boundary.
 
-Las cuatro devuelven `true` cuando el lock no está activo. `Lock()` /
-`Unlock()` en `core/display_lock/display_lock_context.cc` cambian el estado, y
-`SetRequestedState(EContentVisibility)` lo origina desde el estilo
-(`content-visibility: hidden|auto|visible`). `DisplayLockUtilities`
-(`core/display_lock/display_lock_utilities.h`) responde
-`LockedAncestorPreventingStyle/Layout/Paint` para no forzar un ancestro
-bloqueado.
+## 2. Culling rect and overscan
 
-**Adaptación Dart.** `CssVirtualBlock` es el equivalente al lock por
-contenedor:
+**Chromium:** `platform/graphics/paint/cull_rect.h` defines `CullRect` with
+intersection helpers. `CullRectUpdater` propagates it recursively, expands for
+composited scroll, and clips with transforms.
 
-- No construye widgets para hijos fuera de la ventana. Sin widget no hay
-  `Element`, ni `RenderObject`, ni estilo (`styleOf` no se llama).
-- El contenedor expone una ventana `[start, end]` calculada con el rect de
-  culling. Solo esa ventana se materializa.
-- El bloque sigue existiendo como caja CSS; su altura total se compone de
-  estimaciones y de las alturas reales medidas.
-- La decisión se toma en el mismo punto que Chromium toma
-  `ShouldStyleChildren`: antes de recorrer los hijos.
+**NativaX:** the window is a vertical interval,
+`viewportTop - overscan <= y < viewportTop + viewportHeight + overscan`, with
+one viewport of overscan by default. Rows are located by summing medium heights
+with a linear arithmetic pass that does not build widgets. The window is
+recomputed once per frame after scroll, not on every mutation.
 
-## 2. Rect de culling y margen de overscan
+## 3. Estimated size and correction on entry
 
-**Problema NativaX.** Hay que decidir qué filas caen en el viewport sin
-recorrer y estilar 10.000 nodos.
+**Chromium:** `content-visibility: auto` uses `contain-intrinsic-size` as a
+placeholder, then runs real layout when unlocked.
 
-**Chromium.** `platform/graphics/paint/cull_rect.h` define `CullRect` con
-`Intersects`, `IntersectsTransformed`, `IntersectsHorizontalRange` e
-`IntersectsVerticalRange`. `core/paint/cull_rect_updater.cc` lo propaga:
-
-- `CullRectUpdater::UpdateRecursively`
-- `CullRectUpdater::UpdateForSelf`
-- `CullRectUpdater::ComputeFragmentCullRect`
-- `CullRectUpdater::ComputeFragmentContentsCullRect`
-
-El rect se expande para scroll compuesto (`CullRect::ApplyScrollTranslation`,
-`CullRect::CanExpandForScroll`) y se recorta con clips y transforms.
-
-**Adaptación Dart.** La ventana usa un intervalo vertical, no un rect 2D:
-`viewportTop - overscan <= y < viewportTop + viewportHeight + overscan`.
-`overscan` es configurable (por defecto un viewport, como el margen de
-`content-visibility: auto`). Las filas se localizan por suma de alturas, con
-una búsqueda lineal O(n) sobre aritmética (sin construir widgets). La ventana
-se recalcula una vez por frame tras el scroll; no por mutación.
-
-## 3. Tamaño estimado y corrección al entrar en vista
-
-**Problema NativaX.** Una fila no materializada no tiene altura real, pero el
-scroll necesita una altura total y una posición para cada fila.
-
-**Chromium.** `content-visibility: auto` usa `contain-intrinsic-size` para dar
-un tamaño de reemplazo al subárbol bloqueado; el layout real se ejecuta al
-desbloquear. `DisplayLockContext::DidLayoutChildren()` y
-`ShouldLayoutChildren()` gobiernan esa transición.
-
-**Adaptación Dart.** Cada bloque mantiene:
-
-- `_heights[i]` para alturas medidas;
-- una altura media móvil para las no medidas;
-- una estimación estructural inicial (altura declarada, o
-  `line-height`/padding/tag) para la primera pasada;
-- `total = n * media + suma(medida - media)`.
-
-Cuando una fila entra en la ventana se mide su `RenderBox` y se sustituye la
-estimación. El delta se aplica al `ScrollController` en el mismo post-frame
-para que el ancla visible no se mueva (ver §4).
+**NativaX:** each block keeps measured heights, a moving average for unmeasured
+rows, and an initial structural estimate (declared height, line-height/padding,
+tag default). The total is `n * average + sum(measured - average)`. Entering the
+window measures the real render box and replaces the estimate; the scroll
+controller applies the delta in the same post-frame so the visible anchor does
+not jump.
 
 ## 4. Scroll anchoring
 
-**Problema NativaX.** Al corregir la altura de una fila estimada, todo el
-contenido posterior salta.
+**Chromium:** `core/layout/scroll_anchor` finds an anchor, computes an
+adjustment, applies it, and restores the offset around display locks.
 
-**Chromium.** `core/layout/scroll_anchor.h/.cc`:
-`ScrollAnchor::FindAnchor`, `ScrollAnchor::ComputeAdjustment`,
-`ScrollAnchor::Adjust`, `ScrollAnchor::RestoreAnchor`, y
-`DisplayLockContext::StashScrollOffsetIfAvailable()` /
-`RestoreScrollOffsetIfStashed()` para no perder el offset al bloquear un
-scroller.
+**NativaX:** before correcting heights, it picks the first materialized row whose
+top is at or above the viewport, computes the height delta above it, and calls
+`jumpTo(offset + delta)` in the same post-frame. If the scroller is at its
+maximum, the clamp wins and the next frame re-anchors.
 
-**Adaptación Dart.** Antes de corregir alturas se elige como ancla la primera
-fila materializada cuyo borde superior está en o por encima del viewport. Se
-calcula `aboveDelta` (cambio de altura de todo lo anterior) y se hace
-`jumpTo(offset + aboveDelta)` en el mismo post-frame en que se aplican las
-nuevas alturas. El ancla conserva su posición en pantalla. Si el scroller está
-en el máximo, se respeta el clamp y se vuelve a anclar en el siguiente frame.
+## 5. Activation by navigation, focus, selection, find
 
-## 5. Activación por navegación, foco, selección y find
+**Chromium:** `DisplayLockActivationReason` includes accessibility,
+find-in-page, fragment navigation, script focus, `scrollIntoView`, and
+selection. Activation commits the subtree, often keeping it unlocked for two
+frames.
 
-**Problema NativaX.** Un `#hash`, `element.focus()`, `scrollIntoView()` o una
-búsqueda pueden apuntar a una fila que no existe como `RenderObject`.
+**NativaX:** `CssVirtualBlockState.ensureBuilt(element)` pins the element,
+forces a rebuild, and materializes its render object on the next frame. It is
+used by geometry (`LayoutHost.boxOf`), `scrollIntoView`, hash navigation,
+focus/Tab, and selection paths. Until materialized, geometry may be estimated.
+Selection and find are limited APIs; materialization does not imply Blink-level
+compatibility.
 
-**Chromium.** `DisplayLockActivationReason` en
-`core/display_lock/display_lock_context.h` incluye `kAccessibility`,
-`kFindInPage`, `kFragmentNavigation`, `kScriptFocus`, `kScrollIntoView` y
-`kSelection`. `CommitForActivation(reason)` y
-`ShouldCommitForActivation(reason)` desbloquean el subárbol; para
-navegación/foco/scroll mantiene el desbloqueo dos frames
-(`SetKeepUnlockedUntilLifecycleCount(2)`) porque la visibilidad se decide al
-final del frame.
+## 6. Bounded recycling
 
-**Adaptación Dart.** `CssVirtualBlockState.ensureBuilt(element)` fija el
-elemento en la ventana (`_pinned`), fuerza un `setState` y el siguiente frame
-ya tiene su `RenderObject` real. Se usa desde:
+**Chromium:** locking detaches the layout subtree; culling avoids paint
+fragments outside the cull rect.
 
-- `LayoutHost.boxOf` cuando el elemento está virtualizado (devuelve caja
-  estimada si aún no se materializó, real si ya está);
-- `LayoutHost.scrollIntoView`, que materializa, espera el frame y luego
-  desplaza;
-- navegación `#hash` (el binding ya llama a `scrollIntoView`);
-- `focus()`/Tab: el foco que entra en un elemento virtualizado lo fija.
+**NativaX:** the materialized window is bounded by
+`viewport + 2 * overscan`. Widgets leaving the window are removed and their
+render objects released. The block keeps light data (heights, indices, DOM
+elements), not render trees. The recycle queue keeps at most one window of
+built widgets and does not grow with row count. `virtualization_test.dart`
+checks live render objects for 100/1,000/10,000 rows remain roughly constant.
 
-## 6. Reciclaje acotado
+## 7. Deliberate differences
 
-**Problema NativaX.** Al salir de la ventana, los `RenderObject` deben
-liberarse; no pueden acumularse con el número de filas.
+- Chromium keeps a `LayoutObject` and locks phases; NativaX builds no render
+  object outside the window. This is more aggressive and fits Flutter.
+- Chromium derives the intrinsic placeholder from CSS; NativaX starts from a
+  structural estimate and corrects with real measurements.
+- Flutter owns scrolling, so anchoring lives in the virtual block rather than
+  Blink's `ScrollAnchor`.
+- Selection/find remain limited; materialization preserves geometry but is not
+  full Blink parity.
 
-**Chromium.** `DisplayLockContext::Lock()` desconecta el layout tree del
-subárbol (`DetachLayoutTree`) y `Unlock()` lo reconstruye. El culling evita
-crear fragmentos de paint fuera del cull rect.
+## 8. CSS: RuleSet, SelectorFilter, MatchedPropertiesCache
 
-**Adaptación Dart.** La ventana materializada está acotada por
-`viewport + 2 * overscan`; al desplazarse, los widgets que salen se eliminan
-del árbol y sus `RenderObject` se liberan. El bloque conserva solo datos
-ligeros (alturas, índices, elementos DOM), no árboles de render. La cola de
-reciclaje conserva como máximo una ventana de widgets ya construidos; no crece
-con N. El test `virtualization_test.dart` cuenta `RenderObject` vivos para
-100, 1.000 y 10.000 filas y exige que la diferencia sea ~constante.
+**Problem:** every element scanning every rule is dominated by a large
+Tailwind/Font Awesome sheet.
 
-## 7. Diferencias deliberadas
+**Chromium:**
 
-- Chromium mantiene el `LayoutObject` y bloquea sus fases; NativaX no crea el
-  `RenderObject` fuera de la ventana. Es más agresivo y encaja con el
-  renderer Flutter.
-- Chromium calcula `contain-intrinsic-size` desde CSS; NativaX empieza con una
-  estimación estructural y la corrige con medidas reales.
-- Chromium tiene scroll anchoring nativo por `ScrollAnchor`; NativaX lo
-  implementa en el bloque virtual porque el scroll lo controla Flutter.
-- `selection` y `find` siguen siendo APIs limitadas en NativaX; la
-  virtualización garantiza que un nodo materializado por esas rutas conserva
-  su geometría, pero no se declara compatibilidad completa con Blink.
+- `RuleSet` buckets rules by id/class/tag/universal/pseudo subject;
+- `SelectorFilter` rejects descendant selectors with an ancestor filter before
+  matching;
+- `MatchedPropertiesCache` reuses matched declarations and resolved styles for
+  equal signatures;
+- the style resolver shares styles between siblings with the same inherited
+  context.
 
-## 8. CSS: RuleSet, SelectorFilter y MatchedPropertiesCache
+**NativaX:**
 
-**Problema NativaX.** Cada elemento visible recorría las reglas candidatas y
-volvía a construir sus declaraciones; con Tailwind/Font Awesome (~3.600
-reglas) eso domina el arranque.
+- `StyleEngine` indexes id/class/tag/universal and has a hover-specific bucket
+  so non-hoverable nodes do not create a `MouseRegion`;
+- `_elementSignature` + `_matchedCache` share cascaded declarations;
+- `_computedCache` keys by signature + inherited style identity + structural
+  context where needed;
+- structural selectors (`:first-*`, `:nth-*`, `:empty`, `:has`, `+`, `~`) are
+  detected during indexing, so only those subjects include structural context;
+- `useStyleCaches` allows measuring the uncached path; production keeps caches
+  on.
 
-**Chromium.**
+Current gap: Chromium's ancestor Bloom filter and full invalidation sets.
+NativaX still uses subject buckets + signatures. Measurements with metrics
+enabled show style is no longer the dominant cost in the Bible fixture; layout
+and paint dominate population frames.
 
-- `core/css/rule_set.h`: `RuleSet::AddRule`, `RuleSet::AddRulesFromSheet` y
-  los buckets por id, clase, tag, universal y pseudo. La cascada solo mira el
-  bucket que puede casar con el sujeto.
-- `core/css/selector_filter.h`: `SelectorFilter::CollectElementIdentifierHashes`
-  y `SelectorFilter::FastRejectSelector`; el filtro de ancestros (Bloom de
-  ids/clases/tags) descarta selectores descendientes antes de evaluarlos.
-- `core/css/resolver/matched_properties_cache.h`: `MatchedPropertiesCache::Find`
-  y `MatchedPropertiesCache::Add`; reutiliza las declaraciones casadas y el
-  estilo resultante para elementos con la misma firma.
-- `core/css/resolver/style_resolver.cc` y `style_cascade.cc`: comparten estilo
-  entre hermanos cuando la firma y el estilo heredado coinciden, y mantienen la
-  herencia por referencia.
+## 9. LayoutNG: ConstraintSpace and LayoutResult
 
-**Adaptación Dart.**
+**Problem:** repeated passes (`layout`, dry, intrinsic) can re-measure text.
 
-- `StyleEngine` ya indexa por `id`/`class`/`tag`/universal; se añadieron
-  buckets específicos de `:hover` para no crear `MouseRegion` en nodos que no
-  pueden casar con una regla de hover.
-- `_elementSignature` + `_matchedCache`: declaraciones casadas compartidas por
-  firma (tag, id, clases, atributos, pseudo, estado de puntero/foco/target).
-- `_computedCache`: `ComputedStyle` compartido por firma + identidad del estilo
-  heredado + contexto estructural (posición, número de hermanos, `:empty`).
-- Las estructuras con selectores estructurales se detectan al indexar
-  (`:first-*`, `:nth-*`, `:empty`, `:has()`, `+`, `~`) y solo esos sujetos
-  incluyen el contexto estructural en la clave.
-- `useStyleCaches` permite medir el camino sin caché; producción lo deja activo.
-- Diferencia: Chromium usa un Bloom de ancestros; NativaX todavía usa la firma
-  del elemento y el índice de sujeto. El Bloom queda como siguiente paso.
+**Chromium:** immutable `ConstraintSpace`, reusable `LayoutResult` keyed by
+constraints/style, explicit flex child spaces, and targeted invalidation
+(`SetNeedsLayout`, `SetChildNeedsLayout`) bound relayout.
 
-## 9. LayoutNG: ConstraintSpace y LayoutResult
+**NativaX:** `RenderCssFlex` reuses real child layout when a flexible length
+does not change the main size. `LayoutProfile` separates `box.layout`,
+`box.dry`, `box.paint`, `flex.*`, `text.*`, and `text.intrinsic` per frame.
+Not implemented: caching a `LayoutResult` by `(constraints, style)` in
+`RenderCssBox`/`RenderCssFlex` and limiting relayout to a boundary. Attempts to
+cache intrinsics did not move the metric and were reverted; do not claim a
+layout-cache win without new evidence.
 
-**Problema NativaX.** El primer frame hacía varias pasadas por caja
-(`layout`, `dry`, intrínsecos) y cada pasada podía volver a medir texto.
+## 10. Text and mutation
 
-**Chromium.**
+Chromium caches shaping by `(text, style, width)` and batches document
+lifecycle invalidations. NativaX measures text with Flutter's
+`RenderParagraph`, attributes timed passes through `LayoutTimed`, and keeps one
+style flush per frame in `NativaXDocumentView._flush`, deferring style work for
+out-of-view virtualized nodes (`invalidateDeferred`).
 
-- `core/layout/constraint_space.h`: `ConstraintSpace`,
-  `ConstraintSpaceBuilder` y `ConstraintSpace::AvailableSize()`; el espacio de
-  restricciones es un valor inmutable que se reutiliza.
-- `core/layout/layout_result.h`: `LayoutResult` guarda el fragmento, tamaño,
-  baseline y datos de ruptura; un resultado se reutiliza mientras las
-  restricciones y el estilo no cambien.
-- `core/layout/flex/flex_layout_algorithm.cc`: `FlexLayoutAlgorithm::Layout`,
-  `LayoutInternal`, `ConstructAndAppendFlexItems`,
-  `BuildSpaceForFlexBasis` y `BuildSpaceForLayout`; los hijos se miden con un
-  `ConstraintSpace` explícito una vez por fase.
-- `core/layout/layout_box.cc`: `LayoutBox::Layout` y los puntos de invalidación
-  de layout (`SetNeedsLayout`, `SetChildNeedsLayout`) limitan el relayout.
+## 11. Pseudo-element RuleSet and ElementRuleCollector
 
-**Adaptación Dart.**
+**Problem:** `hasPseudoRules()`/`pseudoStyleOf()` scanning every `::before`
+rule is expensive with icon fonts.
 
-- `RenderCssFlex` ya reutiliza el layout real de los hijos en columnas cuando
-  la longitud flexible no cambia el tamaño principal; evita la pasada dry
-  duplicada.
-- `LayoutProfile` mide `box.layout`, `box.dry`, `box.paint`, `flex.layout`,
-  `flex.dry`, `text.layout`, `text.dry` y `text.intrinsic` por frame.
-- Pendiente: cachear `LayoutResult` por `(constraints, estilo)` en
-  `RenderCssBox`/`RenderCssFlex` y limitar el relayout a un boundary. El
-  primer frame del fixture genérico sigue dominado por layout; los intentos de
-  cachear intrínsecos en `RenderCssBox` no movieron la métrica y se
-  revirtieron.
+**Chromium:** pseudo-element rules are indexed by their rightmost subject in
+`RuleSet`; `ElementRuleCollector` collects only candidate lists for the element.
 
-## 10. Texto y mutación
+**NativaX:** `_RuleBuckets` indexes pseudo rules by subject;
+`pseudoStyleOf`/`cascadedDeclarations(..., pseudo:)` iterate only
+`buckets.candidates(element)`. `nativaxNeverRenderedTags` excludes
+`script/style/head/title/meta/link/noscript/template` before styling.
+`StyleEngine.metricsEnabled` (opt-in with `NATIVAX_METRICS=1`) reports selector
+counts, candidates, cache hits/misses, and exclusive/self time.
 
-- Chromium cachea el shaping por `(texto, estilo, ancho)` en
-  `platform/text` y evita re-shaping entre pasadas; NativaX mide con
-  `RenderParagraph` de Flutter y `LayoutTimed` atribuye sus pasadas.
-- Chromium agrupa invalidaciones en el lifecycle del documento
-  (`core/dom/style_engine.cc`, `document_lifecycle.cc`); NativaX mantiene una
-  sola pasada por frame en `NativaXDocumentView._flush` y difiere estilos de
-  nodos virtualizados fuera de vista (`invalidateDeferred`).
+Remaining gap: ancestor Bloom filters and complete invalidation sets. Current
+work has reduced style cost; layout/paint is the next bottleneck.
 
-## 11. Pseudo-element RuleSet y ElementRuleCollector
+## Status and evidence
 
-**Problema NativaX.** `hasPseudoRules('before')` era global y
-`pseudoStyleOf` recorría **todas** las reglas `::before` para cada elemento.
-Con Font Awesome (600 iconos) eso añadía cientos de evaluaciones por nodo y
-dominaba el estilo (~10 ms/elemento en la Biblia).
+This mapping is **design guidance**. Each claim about NativaX must be checked in
+source and tests. Relevant files:
 
-**Chromium.**
+- `packages/nativa_render/lib/src/layout/virtualization.dart`
+- `packages/nativa_render/lib/src/layout/layout_profile.dart`
+- `packages/nativa_render/test/virtualization_test.dart`
+- `packages/nativa_css/lib/src/cascade.dart` (`StyleEngine`)
+- `packages/nativa_render/lib/src/render/node_view.dart`
 
-- `core/css/rule_set.h`: `RuleSet::AddRule` y
-  `RuleSet::AddRulesFromSheet` indexan por el compuesto más a la derecha
-  (id/clase/tag/universal), incluidas las reglas con pseudo-elemento.
-- `core/css/element_rule_collector.h/.cc`:
-  `ElementRuleCollector::CollectMatchingRules` y
-  `CollectMatchingRulesForListInternal` toman solo las listas de candidatos
-  del `RuleSet` para el elemento; no recorren toda la hoja.
-- `core/css/selector_filter.h`: `SelectorFilter::FastRejectSelector` descarta
-  selectores descendientes con un filtro de ancestros antes del matching.
-- `core/css/resolver/matched_properties_cache.h`:
-  `MatchedPropertiesCache::Find` / `Add` reutilizan declaraciones y estilos.
-- `core/css/resolver/style_resolver.h`: `ApplyMatchedCache` y
-  `MaybeAddToMatchedPropertiesCache`; `InvalidateMatchedPropertiesCache` al
-  cambiar viewport/estado.
+The latest measured visual and performance results are in
+[`visual-fidelity.md`](visual-fidelity.md) and
+[`performance-suite.md`](performance-suite.md). A Chromium mechanism being
+described here is not evidence that NativaX already matches it.
 
-**Adaptación Dart.**
+## Related
 
-- `_RuleBuckets` indexa las reglas de cada pseudo-elemento por el sujeto
-  (id/clase/tag/universal). `pseudoStyleOf` y `cascadedDeclarations(...,
-  pseudo:)` solo iteran `buckets.candidates(element)`.
-- `nativaxNeverRenderedTags` excluye `script`, `style`, `head`, `title`,
-  `meta`, `link`, `noscript` y `template` antes de `styleOf`; no generan caja
-  y no deben pagar matching.
-- `StyleEngine.metricsEnabled` (opt-in con `NATIVAX_METRICS=1`) mide por
-  elemento: selectores, candidatos, cache hit/miss y µs propios/exclusivos,
-  restando el tiempo de los padres anidados.
-- `_RuleBuckets.candidates` sustituye el recorrido plano de pseudo reglas;
-  el resto de la cascada usa los buckets normales + `_matchedCache` +
-  `_computedCache`.
-- Pendiente: el Bloom de ancestros de `SelectorFilter` y los invalidation
-  sets completos. La medición actual ya deja el estilo en ~0,34 ms/elemento
-  en la Biblia; el siguiente cuello es layout/paint de los frames de
-  población.
+- [`architecture/rendering.md`](architecture/rendering.md)
+- [`internals/renderer.md`](internals/renderer.md)
+- [`css-supported.md`](css-supported.md)
+- [`visual-fidelity.md`](visual-fidelity.md)

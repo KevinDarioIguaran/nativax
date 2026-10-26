@@ -6,7 +6,7 @@
 |---|---|
 | Trivial JS → Dart host call | < 5 µs (measured ~3 µs on Linux) |
 | UI frame | 16 ms |
-| Script entry | 1 s by default, configurable |
+| Script entry | 10 s runtime default; `JavaScriptEngineConfig` direct default 1 s |
 | HTML parsing | linear; no regex over markup |
 | Style recomputation | incremental per dirty subtree |
 
@@ -127,6 +127,8 @@ JIT on iOS, keeping wasm3 as a fallback.
 - To be 7× faster than V8 from that baseline requires **53.1×**.
 - Rejected experiments with no improvement: LTO, `-O2`, `-march=native`,
   `-fno-semantic-interposition`, raising the GC threshold.
-- Details, per-benchmark table, and roadmap: `docs/performance-audit.md`.
+- Details, per-benchmark table, and roadmap: archived at
+  `docs/archive/legacy-es/performance-audit-2026-10-21.md`; current methodology
+  is in `docs/benchmarks.md`.
 - New harness: `debug/engines/microbenchmarks/node/steady_bench.mjs` and
   `debug/engines/microbenchmarks/node/compare_node.py`.

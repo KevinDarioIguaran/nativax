@@ -1,9 +1,9 @@
 # Fidelidad visual 50projects50days — última ejecución
 
 - Fecha: 2026-10-24
-- Comando: `dart run tools/visual/bin/visual_check.dart --suite 50projects50days --out .visual/runs/50projects50days` (evaluación final regenerada con `--resume`)
+- Comando: `dart run debug/engines/visual_comparison/bin/visual_check.dart --suite 50projects50days --out .visual/runs/50projects50days` (evaluación final regenerada con `--resume`)
 - Referencia: Google Chrome 152.0.7977.82 headless; viewport 800x900, DPR 1, animaciones congeladas
-- Fixtures: `tools/visual/fixtures/50projects50days` @ `c92b0bc3a87fc95d44b89552b7b6a2eeb36ca481` (MIT)
+- Fixtures: `debug/engines/visual_comparison/fixtures/50projects50days` @ `c92b0bc3a87fc95d44b89552b7b6a2eeb36ca481` (MIT)
 - Páginas: **51** — PASS **6**, WARN **5**, FAIL **40**, INVALID **0**
 - Overall: media **52.59 %**, mediana **48.54 %**
 - Medias por categoría: posición **36.20 %**, layout **53.04 %**, color **45.24 %**, diseño **96.72 %**

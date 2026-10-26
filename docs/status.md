@@ -1,81 +1,153 @@
-# NativaX: estado de la sesión (2026-10-20)
+# Status and maturity
 
-> **Este archivo es histórico.** El estado vivo y actualizado está en
-> [`progress/status.md`](progress/status.md) (sesión 19: 276 tests en los
-> paquetes, WebGL/WebAssembly y juego real arrancando; B5 en curso).
+**Snapshot:** 2026-10-26, `HEAD` `f47240e`, working tree contains uncommitted
+information-architecture and documentation changes. This page is the stable
+maturity view; [`../progress/status.md`](../progress/status.md) is the live,
+short status and [`../progress/conformance.md`](../progress/conformance.md) is
+the conformance baseline.
 
-> **Actualización de la sesión 2 (conformidad + fase 1).** El estado vivo está
-> en [`progress/status.md`](progress/status.md); el histórico y los números en
-> [`progress/`](progress/README.md); las normas de trabajo en
-> [`.agents/`](.agents/README.md). Resumen: `nativa_render` ya compila y
-> renderiza texto, cajas, bloque, flex, controles básicos y eventos
-> JS→DOM→Flutter; el runtime público `NativaXView` ya carga documentos y un
-> contador con estado en JS; las fases 2 y 3 están cerradas para el alcance 0.1
-> (JS async/eventos/ciclo de vida y layout CSS con posición, listas,
-> formularios, imágenes y responsive); hay 212 tests verdes y runners de conformidad para Test262,
-> html5lib y WPT. La línea base es Test262 97,93 %, html5lib 96,95 %, WPT
-> DOM/CSS todavía muy bajo y URL 0 % (API ausente). El texto de abajo es el
-> resumen original de la sesión 1 y se conserva como referencia.
+NativaX is **experimental and pre-1.0**. It has a working runtime for real pages
+on Linux x86_64 and a substantial standards test suite, but it is not a browser
+replacement and does not claim production readiness. The honest summary is:
+**the core chain works; coverage, platforms, accessibility, resilience, and
+several engine paths are incomplete.**
 
-El prompt original completo está en
-[`docs/idea.md`](idea.md). Este archivo resume lo que ya
-existe, lo verificado y lo que falta, para retomar en otra sesión.
+## What is actually proven
 
-## Pedidos adicionales del usuario (durante la sesión)
+| Area | Status | Evidence | Limits |
+|---|---|---|---|
+| `HTML → DOM → CSS → Flutter` flow | **Implemented, partial verification** | Widget tests, conformance suites, examples | Visual fidelity is 52.59 % mean on 51 vendored pages |
+| Public `NativaXView` / `NativaXRuntime` | **Implemented** | `packages/nativax/test/runtime_test.dart`, `web_platform_render_test.dart` | Full `test_all.sh` is flaky at `game_play_test.dart`; final 2026-10-26 run failed |
+| HTML parsing | **Partial** | html5lib tokenizer 99.26 %; tree construction 83.03 % | Tree path delegates to `package:html`; template/quirks gaps; 1,025 tokenizer SKIPs |
+| DOM, events, selectors | **Partial** | WPT `dom/nodes` 70.00 %, `dom/events` 71.23 %, CSS selectors 70.56 % | The WPT adapter is deliberately lite; reftests and testdriver are skipped |
+| CSS and layout | **Partial** | Renderer tests, 51-page visual baseline | Flex/grid/table/SVG approximations; visual layout score 53.04 % |
+| JavaScript language | **Verified for QuickJS subset** | Test262 97.93 % on `language/*` subset | Test262 runs on QuickJS; V8 has not been run through the suite; 1,108 SKIPs |
+| Engine selection and fallback | **Implemented, partial verification** | Runtime and V8 tests; V8 memory fallback | V8 lacks modules, WebAssembly, SAB, WebGL; only Linux has a built library in this tree |
+| Workers and messaging | **Implemented** | `workers_test.dart`, messaging tests, game boot | Workers use QuickJS; no long-running stress or cross-platform verification |
+| Resources and network policy | **Implemented** | Loader tests, network tests under bindings | Flutter resource-policy security case is `SKIP`; host policy is the real boundary |
+| Visual fidelity | **Measured, low** | 51 pages, Chromium headless reference | 6 PASS / 5 WARN / 40 FAIL; not a conformance metric |
+| Performance | **Measured, misses targets** | 270 scenarios registered; 17 measured in latest pass | Offscreen CPU pumps, not GPU/FPS; latest pass 5 PASS / 2 WARN / 10 FAIL |
+| Security | **Partial** | 45 cases: 44 PASS, 0 FAIL, 1 SKIP | No OS sandbox; no fuzzing/SCA; Linux only |
+| Platforms | **Linux only verified** | Build/test/measurement records | Android/iOS/macOS/Windows unverified |
+| Accessibility | **Unknown / mostly absent** | No dedicated evidence | Do not claim screen-reader, focus, contrast, or text-scaling support |
 
-1. Crear el proyecto en `~/Documents/nativax`, separado del repo Torah+ (`~/Documents/bible`).
-2. Que el motor sea "tan rápido como C": QuickJS-ng compilado en C con `-O3`. Es un intérprete sin JIT (iOS no permite JIT). El costo principal está en el puente JS↔Dart (JSON por llamada). Hay que **medirlo con benchmarks y luego optimizarlo** (agrupar llamadas, cachés).
-3. APIs "como si fuera un navegador", respaldadas por las capacidades nativas de Flutter: tema, idioma, etc. → **ya implementadas en la capa de bindings** (ver más abajo). Falta conectarlas a Flutter (`HostEnvironment`).
+## Conformance snapshot
 
-## Entorno verificado
+Percentages exclude `SKIP`. A `SKIP` is not compatibility. These are the last
+recorded suite runs, not a fresh run during this documentation change.
 
-- Flutter 3.47.0 / Dart 3.13.0, Linux desktop disponible (Debian 13, Wayland `:1`), clang/cmake/ninja/gtk3.
-- Sin Android SDK ni iOS/macOS/Windows en esta máquina → esas plataformas aún **no verificadas**.
-- Node v22 disponible (solo para `node --check` del preludio JS).
+| Suite | PASS | FAIL | SKIP | ERROR | Rate | Recorded |
+|---|---:|---:|---:|---:|---:|---|
+| Test262 `language/{expressions,statements,types,literals}` | 19,577 | 413 | 1,108 | 0 | 97.93 % | 2026-10-24 |
+| html5lib tokenizer | 5,759 | 43 | 1,025 | 0 | 99.26 % | 2026-10-24 |
+| WPT URL fixture | 665 | 231 | 0 | 0 | 74.22 % | 2026-10-25 |
+| WPT `dom/nodes` | 196 | 84 | 47 | 0 | 70.00 % | 2026-10-24 |
+| WPT `css/selectors` | 127 | 53 | 348 | 0 | 70.56 % | 2026-10-24 |
+| WPT `dom/events` | 52 | 21 | 103 | 0 | 71.23 % | 2026-10-24 |
+| WPT tree construction | 1,556 | 316 | 99 | 2 | 83.03 % | 2026-10-25 |
 
-## Decisiones (pendiente escribirlas como ADR en docs/adr/)
+Two tree-construction gains came from fixing the runner's comparison
+attributes/namespaces, not from a product change. They are legitimate
+measurement corrections but must not be presented as new engine compatibility.
+See [`../progress/conformance.md`](../progress/conformance.md).
 
-- **Motor JS:** QuickJS-ng v0.17.0 (MIT), código vendorizado en `packages/nativa_js/third_party/quickjs` (solo las fuentes de la librería y su LICENSE), compilado por `hook/build.dart` con `native_toolchain_c` 0.19.5 (paquete *experimental* de labs.dart.dev, a documentar como riesgo). `flutter_js` y `flutter_qjs` se descartaron: `flutter_qjs` está abandonado (2022) y `flutter_js` usa motores distintos por plataforma.
-- **Puente C propio** (`src/nativax_bridge.c/.h`): solo punteros, escalares y JSON. Evita el ABI de `JSValue`, que cambia entre 32 y 64 bits (NaN-boxing). Callback síncrono con `NativeCallable.isolateLocal`. Interrupción por presupuesto de tiempo, límite de memoria y de pila.
-- **Monorepo:** pub workspaces (no melos). Raíz `pubspec.yaml` con `workspace:`.
-- **Layout:** no hay paquete `nativax_layout` puro. La geometría vive en RenderObjects propios dentro de `nativa_render` (una sola fuente de verdad): `RenderCssBox`, `RenderCssBlock` y `RenderCssFlex`. El estilo calculado deja solo los `%` sin resolver, y el layout los resuelve contra el bloque contenedor que el padre escribe en `CssItemParentData`.
-- **Parser HTML y CSS propios** (tokenizer + tree builder / CSS Syntax L3), sin regex sobre el markup.
+## Visual and performance snapshot
 
-## Paquetes y estado
+Visual judge, 51 vendored pages at 800×900, network blocked, animations frozen:
 
-| Paquete | Qué contiene | Tests |
+| Metric | Value |
+|---|---:|
+| PASS / WARN / FAIL / INVALID | 6 / 5 / 40 / 0 |
+| Mean overall | 52.59 % |
+| Position | 36.20 % |
+| Layout | 53.04 % |
+| Color | 45.24 % |
+| Design | 96.72 % |
+| Pixels with ΔE > 2 | 6,569,980 / 36,720,000 |
+
+The dominant visual failure is layout/positioning, not the cascade. This is a
+baseline, not a compatibility rate.
+
+Performance suite, latest measured pass:
+
+| Metric | Value |
+|---|---|
+| Registered scenarios | 270 |
+| Measured scenarios in latest pass | 17 |
+| PASS / WARN / FAIL / INVALID | 5 / 2 / 10 / 0 in the latest pass |
+| Desktop app idle, blank page | 105.0 MB RSS, 0.00 % CPU |
+| Target frame p95 in scroll | ≤ 16.7 ms |
+| Target work ratio vs Chromium | ≤ 3× |
+
+The suite misses targets on large row creation/update and 10k-row scroll. A
+single pass is not FPS. See [`performance-suite.md`](performance-suite.md) and
+[`../progress/reports/perf-latest.md`](../progress/reports/perf-latest.md).
+
+## Engine reality
+
+The default engine is not “QuickJS-only” anymore, and it is not “V8
+everywhere” either.
+
+| Context | Engine |
+|---|---|
+| Linux/macOS/Windows page, V8 library loadable, no module script, no force flag | V8 |
+| Linux/macOS/Windows page, V8 library missing or already live on the thread | QuickJS-ng |
+| Page with `<script type="module">` | QuickJS-ng |
+| Mobile, or `NATIVAX_ENGINE=quickjs`, or `forceQuickJs: true` | QuickJS-ng |
+| V8 heap limit reached during startup | Page is recreated on QuickJS |
+| V8 heap limit reached after startup | `onEngineOverBudget` fires; the Flutter view reloads on QuickJS |
+| Dedicated/in-process worker | QuickJS-ng |
+
+V8 has no ES-module support, WebAssembly, SharedArrayBuffer, or WebGL bridge in
+this repository. Pages needing those features must force QuickJS or supply a
+custom engine. V8 is also not covered by the recorded Test262/WPT runs, which use
+QuickJS. See [`architecture/javascript-engines.md`](architecture/javascript-engines.md).
+
+## What is not proven
+
+- **Full test suite green.** `./tools/test_all.sh` is flaky at
+  `packages/nativax/test/game_play_test.dart`. Repeated runs on 2026-10-26
+  produced both `exit 0` and `TestDeviceException(Shell subprocess crashed with
+  SIGABRT (-6))`; the final run exited 1. The same failure occurred at clean
+  `HEAD`, and root cause is not established. There is no CI.
+- **Platform support beyond Linux x86_64.** Engine selection code exists for
+  other platforms, but no current build/test/security evidence is recorded.
+- **Real browser parity.** WPT is a lite adapter. Reftests, testdriver, workers,
+  and the full `testharness.js` are not run.
+- **Accessibility.** No screen-reader, semantic-tree, focus-order, contrast, or
+  text-scaling matrix exists.
+- **Long-running resilience.** No 24–72 h soak, no sustained mutation/fuzz
+  campaign, no leak proof across platform lifecycles.
+- **Security.** 44 PASS on concrete attacks is not an absence-of-vulnerability
+  proof. There is no OS sandbox, no SCA/SAST gate, and no fuzzing campaign.
+- **V8 performance or conformance.** V8 is integrated for desktop pages, but
+  Test262/WPT measurements are QuickJS. V8 memory/RSS data exists, not a
+  standards score.
+- **Production release process.** No CI workflows, versioning policy, migration
+  policy, or supported-platform release artifacts are present in this repo.
+
+## Maturity levels
+
+Using the internal scale from the agent maturity reference:
+
+| Level | State | Reason |
 |---|---|---|
-| `nativa_js` | QuickJS FFI, `JavaScriptEngine`/`QuickJsEngine`, host functions `__nx.host`, `TimerHost` (setTimeout/Interval, queueMicrotask), `installConsole`, límites (tiempo, memoria, pila, microtareas) | **31 ✅** |
-| `nativa_dom` | Node/Element/Text/Comment/Document/Fragment, selectores (L3 + `:not`, nth-*, atributos, combinadores, especificidad), eventos (captura/target/burbujeo, once, dedup, `RemovalAwareListener`), mutaciones, límites de nodos y profundidad, formularios (value/checked/select/radio), `click()` con comportamiento de activación (checkbox, submit, links → `onNavigate`), serializador | **34 ✅** |
-| `nativa_html` | Tokenizer (estados WHATWG simplificados), entidades, raw text (script/style) y RCDATA, tree builder con html/head/body implícitos, cierre implícito de p/li/dd/dt/option, recuperación, errores con línea:col, límites, `parseFragment` | **38 ✅** |
-| `nativa_css` | Tokenizer, parser con recuperación y warnings, ~70 longhands + shorthands, colores (148 nombres, hex, rgb, hsl), unidades, media queries (width/height/orientation/prefers-color-scheme/reduced-motion/resolution), `StyleEngine` (índice de reglas, capas UA/autor/inline/!important, herencia, `inherit`/`initial`/`unset`, blockificación, invalidación incremental), hoja UA | **30 ✅** |
-| `nativa_dom_bindings` | Preludio JS (`prelude.dart`: Node/Element/Document/Event/CustomEvent/classList/style Proxy/dataset/on* handlers; WeakRef + FinalizationRegistry para liberar wrappers), `DomBindings` (≈70 ops del host), `HostEnvironment` y `StaticEnvironment`, `MemoryStorage`, `InlineStyle`. APIs tipo navegador: `window`, `navigator.language(s)`, `innerWidth/innerHeight/devicePixelRatio`, `matchMedia` con eventos `change`, `localStorage` con cuota, `nativax.theme` (brightness/colors/`setMode`) con el evento `nativax:themechange`, `languagechange`, `resize`, `nativax.invoke` (JS→Dart) y `postMessage` (Dart→JS) | **26 ✅** |
-| `nativa_render` | **Fase 1 (sesión 2): compila y renderiza.** Layout de caja/bloque/flex, `NativaXDocumentView`, texto inline, controles básicos, gestos y 7 tests. **Falta:** posicionamiento absoluto/z-index, listas, tablas, foco/teclado, scroll por contenedor y notificaciones por dueño | — |
-| `nativax` | **Fase 1 (sesión 2):** `NativaXRuntime`, `NativaXView`, `FlutterHostEnvironment` y 3 tests; falta carga desde assets y ejemplo ejecutable | — |
+| 1 — Functional | **Partial** | Core chain, tests, conformance, and examples exist; full suite is flaky, no CI |
+| 2 — Reliable | **Partial** | Baselines and limits exist; CI, cross-platform coverage, and stable release process do not |
+| 3 — Resilient | **No** | No long-running/fuzz/accessibility evidence; security scope is narrow |
+| 4 — Production-mature | **No** | No release, support, migration, or real-world durability evidence |
 
-Total verificado (sesión 1): **159 tests en verde**; tras la sesión 7 (fase 4A en curso): **190 tests** (ejecutar `dart test` dentro de cada paquete puro).
+The next status change should be driven by evidence, not by adding pages:
+diagnose the `game_play_test.dart` SIGABRT, add CI, verify one non-Linux
+platform, expand WPT/CSS with the renderer, and add accessibility and long-run
+tests. Those are separate changes with their own commits and measurements.
 
-## Plan del renderizador (diseño ya decidido, falta implementarlo)
+## How to update this page
 
-- `NativaXDocumentView(document, styleEngine, imageResolver, onDiagnostic)`: escucha mutaciones → `styleEngine.handleMutation` + nodos sucios → en lote (microtask) `recompute()` → señal (`ValueNotifier`) por "dueño" del nodo (el ancestro que se dibuja como widget propio; los inline van como spans dentro del párrafo del bloque). En cambios de estilo también se señala al dueño del padre y, si cambia `position`, al bloque contenedor.
-- `_NodeView(element, mode)` con modo `block | flex | inline | positioned | root`. El modo decide el wrapper: `CssItem` (márgenes y flex) para bloque/flex, `Padding` para inline (WidgetSpan).
-- Contenido: flex → `CssFlexLayout`. Bloque → si todos los hijos son inline, un `Text.rich`; si hay mezcla, `CssBlockFlow` con párrafos anónimos. `list-item` → marcador fuera del contenido (SizedBox de ancho 0 + OverflowBox). Caja → `CssBox(boxSpecFor(style))`.
-- Inline: TextSpan anidados con colapso de espacios entre runs (`processWhiteSpace`), `<br>` → `\n`. Átomos (img, input, button, inline-block) → WidgetSpan. Links o inline con listeners → `TapGestureRecognizer` (se desechan en cada rebuild).
-- Eventos: `GestureDetector(onTap: el.click())` en cada caja (gana el más interno y el DOM burbujea), con `excludeFromSemantics` en lo no interactivo. `Focus` → `document.setFocusedElement`, keydown/keyup con `detail.key`. `document.onFocusRequest` → `FocusNode` por elemento.
-- Controles: TextField (`InputDecoration.collapsed`, controller por elemento, input/change/submit), Checkbox, radio pintado a mano (para evitar la API RadioGroup), DropdownButton para select, img con `ImageResolver` y `alt` en semantics. Requiere MaterialApp; si faltan MaterialLocalizations se inyectan las default.
-- `position:absolute` → Stack del ancestro posicionado más cercano. `relative` → Transform.translate. z-index ordena los hijos del Stack.
-- Raíz: LayoutBuilder (viewport → MediaContext para vw/vh y @media), SingleChildScrollView, color del canvas desde el fondo de html o de body.
-- Accesibilidad: headers h1–h6, button, link, label de img, `aria-label`.
-
-## Siguientes pasos priorizados
-
-1. `nativa_render`: pubspec (flutter sdk + nativa_dom + nativa_css), renderizador, `flutter analyze` y widget tests (texto, cajas, flex, botón → evento, actualización reactiva, resize/@media, semantics).
-2. ✅ (parcial, sesión 2) `nativax`: `NativaXRuntime` (carga desde string/asset/archivo con `ResourcePolicy`, ejecución de `<script>` inline en orden, `<style>` → authorSheets, `fireLoadEvents`, TimerHost + console + logger, dispose), `NativaXView(source:)`, `FlutterHostEnvironment` (MediaQuery, Theme, locales, plataforma) y `environmentChanged()` en cambios.
-3. Ejemplos (`examples/counter`, hello, todo, forms) + `integration_test` en Linux (`flutter test -d linux`), y verificar que funciona `flutter build linux` con native assets.
-4. Benchmarks (`debug/engines/microbenchmarks`): parsing, estilos, layout, costo por llamada del puente JS↔Dart → optimizar el puente.
-5. Docs: README, architecture, compatibility (matriz real: solo Linux verificable aquí), html/css/javascript-supported, security-model, api-reference, troubleshooting, ADRs, CHANGELOG, LICENSE y licencias de terceros.
-6. Fuera de esta máquina: Android/iOS/Windows/macOS (MSVC: QuickJS-ng necesita `/experimental:c11atomics`, ya está en el hook pero sin probar).
-
-## Limitaciones conocidas a documentar
-
-Sin colapso de márgenes padre/hijo, sin `align-content`, `baseline` → flex-start, sin clamp de max-size en items flex, el min automático en columnas es 0, `flex-basis` px se trata como border-box, los bordes dashed/dotted se dibujan sólidos (con diagnóstico), radio + colores de borde distintos → color uniforme, `position:absolute` relativo al content box, el contenido desbordado no recibe hit-test, sin `fixed`/`sticky`/grid/transform/animaciones/`calc`/`var`, los scripts de `innerHTML` no se ejecutan, eventos `:hover` no soportados, el JS corre en el hilo de UI (limitado por presupuesto).
+1. Run the exact suite/benchmark; do not copy an old percentage.
+2. Record date, commit, command, platform, engine, and artifact path.
+3. Update [`../progress/conformance.md`](../progress/conformance.md) or the
+   relevant `progress/reports/*-latest.md` first.
+4. Update this page only after the evidence exists.
+5. Update [`../progress/status.md`](../progress/status.md) and
+   [`../progress/log.md`](../progress/log.md) in the same change.

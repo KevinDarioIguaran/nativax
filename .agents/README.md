@@ -16,48 +16,12 @@ reference files that load only when the skill is used.
 - `AGENTS.md` and `CLAUDE.md` are the always-on entry instructions. They point
   here; the detailed references stay out of the context until a skill loads.
 
-## Tree
+## Layout
 
-```text
-.agents/
-├── README.md
-└── skills/
-    ├── nativa-project/
-    │   ├── SKILL.md
-    │   └── references/
-    │       ├── context.md
-    │       ├── requirements.md
-    │       └── maturity.md
-    ├── nativa-architecture/
-    │   ├── SKILL.md
-    │   └── references/
-    │       └── overview.md
-    ├── nativa-web-rendering/
-    │   ├── SKILL.md
-    │   └── references/
-    │       └── rendering.md
-    ├── nativa-conformance/
-    │   ├── SKILL.md
-    │   └── references/
-    │       ├── conformance.md
-    │       └── test-infrastructure.md
-    ├── nativa-verification/
-    │   ├── SKILL.md
-    │   └── references/
-    │       ├── working-method.md
-    │       ├── quality-standards.md
-    │       └── coding-standards.md
-    ├── nativa-security/
-    │   ├── SKILL.md
-    │   └── references/
-    │       └── security.md
-    ├── nativa-performance/
-    │   ├── SKILL.md
-    │   └── references/
-    │       └── performance.md
-    └── nativa-docs/
-        └── SKILL.md
-```
+Each skill is `.agents/skills/<id>/SKILL.md` plus optional `references/` files
+that load only with that skill. `find .agents/skills -name SKILL.md` lists the
+current set; the table below is the authoritative map, so this file does not
+mirror the directory tree.
 
 ## Skills
 

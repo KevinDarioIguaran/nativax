@@ -1,75 +1,107 @@
 # Security test plan
 
-## Objetivo
+## Objective
 
-Comprobar empíricamente las fronteras de confianza de NativaX con límites
-seguros y resultados reproducibles. No sustituye a una auditoría externa ni a
-un sandbox del sistema operativo.
+Empirically probe NativaX's trust boundaries with bounded, reproducible cases.
+This does not replace an external audit or an OS sandbox.
 
-## Ejecución
+## Run
 
 ```bash
 cd debug/engines/security
 dart run bin/security.dart run
-dart run bin/security.dart run --only <caso>
 dart run bin/security.dart run --list
+dart run bin/security.dart run --only <case-id>
 ```
 
-Resultados: `benchmarks/security/*.json` y `*.md` (ignorados por git).
+Results go to `debug/benchmarks/security/<run_id>/` as JSON, Markdown, and
+`manifest.json`. The directory is gitignored; copy the run ID and counts into
+the audit/status when citing it. The current suite is QuickJS-only.
 
-## Casos actuales
+## Core cases
 
-| ID | Categoría | Severidad | Qué prueba |
+| ID | Category | Severity | What it proves |
 |---|---|---|---|
-| `engine.host_globals` | sandbox | crítica | No hay globals de OS/FS/red/Dart |
-| `bridge.raw_host_hardened` | bridge | alta | `__nx` eliminado en runtime |
-| `events.programmatic_click_not_trusted` | eventos | alta | `click()` no es gesto |
-| `events.programmatic_submit_not_trusted` | eventos | alta | `requestSubmit()` no es gesto |
-| `xss.inner_html_does_not_execute` | XSS | crítica | `<script>`/`onerror` no ejecutan |
-| `xss.javascript_url_not_executed` | XSS | alta | `javascript:` no ejecuta |
-| `bridge.malformed_ids_are_contained` | bridge | alta | IDs falsos no corrompen |
-| `sandbox.engine_isolation` | aislamiento | crítica | Engines separados |
-| `limits.infinite_loop_interrupted` | DoS | alta | Timeout real |
-| `limits.microtask_limit` | DoS | alta | Límite de microtareas |
-| `limits.parser_input_limit` | DoS | media | Límite de entrada HTML |
-| `storage.quota` | storage | media | Cuota de localStorage |
-| `lifecycle.disposed_engine_rejects_calls` | lifecycle | alta | Uso tras dispose |
-| `internal.callback_globals` | hardening | media | Globals internos (abierto) |
-| `platform.flutter_resource_policy` | recursos | alta | Denegación en Flutter (SKIP CLI) |
+| `engine.host_globals` | sandbox | critical | No OS/FS/network/Dart globals |
+| `bridge.raw_host_hardened` | bridge | high | `__nx.host` removed in the runtime |
+| `events.programmatic_click_not_trusted` | events | high | `click()` is not a user gesture |
+| `events.programmatic_submit_not_trusted` | events | high | `requestSubmit()` is not a gesture |
+| `xss.inner_html_does_not_execute` | XSS | critical | Inserted `<script>`/handlers do not run |
+| `xss.javascript_url_not_executed` | XSS | high | `javascript:` does not execute |
+| `bridge.malformed_ids_are_contained` | bridge | high | Forged ids do not corrupt the runtime |
+| `sandbox.engine_isolation` | isolation | critical | Separate engines have separate globals |
+| `limits.infinite_loop_interrupted` | DoS | high | QuickJS execution budget interrupts a loop |
+| `limits.microtask_limit` | DoS | high | Self-rescheduling microtasks hit a limit |
+| `limits.parser_input_limit` | DoS | medium | Oversized HTML is rejected before tokenizing |
+| `storage.quota` | storage | medium | `localStorage` enforces its quota |
+| `lifecycle.disposed_engine_rejects_calls` | lifecycle | high | Evaluation after dispose throws |
+| `internal.callback_globals` | hardening | medium | No reachable `__nx_*` internal callbacks |
+| `platform.flutter_resource_policy` | resources | high | Flutter default-deny/cancellation (SKIP in CLI) |
 
-## Límites aplicados
+## Generated matrices
 
-- Bucle infinito: presupuesto de 50 ms; se mide que termina.
-- Microtareas: 100 jobs por drain.
-- Parser HTML: 64 caracteres en la prueba de límite.
-- Storage: 8 caracteres de cuota en la prueba.
-- Timeout global de cada caso: la propia suite no ejecuta cargas sin límite.
-- Los ataques destructivos de RAM/CPU no se ejecutan en CI.
+The suite also generates cases from small matrices:
 
-## Cobertura pendiente
+- global names (`process`, `require`, `fetch`, `XMLHttpRequest`, `WebSocket`,
+  `Deno`, `Bun`, `dart`, `File`, `Directory`) must be undefined;
+- navigation URL payloads (ten `matrix.url.*` cases) must not execute or kill
+  the runtime;
+- ten `innerHTML` payloads must not execute scripts/handlers or leave a payload
+  behind.
 
-- Fuzzing de HTML/CSS/JS y del puente con semilla reproducible.
-- Minimización automática de fallos.
-- Pruebas de red local: redirecciones, loopback, DNS, TLS, MIME, tamaño.
-- Pruebas de archivos/recursos externos y cancelación.
-- Aislamiento entre documentos con IDs/handles cruzados a gran escala.
-- Reentrancia host→JS→host y dispose durante callback.
-- Pruebas de agotamiento de memoria y pila con procesos aislados.
-- Android, iOS, Windows y macOS.
-- SAST/SCA/licencias/secretos en CI.
-- Pruebas de accesibilidad/entrada hostil.
-- Pruebas de ciclo de vida del renderer Flutter (montaje/desmontaje).
+Generated cases are still concrete attacks, not evidence that every encoding
+or browser parser edge case was tried.
 
-## Criterio de PASS
+## Limits applied inside cases
 
-Un `PASS` significa que **el ataque concreto ejecutado** no produjo el efecto no
-autorizado. No significa que la categoría completa esté libre de
-vulnerabilidades. Un `SKIP` no es una protección; un `FAIL` es un hallazgo.
+- Infinite loop: a 50 ms test budget proves interruption; the production page
+  default is 10 s.
+- Microtasks: test limit of 100 jobs in one drain.
+- Parser input: test limit of 64 chars; production default is 4 MiB.
+- Storage: test quota of 8 chars; production default is 5 MB.
+- Each case has its own suite timeout.
+- Destructive RAM/CPU exhaustion is not run in CI or the quick suite.
 
-## Integración CI
+These test limits are intentionally smaller than production so the suite stays
+fast. Do not quote them as the runtime defaults.
 
-- `ci-fast`: suite de seguridad actual (15 casos) + tests.
-- `ci-full`: fuzzing corto con semilla y comparación con baseline.
-- `stress`/nightly: agotamiento controlado en proceso aislado.
-- Un `FAIL`/`ERROR` de seguridad bloquea la publicación; un `SKIP` se revisa y
-  se documenta.
+## PASS semantics
+
+A `PASS` means **the specific attack executed** did not produce the
+unauthorized effect. A `SKIP` is not a protection; a `FAIL` is a finding; an
+`ERROR` is not a pass.
+
+## Coverage gaps
+
+- No security fuzzing/minimization with a reproducible seed.
+- No local-network tests for redirects, loopback, DNS, TLS, MIME sniffing, or
+  response size.
+- No external-resource cancellation test in this CLI (Flutter SKIP).
+- No cross-document handle/id stress.
+- No host→JS→host reentrancy or dispose-during-callback test.
+- No memory/stack exhaustion in a separate process.
+- No Android, iOS, Windows, or macOS run.
+- No V8 security run; V8 time/job/stack limits are not enforced.
+- No SAST/SCA/license/secret scan.
+- No accessibility or hostile-input timing tests.
+- No Flutter renderer mount/unmount security test.
+- No OS sandbox or privilege-separation test.
+
+## Intended gates
+
+These are proposed, not a working CI workflow (the repository has no
+`.github/workflows`):
+
+- **fast:** current 45-case suite + focused unit tests; any FAIL/ERROR blocks a
+  release claim.
+- **full:** short seeded fuzzing plus a baseline diff.
+- **stress/nightly:** bounded exhaustion in an isolated process.
+
+A SKIP must be reviewed and documented; it must not silently count as success.
+
+## Related
+
+- [`audit.md`](audit.md)
+- [`threat-model.md`](threat-model.md)
+- [`platform-matrix.md`](platform-matrix.md)
+- [`../internals/limits-and-memory.md`](../internals/limits-and-memory.md)

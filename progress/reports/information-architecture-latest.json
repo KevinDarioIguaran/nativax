@@ -1,0 +1,289 @@
+{
+  "agents": {
+    "after": {
+      "bytes": 3321,
+      "lines": 68,
+      "path": ".agents/README.md",
+      "tokens": 831
+    },
+    "before": {
+      "bytes": 4308,
+      "lines": 104,
+      "path": ".agents/README.md",
+      "tokens": 1077
+    },
+    "savingsPct": 22.9
+  },
+  "artifacts": {
+    "audit": 256454673,
+    "conformance": 139904325,
+    "index": 69045,
+    "perf": 35865903,
+    "runs": 214775,
+    "visual": 541262850
+  },
+  "conformance": {
+    "compactRuns": 1,
+    "largestLegacyPreview": {
+      "compactBytes": 466,
+      "currentBytes": 5576040,
+      "note": "historical file is unchanged; this is what a new run of the same suite writes",
+      "source": "debug/artifacts/conformance/results/test262-2026-10-23T221334.summary.json",
+      "summarySavingsPct": 100.0
+    },
+    "legacyRuns": 92,
+    "url": {
+      "compact": {
+        "bytes": 289,
+        "jsonlBytes": 135424,
+        "lines": 15,
+        "pairBytes": 135713,
+        "path": "debug/artifacts/conformance/results/wpt-url-2026-10-25T221027.summary.json",
+        "tokens": 73
+      },
+      "legacy": {
+        "bytes": 197504,
+        "jsonlBytes": 135424,
+        "lines": 8417,
+        "pairBytes": 332928,
+        "path": "debug/artifacts/conformance/results/wpt-url-2026-10-25T215917.summary.json",
+        "tokens": 49376
+      },
+      "pairSavingsPct": 59.2,
+      "summarySavingsBytes": 197215,
+      "summarySavingsPct": 99.9
+    }
+  },
+  "context": {
+    "brief": {
+      "budget": 2000,
+      "bytes": 7680,
+      "estimatedTokens": 1915,
+      "truncated": {
+        "conformance": 1,
+        "docs": 8,
+        "runs": 1
+      }
+    },
+    "indexBuildMs": 141.3,
+    "indexBytes": {
+      "conformance": 37290,
+      "docs": 23069,
+      "runs": 8686
+    },
+    "indexWritten": {
+      "conformance": "debug/artifacts/index/conformance.jsonl",
+      "docs": "debug/artifacts/index/docs.jsonl",
+      "runs": "debug/artifacts/index/runs.jsonl"
+    }
+  },
+  "generatedAt": "2026-10-26T03:31:51+00:00",
+  "repo": {
+    "byExtension": [
+      {
+        "bytes": 10586127,
+        "files": 72,
+        "name": ".js"
+      },
+      {
+        "bytes": 6102435,
+        "files": 20,
+        "name": ".jpg"
+      },
+      {
+        "bytes": 4142125,
+        "files": 31,
+        "name": ".c"
+      },
+      {
+        "bytes": 2458573,
+        "files": 264,
+        "name": ".dart"
+      },
+      {
+        "bytes": 1839399,
+        "files": 67,
+        "name": ".html"
+      },
+      {
+        "bytes": 1764682,
+        "files": 82,
+        "name": ".h"
+      },
+      {
+        "bytes": 956334,
+        "files": 4,
+        "name": ".wasm"
+      },
+      {
+        "bytes": 950909,
+        "files": 21,
+        "name": ".json"
+      },
+      {
+        "bytes": 930918,
+        "files": 114,
+        "name": ".md"
+      },
+      {
+        "bytes": 759459,
+        "files": 4,
+        "name": ".png"
+      },
+      {
+        "bytes": 722202,
+        "files": 36,
+        "name": ".py"
+      },
+      {
+        "bytes": 591432,
+        "files": 22,
+        "name": ".mp3"
+      },
+      {
+        "bytes": 571466,
+        "files": 4,
+        "name": ".gltf"
+      },
+      {
+        "bytes": 341039,
+        "files": 87,
+        "name": ".ts"
+      },
+      {
+        "bytes": 325712,
+        "files": 2,
+        "name": ".glb"
+      },
+      {
+        "bytes": 239808,
+        "files": 2,
+        "name": ".bin"
+      },
+      {
+        "bytes": 138048,
+        "files": 59,
+        "name": ".css"
+      },
+      {
+        "bytes": 65245,
+        "files": 2,
+        "name": ".jsonl"
+      },
+      {
+        "bytes": 61227,
+        "files": 41,
+        "name": "(none)"
+      },
+      {
+        "bytes": 39137,
+        "files": 8,
+        "name": ".yml"
+      },
+      {
+        "bytes": 37398,
+        "files": 2,
+        "name": ".lock"
+      },
+      {
+        "bytes": 26686,
+        "files": 10,
+        "name": ".txt"
+      },
+      {
+        "bytes": 17881,
+        "files": 9,
+        "name": ".cc"
+      },
+      {
+        "bytes": 17406,
+        "files": 1,
+        "name": ".rs"
+      }
+    ],
+    "byTop": [
+      {
+        "bytes": 20782387,
+        "files": 241,
+        "name": "examples"
+      },
+      {
+        "bytes": 7705492,
+        "files": 281,
+        "name": "packages"
+      },
+      {
+        "bytes": 2823519,
+        "files": 364,
+        "name": "debug"
+      },
+      {
+        "bytes": 1275077,
+        "files": 35,
+        "name": "progress"
+      },
+      {
+        "bytes": 873534,
+        "files": 19,
+        "name": "tools"
+      },
+      {
+        "bytes": 144174,
+        "files": 21,
+        "name": "docs"
+      },
+      {
+        "bytes": 97550,
+        "files": 29,
+        "name": ".agents"
+      },
+      {
+        "bytes": 18569,
+        "files": 9,
+        "name": "(root)"
+      },
+      {
+        "bytes": 37,
+        "files": 1,
+        "name": ".freebuff"
+      }
+    ],
+    "bytes": 33720339,
+    "files": 1000,
+    "missing": 1,
+    "missingPaths": [
+      "repomix-output.xml"
+    ],
+    "root": ".",
+    "schema": "nativax.inventory.v1",
+    "tracked": true
+  },
+  "schema": "nativax.ia.audit.v1",
+  "status": {
+    "after": {
+      "bytes": 5531,
+      "lines": 94,
+      "path": "progress/status.md",
+      "tokens": 1383
+    },
+    "before": {
+      "bytes": 37920,
+      "lines": 657,
+      "path": "progress/status.md (HEAD)",
+      "tokens": 9480
+    },
+    "history": {
+      "bytes": 37920,
+      "lines": 657,
+      "path": "progress/history/status-2026-10-25.md",
+      "tokens": 9480
+    },
+    "savingsPct": 85.4
+  },
+  "tokenizer": "estimate:utf8_bytes/4",
+  "trackedDocs": {
+    "bytes": 818358,
+    "files": 78,
+    "indexBytes": 23069
+  }
+}

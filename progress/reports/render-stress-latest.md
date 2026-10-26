@@ -104,7 +104,7 @@ la Biblia solo valida, no guía el código.
   bordes y sombras.
 - **~4.300 reglas** (3.000 utilidades sintéticas + 600 iconos + app), no
   basadas en ninguna app real.
-- JSON de perfil: `benchmarks/results/render-tailwind-baseline.json` y
+- JSON de perfil: `debug/benchmarks/baselines/render-tailwind-baseline.json` y
   `render-tailwind-current.json`.
 
 Comando:
@@ -202,7 +202,7 @@ pseudo-elemento por el sujeto, igual que las reglas normales.
 | flex 10k | 3.672 ms | **611 ms** (426 ms parseo/JS + ~185 ms render) |
 | article 2k updateAll | 129 ms | **26 ms/frame** |
 
-JSON: `benchmarks/results/style-css-baseline.json`,
+JSON: `debug/benchmarks/baselines/style-css-current.json`,
 `style-css-current.json`, `style-bible-baseline.json`,
 `style-bible-current.json`.
 

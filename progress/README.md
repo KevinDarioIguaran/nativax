@@ -1,28 +1,37 @@
-# Progreso de NativaX
+# Progress and evidence
 
-Esta carpeta es la fuente de verdad del avance. `docs/status.md` es solo un
-resumen de sesión; aquí están los números, las fases y el histórico.
+This directory holds the current progress record and generated evidence. The
+repository source and tests remain authoritative; a report is a projection.
 
-## Archivos
+## Files
 
-- [`status.md`](status.md): estado actual, bloqueos y siguiente paso.
-- [`phases.md`](phases.md): checklist por fase del plan maestro.
-- [`conformance.md`](conformance.md): resultados de Test262/WPT/html5lib y
-  brechas principales.
-- [`log.md`](log.md): histórico de sesiones y comandos ejecutados.
-- [`reports/`](reports/): informes generados por `debug/engines/compatibility`
-  (`test262-latest.md`, `html5lib-tokenizer-latest.md`, `wpt-*.md`) y la
-  última línea base visual (`visual-50projects50days-latest.md`) y la de
-  rendimiento (`perf-latest.md`). El informe consolidado de capacidades y
-  evidencia es [`nativa-quality-latest.md`](reports/nativa-quality-latest.md).
-  [`recommendations-latest.md`](reports/recommendations-latest.md) se genera
-  automáticamente con prioridades y evidencia, y
-  [`test-matrix-300.md`](reports/test-matrix-300.md) documenta la matriz de
-  cobertura. El historial de corridas se guarda en `.visual/history` y
-  `.perf/history` y se compara desde la página **Historial**.
+- [`status.md`](status.md): compact live state, measurements, blockers, next
+  step.
+- [`conformance.md`](conformance.md): current suite baseline, gaps, and
+  methodology.
+- [`phases.md`](phases.md): phase checklist and current gates.
+- [`log.md`](log.md): chronological work log with commands/results.
+- [`history/`](history/): replaced snapshots, including the earlier Spanish
+  status/log/phases. Historical; not current guidance.
+- [`reports/`](reports/): generated Markdown/JSON reports and latest
+  convenience copies. Timestamped conformance summaries and JSONL live in
+  `debug/artifacts/conformance/results/`; benchmark runs live in
+  `debug/benchmarks/<area>/<run_id>/`.
 
-## Regla
+## Update rules
 
-Cada sesión que cambie código funcional debe actualizar `status.md` y añadir
-una entrada a `log.md`. Los informes de conformidad se regeneran, no se
-editan a mano.
+- A functional change updates `status.md` and appends to `log.md`.
+- Generated reports are regenerated, not hand-edited.
+- Never copy a number without its command/date/commit and environment.
+- Do not turn a SKIP, a single leak control, or a 17-scenario performance run
+  into a complete pass.
+- Link canonical evidence instead of duplicating long tables here.
+- Historical Spanish files remain verbatim; the English `docs/` pages are the
+  maintained documentation.
+
+## Related
+
+- [`../docs/status.md`](../docs/status.md): stable maturity view
+- [`../docs/information-architecture.md`](../docs/information-architecture.md):
+  evidence formats and context policy
+- [`../debug/README.md`](../debug/README.md): diagnostics layout

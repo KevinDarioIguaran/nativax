@@ -6,9 +6,9 @@ tasa de compatibilidad ni una promesa de reproducción multimedia.
 | Área | Casos nuevos | Dónde | Resultado de esta pasada |
 |---|---:|---|---|
 | Rendimiento: tamaños, DOM, scroll, layout | 120 | `tools/perf/lib/src/scenarios.dart` | 14 tests de contrato; escenarios definidos, no todos ejecutados |
-| Juegos Canvas 2D por resolución/partículas | 25 | `tools/perf` (`game.quality-*`) | smoke 640x360/100 partículas: WARN, 56,7 ms NativaX vs 2,0 ms Chromium |
+| Juegos Canvas 2D por resolución/partículas | 25 | `debug/engines/performance` (`game.quality-*`) | smoke 640x360/100 partículas: WARN, 56,7 ms NativaX vs 2,0 ms Chromium |
 | Vídeo por resolución y atributos | 25 | `packages/nativa_render/test/video_quality_test.dart` | 25/25 PASS; **es contrato de placeholder, no reproducción** |
-| Juez visual (color/geometría) | 50 | `tools/visual/test/matrix_test.dart` | 50/50 PASS |
+| Juez visual (color/geometría) | 50 | `debug/engines/visual_comparison/test/matrix_test.dart` | 50/50 PASS |
 | Media/platform: DPR, orientación, resolución, color scheme | 20 | `packages/nativa_css/test/media_matrix_test.dart` | 20/20 PASS |
 | Seguridad adversarial | 30 | `tools/security/lib/src/matrix_cases.dart` | 30/30 PASS (10 globals, 10 URLs, 10 innerHTML) |
 | Memoria y lifecycle | 30 | `tools/leaks/lib/src/cases/matrix_cases.dart` | quick: 30 PASS, 0 FAIL, 0 ERROR |
@@ -45,7 +45,7 @@ en esta matriz; hacerlo requiere su build, WebGL/workers y una medición aparte.
 
 ```bash
 cd tools/perf && dart analyze && dart test
-cd tools/visual && dart analyze && dart test
+cd debug/engines/visual_comparison && dart analyze && dart test
 cd packages/nativa_css && dart analyze && dart test
 cd packages/nativa_render && flutter analyze && flutter test test/video_quality_test.dart
 cd tools/security && dart analyze && dart test

@@ -1,39 +1,69 @@
-# NativaX web compatibility matrix
+# Web compatibility matrix
 
-Generated from `tools/analyze_app.py` over the reference app and
-`examples/test-pages/`. This is a usage-driven matrix, not a claim of full
-standards coverage.
+Usage-driven map for the repository's reference pages and analyzed apps. It is
+**not** a standards-coverage percentage and not a promise for arbitrary sites.
+Canonical support pages are [`docs/html-supported.md`](docs/html-supported.md),
+[`docs/css-supported.md`](docs/css-supported.md), and
+[`docs/javascript-supported.md`](docs/javascript-supported.md).
 
-| Area | Feature | Status | Evidence |
+Status words: **yes** = implemented with tests for the stated scope;
+**partial** = a subset works with documented gaps; **no** = absent; **no-op** =
+accepted but deliberately does nothing.
+
+| Area | Feature | Status | Evidence / limit |
 |---|---|---|---|
-| HTML | HTML5 tree construction | yes | `package:html` parser; html5lib suite |
-| HTML | templates, forms, tables, lists | yes/partial | unit + app tests |
-| HTML | custom elements / shadow DOM | partial | `:host` diagnostics |
-| CSS | block/flex/grid layout | yes/partial | render tests |
-| CSS | selectors, pseudo-classes | partial | WPT CSS selectors |
-| CSS | `@font-face`, TTF/OTF | yes | font runtime tests |
-| CSS | CSS variables, transitions, keyframes | partial | animation tests |
-| CSS | `:has()` | partial | targeted invalidation tests |
-| DOM | nodes, attributes, classList, events | yes | nativa_dom tests |
-| DOM | `elementFromPoint`, `elementsFromPoint` | yes | renderer hit-test |
-| DOM | MutationObserver, Range, Selection | partial | DOM binding tests |
-| DOM | fullscreen, pointer lock | no-op | app compatibility stubs |
-| BOM | timers, rAF, fetch, localStorage | yes | bindings tests |
-| BOM | clipboard, matchMedia, history | partial | platform services |
-| BOM | Service Worker, Cache API | no | not implemented |
-| BOM | `navigator.mediaDevices` | no | not implemented |
-| JS | QuickJS-NG ES2023 subset | yes | engine tests |
-| JS | V8 backend | not used by default | optional legacy backend |
-| Build | static app analyzer | yes | `tools/analyze_app.py` |
-| Build | AOT templates / bytecode | no | planned |
-| Perf | virtualized long lists | yes | virtualization tests |
-| Perf | incremental subtree invalidation | partial | scroll deferral + widget cache |
+| HTML | Tree construction | yes | Default `package:html`; in-house custom-depth builder is reduced |
+| HTML | Templates, forms, tables, lists | partial | `<template>` content fragment unsupported; rows use flex approximation; forms subset |
+| HTML | Custom elements / Shadow DOM | partial | `customElements`; Shadow DOM is a facade, no CSS scoping/slots |
+| CSS | Block/flex/grid layout | partial | Grid subset; no subgrid/dense; no full intrinsic sizing |
+| CSS | Selectors/pseudo-classes | partial | WPT selectors 70.56 %; `:focus-visible`/namespace/Shadow DOM gaps |
+| CSS | `@font-face` TTF/OTF | yes | Resource bytes; WOFF containers need sibling SFNT fallback |
+| CSS | Variables, transitions, keyframes | partial | CSS animations implemented; Web Animations API absent |
+| CSS | `:has()` | partial | Targeted invalidation; not full browser behavior |
+| CSS | Tables/floats/columns/writing modes | no | Accepted/inert or approximate; no full layout |
+| DOM | Nodes, attributes, classList, events | yes | Unit + WPT subsets |
+| DOM | `elementFromPoint(s)` | yes | Renderer hit-test |
+| DOM | MutationObserver, Range, Selection | partial | Observers implemented; Range/Selection subset |
+| DOM | Custom elements | partial | Autonomous elements; no full scoped registry |
+| DOM | Fullscreen, pointer lock | no-op | Compatibility stubs |
+| BOM | Timers, rAF, fetch/XHR, localStorage | yes/partial | Network requires host policy; default deny |
+| BOM | Clipboard, matchMedia, history | partial | Needs host services; in-memory history |
+| BOM | Service Worker, Cache API | no | Not implemented |
+| BOM | `navigator.mediaDevices` | no | Camera/mic unsupported |
+| JS | QuickJS-ng modern ECMAScript | yes | Test262 subset 97.93 %; not full browser |
+| JS | V8 backend | experimental | Optional desktop; no modules, host WASM/WebGL/SAB, time/job/stack enforcement |
+| JS | WebAssembly | partial | wasm3, self-contained modules; no SIMD/threads/full imports |
+| JS | WebGL | partial | QuickJS host bridge; no conformance run; V8 unsupported |
+| Media | Audio/video playback | no | Space placeholders; silent Web Audio graph |
+| Build | Static app analyzer | yes | `python3 tools/analyze_app.py <dir>` |
+| Build | AOT templates/bytecode | no | Planned |
+| Perf | Virtualized long lists | yes | Renderer virtualization; opt-out attributes |
+| Perf | Incremental subtree invalidation | partial | Scroll deferral + widget/style caches, not a complete ownership model |
 
-## Known gaps used by the analyzed apps
+## Known gaps in analyzed pages
 
-- `navigator.serviceWorker`, `window.caches`: stubbed/absent.
-- `navigator.mediaDevices`: absent; meetings features that need camera/mic
-  cannot work.
+- `navigator.serviceWorker` and `window.caches` are absent.
+- `navigator.mediaDevices` is absent; camera/mic meetings cannot work.
 - Custom-element `:host(...)` selectors are diagnosed as unsupported.
-- AOT compilation of templates/CSS and JS bytecode are not implemented.
-- The QuickJS bridge still serializes host calls as JSON.
+- Template content fragments, full table formatting, floats, and writing modes
+  are not implemented.
+- AOT templates/CSS and JS bytecode are not implemented.
+- Host calls still serialize through JSON/scalars at the bridge.
+- V8 is not a drop-in game/WebAssembly/WebGL backend.
+
+## Reproduce
+
+```bash
+python3 tools/analyze_app.py examples/test-pages
+python3 tools/analyze_app.py <app-directory>
+```
+
+Read the generated usages and compare them with the support pages. A feature
+detected by the analyzer is not proof of correctness; run the page and a
+focused test.
+
+## Related
+
+- [`docs/status.md`](docs/status.md)
+- [`progress/conformance.md`](progress/conformance.md)
+- [`docs/security/audit.md`](docs/security/audit.md)

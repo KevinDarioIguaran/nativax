@@ -1,6 +1,6 @@
 # Conformidad: wpt-url
 
-- Fecha: 2026-10-24T03:12:58.289856Z
+- Fecha: 2026-10-26T03:10:27.212530Z
 - Duración: 0.2 s
 - Comando: `run_url`
 - Total: **896** tests
@@ -12,6 +12,14 @@
 | FAIL | 231 |
 | SKIP | 0 |
 | ERROR | 0 |
+
+## Delta contra la línea base
+
+- Corregidos: **0**
+- Regresiones: **0**
+- Siguen fallando: **231**
+- Nuevos en esta ejecución: **0**
+- Ausentes respecto a la base: **0**
 
 ## Por característica
 
@@ -1031,4 +1039,4 @@ _… y 111 fallos más (ver el JSONL)._
 
 ---
 
-_Generado por `tools/conformance`. Un SKIP no cuenta como compatibilidad; mide únicamente que el runner no pudo ejecutar el test o que la característica está fuera de alcance._
+_Generado por `debug/engines/compatibility`. Un SKIP no cuenta como compatibilidad; mide únicamente que el runner no pudo ejecutar el test o que la característica está fuera de alcance._

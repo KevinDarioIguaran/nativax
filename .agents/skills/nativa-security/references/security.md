@@ -7,9 +7,9 @@ trusts none of them.
 
 | Asset | Risk | Mitigation |
 |---|---|---|
-| Process / UI | Infinite script or microtask loop | 1 s budget per entry, 10k jobs per drain |
-| Memory | Unbounded heap | 64 MB per runtime (configurable), explicit GC |
-| Stack | Deep recursion | 256 KB by default; TCO is not supported |
+| Process / UI | Infinite script or microtask loop | 10 s runtime budget per entry, 1,000,000 jobs per drain (engine config defaults: 1 s / 10,000) |
+| Memory | Unbounded heap | 64 MiB QuickJS allocator limit by default; V8 terminates near its limit |
+| Stack | Deep recursion | 256 KiB QuickJS stack limit by default; V8 does not enforce it |
 | DOM | Huge tree | 100k nodes, depth 256 |
 | HTML parser | Malformed input / infinite nodes | Node limits and error recovery |
 | Storage | Unlimited quota | 5 MB of characters |
@@ -28,18 +28,19 @@ trusts none of them.
 ## What is not implemented (and therefore cannot be assumed)
 
 - No OS-level sandbox: the engine runs in the app process.
-- No isolation between documents: one runtime = one document.
+- Logical isolation only: one engine runtime per document, all inside the same OS process.
 - No CSP or origin policy.
 - No guarantee that destructive workloads are safe without the configured
-  limits. Timeouts on the same thread do not always interrupt a JavaScript
-  infinite loop.
+  limits. The QuickJS budget interrupts bytecode, not synchronous Dart host
+  work. The current V8 path does not enforce the time/job/stack limits.
 - External resources are policy-gated and denied by default; this is not a
   network sandbox.
 
 ## Current audit
 
 The executable suite lives in `debug/engines/security`. The live Linux status is in
-`progress/status.md`; the current audit reports 14 PASS, 0 FAIL, and 1 SKIP.
+`progress/status.md`; the latest QuickJS-only audit reports 45 cases: 44 PASS,
+0 FAIL, and 1 SKIP. It does not certify V8.
 See `../../../docs/security/audit.md`, `../../../docs/security/threat-model.md`,
 `../../../docs/security/test-plan.md`, and
 `../../../docs/security/platform-matrix.md`.

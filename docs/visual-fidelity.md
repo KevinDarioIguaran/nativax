@@ -1,106 +1,139 @@
-# Fidelidad visual contra un navegador
+# Visual fidelity
 
-NativaX se compara visualmente contra Chromium sin abrir ninguna ventana y sin
-usar WebView, Chromium embebido ni un servidor local. Chromium es solo el
-instrumento de referencia: `google-chrome --headless=new` produce la captura
-patrón y NativaX produce la suya con `flutter test` +
+NativaX is compared with headless Chromium without a WebView, embedded browser,
+or local server. Chromium is only the reference instrument:
+`google-chrome --headless=new` produces the expected capture, and NativaX
+produces its own through `flutter test` and
 `RenderRepaintBoundary.toImage()`.
 
-La herramienta vive en `debug/engines/visual_comparison` y su contrato completo (fórmulas,
-umbrales y formato de salida) está en
-[`debug/engines/visual_comparison/README.md`](../debug/engines/visual_comparison/README.md).
+The engine lives in `debug/engines/visual_comparison`. Its README owns the
+full formula/threshold contract; this page explains how to read the result
+without turning it into a compatibility claim.
 
-## Qué mide
+## What the judge measures
 
-| Categoría | Qué responde | Cómo se mide |
+| Category | Question | Method |
 |---|---|---|
-| **Posición** | ¿Cada caja está donde debe? | `getBoundingClientRect` en ambos motores; tolerancia 2 px con caída lineal hasta 16 px; peso `sqrt(área)`. |
-| **Layout** | ¿Cada caja mide lo que debe y fluye igual? | Diferencias de ancho/alto, IoU y error de altura del documento. |
-| **Color** | ¿Se usan los mismos colores? | Media y paleta dominante (top 5) por elemento, ΔE76 en Lab D65. Se muestrea la caja propia de cada motor, así un desplazamiento no se cuenta dos veces. |
-| **Diseño** | ¿El estilo computado coincide? | 27 propiedades normalizadas: tipografía, color, fondo, bordes, radios, sombra, display, posición, opacidad y overflow. |
-| **Entorno** | ¿La comparación es válida? | Viewport, DPR, tamaño de captura, cobertura del documento, errores JS y recursos externos bloqueados. |
-| **Píxeles** | ¿Qué cambia píxel a píxel? | ΔE76 por píxel, cubos 2/5/10/20, filas, teselas 16×16, imagen de diferencias y porcentaje de tinta no coincidente. |
+| **Position** | Is each box where it should be? | `getBoundingClientRect` in both engines; 2 px tolerance, linear falloff to 16 px; weight `sqrt(area)` |
+| **Layout** | Does each box have the right size/flow? | Width/height differences, IoU, document-height error |
+| **Color** | Are the same colors used? | Mean and top-5 palette per element, ΔE76 in Lab D65; each engine samples its own box to avoid double-counting a shift |
+| **Design** | Does computed style agree? | 27 normalized properties: typography, color, background, borders, radii, shadow, display, position, opacity, overflow |
+| **Environment** | Is the comparison valid? | Viewport, DPR, capture size, document coverage, JS errors, blocked external resources |
+| **Pixels** | What changes pixel by pixel? | ΔE76 per pixel, 2/5/10/20 buckets, rows, 16×16 tiles, diff image, ink mismatch |
 
-El resultado global pondera posición 30 %, layout 30 %, color 25 % y diseño
-15 %, renormalizando si el color no es medible. Un fallo de entorno duro deja
-la página en `INVALID` en vez de inventar una nota.
+Overall renormalizes position 30 %, layout 30 %, color 25 %, design 15 % when
+color is not measurable. A hard environment failure marks the page `INVALID`
+rather than inventing a score.
 
-## Por qué no basta el porcentaje de píxeles
+`ink_mismatch_pct` exists because a near-blank page can match 99.8 % of pixels
+while being completely blank. The judge finds the dominant background, treats
+every pixel differing from it in either capture as ink, and reports the
+fraction of ink that differs. Blank NativaX versus text in Chromium is 100 %
+ink mismatch even when total pixel difference is 0.2 %.
 
-Una página casi vacía puede coincidir en el 99,8 % de los píxeles y aun así
-estar completamente en blanco. Por eso el reporte incluye
-`ink_mismatch_pct`: calcula el fondo dominante, considera "tinta" todo píxel
-que se separa de él en cualquiera de las dos capturas y mide qué fracción de
-esa tinta difiere. Una captura en blanco con texto en Chromium da 100 % de
-tinta no coincidente aunque el total de píxeles sea 0,2 %.
-
-## Suites de ejemplo
-
-El catálogo completo tiene **300 páginas** con `--all`: 51 de
-50projects50days, 27 de MDN CSS, 67 de MDN learning-area, 21 de Odin Project y
-134 de MDN DOM/UI. Las cuatro suites externas son CC0/MIT, se descargan con
-commit pinneado en `.visual/suites/` y no se redistribuyen. Catálogo y fuentes:
-[`progress/reports/visual-catalog-latest.md`](../progress/reports/visual-catalog-latest.md).
-
-`debug/engines/visual_comparison/fixtures/50projects50days` contiene una copia íntegra y sin
-modificar de los 51 proyectos HTML/CSS/JS de
-[bradtraversy/50projects50days](https://github.com/bradtraversy/50projects50days)
-en el commit `c92b0bc3a87fc95d44b89552b7b6a2eeb36ca481` (licencia MIT y aviso
-de procedencia incluidos). Son fixtures de prueba: NativaX no los carga desde
-el runtime público.
+## Run it
 
 ```bash
-dart run debug/engines/visual_comparison/bin/visual_check.dart --suite 50projects50days
-dart run debug/engines/visual_comparison/bin/visual_check.dart examples/test-pages/form.html
-dart run debug/engines/visual_comparison/bin/visual_check.dart --self-check --limit 1
+dart run debug/engines/visual_comparison/bin/visual_check.dart \
+  --suite 50projects50days
+dart run debug/engines/visual_comparison/bin/visual_check.dart \
+  examples/test-pages/form.html
+dart run debug/engines/visual_comparison/bin/visual_check.dart \
+  --self-check --limit 1
 ```
 
-## Salidas
+`--self-check` compares Chromium with a second Chromium capture; it is the
+calibration check. Without a passing self-check, the visual judge is not valid.
 
-Cada ejecución deja en `.visual/latest/` (ignorado por git):
+## Catalog
 
-- `report.md`: resumen legible y peores causas raíz.
-- `report.json`: informe completo.
-- `results.json`: **tabla de resultados**, una fila por página con una lista
-  `columns` estable y todas las métricas.
-- `summary.csv`: la misma tabla en CSV.
-- `pages/<suite>/<página>/`: capturas `chrome.png`/`nativax.png`,
-  `diff.png`, sondas JSON, `elements.json`/`.csv`, `positions.csv`,
-  `colors.csv` y `pixels.json` (más `pixels.csv` con `--pixel-csv`).
+The full catalog has **300 pages** with `--all`: 51 from 50projects50days, 27
+from MDN CSS, 67 from MDN learning-area, 21 from Odin Project, and 134 from MDN
+DOM/UI. External suites are fetched at pinned commits into
+`debug/artifacts/visual/suites/` and are not redistributed. See
+[`../progress/reports/visual-catalog-latest.md`](../progress/reports/visual-catalog-latest.md).
 
-## Línea base (2026-10-24)
+The 51 HTML/CSS/JS projects in
+`debug/engines/visual_comparison/fixtures/50projects50days` are an unmodified
+copy of `bradtraversy/50projects50days` at
+`c92b0bc3a87fc95d44b89552b7b6a2eeb36ca481` (MIT, with provenance). They are
+test fixtures; NativaX does not load them from its public runtime.
 
-Las 51 páginas vendorizadas, a 800x900 y sin red, dieron **6 PASS, 5 WARN,
-40 FAIL y 0 INVALID**. Overall medio **52,59 %** (mediana 48,54 %); medias de
-posición **36,20 %**, layout **53,04 %**, color **45,24 %** y diseño
-**96,72 %**. Se compararon 36.720.000 píxeles; 6.569.980 superaron ΔE 2
-(17,89 % de media) y la tinta no coincidente promedió 62,82 %. El fallo
-dominante es layout/posicionamiento, no la cascada de estilos.
+## Outputs
 
-No es una tasa de compatibilidad ni una regresión: es la primera línea base
-medida con el juez calibrado. El detalle por página, comandos y casos
-concretos están en
-[`progress/reports/visual-50projects50days-latest.md`](../progress/reports/visual-50projects50days-latest.md).
+Each run writes under `debug/artifacts/visual/latest/`:
 
-## Calibración del viewport de Chromium
+- `report.md`: human-readable summary and worst root causes;
+- `report.json`: complete report;
+- `results.json`: stable `columns` and one row per page;
+- `summary.csv`;
+- `pages/<suite>/<page>/`: `chrome.png`, `nativax.png`, `diff.png`, JSON
+  probes, `elements.json`/`.csv`, `positions.csv`, `colors.csv`, and
+  `pixels.json` (plus `pixels.csv` with `--pixel-csv`).
 
-En Chromium headless, `--dump-dom` y `--screenshot` no coinciden en el
-viewport de layout: el volcado informa `innerHeight = ventana − 87 px` y la
-captura pinta a la altura completa de la ventana. El juicio calibra ese
-desfase al arrancar, mide con `alto + desfase` y captura con `alto`, de modo
-que las cajas del sondeo y los píxeles pertenecen al mismo viewport. Sin esa
-corrección, páginas con `100vh`, centrado con `fixed` o alturas porcentuales
-se medían contra un viewport y se pintaban contra otro. El test
-`debug/engines/visual_comparison/test/chrome_e2e_test.dart` lo verifica con una caja centrada.
+Generated captures are not committed. `progress/reports/visual-*-latest.md`
+are convenience reports and may lag the raw run.
 
-## Limitaciones declaradas
+## Last recorded baseline
 
-- Se compara el viewport capturado; `--height` controla su alto y
-  `document-coverage` avisa si la página es más larga.
-- Las animaciones y transiciones se congelan en ambos motores.
-- La red está bloqueada en ambos lados: las fuentes de Google, CDN e imágenes
-  remotas no se cargan. Cada página lo reporta como `external-resources`.
-- No se juzgan vídeo, audio, animación de canvas ni el resultado de WebGL.
-- Las fuentes son del sistema; otra máquina puede cambiar las métricas de
-  texto.
-- `INVALID` no es compatibilidad: significa que la medición no es fiable.
+The 51 vendored pages at 800×900 with network blocked produced:
+
+| Result | Value |
+|---|---|
+| Verdicts | **6 PASS, 5 WARN, 40 FAIL, 0 INVALID** |
+| Mean overall | **52.59 %** (median 48.54 %) |
+| Mean position | 36.20 % |
+| Mean layout | 53.04 % |
+| Mean color | 45.24 % |
+| Mean design | 96.72 % |
+| Pixels compared | 36,720,000 |
+| Pixels with ΔE > 2 | 6,569,980 (17.89 % mean) |
+| Mean ink mismatch | 62.82 % |
+
+The dominant failure is layout/positioning, not the style cascade. This is a
+first calibrated baseline, not a regression or a CSS compatibility rate. The
+full per-page table is in
+[`../progress/reports/visual-50projects50days-latest.md`](../progress/reports/visual-50projects50days-latest.md).
+
+Notable verified cases:
+
+- `hidden-search`: 98.63 % position, 100 % color, 0.04 % pixel difference,
+  0.16 % ink. PASS.
+- `event-keycodes`: 100 % geometry but 99.21 % ink mismatch; FAIL by the ink
+  rule even though overall is 91.91 %. Overall alone would have hidden it.
+- `animated-countdown`: a fixed/translated container lands offscreen
+  (`-400, -378`), leaving a blank NativaX capture. Position 0 %, ink 100 %.
+- `background-slider`: Chromium centers the 560×630 container at `x=120`;
+  NativaX puts it at `x=0`, so the slides are shifted 120 px and pixels match
+  0 %.
+
+## Chromium viewport calibration
+
+In headless Chromium, `--dump-dom` and `--screenshot` do not agree on the layout
+viewport: the dump reports `innerHeight = window − 87 px`, while the screenshot
+paints at the full window height. The judge measures that offset at startup,
+probes at `height + offset`, and captures at `height`, so probe boxes and pixels
+belong to the same viewport. Without this correction, `100vh`, fixed centering,
+and percentage heights are measured against one viewport and painted against
+another. `test/chrome_e2e_test.dart` verifies a centered box.
+
+## Limitations
+
+- Only the captured viewport is judged; `--height` controls it and
+  `document-coverage` warns when the document is taller.
+- Animations/transitions are frozen in both engines.
+- Network is blocked in both engines: remote fonts, CDNs, and images are absent
+  and reported as `external-resources`.
+- System fonts differ between machines, so text metrics are not portable.
+- Video, audio, animated canvas, and WebGL output are not judged.
+- `INVALID` means the measurement is unreliable; it is not compatibility.
+- A 52 % overall score is not “52 % of CSS supported”. It is a weighted visual
+  baseline on one catalog.
+
+## Related
+
+- [`css-supported.md`](css-supported.md)
+- [`performance-suite.md`](performance-suite.md)
+- [`benchmarks.md`](benchmarks.md)
+- [`debugging.md`](debugging.md)
+- [`../debug/engines/visual_comparison/README.md`](../debug/engines/visual_comparison/README.md)

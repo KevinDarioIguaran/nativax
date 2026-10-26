@@ -1,190 +1,141 @@
-# Conformidad: línea base 2026-10-24 (actualizada en la sesión V8/CSS)
+# Conformance baseline
 
-Los runners viven en `debug/engines/compatibility` y reutilizan suites oficiales. Los
-checkouts están pinneados y no se versionan (`.conformance/` está ignorado).
+**Snapshot:** 2026-10-26. Runners live in `debug/engines/compatibility`; the
+official suite checkouts are pinned and downloaded under
+`debug/artifacts/conformance/` (gitignored). The latest recorded run per
+command is below. **SKIP is excluded from the rate and never counts as
+compatibility.**
 
-## Resultados
+## Results
 
-| Suite | Alcance ejecutado | PASS | FAIL | SKIP | ERROR | Tasa | Commit |
-|---|---|---:|---:|---:|---:|---:|---|
-| Test262 | `language/{expressions,statements,types,literals}` | 19.577 | 413 | 1.108 | 0 | **97,93 %** | `d53ebc8` |
-| html5lib tokenizer | todos los `.test` | 5.759 | 43 | 1.025 | 0 | **99,26 %** | `e7d77cd` |
-| WPT `dom/nodes` | 327 archivos | 196 | 84 | 47 | 0 | **70,00 %** | `e7d77cd` |
-| WPT `css/selectors` | 528 archivos | 127 | 53 | 348 | 0 | **70,56 %** | `e7d77cd` |
-| WPT URL | 896 casos del fixture | 665 | 231 | 0 | 0 | **74,22 %** | `e7d77cd` |
-| WPT `dom/events` | 176 archivos | 52 | 21 | 103 | 0 | **71,23 %** | `e7d77cd` |
-| WPT tree construction | 1.973 casos `.dat` | 1.556 | 316 | 99 | 2 | **83,03 %** | `e7d77cd` |
+| Suite | Scope | PASS | FAIL | SKIP | ERROR | Tests | Rate | Evidence stamp |
+|---|---|---:|---:|---:|---:|---:|---:|---|
+| Test262 | `language/{expressions,statements,types,literals}` | 19,577 | 413 | 1,108 | 0 | 21,098 | **97.93 %** | `test262-2026-10-23T221334` |
+| html5lib tokenizer | all `.test` files | 5,759 | 43 | 1,025 | 0 | 6,827 | **99.26 %** | `html5lib-tokenizer-2026-10-24T205003` |
+| WPT URL | 896 fixture cases | 665 | 231 | 0 | 0 | 896 | **74.22 %** | `wpt-url-2026-10-25T221027` |
+| WPT `dom/nodes` | 327 files | 196 | 84 | 47 | 0 | 327 | **70.00 %** | `wpt-2026-10-24T080256` |
+| WPT `css/selectors` | 528 files | 127 | 53 | 348 | 0 | 528 | **70.56 %** | `wpt-2026-10-24T204139` |
+| WPT `dom/events` | 176 files | 52 | 21 | 103 | 0 | 176 | **71.23 %** | `wpt-2026-10-24T061648` |
+| WPT tree construction | 1,973 `.dat` cases | 1,556 | 316 | 99 | 2 | 1,973 | **83.03 %** | `wpt-html-tree-2026-10-25T092140` |
 
-La tasa excluye `SKIP`. Un `SKIP` **no** cuenta como compatibilidad.
+Rate = `PASS / (PASS + FAIL)`. The per-suite summaries and full JSONL are under
+`debug/artifacts/conformance/results/`. The full summaries use schema 1.0 and
+point to the JSONL with `resultsFile`; they do not duplicate every test row.
 
-Comandos de esta corrida: `run_test262`, `run_html5lib`, `run_url`,
-`run_html_tree`, `run_wpt --dirs dom/nodes --limit 2000`, `dom/events` y
-`css/selectors` (suites fijadas arriba). La base de la rama `c428bbc` daba
-82 PASS en `css/selectors`; esta corrida da 84, y `dom/nodes` vuelve a 168 tras
-corregir la caché de `classList`.
+These are **QuickJS runs**. V8 has no Test262/WPT run in this repository.
 
-## Objetivo 70 % (fase 4)
-
-| Suite | Objetivo | Actual | Estado |
-|---|---:|---:|---|
-| Test262 | 70 % | 97,93 % | ✅ |
-| html5lib tokenizer | 70 % | 99,26 % | ✅ |
-| WPT URL | 70 % | 74,22 % | ✅ |
-| WPT `dom/nodes` | 70 % | 70,00 % | ✅ |
-| WPT `css/selectors` | 70 % | 70,56 % | ✅ |
-| WPT tree construction | 70 % | 83,03 % | ✅ |
-
-El 70 % se alcanzó sin tocar el denominador ni convertir SKIP en PASS. Los
-reftests visuales y testdriver siguen excluidos.
-
-## Informes
-
-- `reports/test262-latest.md`
-- `reports/html5lib-tokenizer-latest.md`
-- `reports/wpt-dom-nodes-2026-10-20.md`
-- `reports/wpt-css-selectors-2026-10-20.md`
-- `reports/wpt-url-latest.md`
-- `reports/wpt-html-tree-latest.md`
-
-Los JSONL completos quedan en `.conformance/results/` (ignorado por git). Los
-informes legibles versionados son solo `progress/reports/<suite>-latest.md`;
-las corridas con timestamp también quedan en `.conformance/results/`.
-
-## Corrida de eventos y selectores (2026-10-24)
-
-Comandos:
+## Commands
 
 ```bash
 cd debug/engines/compatibility
-dart run bin/run_wpt.dart --dirs dom/events --limit 2000
-dart run bin/run_wpt.dart --dirs css/selectors --limit 2000
+dart run bin/run_test262.dart
+dart run bin/run_html5lib.dart
+dart run bin/run_url.dart
 dart run bin/run_wpt.dart --dirs dom/nodes --limit 2000
+dart run bin/run_wpt.dart --dirs css/selectors --limit 2000
+dart run bin/run_wpt.dart --dirs dom/events --limit 2000
+dart run bin/run_html_tree.dart
+# all of the above:
+dart run bin/run_all.dart
 ```
 
-| Suite | PASS | FAIL | SKIP | Tasa (sin SKIP) |
-|---|---:|---:|---:|---:|
-| `dom/events` | 52 | 21 | 103 | **71,23 %** |
-| `css/selectors` | 127 | 53 | 348 | **70,56 %** |
-| `dom/nodes` | 196 | 84 | 47 | **70,00 %** |
+Exploratory runs under 100 tests are hidden from the default context view;
+`python3 debug/run.py context conformance --all` lists them.
 
-`dom/events` alcanza 52/73 (71,23 %), `css/selectors` 127/180 (70,56 %)
-y tree construction 1.334/1.874 (71,18 %). No se redondea ni se reclasifica. Los cambios reales de esta corrida son `Event` legacy
-(`cancelBubble`, `returnValue`, constantes, `initEvent`/`initUIEvent`/
-`initMouseEvent`/`initKeyboardEvent`), `createEvent` sin inicializar,
-`window.event` reemplazable, `passive` por defecto, captura booleana,
-`offsetX`/`offsetY`, handlers de `body`/`frameset`, aliases prefijados y
-`HTMLFrameSetElement`.
+## 70 % phase gate
 
-El runner WPT también se corrigió para llamar a `StyleEngine.handleMutation`
-en vez de sólo `invalidate()` y para completar `testharness` (`step_func`,
-`promise_test` con `t`, asserts). **Eso es infraestructura de medición, no una
-ganancia de compatibilidad del motor**: la línea base anterior subestimaba
-`css/selectors` y `dom/events`. Las cifras de arriba ya reflejan el motor real,
-pero no deben presentarse como si todo el delta fuera producto.
+| Suite | Target | Current | State |
+|---|---:|---:|---|
+| Test262 | 70 % | 97.93 % | Met |
+| html5lib tokenizer | 70 % | 99.26 % | Met |
+| WPT URL | 70 % | 74.22 % | Met |
+| WPT `dom/nodes` | 70 % | 70.00 % | Met (no margin) |
+| WPT `css/selectors` | 70 % | 70.56 % | Met |
+| WPT `dom/events` | 70 % | 71.23 % | Met |
+| WPT tree construction | 70 % | 83.03 % | Met |
 
-Las cinco suites medidas están en 70 % o más. `dom/nodes` cierra en 196/280
-(70,00 %). Tree construction usa el algoritmo HTML5 completo (71,18 %).
-En selectores aún fallan `:focus-visible`, Shadow DOM, quirks mode, namespaced
-y partes de `:dir`, pero ya están por encima del objetivo.
+The gate was reached without changing denominators or turning SKIP into PASS.
+Reftests and testdriver-only WPT cases remain excluded/skipped. “70 %” is a
+project phase gate, not a claim that websites will work 70 % of the time.
 
-## Brechas principales
+## What each suite actually covers
 
-### Test262 (413 fallos)
+### Test262
 
-- Errores tempranos de modo estricto que QuickJS-ng no rechaza (palabras
-  reservadas futuras en identificadores).
-- Decoradores (propuesta no implementada).
-- Orden de evaluación en destructuring/assignment.
-- Diferencias de `RegExp`/`Symbol` en casos límite.
-- 1.108 SKIP: módulos, `dynamic-import`, `import-defer`, source-phase
-  imports, TCO y APIs de host de Test262.
+Language semantics through QuickJS, not the DOM, modules, host APIs, or
+rendering. Known failure areas: strict-mode early errors, decorators/recent
+proposals, destructuring/assignment evaluation order, and `RegExp`/`Symbol`
+edge cases. The 1,108 SKIPs include modules, dynamic import, import defer,
+source-phase imports, TCO, and host-specific Test262 APIs.
 
-### html5lib (177 fallos)
+### html5lib tokenizer
 
-- Comentarios bogus (`<!`, `<!-`) que incluyen el `!` en el dato.
-- Entidades con ambigüedad de prefijo y casos de atributos.
-- Detalles de `test4`/`domjs` sobre atributos y NUL.
-- 1.025 SKIP: estados iniciales distintos de Data y doctypes con
-  identificadores público/sistema (el `DoctypeToken` solo expone el nombre).
+Tokenizer only. The 1,025 SKIPs are non-Data states and doctype public/system
+identifier variants that the adapter does not model. Remaining failures include
+bogus comments (`<!`, `<!-`), ambiguous entity prefixes, attribute edge cases,
+and NUL handling. This number is not tree construction.
 
-### Límite del runner CSS
+### WPT DOM, events, and selectors
 
-La mayoría de los 164 FAIL de `css/selectors` comprueban `offsetWidth`,
-`offsetHeight` o `getBoundingClientRect`. El runner de WPT sólo tiene DOM y
-`StyleEngine`, **no layout/renderer**, así que no puede alcanzar el 70 % de
-CSS selectors sin integrar el motor de layout de `nativa_render`. Los tests
-reftest (345) están SKIP y no cuentan.
+These use a lite `testharness.js` adapter, not a full browser. They do not have
+layout/renderer geometry, testdriver, reftests, or a complete realm model.
 
-### WPT DOM/CSS (127 y 19 PASS)
+- `dom/nodes`: 47 SKIPs; remaining failures include realms/iframes, complete
+  `Range`/`TreeWalker`, `DOMParser`/CDATA, and `moveBefore`.
+- `dom/events`: 103 SKIPs; the run covers event construction, legacy aliases,
+  listeners, capture/bubble, and handler properties in the adapter.
+- `css/selectors`: 348 SKIPs, mostly reftests. `:focus-visible`, Shadow DOM,
+  quirks mode, namespaced selectors, and parts of `:dir` still fail.
 
-Implementado en esta iteración:
+### WPT URL
 
-- `Attr` real, `createAttribute`/`createAttributeNS`, `getAttributeNode(N S)`,
-  `setAttributeNode(N S)`, `removeAttributeNode` y `attributes` tipo
-  `NamedNodeMap` con `getNamedItem`/`setNamedItem`.
-- `DOMImplementation` por documento, `new Document()`, `XMLDocument`,
-  `createDocument`, `createDocumentType` y `createHTMLDocument`.
-- Adopción automática al insertar entre documentos, `Document.cloneNode`,
-  orden correcto de comentarios/doctype y `ownerDocument` real por nodo.
-- `DOMException` de host con `name`, `code` y `constructor` correctos;
-  `createProcessingInstruction` valida el `Name` XML y `CharacterData`
-  convierte offsets a `unsigned long`.
-- `classList` completo: tokens únicos, acceso indexado, `supports()`,
-  `replace()` con mutación, normalización y `toString()`.
-- `ChildNode.after/replaceWith` y `ParentNode.append/prepend` con el orden de
-  hermanos y validación de ancestros; restricciones de hijos de `Document`.
+`URL`/`URLSearchParams` through the bindings. Remaining failures are IDN,
+canonical IPv6, file URLs, and WHATWG normalization details. This is a fixture
+suite, not a network test.
 
-En la segunda pasada se completaron además:
+### Tree construction
 
-- `MutationObserver` completo: todos los archivos de `MutationObserver-*.html`
-  pasan (atributos, characterData, childList, takeRecords, disconnect,
-  overlapping, inner/outerHTML, textContent y callbacks).
-- Colecciones vivas `HTMLCollection` con índices y propiedades nombradas;
-  `NodeList` itera con `Array.prototype` y refleja inserciones.
-- Atributos con namespace/prefix reales (`setAttributeNS`,
-  `getAttributeNodeNS`, `removeAttributeNS`, `attributeEntries`).
-- `Document.importNode`, constantes de `Node`, `isEqualNode`, `isSameNode`,
-  `classList` vivo, `outerHTML`, `createTreeWalker` y validación de doctypes.
-- El runner WPT ahora soporta `async_test(name)`, `this.add_cleanup`,
-  `step_func(_done)` con argumentos y `unreached_func`, como el testharness real.
-- `iframe.contentDocument`/`contentWindow` y `window.frames` con documentos
-  aislados, tipo MIME inferido y evento `load`; `Node-isConnected` pasa al 100 %.
+The default parser delegates tree construction to `package:html`; the in-house
+tokenizer supplies parse errors and limits. The 2026-10-25 runner corrections
+fixed attribute comparison and foreign namespace/local-name comparison. Those
+changes raised the measured rate from 71.18 % to 83.03 % with the same
+denominator and **are harness corrections, not product compatibility gains**.
+The dominant remaining real gap is `<template>` content (112 cases);
+`package:html` 0.15.x does not implement the template content fragment. There
+are also 2 runner errors.
 
-Pendiente para el 70 %: realms/iframes, `Range`/`TreeWalker` completos,
-`DOMParser`/CDATA, `moveBefore`, adoption agency del parser y el layout para
-CSS selectors. Los 345 SKIP de CSS son reftests visuales.
+## Evidence and reports
 
-### WPT URL (665/896, 74,22 %)
+- Per-test rows: `debug/artifacts/conformance/results/<suite>-<stamp>.jsonl`
+- Metadata: `debug/artifacts/conformance/results/<suite>-<stamp>.summary.json`
+- Human reports: `progress/reports/{test262,html5lib-tokenizer,wpt-url,wpt-dom-nodes,wpt-css-selectors,wpt-html-tree,conformance}-latest.md`
+- Context projection: `python3 debug/run.py context conformance`
 
-`URL` y `URLSearchParams` ya se exponen a scripts. Los fallos restantes son
-IDN, IPv6 canónico, file URLs y detalles de normalización de WHATWG. Ver
-`docs/javascript-supported.md`.
+`progress/reports/*-latest.md` may lag the latest timestamped summary. For a
+quoted number, use the summary/JSONL and state the timestamp.
 
-### WPT tree construction (83,03 %)
+## Interpreting a change
 
-- La construcción del árbol usa el algoritmo HTML5 (`package:html`), con adoption agency, foster parenting, foreign content y template.
-- El tokenizer propio sigue aportando errores y límites; quedan 316 fallos y 2 errores del runner. El mayor bloque real son 112 casos de `template.dat`: `package:html` 0.15.7 no implementa `<template>` (lo coloca en `body` en vez de `head` y no aplica sus modos de inserción).
+- A runner/adapter fix is not a product gain.
+- A SKIP is not a PASS.
+- A subset result is not full-suite compatibility.
+- Test262 does not cover V8 and does not measure DOM/rendering.
+- Visual fidelity and performance are separate measurements.
+- A single percentage is not per-site compatibility.
 
-**Corrección del runner (2026-10-25), no ganancia de producto.** El lector de
-`.dat` descartaba las líneas de atributos (`|       id="A"`), así que todo caso
-esperado con atributos fallaba aunque el parser fuera correcto. Ahora se
-comparan. Comparación por test contra la corrida `2026-10-24T064649`: 116
-FAIL → PASS, 1 ERROR → PASS, 0 regresiones. 1.334 → 1.451 PASS
-(71,18 % → 77,43 %), mismo denominador (1.874 ejecutados). Comando:
-`cd debug/engines/compatibility && dart run bin/run_html_tree.dart`. Test:
-`debug/engines/compatibility/test/html_tree_runner_test.dart`.
+## Next improvements
 
-**Segunda corrección del runner (2026-10-25), tampoco es ganancia de
-producto.** Los elementos extranjeros se escriben `<svg foreignObject>` /
-`<math mi>`; el lector tomaba sólo el prefijo como nombre y no comparaba el
-namespace. Ahora compara namespace y nombre local. Contra la corrida
-`2026-10-25T091944`: 105 FAIL → PASS, 0 regresiones. 1.451 → 1.556 PASS
-(77,43 % → 83,03 %), mismo denominador.
+1. `nativa_html`: template content, quirks/doctype, and remaining tree modes.
+2. `nativa_dom_bindings`: realms/iframes, `Range`/`TreeWalker`, `DOMParser`,
+   and URL normalization.
+3. CSS: layout-aware selectors and remaining state/namespace cases.
+4. Repeat `run_all.dart`, record the per-test delta, and keep harness fixes
+   separate from compatibility gains.
 
-## Cómo mejorar la línea base
+## Related
 
-1. `nativa_dom_bindings`: `createElementNS`, CSSOM, `DOMParser`.
-2. `nativa_html`: adoption agency, foster parenting, doctype, template,
-   foreign content.
-3. `nativa_dom_bindings`: `URL` sobre `Uri` o un parser WHATWG propio.
-4. Repetir `dart run bin/run_all.dart` y comparar el delta.
+- [`../docs/testing.md`](../docs/testing.md)
+- [`../docs/javascript-supported.md`](../docs/javascript-supported.md)
+- [`../docs/html-supported.md`](../docs/html-supported.md)
+- [`../docs/css-supported.md`](../docs/css-supported.md)
+- [`status.md`](status.md)
