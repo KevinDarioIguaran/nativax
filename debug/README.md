@@ -36,6 +36,11 @@ debug/
   workspaces, compare_runs, storage) → engines. Colors and fonts come only
   from `debug/styles` (enforced by `debug/tests/ui/test_app.py`).
 
+- **LLM debug pack** (`python3 debug/run.py llm`, `debug/logic/llm/`): every
+  engine's evidence pre-analyzed into minified JSON for models
+  (`debug/artifacts/llm/index.json` → `items/<id>.json`); see
+  `debug/logic/llm/README.md`.
+
 The JSON interface audit (`debug/engines/bug_detection`) is an AI-facing tool;
 it is run from the command line, not from the dashboard.
 

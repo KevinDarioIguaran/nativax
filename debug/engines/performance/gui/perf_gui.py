@@ -1774,7 +1774,17 @@ class Dashboard(ChartMixin):
         self.history = self._load_history()
         self._fill_history()
 
+    def _refresh_llm_pack(self):
+        """Regenerates the pre-analyzed LLM pack (debug/artifacts/llm) in the
+        background after a run, so it is always current. Not shown in the UI."""
+        try:
+            subprocess.Popen([sys.executable, str(ROOT / "debug" / "logic" / "llm" / "pack.py")], cwd=ROOT,
+                             stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, start_new_session=True)
+        except OSError as error:
+            self._append_log(f"[llm pack] {error}\n")
+
     def _record_history_if_needed(self):
+        self._refresh_llm_pack()
         if history_engine is None:
             return
         sources = history_sources()

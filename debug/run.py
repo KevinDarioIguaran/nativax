@@ -6,6 +6,7 @@
     python3 debug/run.py storage visual     # list the archived runs of an area
     python3 debug/run.py verify visual <run_id>        # integrity of an archived run
     python3 debug/run.py compare visual <old> <new>    # improved/regressed/... (--record)
+    python3 debug/run.py llm                # pre-analyzed minified pack for LLMs -> debug/artifacts/llm
     python3 debug/run.py context brief      # compact AI context projection
     python3 debug/run.py gate --json        # engines receive their own flags
     python3 debug/run.py list               # known commands
@@ -25,6 +26,7 @@ DEBUG = ROOT / "debug"
 ENGINES = {
     "context": "logic/context.py",
     "compare": "logic/compare_runs.py",
+    "llm": "logic/llm/pack.py",
     "gate": "engines/quality_gate/quality_gate.py",
     "audit": "engines/bug_detection/audit.py",
     "recommend": "engines/recommendations/recommend.py",
