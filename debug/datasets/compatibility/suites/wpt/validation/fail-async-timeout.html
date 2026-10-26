@@ -1,0 +1,9 @@
+<!doctype html>
+<meta charset="utf-8">
+<script src="/resources/testharness.js"></script>
+<script src="/resources/testharnessreport.js"></script>
+<title>fail-async-timeout</title>
+<script>
+test(() => { assert_true(true); }, "sync subtest passes");
+async_test(t => { /* never calls t.done() */ }, "async subtest never completes");
+</script>

@@ -1,0 +1,21 @@
+[
+  "Validation subset for the NativaX URL runner. Comment strings are skipped by the runner, as in upstream urltestdata.json.",
+  {"input": "http://example.com/a/../b", "base": null,
+   "href": "http://example.com/b", "origin": "http://example.com", "protocol": "http:",
+   "username": "", "password": "", "host": "example.com", "hostname": "example.com",
+   "port": "", "pathname": "/b", "search": "", "hash": ""},
+  {"input": "c?q=1#h", "base": "http://example.com/a/b",
+   "href": "http://example.com/a/c?q=1#h", "origin": "http://example.com", "protocol": "http:",
+   "username": "", "password": "", "host": "example.com", "hostname": "example.com",
+   "port": "", "pathname": "/a/c", "search": "?q=1", "hash": "#h"},
+  {"input": "HTTP://EXAMPLE.COM:80/", "base": null,
+   "href": "http://example.com/", "protocol": "http:", "host": "example.com", "port": "", "pathname": "/"},
+  {"input": "https://user:pw@example.com:8443/p", "base": null,
+   "href": "https://user:pw@example.com:8443/p", "username": "user", "password": "pw",
+   "host": "example.com:8443", "hostname": "example.com", "port": "8443", "pathname": "/p"},
+  {"input": "http://[::1", "base": null, "failure": true},
+  {"input": "relative", "base": null, "failure": true},
+  {"input": "http://example.com/x", "base": null,
+   "href": "http://example.com/x", "pathname": "/y"},
+  {"input": "http://example.com/", "base": null, "failure": true}
+]

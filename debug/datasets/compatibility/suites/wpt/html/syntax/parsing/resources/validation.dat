@@ -1,0 +1,68 @@
+#data
+<p>One<p>Two
+#errors
+#document
+| <html>
+|   <head>
+|   <body>
+|     <p>
+|       "One"
+|     <p>
+|       "Two"
+
+#data
+<b><i>x</b>y
+#errors
+#document
+| <html>
+|   <head>
+|   <body>
+|     <b>
+|       <i>
+|         "x"
+|     <i>
+|       "y"
+
+#data
+<table><tr><td>x</table>
+#errors
+#document
+| <html>
+|   <head>
+|   <body>
+|     <table>
+|       <tbody>
+|         <tr>
+|           <td>
+|             "x"
+
+#data
+<p>a
+#errors
+#document
+| <html>
+|   <head>
+|   <body>
+|     <div>
+|       "a"
+
+#data
+<noscript><p>x</noscript>
+#errors
+#script-off
+#document
+| <html>
+|   <head>
+|     <noscript>
+|   <body>
+|     <p>
+|       "x"
+
+#data
+<p>x
+#errors
+#document-fragment
+svg path
+#document
+| <svg p>
+|   "x"

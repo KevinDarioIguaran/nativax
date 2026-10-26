@@ -1,0 +1,11 @@
+<!doctype html>
+<meta charset="utf-8">
+<script src="/resources/testharness.js"></script>
+<script src="/resources/testharnessreport.js"></script>
+<title>skip-precondition</title>
+<script>
+test(() => {
+  assert_implements_optional(false, "optional feature missing");
+  assert_true(true);
+}, "optional feature is reported as precondition failed, not PASS");
+</script>

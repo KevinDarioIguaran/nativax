@@ -20,9 +20,14 @@ class WptRunOptions {
     this.grep,
     this.timeout = const Duration(seconds: 20),
     this.verbose = false,
+    this.harnessSource = wptShim,
   });
 
   final String suitePath;
+
+  /// The `testharness.js` replacement evaluated before the test scripts.
+  /// Only the runner validation swaps it (for a deliberately broken one).
+  final String harnessSource;
 
   /// Directories relative to the WPT checkout, e.g. `dom/nodes`.
   final List<String> directories;
@@ -292,7 +297,7 @@ class WptRunner {
         ),
         styleEngine: styleEngine,
       )..install();
-      e.evaluate(wptShim, filename: '<wpt:testharness>');
+      e.evaluate(options.harnessSource, filename: '<wpt:testharness>');
       e.evaluate(r'''
 for (const el of document.querySelectorAll('[id]')) {
   const id = el.id;

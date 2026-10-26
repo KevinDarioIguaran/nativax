@@ -12,4 +12,5 @@ export 'src/result.dart';
 export 'src/suite_paths.dart';
 export 'src/test262_runner.dart';
 export 'src/url_runner.dart';
+export 'src/validation.dart';
 export 'src/wpt_runner.dart';

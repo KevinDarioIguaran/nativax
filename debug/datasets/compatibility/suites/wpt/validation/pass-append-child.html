@@ -1,0 +1,15 @@
+<!doctype html>
+<meta charset="utf-8">
+<script src="/resources/testharness.js"></script>
+<script src="/resources/testharnessreport.js"></script>
+<title>pass-append-child</title>
+<div id="host"></div>
+<script>
+test(() => {
+  const host = document.getElementById("host");
+  const child = document.createElement("span");
+  host.appendChild(child);
+  assert_equals(child.parentNode, host);
+  assert_equals(host.childNodes.length, 1);
+}, "appendChild sets parentNode (DOM 4.2.3 append)");
+</script>
