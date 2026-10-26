@@ -27,8 +27,8 @@ dart run bin/leaks.dart run --list
 
 # Comparar dos revisiones
 dart run bin/leaks.dart compare \
-  --baseline ../../benchmarks/leaks/baseline.json \
-  --current ../../benchmarks/leaks/current.json
+  --baseline ../../../benchmarks/leaks/baseline.json \
+  --current ../../../benchmarks/leaks/current.json
 ```
 
 Salidas:

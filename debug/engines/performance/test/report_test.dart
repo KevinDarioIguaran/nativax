@@ -90,7 +90,7 @@ void main() {
   });
 
   test('external registry resolves vendored fixtures', () {
-    final root = Directory.current.parent.parent.path;
+    final root = _repoRoot();
     final browser = externalSuiteById('browserbench');
     final cerious = externalSuiteById('cerious');
     final jsfb = externalSuiteById('jsfb');
@@ -147,4 +147,21 @@ void main() {
       contains('PassMark'),
     );
   });
+}
+
+/// The workspace root, found by its pubspec name like the engine binaries do,
+/// so the test does not depend on how deep this package sits.
+String _repoRoot() {
+  var dir = Directory.current.absolute;
+  while (true) {
+    final pubspec = File('${dir.path}/pubspec.yaml');
+    if (pubspec.existsSync() &&
+        pubspec.readAsStringSync().contains('name: nativa_workspace')) {
+      return dir.path;
+    }
+    if (dir.parent.path == dir.path) {
+      throw StateError('NativaX workspace root not found');
+    }
+    dir = dir.parent;
+  }
 }

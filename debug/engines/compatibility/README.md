@@ -53,7 +53,7 @@ dart run bin/run_wpt.dart --dirs dom/nodes --grep Element-tagName
 ## Limitaciones del adaptador
 
 Ver
-[`../../.agents/skills/nativa-conformance/references/conformance.md`](../../.agents/skills/nativa-conformance/references/conformance.md).
+[`../../.agents/skills/nativa-conformance/references/conformance.md`](../../../.agents/skills/nativa-conformance/references/conformance.md).
 En resumen:
 Test262 modules y APIs de host se saltan; html5lib se ejecuta solo desde Data
 state; WPT no soporta reftests, testdriver, workers ni el testharness completo.

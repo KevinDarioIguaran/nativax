@@ -163,9 +163,9 @@ so no terminal is needed after launching the dashboard.
 debug/engines/performance/gui/run_gui.sh
 ```
 
-![Dashboard summary](../../progress/reports/perf-gui.png)
+![Dashboard summary](../../../progress/reports/perf-gui.png)
 
-![Performance table with 245 scenarios](../../progress/reports/perf-gui-perf.png)
+![Performance table with 245 scenarios](../../../progress/reports/perf-gui-perf.png)
 
 ## Recommendations
 

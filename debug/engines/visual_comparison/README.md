@@ -137,7 +137,7 @@ The four MDN/Odin suites are downloaded on demand to `.visual/suites/`
 (git-ignored; about 270 MB) and are never redistributed. `--list` prints every
 page without rendering. In the Tkinter panel, **Fidelidad visual** lists all
 300 with pending rows; **Visual 300** runs them. The catalog report is
-[`progress/reports/visual-catalog-latest.md`](../../progress/reports/visual-catalog-latest.md).
+[`progress/reports/visual-catalog-latest.md`](../../../progress/reports/visual-catalog-latest.md).
 
 `fixtures/50projects50days/` is a vendored, unmodified MIT copy of
 [bradtraversy/50projects50days](https://github.com/bradtraversy/50projects50days)
