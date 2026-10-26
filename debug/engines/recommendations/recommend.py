@@ -949,11 +949,11 @@ def _game_rows(data: dict[str, Any], perf_rows: list[dict]) -> dict[str, dict]:
     rows = {
         str(row.get("scenario")): row
         for row in perf_rows
-        if str(row.get("scenario", "")).startswith("game.")
+        if _is_game(row)
     }
     for row in (_rows(data.get("game") or {}, "results")
                 + _rows(data.get("game3d") or {}, "results")):
-        if str(row.get("scenario", "")).startswith(("game.", "game3d.")):
+        if _is_game(row):
             rows[str(row.get("scenario"))] = row
     return rows
 

@@ -253,6 +253,14 @@ class RecommendationsTest(unittest.TestCase):
         self.assertNotIn("perf.dom.over_target", ids)
         self.assertEqual(recommend.audit(recs)["duplicates"], [])
 
+    def test_game3d_profiles_in_the_perf_run_are_judged(self):
+        # Regression: only game.* rows of the perf run reached the game rule;
+        # a slow game3d.* profile produced no recommendation at all.
+        data = dict(BASE)
+        data["perf"] = {"results": [row("dom", "game3d.quality-640x360-c100", 100, 10)]}
+        ids = {r.id for r in recommend.build_recommendations(data)}
+        self.assertIn("perf.game.over_target", ids)
+
 
 if __name__ == "__main__":
     unittest.main()
