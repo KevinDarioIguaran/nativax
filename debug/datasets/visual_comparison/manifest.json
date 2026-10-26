@@ -1,0 +1,308 @@
+{
+  "schema": "nativa_visual.dataset/1",
+  "generator": "debug/engines/visual_comparison/tool/generate_dataset.dart",
+  "boxFormat": "[x, y, w, h] in pixels",
+  "cases": [
+    {
+      "id": "identical",
+      "kind": "identical",
+      "description": "Both images are byte-identical renders of the base page.",
+      "expectation": "no mismatched pixels, no regions",
+      "expectDifferent": false,
+      "reference": {
+        "width": 160,
+        "height": 120
+      },
+      "actual": {
+        "width": 160,
+        "height": 120
+      },
+      "truth": []
+    },
+    {
+      "id": "one-pixel",
+      "kind": "important",
+      "description": "One background pixel at (120,100) turns black.",
+      "expectation": "one mismatched pixel; one 1x1 region",
+      "expectDifferent": true,
+      "reference": {
+        "width": 160,
+        "height": 120
+      },
+      "actual": {
+        "width": 160,
+        "height": 120
+      },
+      "truth": [
+        [
+          120,
+          100,
+          1,
+          1
+        ]
+      ]
+    },
+    {
+      "id": "small-block",
+      "kind": "important",
+      "description": "A 6x6 red block appears inside the card at (132,64).",
+      "expectation": "one region with bbox [132,64,6,6]",
+      "expectDifferent": true,
+      "reference": {
+        "width": 160,
+        "height": 120
+      },
+      "actual": {
+        "width": 160,
+        "height": 120
+      },
+      "truth": [
+        [
+          132,
+          64,
+          6,
+          6
+        ]
+      ]
+    },
+    {
+      "id": "layout-shift",
+      "kind": "important",
+      "description": "The 60x52 card moves 24 px down (y 28 -> 52); old and new positions overlap by 28 px.",
+      "expectation": "regions covering the union of old and new card boxes",
+      "expectDifferent": true,
+      "reference": {
+        "width": 160,
+        "height": 120
+      },
+      "actual": {
+        "width": 160,
+        "height": 120
+      },
+      "truth": [
+        [
+          90,
+          28,
+          60,
+          76
+        ]
+      ]
+    },
+    {
+      "id": "missing-component",
+      "kind": "important",
+      "description": "The blue OK button (40x16) is not rendered.",
+      "expectation": "one region with the button box",
+      "expectDifferent": true,
+      "reference": {
+        "width": 160,
+        "height": 120
+      },
+      "actual": {
+        "width": 160,
+        "height": 120
+      },
+      "truth": [
+        [
+          10,
+          30,
+          40,
+          16
+        ]
+      ]
+    },
+    {
+      "id": "extra-component",
+      "kind": "important",
+      "description": "A red NEW badge (22x11) is rendered that the reference does not have.",
+      "expectation": "one region with the badge box",
+      "expectDifferent": true,
+      "reference": {
+        "width": 160,
+        "height": 120
+      },
+      "actual": {
+        "width": 160,
+        "height": 120
+      },
+      "truth": [
+        [
+          60,
+          30,
+          22,
+          11
+        ]
+      ]
+    },
+    {
+      "id": "text-change",
+      "kind": "important",
+      "description": "TOTAL 42 becomes TOTAL 47: one glyph changes.",
+      "expectation": "region(s) inside the changed glyph cell",
+      "expectDifferent": true,
+      "reference": {
+        "width": 160,
+        "height": 120
+      },
+      "actual": {
+        "width": 160,
+        "height": 120
+      },
+      "truth": [
+        [
+          52,
+          56,
+          5,
+          7
+        ]
+      ]
+    },
+    {
+      "id": "color-change",
+      "kind": "important",
+      "description": "Button background rgb(37,99,235) becomes rgb(37,82,200).",
+      "expectation": "one region with the button box",
+      "expectDifferent": true,
+      "reference": {
+        "width": 160,
+        "height": 120
+      },
+      "actual": {
+        "width": 160,
+        "height": 120
+      },
+      "truth": [
+        [
+          10,
+          30,
+          40,
+          16
+        ]
+      ]
+    },
+    {
+      "id": "opacity-change",
+      "kind": "important",
+      "description": "The card is composited at opacity 0.6 over the page.",
+      "expectation": "one region with the card box",
+      "expectDifferent": true,
+      "reference": {
+        "width": 160,
+        "height": 120
+      },
+      "actual": {
+        "width": 160,
+        "height": 120
+      },
+      "truth": [
+        [
+          90,
+          28,
+          60,
+          52
+        ]
+      ]
+    },
+    {
+      "id": "scaling",
+      "kind": "important",
+      "description": "The whole page is scaled by 1.05 from the top-left corner (nearest neighbour), as with a wrong zoom or DPR.",
+      "expectation": "regions spread over the whole canvas",
+      "expectDifferent": true,
+      "reference": {
+        "width": 160,
+        "height": 120
+      },
+      "actual": {
+        "width": 160,
+        "height": 120
+      },
+      "truth": [
+        [
+          0,
+          0,
+          160,
+          120
+        ]
+      ]
+    },
+    {
+      "id": "viewport-size",
+      "kind": "important",
+      "description": "The actual capture is 8 px narrower (152x120) with the same content: a viewport-size mismatch.",
+      "expectation": "the size difference must be reported; the pipeline catches it with the hard screenshot-size check, not with pixels",
+      "expectDifferent": true,
+      "reference": {
+        "width": 160,
+        "height": 120
+      },
+      "actual": {
+        "width": 152,
+        "height": 120
+      },
+      "truth": [
+        [
+          152,
+          0,
+          8,
+          120
+        ]
+      ]
+    },
+    {
+      "id": "antialias-noise",
+      "kind": "unimportant",
+      "description": "Every edge pixel is mixed 15-45 % with its neighbour (fixed LCG), imitating another rasterizer. Geometry and colours are unchanged.",
+      "expectation": "no actionable region (differences are rasterization noise)",
+      "expectDifferent": false,
+      "reference": {
+        "width": 160,
+        "height": 120
+      },
+      "actual": {
+        "width": 160,
+        "height": 120
+      },
+      "truth": []
+    },
+    {
+      "id": "tiny-important",
+      "kind": "important",
+      "description": "PRICE 1.50 becomes PRICE 1 50: the 1 px decimal point disappears, changing the value tenfold.",
+      "expectation": "one region at the decimal point despite its size",
+      "expectDifferent": true,
+      "reference": {
+        "width": 160,
+        "height": 120
+      },
+      "actual": {
+        "width": 160,
+        "height": 120
+      },
+      "truth": [
+        [
+          52,
+          70,
+          5,
+          7
+        ]
+      ]
+    },
+    {
+      "id": "unimportant-many",
+      "kind": "unimportant",
+      "description": "The page background changes from rgb(255,255,255) to rgb(247,247,247): about 70 % of the pixels change by deltaE ~3.",
+      "expectation": "no actionable region (an imperceptible tint change)",
+      "expectDifferent": false,
+      "reference": {
+        "width": 160,
+        "height": 120
+      },
+      "actual": {
+        "width": 160,
+        "height": 120
+      },
+      "truth": []
+    }
+  ]
+}

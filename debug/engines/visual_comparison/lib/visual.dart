@@ -13,6 +13,8 @@ export 'src/color.dart'
         deltaEScore,
         parseCssColor,
         rgbToLab;
+export 'src/environment.dart'
+    show CaptureWindow, GitRevision, isoWithOffset, readGitRevision;
 export 'src/fixtures.dart'
     show
         FixtureSuite,
@@ -39,6 +41,17 @@ export 'src/pixels.dart'
         pixelCsv,
         sampleRegion;
 export 'src/png.dart' show RasterImage, decodePng, encodePng;
+export 'src/regions.dart'
+    show
+        DeltaMap,
+        DiffRegion,
+        RegionElement,
+        RegionReport,
+        deltaMap,
+        defaultMaskThreshold,
+        defaultMinRegionArea,
+        findRegions,
+        overlayImage;
 export 'src/report.dart' show PageReport, RunReport;
 export 'src/runner.dart'
     show

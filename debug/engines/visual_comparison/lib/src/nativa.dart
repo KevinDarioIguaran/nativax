@@ -18,7 +18,17 @@ class NativaOutcome {
     required this.screenshotPath,
     required this.probeJsonPath,
     this.engine = 'unknown',
+    required this.startedAt,
+    required this.finishedAt,
+    this.waitMs = defaultNativaWaitMs,
   });
+
+  /// Wall-clock start and end of the `flutter test` capture (both attempts).
+  final DateTime startedAt;
+  final DateTime finishedAt;
+
+  /// Milliseconds of pumped frames before the screenshot.
+  final int waitMs;
 
   /// JavaScript engine the page ran on (`v8`, `quickjs`).
   final String engine;
@@ -33,6 +43,9 @@ class NativaOutcome {
   final String probeJsonPath;
 }
 
+/// Frames pumped before the NativaX screenshot, in milliseconds.
+const int defaultNativaWaitMs = 900;
+
 /// Renders the staged page offscreen through the existing `flutter test`
 /// screenshot harness. No window or display server is opened.
 Future<NativaOutcome> renderWithNativa({
@@ -43,7 +56,7 @@ Future<NativaOutcome> renderWithNativa({
   required int height,
   String scheme = 'light',
   String setupJs = '',
-  int waitMs = 900,
+  int waitMs = defaultNativaWaitMs,
   Duration timeout = const Duration(seconds: 100),
 }) async {
   final started = DateTime.now();
@@ -58,8 +71,8 @@ Future<NativaOutcome> renderWithNativa({
   // Pages run on V8 by default on desktop: point the harness at the cdylib
   // built in tools/v8-spike unless the caller chose one.
   final v8 = '$repoRoot/tools/v8-spike/target/release/libnx_v8.so';
-  final v8Env = Platform.environment['NATIVAX_V8_LIB'] == null &&
-          File(v8).existsSync()
+  final v8Env =
+      Platform.environment['NATIVAX_V8_LIB'] == null && File(v8).existsSync()
       ? {'NATIVAX_V8_LIB': v8}
       : const <String, String>{};
 
@@ -116,9 +129,11 @@ Future<NativaOutcome> renderWithNativa({
       'stdout: ${_tail(finished.stdout)} stderr: ${_tail(finished.stderr)}',
     );
   }
-  final engine = RegExp(r'^ENGINE: (\w+)', multiLine: true)
-          .firstMatch(finished.stdout)
-          ?.group(1) ??
+  final engine =
+      RegExp(
+        r'^ENGINE: (\w+)',
+        multiLine: true,
+      ).firstMatch(finished.stdout)?.group(1) ??
       'unknown';
   final ProbeSnapshot probe;
   try {
@@ -164,10 +179,14 @@ Future<NativaOutcome> renderWithNativa({
       '${probe.viewportWidth}x${probe.viewportHeight}',
     );
   }
+  final finishedAt = DateTime.now();
   return NativaOutcome(
     probe: probe,
     screenshot: raw.crop(probe.viewportWidth, probe.viewportHeight),
-    duration: DateTime.now().difference(started),
+    duration: finishedAt.difference(started),
+    startedAt: started,
+    finishedAt: finishedAt,
+    waitMs: waitMs,
     stdout: finished.stdout,
     stderr: finished.stderr,
     scriptErrors: errors,

@@ -87,8 +87,47 @@ the pixel report still shows the positional consequence separately.
   hide (for example, 0.2 % of an almost-empty page).
 - Per-row statistics and the 12 worst 16×16 px tiles.
 - `diff.png`: white for `ΔE ≤ 2`, yellow→red heat ramp above it.
+- `overlay.png`: reference and NativaX blended 50/50 over the compared
+  viewport; pixels with `ΔE > 2` are mixed 60 % with magenta `rgb(255,0,128)`.
 - Optional `pixels.csv` (`--pixel-csv`): `x,y,chrome_r,g,b,nativa_r,g,b,delta_e`
   for every mismatched pixel (`--pixel-csv-all` for all pixels).
+
+### Difference regions (`regions.json`)
+
+`findRegions()` (`lib/src/regions.dart`) turns the per-pixel ΔE into a list
+of regions:
+
+1. **Mask**: a pixel is in the mask when its CIE76 `ΔE > 2` (the same
+   threshold as the pixel report; equality is not masked).
+2. **Connectivity**: mask pixels are labelled into connected components with
+   the 8-neighbourhood (diagonal pixels join).
+3. **Minimum area**: components with fewer than **4 pixels** are dropped.
+   They are still counted (`droppedComponents`, `droppedPixels`), so nothing
+   disappears silently. A 1-pixel change is therefore visible in the pixel
+   report but not as a region; see
+   [`metrics-visual.md`](../../architecture/metrics-visual.md).
+4. **Per region**: integer bbox `[x, y, w, h]`, pixel count, mean and max
+   ΔE, and up to 8 probe elements whose rect intersects the bbox, sorted by
+   bbox IoU, each with `sides` (`reference`, `actual` or both).
+5. At most 500 regions are listed (largest first, `truncated: true` beyond);
+   the totals stay exact.
+
+The file records `mask.threshold`, `connectivity` and `minArea`.
+
+### Capture environment (`environment.json`)
+
+One per page, written by the judge and by `--self-check` (`--resume` keeps
+the original file):
+
+- `reference` / `actual`: engine, capture `startedAt` / `finishedAt` as
+  ISO-8601 with UTC offset (`2026-10-26T05:40:05.762-05:00`) and duration;
+  Chromium version, executable, flags, `virtualTimeBudgetMs` and the
+  calibrated `frameDelta`; NativaX JS engine (`v8`/`quickjs`), harness and
+  `waitMs`; screenshot sizes.
+- `viewport`, `devicePixelRatio` per side, `scheme`.
+- `fonts` (aliasing note), `animations`, `network`.
+- `git.revision` and `git.dirty` (tracked files modified), host OS and Dart
+  version.
 
 ## Output tree
 
@@ -102,6 +141,9 @@ debug/artifacts/visual/latest/
     ├── chrome.png            # reference screenshot
     ├── nativax.png           # NativaX screenshot
     ├── diff.png              # per-pixel ΔE heat map
+    ├── overlay.png           # 50/50 blend, ΔE > 2 tinted
+    ├── regions.json          # connected ΔE > 2 regions + elements
+    ├── environment.json      # capture timestamps, engines, git revision
     ├── chrome.json           # geometry + computed styles (reference)
     ├── nativax.json          # geometry + computed styles (NativaX)
     ├── elements.json         # per-element table: positions, ΔE, styles ←
@@ -118,7 +160,8 @@ debug/artifacts/visual/latest/
 environment_ok, environment_total, matched, missing, extra, order_violations,
 pixels, mismatched_pixels, mismatched_pct, ink_mismatch_pct, ink_pixels,
 mean_delta_e, max_delta_e, mae, chrome_ms, nativa_ms, artifacts, chrome_png,
-nativax_png, diff_png, elements_json, failure`.
+nativax_png, diff_png, elements_json, failure, overlay_png, regions_json,
+environment_json`. New columns are only ever appended.
 
 ## Fixture catalog (300 pages)
 
@@ -180,9 +223,17 @@ cd debug/engines/visual_comparison && dart test && dart analyze
 
 # Chrome-only integration test: probe viewport == painted viewport
 NATIVA_VISUAL_E2E=1 dart test test/chrome_e2e_test.dart
+
+# Accuracy audit on the synthetic dataset (debug/datasets/visual_comparison)
+dart run tool/generate_dataset.dart && dart run tool/audit_dataset.dart
 ```
+
+Measured detector accuracy, formulas and known failure cases:
+[`debug/architecture/metrics-visual.md`](../../architecture/metrics-visual.md).
 
 Unit coverage: PNG decode/encode/crop, Lab/ΔE/CSS colours, geometry falloff,
 root-cause attribution, style canonicalisation, palette comparison, per-pixel
-statistics, scoring/verdicts/invalidations, report + artifacts, fixture
+statistics, difference regions and overlay, environment timestamps, the accuracy
+dataset and its evaluator,
+scoring/verdicts/invalidations, report + artifacts, fixture
 discovery, and the provenance of the vendored suite.

@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'chrome.dart';
+import 'environment.dart';
 import 'model.dart';
 import 'nativa.dart';
 import 'png.dart';
@@ -24,7 +25,13 @@ class JudgeOptions {
     this.chromeTimeout = const Duration(minutes: 2),
     required this.frameDelta,
     this.nativaTimeout = const Duration(seconds: 100),
+    this.chromeVersion = '',
+    this.git = GitRevision.unknown,
   });
+
+  /// `chrome --version` output, recorded in `environment.json`.
+  final String chromeVersion;
+  final GitRevision git;
 
   final String repoRoot;
   final String outputDir;
@@ -114,6 +121,15 @@ Future<PageJudgeResult> judgePage(
         artifactsDir: artifacts,
         checks: checks,
         failure: 'Chromium reference failed: $error',
+        environment: _environment(
+          source,
+          options,
+          mode: 'judge',
+          width: options.width,
+          height: options.height,
+          reference: {..._chromeInfo(options), 'error': '$error'},
+          actual: const {'engine': 'nativax', 'skipped': true},
+        ),
       );
       report.writeArtifacts();
       return PageJudgeResult(report, DateTime.now().difference(started));
@@ -160,6 +176,16 @@ Future<PageJudgeResult> judgePage(
         chromeProbe: chrome.probe,
         chromeDuration: chrome.duration,
         failure: 'NativaX render failed: $error',
+        environment: _environment(
+          source,
+          options,
+          mode: 'judge',
+          width: viewportWidth,
+          height: viewportHeight,
+          referenceDpr: chrome.probe.dpr,
+          reference: _chromeCapture(chrome, options),
+          actual: {'engine': 'nativax', 'error': '$error'},
+        ),
       );
       report.writeArtifacts(chromeImage: chrome.screenshot);
       return PageJudgeResult(report, DateTime.now().difference(started));
@@ -299,6 +325,17 @@ Future<PageJudgeResult> judgePage(
       chromeDuration: chrome.duration,
       nativaDuration: nativa.duration,
       notes: notes,
+      environment: _environment(
+        source,
+        options,
+        mode: 'judge',
+        width: viewportWidth,
+        height: viewportHeight,
+        referenceDpr: chrome.probe.dpr,
+        actualDpr: nativa.probe.dpr,
+        reference: _chromeCapture(chrome, options),
+        actual: _nativaCapture(nativa),
+      ),
     );
     report.writeArtifacts(
       chromeImage: chrome.screenshot,
@@ -317,6 +354,60 @@ Future<PageJudgeResult> judgePage(
     }
   }
 }
+
+Map<String, Object?> _chromeInfo(JudgeOptions options) => {
+  'engine': 'chromium',
+  'version': options.chromeVersion.isEmpty
+      ? options.chromeExecutable
+      : options.chromeVersion,
+  'executable': options.chromeExecutable,
+  'virtualTimeBudgetMs': chromeVirtualTimeBudgetMs,
+  'flags': chromeBaseFlags,
+};
+
+Map<String, Object?> _chromeCapture(
+  ChromeOutcome chrome,
+  JudgeOptions options,
+) => {
+  ..._chromeInfo(options),
+  'capture': CaptureWindow(chrome.startedAt, chrome.finishedAt).toJson(),
+  'frameDelta': chrome.frameDelta,
+  'screenshot': [chrome.rawScreenshot.width, chrome.rawScreenshot.height],
+};
+
+Map<String, Object?> _nativaCapture(NativaOutcome nativa) => {
+  'engine': 'nativax',
+  'jsEngine': nativa.engine,
+  'harness':
+      'debug/harness/test/screenshot_test.dart '
+      '(flutter test, RenderRepaintBoundary.toImage)',
+  'capture': CaptureWindow(nativa.startedAt, nativa.finishedAt).toJson(),
+  'waitMs': nativa.waitMs,
+  'screenshot': [nativa.screenshot.width, nativa.screenshot.height],
+};
+
+Map<String, Object?> _environment(
+  PageSource source,
+  JudgeOptions options, {
+  required String mode,
+  required int width,
+  required int height,
+  double? referenceDpr,
+  double? actualDpr,
+  required Map<String, Object?> reference,
+  required Map<String, Object?> actual,
+}) => pageEnvironment(
+  page: source.id,
+  mode: mode,
+  viewportWidth: width,
+  viewportHeight: height,
+  referenceDpr: referenceDpr,
+  actualDpr: actualDpr,
+  scheme: options.scheme,
+  reference: reference,
+  actual: actual,
+  git: options.git,
+);
 
 void _copyTrees(Directory source, Directory target) {
   target.createSync(recursive: true);
@@ -405,6 +496,17 @@ Future<PageJudgeResult> selfCheck(
       chromeDuration: first.duration,
       nativaDuration: second.duration,
       notes: const ['Self-check: both sides are Chromium renders.'],
+      environment: _environment(
+        source,
+        options,
+        mode: 'self-check',
+        width: first.probe.viewportWidth,
+        height: first.probe.viewportHeight,
+        referenceDpr: first.probe.dpr,
+        actualDpr: second.probe.dpr,
+        reference: _chromeCapture(first, options),
+        actual: _chromeCapture(second, options),
+      ),
     );
     report.writeArtifacts(
       chromeImage: first.screenshot,

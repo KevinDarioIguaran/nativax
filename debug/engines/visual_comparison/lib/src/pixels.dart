@@ -160,12 +160,15 @@ PixelComparison comparePixels(
     var rowDelta = 0.0;
     for (var x = 0; x < width; x++) {
       final i = (y * width + x) * 4;
-      final r1 = chrome.rgba[i],
-          g1 = chrome.rgba[i + 1],
-          b1 = chrome.rgba[i + 2];
-      final r2 = nativa.rgba[i],
-          g2 = nativa.rgba[i + 1],
-          b2 = nativa.rgba[i + 2];
+      // Each source has its own row stride when the sizes differ.
+      final ci = (y * chrome.width + x) * 4;
+      final ni = (y * nativa.width + x) * 4;
+      final r1 = chrome.rgba[ci],
+          g1 = chrome.rgba[ci + 1],
+          b1 = chrome.rgba[ci + 2];
+      final r2 = nativa.rgba[ni],
+          g2 = nativa.rgba[ni + 1],
+          b2 = nativa.rgba[ni + 2];
       final de = deltaE(r1, g1, b1, r2, g2, b2);
       final chromeInk =
           deltaE(r1, g1, b1, background.r, background.g, background.b) > 5;
@@ -535,13 +538,15 @@ String pixelCsv(
   final height = math.min(chrome.height, nativa.height);
   for (var y = 0; y < height; y++) {
     for (var x = 0; x < width; x++) {
-      final i = (y * width + x) * 4;
-      final r1 = chrome.rgba[i],
-          g1 = chrome.rgba[i + 1],
-          b1 = chrome.rgba[i + 2];
-      final r2 = nativa.rgba[i],
-          g2 = nativa.rgba[i + 1],
-          b2 = nativa.rgba[i + 2];
+      // Each source has its own row stride when the sizes differ.
+      final ci = (y * chrome.width + x) * 4;
+      final ni = (y * nativa.width + x) * 4;
+      final r1 = chrome.rgba[ci],
+          g1 = chrome.rgba[ci + 1],
+          b1 = chrome.rgba[ci + 2];
+      final r2 = nativa.rgba[ni],
+          g2 = nativa.rgba[ni + 1],
+          b2 = nativa.rgba[ni + 2];
       final de = deltaE(r1, g1, b1, r2, g2, b2);
       if (!includeMatching && de <= 2) continue;
       buffer.writeln('$x,$y,$r1,$g1,$b1,$r2,$g2,$b2,${de.toStringAsFixed(2)}');
@@ -559,7 +564,7 @@ Rgb _pageBackground(RasterImage image, int width, int height) {
   final sums = <int, List<int>>{};
   for (var y = 0; y < height; y += 2) {
     for (var x = 0; x < width; x += 2) {
-      final i = (y * width + x) * 4;
+      final i = (y * image.width + x) * 4;
       final r = image.rgba[i], g = image.rgba[i + 1], b = image.rgba[i + 2];
       final key = ((r >> 3) << 10) | ((g >> 3) << 5) | (b >> 3);
       counts[key] = (counts[key] ?? 0) + 1;

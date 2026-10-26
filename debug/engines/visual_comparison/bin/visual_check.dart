@@ -256,7 +256,8 @@ Future<void> main(List<String> arguments) async {
   }
 
   if (pages.isEmpty && cli.suites.isEmpty) {
-    final vendored = '$repoRoot/debug/engines/visual_comparison/fixtures/50projects50days';
+    final vendored =
+        '$repoRoot/debug/engines/visual_comparison/fixtures/50projects50days';
     if (Directory(vendored).existsSync()) {
       pages.addAll(discoverPages(vendored, suite: '50projects50days'));
     }
@@ -352,6 +353,8 @@ Future<void> main(List<String> arguments) async {
     pixelCsvAll: cli.pixelCsvAll,
     keepStaging: cli.keepStaging,
     chromeExecutable: cli.chrome,
+    chromeVersion: chromeVersion,
+    git: await readGitRevision(repoRoot),
   );
 
   stdout.writeln('NativaX visual judge');
