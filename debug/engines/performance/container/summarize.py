@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Summarize the per-container performance results into one matrix.
 
-Discovers every `.perf/container/<name>/results.json`, reads its
+Discovers every `debug/artifacts/perf/container/<name>/results.json`, reads its
 `container.json` metadata when present and writes matrix.json/matrix.md.
 """
 from __future__ import annotations
@@ -12,7 +12,7 @@ from datetime import datetime
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[4]
-BASE = ROOT / ".perf" / "container"
+BASE = ROOT / "debug" / "artifacts" / "perf" / "container"
 
 KNOWN = {
     "desktop": ("2 CPUs · 2 GB", "2", "2g"),

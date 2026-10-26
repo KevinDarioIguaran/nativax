@@ -1,0 +1,134 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "nativax/diagnostic-run-manifest@1.1",
+  "title": "NativaX diagnostic run manifest",
+  "description": "One immutable record per archived engine run under debug/artifacts/runs/<area>/<run_id>/. evidence/ is a byte copy of the directory the engine wrote; reports/ holds the per-area report snapshot; integrity.json lists the sha256 of every archived file; history/ is append-only. Version 1.0 manifests (no integrity, lineage or history) remain readable.",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "run_id",
+    "area",
+    "engine",
+    "status",
+    "archived_at"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "enum": [
+        "1.0",
+        "1.1"
+      ]
+    },
+    "run_id": {
+      "type": "string",
+      "pattern": "^[0-9]{8}T[0-9]{6}Z(-[0-9a-f]{7,40})?(-[0-9]{1,3})?$"
+    },
+    "area": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9_-]{0,31}$"
+    },
+    "engine": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "maxLength": 200
+    },
+    "status": {
+      "enum": [
+        "completed",
+        "failed",
+        "aborted"
+      ]
+    },
+    "archived_at": {
+      "type": "string",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}([+-][0-9]{2}:[0-9]{2}|Z)$"
+    },
+    "git_revision": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "argv": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "source": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "evidence": {
+      "type": "object",
+      "required": [
+        "files",
+        "bytes"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "files": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "bytes": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    "reports": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "notes": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "lineage_key": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "maxLength": 200,
+      "description": "Runs with the same key ran the same engine with the same configuration; only they are compared."
+    },
+    "previous_run": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "run_id of the newest earlier run of this area with the same lineage_key, when one exists."
+    },
+    "integrity": {
+      "type": "object",
+      "required": [
+        "algorithm",
+        "file",
+        "files"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "algorithm": {
+          "const": "sha256"
+        },
+        "file": {
+          "const": "integrity.json"
+        },
+        "files": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    }
+  }
+}

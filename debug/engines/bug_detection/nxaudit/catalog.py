@@ -249,7 +249,7 @@ def css_support(cache: Path | None = None) -> dict:
     css_support.dart`; it is cached per source mtime so a run does not pay a
     Dart start each time. Returns `{"source": ..., "properties": {name: bool}}`.
     """
-    cache = cache or ROOT / ".audit" / "css-support.json"
+    cache = cache or ROOT / "debug" / "artifacts" / "audit" / "css-support.json"
     source = ROOT / "packages" / "nativa_css" / "lib" / "src" / "properties.dart"
     names = sorted(set(PROPERTIES) | set(PROBED_PROPERTIES))
     stamp = source.stat().st_mtime_ns if source.exists() else 0

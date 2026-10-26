@@ -10,10 +10,10 @@ import history
 
 class HistoryTest(unittest.TestCase):
     def test_record_and_list(self):
-        source = ROOT / ".perf" / "live-smoke" / "results.json"
+        source = ROOT / "debug" / "artifacts" / "perf" / "live-smoke" / "results.json"
         if not source.exists():
             self.skipTest("no perf smoke result")
-        out = ROOT / ".perf" / "history-test"
+        out = ROOT / "debug" / "artifacts" / "perf" / "history-test"
         try:
             path = history.record("perf", source, out)
             self.assertTrue(path.exists())

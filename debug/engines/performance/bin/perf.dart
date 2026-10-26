@@ -14,7 +14,7 @@ Usage:
   dart run debug/engines/performance/bin/perf.dart idle-app [--build] [--seconds 5]
 
 Run options:
-  --out <dir>        output directory (default .perf/latest)
+  --out <dir>        output directory (default debug/artifacts/perf/latest)
   --width/--height   layout viewport (default 800x900)
   --only <regex>     run scenarios whose id matches
   --no-externals     only built-in scenarios
@@ -101,7 +101,8 @@ Future<void> main(List<String> args) async {
 Future<void> _idleApp(String repoRoot, List<String> rest) async {
   var seconds = 5;
   var build = false;
-  var out = '.perf/app-idle.json';
+  var out = 'debug/artifacts/perf/app-idle.json';
+  var outGiven = false;
   for (var i = 0; i < rest.length; i++) {
     switch (rest[i]) {
       case '--seconds':
@@ -110,6 +111,7 @@ Future<void> _idleApp(String repoRoot, List<String> rest) async {
         build = true;
       case '--out':
         out = rest[++i];
+        outGiven = true;
       default:
         stderr.writeln('unknown option: ${rest[i]}');
         exit(64);
@@ -121,6 +123,7 @@ Future<void> _idleApp(String repoRoot, List<String> rest) async {
     build: build,
     log: stdout.writeln,
   );
+  if (!outGiven) out = '$repoRoot/debug/artifacts/perf/app-idle.json';
   File(out).writeAsStringSync(
     const JsonEncoder.withIndent('  ').convert(result.toJson()),
   );
@@ -130,7 +133,7 @@ Future<void> _idleApp(String repoRoot, List<String> rest) async {
 }
 
 Future<void> _run(String repoRoot, List<String> rest) async {
-  var out = '.perf/latest';
+  var out = 'debug/artifacts/perf/latest';
   var width = 800;
   var height = 900;
   String? only;
@@ -139,11 +142,13 @@ Future<void> _run(String repoRoot, List<String> rest) async {
   var json = false;
   var appIdle = false;
   var cpuRate = 1.0;
+  var outGiven = false;
   for (var i = 0; i < rest.length; i++) {
     final arg = rest[i];
     switch (arg) {
       case '--out':
         out = rest[++i];
+        outGiven = true;
       case '--width':
         width = int.parse(rest[++i]);
       case '--height':
@@ -165,6 +170,7 @@ Future<void> _run(String repoRoot, List<String> rest) async {
         exit(64);
     }
   }
+  if (!outGiven) out = '$repoRoot/debug/artifacts/perf/latest';
   final outDir = Directory(out).absolute.path;
   final run = await runPerf(
     PerfOptions(

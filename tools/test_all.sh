@@ -32,6 +32,12 @@ echo "=== debug harness ==="
 echo "=== conformance analyze ==="
 (cd "$root/debug/engines/compatibility" && dart analyze)
 
+echo "=== run manifest tests ==="
+(cd "$root/debug/manifest" && dart test)
+
+echo "=== run manifest analyze ==="
+(cd "$root/debug/manifest" && dart analyze)
+
 echo "=== benchmark tests ==="
 (cd "$root/debug/engines/microbenchmarks" && dart test)
 
@@ -63,4 +69,4 @@ echo "=== perf analyze ==="
 (cd "$root/debug/engines/performance" && dart analyze)
 
 echo "=== python tooling syntax and recommendation tests ==="
-(cd "$root" && python3 -m py_compile debug/engines/quality_gate/quality_gate.py debug/scripts/render_report.py debug/engines/recommendations/recommend.py tools/run_video_contract.py debug/logic/history/history.py tools/test_architecture.py debug/engines/performance/gui/perf_gui.py debug/engines/performance/container/summarize.py debug/engines/bug_detection/audit.py debug/engines/bug_detection/gui/app.py && python3 debug/engines/recommendations/test_recommend.py && python3 tools/test_video_manifest.py && python3 debug/logic/history/test_history.py && python3 tools/test_architecture.py && python3 debug/engines/bug_detection/test_audit.py && python3 debug/engines/bug_detection/gui/test_gui.py)
+(cd "$root" && python3 -m py_compile debug/engines/quality_gate/quality_gate.py debug/scripts/render_report.py debug/engines/recommendations/recommend.py tools/run_video_contract.py debug/logic/history/history.py debug/logic/storage.py debug/logic/json_validate.py debug/logic/context.py debug/logic/ia_audit.py debug/logic/test_docs_links.py debug/run.py tools/test_architecture.py tools/check_docs.py tools/test_check_docs.py debug/engines/performance/gui/perf_gui.py debug/engines/performance/container/summarize.py debug/engines/bug_detection/audit.py debug/engines/bug_detection/gui/app.py && python3 debug/engines/recommendations/test_recommend.py && python3 tools/test_video_manifest.py && python3 debug/logic/history/test_history.py && python3 debug/logic/test_storage.py && python3 debug/logic/test_context.py && python3 debug/logic/test_output_schemas.py && python3 debug/logic/test_docs_links.py && python3 tools/test_architecture.py && python3 tools/test_check_docs.py && python3 debug/engines/bug_detection/test_audit.py && python3 debug/engines/bug_detection/gui/test_gui.py && python3 debug/engines/quality_gate/test_quality_gate.py && python3 debug/engines/performance/gui/test_perf_gui.py)

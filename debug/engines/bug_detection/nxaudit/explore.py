@@ -35,7 +35,7 @@ from .report import build_issue_report, llm_brief, summary_markdown, write_json,
 from .schema import check_scenario
 
 ROOT = Path(__file__).resolve().parents[4]
-AUDIT = ROOT / ".audit"
+AUDIT = ROOT / "debug" / "artifacts" / "audit"
 LEDGER = AUDIT / "ledger.json"
 EXEC_FAMILIES = ["basic", "combinatorial", "random", "adversarial", "invalid", "interaction",
                  "mutation", "regression"]
@@ -428,7 +428,7 @@ class Explorer:
         if self.publish:
             report_md = ROOT / "progress" / "reports" / "audit-latest.md"
             write_text(report_md, summary_markdown(summary, reports).replace(
-                "](issues/", "](../../.audit/latest/issues/"))
+                "](issues/", "](../../debug/artifacts/audit/latest/issues/"))
         self.log(f"[audit] done: {len(reports)} issues · summary {latest / 'summary.md'}")
         return summary
 

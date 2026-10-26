@@ -7,7 +7,7 @@
 # <page-dir> must contain index.html. [setup-js] runs after load in both
 # engines (for example "showSec('css')"). [scheme] is light (default) or dark.
 set -euo pipefail
-root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../../.." && pwd)"
 page="$(cd "$1" && pwd)"
 out="$(mkdir -p "$2" && cd "$2" && pwd)"
 width="${3:-800}"

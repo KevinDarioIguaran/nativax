@@ -76,15 +76,36 @@ def _is_ok(row: dict) -> bool:
     )
 
 
-def _latest_json(folder: Path) -> dict | None:
+def _json_candidates(folder: Path) -> list[Path]:
+    """Report JSONs newest first: per-run directories, then legacy flat files.
+
+    Run directories are named by UTC run id, so lexicographic order is
+    chronological. ``manifest.json`` is metadata and never the report.
+    """
     if not folder.exists():
-        return None
-    candidates = sorted(
-        (p for p in folder.glob("*.json") if p.is_file()),
-        key=lambda p: p.stat().st_mtime_ns,
+        return []
+    runs = sorted(
+        (d for d in folder.iterdir() if d.is_dir() and not d.name.startswith(".")),
+        key=lambda d: d.name,
         reverse=True,
     )
-    for path in candidates:
+    nested = [
+        path
+        for run in runs
+        for path in sorted(run.glob("*.json"), key=lambda item: item.name)
+        if path.is_file() and path.name != "manifest.json"
+    ]
+    if nested:
+        return nested
+    return sorted(
+        (path for path in folder.glob("*.json") if path.is_file()),
+        key=lambda path: path.stat().st_mtime_ns,
+        reverse=True,
+    )
+
+
+def _latest_json(folder: Path) -> dict | None:
+    for path in _json_candidates(folder):
         try:
             data = json.loads(path.read_text())
         except (OSError, json.JSONDecodeError):
@@ -95,33 +116,32 @@ def _latest_json(folder: Path) -> dict | None:
     return None
 
 
-_LATEST_CACHE: dict[str, tuple[int, dict | None]] = {}
+_LATEST_CACHE: dict[str, tuple[str, dict | None]] = {}
 
 
 def load_latest_run(folder: Path) -> dict | None:
-    """Loads the newest JSON report in a benchmark folder, cached by mtime."""
-    if not folder.exists():
+    """Loads the newest report, cached by run path and mtime."""
+    candidates = _json_candidates(folder)
+    if not candidates:
         return None
-    files = [p for p in folder.glob("*.json") if p.is_file()]
-    if not files:
-        return None
-    newest = max(files, key=lambda p: p.stat().st_mtime_ns)
-    mtime = newest.stat().st_mtime_ns
+    newest = candidates[0]
+    signature = f"{newest}:{newest.stat().st_mtime_ns}"
     key = str(folder.resolve())
     cached = _LATEST_CACHE.get(key)
-    if cached is not None and cached[0] == mtime:
+    if cached is not None and cached[0] == signature:
         return cached[1]
     data = _latest_json(folder)
-    _LATEST_CACHE[key] = (mtime, data)
+    _LATEST_CACHE[key] = (signature, data)
     return data
 
 
 def collect(root: Path = ROOT) -> dict[str, Any]:
     """Loads the standard files used by the standalone report command."""
+    artifacts = root / "debug" / "artifacts"
     visual = None
     for candidate in (
-        root / ".visual" / "latest" / "results.json",
-        root / ".visual" / "runs" / "50projects50days" / "results.json",
+        artifacts / "visual" / "latest" / "results.json",
+        artifacts / "visual" / "runs" / "50projects50days" / "results.json",
     ):
         if candidate.exists():
             try:
@@ -131,7 +151,7 @@ def collect(root: Path = ROOT) -> dict[str, Any]:
             if visual:
                 break
     perf = None
-    perf_path = root / ".perf" / "latest" / "results.json"
+    perf_path = artifacts / "perf" / "latest" / "results.json"
     if perf_path.exists():
         try:
             perf = json.loads(perf_path.read_text())
@@ -139,8 +159,8 @@ def collect(root: Path = ROOT) -> dict[str, Any]:
             perf = None
     app_idle = None
     for candidate in (
-        root / ".perf" / "latest" / "app-idle.json",
-        root / ".perf" / "app-idle.json",
+        artifacts / "perf" / "latest" / "app-idle.json",
+        artifacts / "perf" / "app-idle.json",
     ):
         if candidate.exists():
             try:
@@ -150,7 +170,7 @@ def collect(root: Path = ROOT) -> dict[str, Any]:
             if app_idle:
                 break
     matrix = None
-    matrix_path = root / ".perf" / "container" / "matrix.json"
+    matrix_path = artifacts / "perf" / "container" / "matrix.json"
     if matrix_path.exists():
         try:
             matrix = json.loads(matrix_path.read_text())
@@ -159,7 +179,7 @@ def collect(root: Path = ROOT) -> dict[str, Any]:
     catalogs = {}
     for name, path in (
         ("perf", root / "debug" / "engines" / "performance" / "scenarios.json"),
-        ("visual", root / ".visual" / "catalog.json"),
+        ("visual", artifacts / "visual" / "catalog.json"),
     ):
         if path.exists():
             try:
@@ -169,14 +189,14 @@ def collect(root: Path = ROOT) -> dict[str, Any]:
             except json.JSONDecodeError:
                 pass
     game = None
-    game_path = root / ".perf" / "game" / "results.json"
+    game_path = artifacts / "perf" / "game" / "results.json"
     if game_path.exists():
         try:
             game = json.loads(game_path.read_text())
         except json.JSONDecodeError:
             game = None
     game3d = None
-    game3d_path = root / ".perf" / "game3d" / "results.json"
+    game3d_path = artifacts / "perf" / "game3d" / "results.json"
     if game3d_path.exists():
         try:
             game3d = json.loads(game3d_path.read_text())
@@ -199,8 +219,8 @@ def collect(root: Path = ROOT) -> dict[str, Any]:
         "matrix": matrix,
         "perf_catalog": catalogs.get("perf", []),
         "visual_catalog": catalogs.get("visual", []),
-        "leaks": load_latest_run(root / "benchmarks" / "leaks"),
-        "security": load_latest_run(root / "benchmarks" / "security"),
+        "leaks": load_latest_run(root / "debug" / "benchmarks" / "leaks"),
+        "security": load_latest_run(root / "debug" / "benchmarks" / "security"),
         "capabilities": {"video": False, "game_player": False},
     }
 
@@ -266,7 +286,7 @@ def build_recommendations(data: dict[str, Any]) -> list[Recommendation]:
             confidence="alta" if visual_total >= 100 else "media",
             commands=[
                 "dart run debug/engines/visual_comparison/bin/visual_check.dart --all "
-                "--catalog .visual/catalog.json --out .visual/latest",
+                "--catalog debug/artifacts/visual/catalog.json --out debug/artifacts/visual/latest",
             ],
         ))
     if perf_total and len(perf_rows) < perf_total:
@@ -289,7 +309,7 @@ def build_recommendations(data: dict[str, Any]) -> list[Recommendation]:
             ),
             confidence="alta",
             commands=[
-                "dart run debug/engines/performance/bin/perf.dart run --out .perf/latest",
+                "dart run debug/engines/performance/bin/perf.dart run --out debug/artifacts/perf/latest",
             ],
         ))
     if not app or app.get("status") != "ok":
@@ -487,7 +507,7 @@ def build_recommendations(data: dict[str, Any]) -> list[Recommendation]:
                 ),
                 commands=[
                     "dart run debug/engines/performance/bin/perf.dart run --only '^dom\\.' "
-                    "--out .perf/dom",
+                    "--out debug/artifacts/perf/dom",
                 ],
             ))
 
@@ -516,7 +536,7 @@ def build_recommendations(data: dict[str, Any]) -> list[Recommendation]:
                 confidence="alta" if perf_coverage >= 0.5 else "media",
                 commands=[
                     "dart run debug/engines/performance/bin/perf.dart run --only '^scroll\\.' "
-                    "--out .perf/scroll",
+                    "--out debug/artifacts/perf/scroll",
                 ],
             ))
 
@@ -544,7 +564,7 @@ def build_recommendations(data: dict[str, Any]) -> list[Recommendation]:
                 "documentada de backend por plataforma."
             ),
             confidence="media" if perf_coverage < 0.5 else "alta",
-            commands=["dart run debug/engines/performance/bin/perf.dart run --only '^js\\.' --out .perf/js"],
+            commands=["dart run debug/engines/performance/bin/perf.dart run --only '^js\\.' --out debug/artifacts/perf/js"],
         ))
 
     game_rows = {
@@ -574,7 +594,7 @@ def build_recommendations(data: dict[str, Any]) -> list[Recommendation]:
             ),
             acceptance="Cada perfil de calidad cumple su frame p95 y su presupuesto de trabajo.",
             confidence="media" if perf_coverage < 0.5 else "alta",
-            commands=["dart run debug/engines/performance/bin/perf.dart run --only '^game\\.' --out .perf/game"],
+            commands=["dart run debug/engines/performance/bin/perf.dart run --only '^game\\.' --out debug/artifacts/perf/game"],
         ))
 
     # Cross-signal: DOM performance and visual layout both point at the renderer.
@@ -633,7 +653,7 @@ def build_recommendations(data: dict[str, Any]) -> list[Recommendation]:
                 confidence="alta" if visual_coverage >= 0.5 else "media",
                 commands=[
                     "dart run debug/engines/visual_comparison/bin/visual_check.dart --only 'pagina' "
-                    "--out .visual/latest",
+                    "--out debug/artifacts/visual/latest",
                 ],
             ))
         elif low_ink:
@@ -921,7 +941,7 @@ def detailed_lines(data: dict[str, Any], recommendations: list[Recommendation]) 
             )
         lines.append("")
     else:
-        lines.extend(["No hay resultados del lote de juegos en `.perf/game`.", ""])
+        lines.extend(["No hay resultados del lote de juegos en `debug/artifacts/perf/game`.", ""])
 
     video = data.get("video") or {}
     lines.extend(["## Detalle de vídeo", ""])
@@ -973,7 +993,7 @@ def detailed_lines(data: dict[str, Any], recommendations: list[Recommendation]) 
         lines.extend([
             "",
             f"Total pendiente: **{len(pending_visual)}** páginas. Lista completa en "
-            "`.visual/catalog.json`.",
+            "`debug/artifacts/visual/catalog.json`.",
             "",
         ])
     else:
@@ -1012,7 +1032,7 @@ def detailed_lines(data: dict[str, Any], recommendations: list[Recommendation]) 
             )
         lines.append("")
     else:
-        lines.extend(["No hay un informe de fugas reciente en `benchmarks/leaks`.", ""])
+        lines.extend(["No hay un informe de fugas reciente en `debug/benchmarks/leaks`.", ""])
 
     security_results = security.get("results") if isinstance(security, dict) else None
     lines.extend(["## Seguridad", ""])
@@ -1026,7 +1046,7 @@ def detailed_lines(data: dict[str, Any], recommendations: list[Recommendation]) 
             )
         lines.append("")
     else:
-        lines.extend(["No hay un informe de seguridad reciente en `benchmarks/security`.", ""])
+        lines.extend(["No hay un informe de seguridad reciente en `debug/benchmarks/security`.", ""])
 
     lines.extend(["## Entorno y procedencia", ""])
     lines.extend([

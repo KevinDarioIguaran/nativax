@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:nativa_leaks/leaks.dart';
+import 'package:nativa_run_manifest/nativa_run_manifest.dart';
 import 'package:path/path.dart' as p;
 
 Future<void> main(List<String> args) async {
@@ -119,13 +120,22 @@ Future<void> _run(List<String> args) async {
     ),
     results: results,
   );
-  final output = outDir ?? p.join(root, 'benchmarks', 'leaks');
+  final runDir = outDir == null
+      ? createRunDirectory(root, 'leaks')
+      : (Directory(outDir)..createSync(recursive: true));
   final files = writeLeakReport(
     run,
-    outputDir: output,
+    outputDir: runDir.path,
     jsonPath: jsonPath,
     jsonlPath: jsonlPath,
     markdownPath: markdownPath,
+  );
+  writeRunManifest(
+    runDir,
+    repoRoot: root,
+    area: 'leaks',
+    engine: 'nativa_leaks',
+    argv: ['run', ...args],
   );
 
   for (final r in results) {

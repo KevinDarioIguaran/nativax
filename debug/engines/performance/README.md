@@ -10,10 +10,10 @@ stay fast, responsive and within its memory budget?*
 
 ```bash
 # Built-in DOM/scroll/JS scenarios + vendored external benchmarks
-dart run debug/engines/performance/bin/perf.dart run --out .perf/latest
+dart run debug/engines/performance/bin/perf.dart run --out debug/artifacts/perf/latest
 
 # Include the real Flutter Linux app idle measurement (opens its window ~8 s)
-dart run debug/engines/performance/bin/perf.dart run --app-idle --out .perf/latest
+dart run debug/engines/performance/bin/perf.dart run --app-idle --out debug/artifacts/perf/latest
 
 # Just the desktop app on a blank page
 dart run debug/engines/performance/bin/perf.dart idle-app --seconds 5 --build
@@ -64,7 +64,7 @@ started outside the panel.
 | `external.millionrows-load-scroll` | only if built manually | million-rows (fetched, no license) |
 
 The vendored fixtures live in `fixtures/` with their licenses and provenance.
-Unlicensed suites are downloaded to `.perf/suites/` and never redistributed.
+Unlicensed suites are downloaded to `debug/artifacts/perf/suites/` and never redistributed.
 
 PassMark's 2D HTML Scroll page is proprietary and not publicly redistributable;
 `scroll.2d-tiles` reproduces the same workload and cites it.
@@ -101,7 +101,7 @@ same clock: use the ratio as a signal, not as FPS.
 ## Outputs
 
 ```
-.perf/latest/
+debug/artifacts/perf/latest/
 ├── results.json          # run + scenarios + metrics + samples
 ├── results.csv           # one row per scenario
 ├── report.md             # tables, reasons, app-idle section
@@ -149,7 +149,7 @@ navigation and the same dark/typographic language as the HTML report:
   without launching Chromium; the capture is regenerated when the run ends.
   The historical reports remain available as manual snapshots.
 - **Historial**: every run can be stored as detailed JSON in
-  `.visual/history` and `.perf/history`; the dashboard compares the last two
+  `debug/artifacts/visual/history` and `debug/artifacts/perf/history`; the dashboard compares the last two
   runs and shows per-case deltas.
 - **Row actions**: right-click a scenario/page (or use **Acciones ▾**) to view
   details or run only that test/page. The single result is merged into the
@@ -185,7 +185,7 @@ debug/engines/performance/container/run.sh --cpus 1 --memory 1g --name low --onl
 Both Chromium and `flutter test` run inside one Docker container with
 `--cpus`, `--memory` and `--network none`. The first run builds
 `nativa-perf:local`; Flutter and the repo are mounted at their real paths.
-Results are summarized in `.perf/container/matrix.{json,md}` and shown in the
+Results are summarized in `debug/artifacts/perf/container/matrix.{json,md}` and shown in the
 **Contenedores** page, which has CPU (0.25–4), RAM (512 MB–4 GB), name and test
 controls, plus the fixed matrix. Limits are cgroup quotas, not real frequency
 changes.

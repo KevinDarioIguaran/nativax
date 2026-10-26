@@ -225,8 +225,9 @@ FixtureSuite? suiteById(String id) {
   return null;
 }
 
-/// Root used for downloaded suites: `<repo>/.visual/suites/<id>`.
-String suiteRoot(String repoRoot, String id) => '$repoRoot/.visual/suites/$id';
+/// Root used for downloaded suites: `<repo>/debug/artifacts/visual/suites/<id>`.
+String suiteRoot(String repoRoot, String id) =>
+    '$repoRoot/debug/artifacts/visual/suites/$id';
 
 /// Downloads and extracts a pinned suite if it is not present yet.
 ///
@@ -246,7 +247,7 @@ Future<String> ensureSuite(
   final marker = File('$target/.nativa-suite');
   if (!force && marker.existsSync()) return target;
 
-  final parent = Directory('$repoRoot/.visual/suites')
+  final parent = Directory('$repoRoot/debug/artifacts/visual/suites')
     ..createSync(recursive: true);
   final temp = Directory(
     '${parent.path}/.${suite.id}.tmp-${DateTime.now().microsecondsSinceEpoch}',

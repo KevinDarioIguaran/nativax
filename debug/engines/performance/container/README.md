@@ -23,8 +23,8 @@ container runs with:
 - the host UID/GID, so results are writable
 - `NATIVAX_PERF_NO_SANDBOX=1` for Chromium inside the container
 
-Results land in `.perf/container/<name>/` and the matrix summary in
-`.perf/container/matrix.{json,md}`. Open it from the **Contenedores** tab in
+Results land in `debug/artifacts/perf/container/<name>/` and the matrix summary in
+`debug/artifacts/perf/container/matrix.{json,md}`. Open it from the **Contenedores** tab in
 the Tkinter dashboard. The tab has CPU (0.25–4), RAM (512 MB–4 GB), name and
 scenario controls, plus the fixed matrix. The RSS column is labelled **RSS
 arnés / RAM** and includes the Docker limit (for example `714 / 2048 MB`).

@@ -14,8 +14,8 @@ from datetime import datetime
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[3]
-VISUAL_DIR = ROOT / ".visual"
-PERF_DIR = ROOT / ".perf"
+VISUAL_DIR = ROOT / "debug" / "artifacts" / "visual"
+PERF_DIR = ROOT / "debug" / "artifacts" / "perf"
 
 
 def _git_commit() -> str:

@@ -23,6 +23,7 @@ workspace:
   - debug/engines/visual_comparison
   - debug/engines/performance
   - debug/harness
+  - debug/manifest
 
 dev_dependencies:
   lints: ^6.0.0

@@ -32,44 +32,68 @@ except Exception:  # pragma: no cover - optional thumbnails
     ImageTk = None
 
 ROOT = Path(__file__).resolve().parents[4]
-VISUAL_DIR = ROOT / ".visual" / "latest"
-PERF_DIR = ROOT / ".perf" / "latest"
+ARTIFACTS = ROOT / "debug" / "artifacts"
+VISUAL_ROOT = ARTIFACTS / "visual"
+PERF_ROOT = ARTIFACTS / "perf"
+CONFORMANCE_DIR = ARTIFACTS / "conformance"
+AUDIT_DIR = ARTIFACTS / "audit"
+VISUAL_DIR = VISUAL_ROOT / "latest"
+PERF_DIR = PERF_ROOT / "latest"
 VISUAL_CANDIDATES = [
     VISUAL_DIR / "results.json",
-    ROOT / ".visual" / "runs" / "50projects50days" / "results.json",
+    VISUAL_ROOT / "runs" / "50projects50days" / "results.json",
 ]
 PERF_RESULTS = PERF_DIR / "results.json"
 PERF_CATALOG = ROOT / "debug" / "engines" / "performance" / "scenarios.json"
 RECOMMENDATIONS_REPORT = ROOT / "progress" / "reports" / "recommendations-latest.md"
 VIDEO_PROFILES = ROOT / "tools" / "video_profiles.json"
-PERF_GAME_DIR = ROOT / ".perf" / "game"
+PERF_GAME_DIR = PERF_ROOT / "game"
 PERF_GAME_RESULTS = PERF_GAME_DIR / "results.json"
-PERF_GAME3D_DIR = ROOT / ".perf" / "game3d"
+PERF_GAME3D_DIR = PERF_ROOT / "game3d"
 PERF_GAME3D_RESULTS = PERF_GAME3D_DIR / "results.json"
-CONFORMANCE_DIR = ROOT / ".conformance"
 CONFORMANCE_RESULTS = CONFORMANCE_DIR / "results"
 CONFORMANCE_REPORT = ROOT / "progress" / "reports" / "conformance-latest.md"
-VISUAL_CATALOG = ROOT / ".visual" / "catalog.json"
-LIVE_DIR = ROOT / ".perf" / "live"
+VISUAL_CATALOG = VISUAL_ROOT / "catalog.json"
+LIVE_DIR = PERF_ROOT / "live"
 # Each area writes its own independent report; none mixes another area's data.
 PERF_REPORT = LIVE_DIR / "report-perf.md"
 VISUAL_REPORT = LIVE_DIR / "report-visual.md"
 GAMES_REPORT = LIVE_DIR / "report-games.md"
-AUDIT_DIR = ROOT / ".audit"
 AUDIT_LATEST = AUDIT_DIR / "latest"
 AUDIT_SUMMARY = AUDIT_LATEST / "summary.json"
 AUDIT_LEDGER = AUDIT_DIR / "ledger.json"
 AUDIT_REPORT = ROOT / "progress" / "reports" / "audit-latest.md"
 AUDIT_BENCH_REPORT = ROOT / "progress" / "reports" / "audit-benchmark-latest.md"
 AUDIT_SELF_REPORT = ROOT / "progress" / "reports" / "audit-self-check-latest.md"
-VISUAL_HISTORY_DIR = ROOT / ".visual" / "history"
-PERF_HISTORY_DIR = ROOT / ".perf" / "history"
+VISUAL_HISTORY_DIR = VISUAL_ROOT / "history"
+PERF_HISTORY_DIR = PERF_ROOT / "history"
 PERF_CATALOG_SOURCES = [
     ROOT / "debug" / "engines" / "performance" / "lib" / "src" / "scenarios.dart",
     ROOT / "debug" / "engines" / "performance" / "lib" / "src" / "externals.dart",
 ]
 VISUAL_CATALOG_SOURCES = [ROOT / "debug" / "engines" / "visual_comparison" / "lib" / "src" / "fixtures.dart"]
 CONSOLIDATED = ROOT / "progress" / "reports" / "nativa-quality-latest.md"
+
+
+def history_sources():
+    """Where each area's results table lives for history recording."""
+    return {"visual": VISUAL_DIR / "results.json", "perf": PERF_DIR / "results.json"}
+
+# Each finished run of an area is archived under debug/artifacts/runs/<area>/<run_id>/ with
+# its evidence (the directory the engine wrote), its own report snapshot and
+# a versioned manifest (debug/logic/schemas/run-manifest.schema.json).
+AREA_ARCHIVES = {
+    "visual": (VISUAL_DIR, "_write_visual_report"),
+    "perf": (PERF_DIR, "_write_perf_report"),
+    "games": (PERF_GAME_DIR, "_write_games_report"),
+    "games3d": (PERF_GAME3D_DIR, "_write_games_report"),
+}
+AREA_REPORTS = {
+    "visual": VISUAL_REPORT,
+    "perf": PERF_REPORT,
+    "games": GAMES_REPORT,
+    "games3d": GAMES_REPORT,
+}
 
 REPORT_CHOICES = [
     "Rendimiento", "Visual", "Juegos", "Conformidad", "Auditoría JSON",
@@ -98,11 +122,16 @@ MONO = "DejaVu Sans Mono"
 SUBTLE = "#0f151d"
 
 sys.path.insert(0, str(ROOT / "debug" / "logic" / "history"))
+sys.path.insert(0, str(ROOT / "debug" / "logic"))
 sys.path.insert(0, str(ROOT / "debug" / "engines" / "recommendations"))
 try:
     import history as history_engine
 except Exception:  # pragma: no cover - optional history engine
     history_engine = None
+try:
+    import storage as storage_engine
+except Exception:  # pragma: no cover - optional run storage
+    storage_engine = None
 try:
     import recommend as recommendation_engine
 except Exception:  # pragma: no cover - optional report engine
@@ -168,7 +197,7 @@ class DataStore:
         self.game3d = None
         self.conformance = None
         self.loaded_at = None
-        # Once a live visual run has cleared .visual/latest, never fall back
+        # Once a live visual run has cleared debug/artifacts/visual/latest, never fall back
         # to older suite results: the table must start empty.
         self.visual_latest_only = False
 
@@ -181,12 +210,12 @@ class DataStore:
                 break
         self.perf = _load_json(PERF_RESULTS)
         self.app_idle = _load_json(PERF_DIR / "app-idle.json") or _load_json(
-            ROOT / ".perf" / "app-idle.json"
+            PERF_ROOT / "app-idle.json"
         )
-        self.matrix = _load_json(ROOT / ".perf" / "container" / "matrix.json")
-        self.catalog = _load_json(ROOT / ".visual" / "catalog.json")
+        self.matrix = _load_json(PERF_ROOT / "container" / "matrix.json")
+        self.catalog = _load_json(VISUAL_ROOT / "catalog.json")
         self.perf_catalog = _load_json(PERF_CATALOG) or _load_json(
-            ROOT / ".perf" / "scenarios.json"
+            PERF_ROOT / "scenarios.json"
         )
         self.video = _load_json(VIDEO_PROFILES)
         self.game = _load_json(PERF_GAME_RESULTS)
@@ -737,6 +766,10 @@ class Dashboard(ChartMixin):
         self.catalog_results: queue.Queue = queue.Queue()
         self.catalog_job = False
         self.pending_action: dict | None = None
+        self.pending_areas: list[str] | None = None
+        self._last_command: list[str] | None = None
+        self._exit_code: int | None = None
+        self._stopped_by_user = False
         self._live_report_timer = None
         self._last_data_sig = None
         self._report_sig = None
@@ -752,10 +785,10 @@ class Dashboard(ChartMixin):
         self.security_run = None
         if recommendation_engine is not None:
             self.leak_run = recommendation_engine.load_latest_run(
-                ROOT / "benchmarks" / "leaks"
+                ROOT / "debug" / "benchmarks" / "leaks"
             )
             self.security_run = recommendation_engine.load_latest_run(
-                ROOT / "benchmarks" / "security"
+                ROOT / "debug" / "benchmarks" / "security"
             )
         self._load_conformance()
         self._build()
@@ -954,11 +987,11 @@ class Dashboard(ChartMixin):
             *VISUAL_CANDIDATES,
             PERF_RESULTS,
             PERF_DIR / "app-idle.json",
-            ROOT / ".perf" / "app-idle.json",
-            ROOT / ".perf" / "container" / "matrix.json",
-            ROOT / ".visual" / "catalog.json",
+            PERF_ROOT / "app-idle.json",
+            PERF_ROOT / "container" / "matrix.json",
+            VISUAL_ROOT / "catalog.json",
             PERF_CATALOG,
-            ROOT / ".perf" / "scenarios.json",
+            PERF_ROOT / "scenarios.json",
             VIDEO_PROFILES,
             PERF_GAME_RESULTS,
             PERF_GAME3D_RESULTS,
@@ -1494,7 +1527,7 @@ class Dashboard(ChartMixin):
             self.conformance_summary.configure(text="sin resultados")
             self.conformance_note.configure(
                 text="Ejecuta las suites para poblar esta página. Los resultados "
-                     "se leen de .conformance/results/*.summary.json."
+                     "se leen de debug/artifacts/conformance/results/*.summary.json."
             )
 
     def _write_conformance_report(self):
@@ -1598,7 +1631,7 @@ class Dashboard(ChartMixin):
         self.history_detail.configure(state="disabled")
         self.history_note = tk.Label(
             tab, text="Cada corrida se guarda como JSON detallado en "
-                     ".visual/history y .perf/history. Comparar muestra los casos "
+                     "debug/artifacts/visual/history y debug/artifacts/perf/history. Comparar muestra los casos "
                      "que empeoraron o mejoraron.",
             bg=BG, fg=MUTED, anchor="w", font=(FONT, 9), wraplength=1100,
         )
@@ -1655,11 +1688,7 @@ class Dashboard(ChartMixin):
         if history_engine is None:
             messagebox.showinfo("Historial", "debug/logic/history/history.py no está disponible.")
             return
-        source = (
-            VISUAL_DIR / "latest" / "results.json"
-            if area == "visual"
-            else PERF_DIR / "results.json"
-        )
+        source = history_sources()[area]
         if not source.exists():
             messagebox.showinfo("Historial", f"No hay resultados en {source}.")
             return
@@ -1703,10 +1732,7 @@ class Dashboard(ChartMixin):
     def _record_history_if_needed(self):
         if history_engine is None:
             return
-        sources = {
-            "visual": VISUAL_DIR / "latest" / "results.json",
-            "perf": PERF_DIR / "results.json",
-        }
+        sources = history_sources()
         attrs = {
             "visual": "_last_visual_history_mtime",
             "perf": "_last_perf_history_mtime",
@@ -2021,6 +2047,7 @@ class Dashboard(ChartMixin):
             ["dart", "run", "debug/engines/performance/bin/perf.dart", "run",
              "--only", r"^game\.", "--out", str(PERF_GAME_DIR)],
             "juegos Canvas (25 perfiles)",
+            areas=["games"],
         )
 
     def run_games3d(self):
@@ -2028,6 +2055,7 @@ class Dashboard(ChartMixin):
             ["dart", "run", "debug/engines/performance/bin/perf.dart", "run",
              "--only", r"^game3d\.", "--out", str(PERF_GAME3D_DIR)],
             "juegos 3D WebGL (25 perfiles)",
+            areas=["games3d"],
         )
 
     def run_conformance_test262(self):
@@ -3277,10 +3305,10 @@ class Dashboard(ChartMixin):
         if recommendation_engine is None:
             return
         self.leak_run = recommendation_engine.load_latest_run(
-            ROOT / "benchmarks" / "leaks"
+            ROOT / "debug" / "benchmarks" / "leaks"
         )
         self.security_run = recommendation_engine.load_latest_run(
-            ROOT / "benchmarks" / "security"
+            ROOT / "debug" / "benchmarks" / "security"
         )
 
     def _write_recommendations_report(self):
@@ -3386,7 +3414,7 @@ class Dashboard(ChartMixin):
         lines = [
             "# NativaX — informe de rendimiento",
             "",
-            f"**Generado:** {self._now()} desde `.perf/latest/results.json`. "
+            f"**Generado:** {self._now()} desde `debug/artifacts/perf/latest/results.json`. "
             "Solo rendimiento; los juegos tienen su propio informe.",
             "",
             "| Medida | Valor |",
@@ -3431,7 +3459,7 @@ class Dashboard(ChartMixin):
         lines = [
             "# NativaX — informe de videojuegos",
             "",
-            f"**Generado:** {self._now()} desde `.perf/game` y `.perf/game3d`. "
+            f"**Generado:** {self._now()} desde `debug/artifacts/perf/game` y `debug/artifacts/perf/game3d`. "
             "Solo perfiles de juego 2D (Canvas) y 3D (WebGL).",
             "",
             f"Perfiles medidos: **{len(measured)}** de **{len(entries)}**.",
@@ -3486,7 +3514,7 @@ class Dashboard(ChartMixin):
                 path.parent,
             )
             return
-        png = ROOT / ".perf" / "preview" / f"{path.stem}.png"
+        png = PERF_ROOT / "preview" / f"{path.stem}.png"
         try:
             if png.exists() and png.stat().st_mtime >= path.stat().st_mtime:
                 self.report_view.show_png(png)
@@ -3797,7 +3825,7 @@ class Dashboard(ChartMixin):
         if self.process is not None:
             messagebox.showinfo("En curso", "Ya hay una ejecución en marcha.")
             return
-        out = ROOT / ".perf" / "single" / self._slug(scenario_id)
+        out = PERF_ROOT / "single" / self._slug(scenario_id)
         if out.exists():
             shutil.rmtree(out, ignore_errors=True)
         self._start(
@@ -3814,7 +3842,7 @@ class Dashboard(ChartMixin):
         if self.process is not None:
             messagebox.showinfo("En curso", "Ya hay una ejecución en marcha.")
             return
-        out = ROOT / ".visual" / "single" / self._slug(page_id)
+        out = VISUAL_ROOT / "single" / self._slug(page_id)
         if out.exists():
             shutil.rmtree(out, ignore_errors=True)
         self._start(
@@ -3831,7 +3859,7 @@ class Dashboard(ChartMixin):
         if self.process is not None:
             messagebox.showinfo("En curso", "Ya hay una ejecución en marcha.")
             return
-        out = ROOT / ".perf" / "single" / self._slug(scenario_id)
+        out = PERF_ROOT / "single" / self._slug(scenario_id)
         if out.exists():
             shutil.rmtree(out, ignore_errors=True)
         self._start(
@@ -3956,11 +3984,15 @@ class Dashboard(ChartMixin):
             self.progress.stop()
             self.status.configure(text="listo")
 
-    def _start(self, command, label, action=None, raw=False):
+    def _start(self, command, label, action=None, raw=False, areas=None):
         if self.process is not None:
             messagebox.showinfo("En curso", "Ya hay una ejecución en marcha.")
             return
         self.pending_action = action
+        self.pending_areas = list(areas) if areas else None
+        self._last_command = [str(part) for part in command]
+        self._exit_code = None
+        self._stopped_by_user = False
         self._set_running(True)
         self._run_done = 0
         self._run_total = 0
@@ -3980,6 +4012,7 @@ class Dashboard(ChartMixin):
             self._append_log(f"error: {error}\n")
             self.process = None
             self.pending_action = None
+            self.pending_areas = None
             self._set_running(False)
             return
 
@@ -4039,6 +4072,59 @@ class Dashboard(ChartMixin):
                     self._live_focus_perf(scenario_id)
                     self.root.after(150, lambda: self._refresh_data() if self.perf_live else None)
 
+    def _archive_pending(self):
+        """Copies each finished area's evidence and report into debug/artifacts/runs/.
+
+        The engine output in `debug/artifacts/visual/latest` / `debug/artifacts/perf/latest` is copied, never
+        moved, so every reader keeps working; the run directory under
+        `debug/artifacts/runs/<area>/<run_id>/` is immutable and versioned by manifest.
+        """
+        areas, self.pending_areas = self.pending_areas, None
+        if not areas or storage_engine is None:
+            return
+        if self._stopped_by_user:
+            status = "aborted"
+        else:
+            status = "completed" if self._exit_code in (0, None) else "failed"
+        command = self._last_command or []
+        if len(command) >= 3 and command[0] == "dart" and command[1] == "run":
+            engine = Path(command[2]).name
+        elif command:
+            engine = Path(command[0]).name
+        else:
+            engine = None
+        for area in areas:
+            spec = AREA_ARCHIVES.get(area)
+            if spec is None:
+                continue
+            src, writer_name = spec
+            if not src.exists():
+                self._append_log(f"[archivo] {area}: sin salida en {src}\n")
+                continue
+            writer = getattr(self, writer_name, None)
+            if writer is not None:
+                # Regenerate this area's report from the fresh data so the
+                # snapshot inside the run matches what the panel shows.
+                try:
+                    writer()
+                except Exception as error:
+                    self._append_log(f"[archivo] informe de {area}: {error}\n")
+            report = AREA_REPORTS.get(area)
+            reports = [report] if report is not None and report.exists() else []
+            try:
+                run_dir = storage_engine.archive(
+                    area, src, engine=engine, argv=command, reports=reports,
+                    status=status,
+                )
+            except Exception as error:
+                self._append_log(f"[archivo] {area}: {error}\n")
+                continue
+            try:
+                shown: Path | str = run_dir.relative_to(ROOT)
+            except ValueError:
+                shown = run_dir
+            self._append_log(f"[archivo] {area} ({status}): {shown}\n")
+
     def _drain_log(self):
         try:
             while True:
@@ -4073,6 +4159,7 @@ class Dashboard(ChartMixin):
             else:
                 self.status.configure(text=f"ejecutando… {elapsed:.0f}s")
         if self.process is not None and self.process.poll() is not None:
+            self._exit_code = self.process.returncode
             self.process = None
             self._set_running(False)
             action = self.pending_action
@@ -4096,6 +4183,7 @@ class Dashboard(ChartMixin):
                     self._append_log(f"[single] error al fusionar: {error}\n")
                 self._record_history_if_needed()
             self.reload()
+            self._archive_pending()
             if action and action.get("open_detail"):
                 try:
                     self.open_detail(action["kind"], action["id"])
@@ -4104,27 +4192,31 @@ class Dashboard(ChartMixin):
         self.root.after(50, self._drain_log)
 
     def run_all(self):
-        self._start(["debug/scripts/quality_report.sh"], "debug/scripts/quality_report.sh")
+        self._start(["debug/scripts/quality_report.sh"],
+                    "debug/scripts/quality_report.sh",
+                    areas=["visual", "perf"])
 
     def run_visual(self):
         self._start(
             ["dart", "run", "debug/engines/visual_comparison/bin/visual_check.dart",
              "--suite", "50projects50days", "--out", str(VISUAL_DIR)],
             "juicio visual 50projects50days",
+            areas=["visual"],
         )
 
     def run_visual_all(self):
         self._start(
             ["dart", "run", "debug/engines/visual_comparison/bin/visual_check.dart",
-             "--all", "--catalog", str(ROOT / ".visual" / "catalog.json"),
+             "--all", "--catalog", str(VISUAL_ROOT / "catalog.json"),
              "--out", str(VISUAL_DIR)],
             "juicio visual completo (300 páginas)",
+            areas=["visual"],
         )
 
     def run_visual_live(self):
         """Runs every visual page while the table follows the judge live.
 
-        Previous results are archived to .visual/previous (not deleted), the
+        Previous results are archived to debug/artifacts/visual/previous (not deleted), the
         table restarts as all pending, each page is selected and scrolled to
         as it is measured, and the live report opens when the run ends.
         """
@@ -4162,6 +4254,7 @@ class Dashboard(ChartMixin):
             "tests visuales en vivo (todas las páginas)",
             action={"kind": "visual_live"},
             raw=True,
+            areas=["visual"],
         )
         if self.process is None:
             self.visual_live = False
@@ -4232,6 +4325,7 @@ class Dashboard(ChartMixin):
             "rendimiento en vivo (todos los escenarios)",
             action={"kind": "perf_live"},
             raw=True,
+            areas=["perf"],
         )
         if self.process is None:
             self.perf_live = False
@@ -4301,6 +4395,7 @@ class Dashboard(ChartMixin):
             "juegos en vivo (todos los perfiles)",
             action={"kind": "game_live"},
             raw=True,
+            areas=["games"],
         )
         if self.process is None:
             self.game_live = False
@@ -4340,6 +4435,7 @@ class Dashboard(ChartMixin):
             ["dart", "run", "debug/engines/performance/bin/perf.dart", "run",
              "--app-idle", "--out", str(PERF_DIR)],
             "suite de rendimiento (100 escenarios)",
+            areas=["perf"],
         )
 
     def run_idle(self):
@@ -4352,6 +4448,7 @@ class Dashboard(ChartMixin):
     def stop(self):
         if self.process is None:
             return
+        self._stopped_by_user = True
         try:
             os.killpg(os.getpgid(self.process.pid), signal.SIGKILL)
         except Exception:

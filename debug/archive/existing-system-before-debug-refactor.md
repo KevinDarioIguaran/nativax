@@ -30,25 +30,31 @@ Python tools use `Path(__file__).parents[N]`, which does.
 
 ## Data flow and storage
 
+Phase 4 adds an immutable per-run layer on top of this: finished runs of an
+area are copied into `debug/artifacts/runs/<area>/<run_id>/` with a versioned,
+schema-valid manifest and a snapshot of that area's report. The live
+directories below are unchanged. Design, flag inventory and limitations:
+`debug/architecture/storage.md`.
+
 ```
-engines ──► .visual/latest/        (overwritten every run; perf_gui moves the previous run to .visual/previous)
-        ──► .perf/latest/          (same)
-        ──► .perf/game, game3d     (same)
-        ──► .audit/runs/<run>/     (one folder per run) + .audit/latest (copy of the newest run)
-        ──► .conformance/results/<suite>-<ts>.{jsonl,md,summary.json}   (flat, timestamped)
-        ──► benchmarks/leaks/*.{json,jsonl,md}, baseline/current        (flat)
-        ──► benchmarks/security/*                                       (flat)
-        ──► benchmarks/results/bench-<ts>.*                             (flat; some baselines tracked)
-history.py ─► .visual/history/<ts>.json, .perf/history/<ts>.json       (results tables only, no evidence)
+engines ──► debug/artifacts/visual/latest/   (overwritten every run; perf_gui moves the previous run to debug/artifacts/visual/previous)
+        ──► debug/artifacts/perf/latest/     (same)
+        ──► debug/artifacts/perf/game, game3d (same)
+        ──► debug/artifacts/audit/runs/<run>/ (one folder per run) + debug/artifacts/audit/latest
+        ──► debug/artifacts/conformance/results/<suite>-<ts>.{jsonl,md,summary.json}   (flat, timestamped)
+        ──► debug/benchmarks/leaks/<run_id>/                           (per run + manifest)
+        ──► debug/benchmarks/security/<run_id>/                        (per run + manifest)
+        ──► debug/benchmarks/microbench/<run_id>/                      (per run + manifest; baselines tracked in baselines/)
+history.py ─► debug/artifacts/visual/history/<ts>.json, debug/artifacts/perf/history/<ts>.json (results tables only, no evidence)
 recommend.py / perf_gui / quality_gate ─► progress/reports/*-latest.md (tracked; overwritten every run)
 ```
 
 ## Problems found
 
-1. **Evidence is overwritten.** `.visual/latest` and `.perf/latest` hold a
-   single run. Only the results tables survive in `history/`; the
-   screenshots, probes and per-element data of earlier runs are lost.
-   `progress/reports/*-latest.md` is rewritten in place.
+1. **Evidence is overwritten.** `debug/artifacts/visual/latest` and
+   `debug/artifacts/perf/latest` hold a single run. Only the results tables
+   survive in `history/`; the screenshots, probes and per-element data of
+   earlier runs are lost. `progress/reports/*-latest.md` is rewritten in place.
 2. **No common report contract.** Each engine has its own layout and
    timestamp format. Engine version and code revision are not recorded
    consistently. There are no timezone-qualified timestamps and no

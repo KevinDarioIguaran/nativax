@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'dart:io';
 
 import 'package:path/path.dart' as p;
@@ -26,9 +25,10 @@ Future<void> main(List<String> args) async {
     switch (args[i]) {
       case '--suite':
         // Checkout override is intentionally unsupported here; use the
-        // standard .conformance/suites location so reports stay comparable.
+        // standard debug/artifacts/conformance/suites location so reports stay
+        // comparable.
         stderr.writeln('--suite is not supported; suites live in '
-            '.conformance/suites (see fetch_suites.dart)');
+            'debug/artifacts/conformance/suites (see fetch_suites.dart)');
         exitCode = 64;
         return;
       case '--dirs':
@@ -104,8 +104,7 @@ RunSummary? _loadBaseline(String root, String? explicit) {
   if (explicit != null) {
     final f = File(explicit);
     if (!f.existsSync()) return null;
-    return RunSummary.fromJson(
-        (jsonDecodeFile(f.path) as Map).cast<String, Object?>());
+    return RunSummary.load(f);
   }
   final dir = Directory(resultsDir(root));
   if (!dir.existsSync()) return null;
@@ -117,10 +116,5 @@ RunSummary? _loadBaseline(String root, String? explicit) {
       .toList()
     ..sort((a, b) => b.path.compareTo(a.path));
   if (candidates.isEmpty) return null;
-  return RunSummary.fromJson(
-      (jsonDecodeFile(candidates.first.path) as Map)
-          .cast<String, Object?>());
+  return RunSummary.load(candidates.first);
 }
-
-Object? jsonDecodeFile(String path) =>
-    const JsonDecoder().convert(File(path).readAsStringSync());

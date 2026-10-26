@@ -1,7 +1,8 @@
 /// Conformance runners and reporting for NativaX.
 ///
 /// The suites are not vendored: `bin/fetch_suites.dart` downloads pinned
-/// commits into `.conformance/suites/<suite>`, and the runners read them from
+/// commits into `debug/artifacts/conformance/suites/<suite>`, and the runners
+/// read them from
 /// there. Results are written as JSONL plus a Markdown summary.
 library;
 

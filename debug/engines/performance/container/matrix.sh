@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 # Runs the same scenarios under several Docker CPU/RAM limits and summarizes
-# the comparison. Results land in .perf/container/matrix.{json,md}.
+# the comparison. Results land in debug/artifacts/perf/container/matrix.{json,md}.
 set -euo pipefail
 
-root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
+root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../../.." && pwd)"
 only="${ONLY:-js.arrays|dom.rows-create-1k|scroll.2d-tiles}"
 configs=(
   "desktop 2 2g"

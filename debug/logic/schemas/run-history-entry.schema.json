@@ -1,0 +1,52 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "nativax/diagnostic-run-history-entry@1.0",
+  "title": "Append-only history entry of an archived run (history/<stamp>-<seq>-<kind>.json)",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "kind",
+    "created_at",
+    "author",
+    "run_id",
+    "data"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "1.0"
+    },
+    "kind": {
+      "enum": [
+        "annotation",
+        "review",
+        "reevaluation",
+        "comparison",
+        "superseded_by",
+        "verification",
+        "migration_note"
+      ]
+    },
+    "created_at": {
+      "type": "string",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}([+-][0-9]{2}:[0-9]{2}|Z)$"
+    },
+    "author": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200
+    },
+    "run_id": {
+      "type": "string"
+    },
+    "refs": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "data": {
+      "type": "object"
+    }
+  }
+}

@@ -10,7 +10,7 @@
 # SDK cache keep working; no WebView is involved.
 set -uo pipefail
 
-root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
+root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../../.." && pwd)"
 image="${IMAGE:-nativa-perf:local}"
 cpus="${CPUS:-2}"
 memory="${MEMORY:-2g}"
@@ -32,7 +32,7 @@ done
 
 # Keep the artifact directory safe for arbitrary user labels.
 safe_name="$(printf '%s' "$name" | tr -cs 'A-Za-z0-9._-' '-')"
-out="$root/.perf/container/$safe_name"
+out="$root/debug/artifacts/perf/container/$safe_name"
 mkdir -p "$out"
 
 if ! docker image inspect "$image" >/dev/null 2>&1; then

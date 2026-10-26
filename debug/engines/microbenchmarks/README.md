@@ -1,109 +1,96 @@
-# Benchmarks de NativaX
+# NativaX microbenchmarks
 
-Suite reproducible para medir el motor JavaScript, el puente, el DOM, el
-recálculo de estilos y una referencia nativa en Dart.
+Reproducible measurements of the JavaScript engine, bridge, DOM, style
+recomputation, and a native Dart reference. This is not a page-performance or
+FPS suite; use `debug/engines/performance` for UI/frame measurements.
 
-## Ejecutar
+## Run
 
 ```bash
 cd debug/engines/microbenchmarks
-dart run bin/benchmark.dart run \
-  --warmup 3 --rounds 15
+dart run bin/benchmark.dart run --warmup 3 --rounds 15
 ```
 
-Salida por defecto:
+Default output is one run directory per invocation:
 
-- `benchmarks/results/bench-<timestamp>.json`
-- `benchmarks/results/bench-<timestamp>.md`
+- `debug/benchmarks/microbench/<run_id>/bench-<stamp>.json`
+- `debug/benchmarks/microbench/<run_id>/bench-<stamp>.md`
+- `debug/benchmarks/microbench/<run_id>/manifest.json`
 
-Opciones:
+Options:
 
 ```bash
---only js.arithmetic       # filtrar por nombre o categoría
+--only js.arithmetic         # filter by name or category
 --no-js | --no-dom | --no-dart
---out DIR                  # directorio de resultados
---json FILE --md FILE      # rutas explícitas
---list                     # listar casos
+--out DIR                    # explicit results directory
+--json FILE --md FILE        # explicit files
+--list                       # list cases
 ```
 
-## Comparar dos ejecuciones
+## Compare two runs
 
 ```bash
+cd debug/engines/microbenchmarks
 dart run bin/benchmark.dart compare \
-  --baseline benchmarks/results/base.json \
-  --current benchmarks/results/current.json \
-  --threshold 10 \
-  --noise 2
+  --baseline debug/benchmarks/microbench/<run-a>/bench-*.json \
+  --current debug/benchmarks/microbench/<run-b>/bench-*.json \
+  --threshold 10 --noise 2
 ```
 
-Una diferencia solo se marca como regresión si supera **el umbral** y **el
-ruido medido** (`MAD / mediana × noise`). Las diferencias dentro del ruido se
-marcan `noise`, no `regression`. El comando devuelve código 2 si hay
-regresiones.
+A difference is a regression only when it exceeds **both** the threshold and
+the measured noise (`MAD / median × noise`). Differences inside noise are
+labelled `noise`, not `regression`. The command exits 2 when it detects a
+regression.
 
-## Categorías
+## Categories
 
-| Categoría | Qué mide |
+| Category | Measures |
 |---|---|
-| `js` | Aritmética, funciones, objetos/prototipos, arrays, strings, recursión, JSON, creación de objetos |
-| `bridge` | Ida y vuelta JS → C → Dart → JS sin DOM |
-| `dom` | Crear, consultar, modificar, eliminar nodos, eventos, `innerHTML`, `StyleEngine.recompute` |
-| `dart` | Referencia nativa del mismo proceso (no equivalente al motor JS) |
+| `js` | Arithmetic, functions, objects/prototypes, arrays, strings, recursion, JSON, object churn; includes parse/compile |
+| `js_steady` | Script compiled once; measured rounds exclude parse/compile |
+| `bridge` | JS → C → Dart → JS round trip without DOM |
+| `dom` | Create/query/mutate/remove nodes, events, `innerHTML`, `StyleEngine.recompute` |
+| `dart` | Same-process native reference; not an equivalent JS comparison |
 
-`dom.style_recompute` mide DOM → estilos, **no** frames de GPU ni la
-actualización visible. La medición de UI requiere un harness Flutter y no se
-presenta como si el CLI pudiera medirla.
+`dom.style_recompute` measures DOM → computed styles, **not** GPU frames or
+visible UI updates. UI frames require the renderer/performance harness.
 
-## Metadatos
+## Metadata
 
-Cada JSON incluye:
+Each JSON records:
 
-- motor y versión (`QuickJS-ng` leída de `quickjs.h`),
-- versión de Dart y modo (`JIT`, `profile`, `AOT`),
-- OS, versión y arquitectura,
-- reloj (`Stopwatch` monotónico), frecuencia y resolución declarada,
-- fecha, comando y notas.
+- engine and version (from `quickjs.h`);
+- Dart version and mode (`JIT`, `profile`, `AOT`);
+- OS, version, architecture;
+- monotonic `Stopwatch` frequency and declared resolution;
+- date, command, and notes.
 
-`Stopwatch` usa un reloj monotónico; se reporta `elapsedTicks / frequency` para
-evitar perder muestras sub-microsegundo. La resolución efectiva depende del
-sistema y se declara como cota (`1000 / frequency` ms), no como precisión
-garantizada.
+`Stopwatch` is monotonic; the report uses `elapsedTicks / frequency` and
+declares the effective resolution as a bound (`1000 / frequency` ms), not a
+guaranteed precision.
 
-## Integridad de las mediciones
+## Measurement integrity
 
-- Cada caso devuelve un **checksum** determinista.
-- El runner ejecuta calentamiento y varias rondas; un checksum distinto o un
-  fallo de valor esperado aborta la ejecución.
-- El checksum se guarda en JSON y Markdown; no se rellenan mediciones con
-  ceros.
-- Los casos hacen trabajo dentro del bucle, no solo una llamada vacía.
+- Every case returns a deterministic checksum.
+- A changed checksum or failed expected value aborts the run.
+- The checksum is stored in JSON/Markdown; missing values are not filled with
+  zeros.
+- Cases do real work in the loop, not an empty call.
 
-## Interpretación
+## Interpretation
 
-- Compara **medianas** entre ejecuciones en la misma máquina y condiciones.
-- `MAD/mediana` es la dispersión robusta; úsala para juzgar si una diferencia
-  es real.
-- No compares números absolutos entre máquinas, modos JIT/AOT o motores
-  distintos como si fueran equivalentes.
-- `dart.*` es una referencia de contexto: el JIT puede optimizar agresivamente
-  bucles y objetos; no es una comparación justa con QuickJS.
-- No se incluyen referencias V8/JavaScriptCore: no hay una ejecución
-  equivalente y documentada con el DOM de NativaX. No se inventan resultados.
+- Compare medians on the same machine and conditions.
+- Use `MAD/median` to judge whether a difference is real.
+- Do not compare absolute numbers across machines, JIT/AOT modes, or engines.
+- `dart.*` may be aggressively optimized; it is context, not a fair JS ratio.
+- No V8/JavaScriptCore comparison is included without an equivalent documented
+  NativaX DOM run.
+- A microbenchmark is not latency, FPS, or conformance.
 
-## Tests del runner
+## Optional V8 (Node.js) steady-state comparison
 
-```bash
-dart test
-```
-
-Cubren estadísticas, checksums, formato JSON/Markdown y comparación con ruido.
-
-
-## Comparación con V8 (Node.js)
-
-La suite `js_steady.*` compila el script una vez y mide solo las llamadas
-posteriores. Es la comparación correcta para estado estacionario: no mezcla
-parseo/compilación con el bucle caliente.
+The `js_steady.*` cases are the correct steady-state comparison: compile once,
+then measure only later calls.
 
 ```bash
 cd debug/engines/microbenchmarks
@@ -116,9 +103,23 @@ taskset -c 4 node node/steady_bench.mjs /tmp/v8-steady.json
 python3 node/compare_node.py /tmp/nativax-steady.json /tmp/v8-steady.json
 ```
 
-`compare_node.py` verifica los checksums y calcula la media geométrica de
-`tiempo NativaX / tiempo V8`. Un valor mayor que 1 significa que NativaX es
-más lento. No se ocultan casos ni se cambia el peso entre ellos.
+`compare_node.py` verifies checksums and reports the geometric mean of
+`NativaX time / V8 time`; greater than 1 means NativaX is slower. Cases and
+weights are not changed to improve the result. This compares JavaScript engine
+steady state, not NativaX rendering, DOM, or modules under V8.
 
-Los benchmarks `js.*` originales siguen midiendo `engine.evaluate()` completo
-(parseo + bytecode + ejecución) para conservar la línea base histórica.
+## Tests
+
+```bash
+cd debug/engines/microbenchmarks
+dart test
+```
+
+They cover statistics, checksums, JSON/Markdown formatting, and noise-aware
+comparison.
+
+## Related
+
+- [`../../../docs/benchmarks.md`](../../../docs/benchmarks.md)
+- [`../../../docs/performance-suite.md`](../../../docs/performance-suite.md)
+- [`../memory/README.md`](../memory/README.md)

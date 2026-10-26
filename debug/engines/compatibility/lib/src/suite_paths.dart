@@ -20,13 +20,14 @@ String findRepoRoot([String? start]) {
   }
 }
 
-/// Root of the downloaded external suites (`<repo>/.conformance/suites`).
+/// Root of the downloaded external suites
+/// (`<repo>/debug/artifacts/conformance/suites`).
 String suitesDir(String repoRoot) =>
-    p.join(repoRoot, '.conformance', 'suites');
+    p.join(repoRoot, 'debug', 'artifacts', 'conformance', 'suites');
 
-/// Root of raw JSONL results (`<repo>/.conformance/results`).
+/// Root of raw JSONL results (`<repo>/debug/artifacts/conformance/results`).
 String resultsDir(String repoRoot) =>
-    p.join(repoRoot, '.conformance', 'results');
+    p.join(repoRoot, 'debug', 'artifacts', 'conformance', 'results');
 
 /// Where the human-readable baselines live (`<repo>/progress/reports`).
 String reportsDir(String repoRoot) => p.join(repoRoot, 'progress', 'reports');

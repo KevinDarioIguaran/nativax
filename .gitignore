@@ -5,24 +5,16 @@ pubspec.lock
 *.iml
 .idea/
 
-# External conformance suites and raw results are downloaded on demand.
-.conformance/
+# Generated debug artifacts, all under one root: downloaded conformance
+# suites/results, visual fidelity runs, performance measurements, JSON audit
+# reports and immutable per-run archives (debug/logic/storage.py).
+debug/artifacts/
 
-# Benchmark outputs are generated locally.
-benchmarks/results/
-
-# Leak suite outputs are generated locally.
-benchmarks/leaks/
-
-# Security suite outputs are generated locally.
-benchmarks/security/
-
-# Visual fidelity runs and downloaded fixture suites are generated locally.
-.visual/
-
-# Performance suite runs, fetched suites and app idle measurements.
-.perf/
-.audit/
+# Benchmark runs are generated locally, one directory per execution
+# (debug/benchmarks/<area>/<run_id>/). Suites live in debug/engines.
+debug/benchmarks/microbench/
+debug/benchmarks/leaks/
+debug/benchmarks/security/
 
 # Python bytecode from the tooling.
 __pycache__/

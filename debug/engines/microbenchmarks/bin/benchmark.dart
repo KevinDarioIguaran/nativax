@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:nativa_benchmark/benchmark.dart';
+import 'package:nativa_run_manifest/nativa_run_manifest.dart';
 import 'package:path/path.dart' as p;
 
 Future<void> main(List<String> args) async {
@@ -126,12 +127,21 @@ Future<void> _run(List<String> args) async {
         'No se simulan resultados de V8/JavaScriptCore.',
       ],
     );
-    final output = outDir ?? p.join(root, 'benchmarks', 'results');
+    final runDir = outDir == null
+        ? createRunDirectory(root, 'microbench')
+        : (Directory(outDir)..createSync(recursive: true));
     final files = writeReport(
       report,
-      outputDir: output,
+      outputDir: runDir.path,
       jsonPath: jsonPath,
       markdownPath: markdownPath,
+    );
+    writeRunManifest(
+      runDir,
+      repoRoot: root,
+      area: 'microbench',
+      engine: 'nativa_benchmark',
+      argv: ['run', ...args],
     );
     stdout
       ..writeln()

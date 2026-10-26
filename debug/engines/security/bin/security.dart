@@ -1,7 +1,7 @@
 import 'dart:io';
 
+import 'package:nativa_run_manifest/nativa_run_manifest.dart';
 import 'package:nativa_security/security.dart';
-import 'package:path/path.dart' as p;
 
 Future<void> main(List<String> args) async {
   if (args.isEmpty || args.first == 'run') {
@@ -68,12 +68,21 @@ Future<void> _run(List<String> args) async {
     ),
     results: results,
   );
-  final output = outDir ?? p.join(root, 'benchmarks', 'security');
+  final runDir = outDir == null
+      ? createRunDirectory(root, 'security')
+      : (Directory(outDir)..createSync(recursive: true));
   final files = writeSecurityReport(
     run,
-    outputDir: output,
+    outputDir: runDir.path,
     jsonPath: jsonPath,
     markdownPath: markdownPath,
+  );
+  writeRunManifest(
+    runDir,
+    repoRoot: root,
+    area: 'security',
+    engine: 'nativa_security',
+    argv: ['run', ...args],
   );
   for (final r in results) {
     stdout.writeln('  ${r.status.label.padRight(13)} ${r.id.padRight(38)} '

@@ -1,0 +1,135 @@
+{
+  "summary": {
+    "scenario": "load",
+    "frames": 5,
+    "over50": 2,
+    "p95Ms": 421,
+    "maxMs": 421
+  },
+  "metrics": {
+    "nodes": 801,
+    "renderObjects": 1121,
+    "widgets": 2232,
+    "createMs": 180,
+    "styleMetrics": {
+      "samples": 627,
+      "ownMs": 23.923,
+      "avgOwnUs": 38.154704944178626,
+      "selectorsPerElement": 1.062200956937799,
+      "candidatesPerElement": 1.062200956937799,
+      "cacheHits": 434,
+      "top": [
+        {
+          "tag": "div",
+          "id": "",
+          "ownUs": 5743,
+          "selectors": 0,
+          "candidates": 0,
+          "cacheHit": true
+        },
+        {
+          "tag": "span",
+          "id": "",
+          "ownUs": 114,
+          "selectors": 0,
+          "candidates": 0,
+          "cacheHit": false
+        },
+        {
+          "tag": "article",
+          "id": "",
+          "ownUs": 106,
+          "selectors": 10,
+          "candidates": 10,
+          "cacheHit": false
+        },
+        {
+          "tag": "i",
+          "id": "",
+          "ownUs": 105,
+          "selectors": 1,
+          "candidates": 1,
+          "cacheHit": false
+        },
+        {
+          "tag": "i",
+          "id": "",
+          "ownUs": 101,
+          "selectors": 6,
+          "candidates": 6,
+          "cacheHit": false
+        },
+        {
+          "tag": "html",
+          "id": "",
+          "ownUs": 101,
+          "selectors": 7,
+          "candidates": 7,
+          "cacheHit": false
+        },
+        {
+          "tag": "i",
+          "id": "",
+          "ownUs": 89,
+          "selectors": 6,
+          "candidates": 6,
+          "cacheHit": false
+        },
+        {
+          "tag": "i",
+          "id": "",
+          "ownUs": 87,
+          "selectors": 6,
+          "candidates": 6,
+          "cacheHit": false
+        },
+        {
+          "tag": "article",
+          "id": "",
+          "ownUs": 85,
+          "selectors": 9,
+          "candidates": 9,
+          "cacheHit": false
+        },
+        {
+          "tag": "article",
+          "id": "",
+          "ownUs": 84,
+          "selectors": 9,
+          "candidates": 9,
+          "cacheHit": false
+        },
+        {
+          "tag": "span",
+          "id": "",
+          "ownUs": 83,
+          "selectors": 7,
+          "candidates": 7,
+          "cacheHit": false
+        },
+        {
+          "tag": "i",
+          "id": "",
+          "ownUs": 76,
+          "selectors": 1,
+          "candidates": 1,
+          "cacheHit": false
+        }
+      ]
+    },
+    "style": {
+      "computes": 627,
+      "selectors": 666,
+      "matchedHits": 57,
+      "matchedMisses": 136,
+      "styleHits": 434,
+      "cachedStyles": 259,
+      "subtreePasses": 0
+    },
+    "layout": {},
+    "rssMb": 240.05859375,
+    "documentHeight": 11943.0
+  },
+  "fixture": "tailwind_800: 801 boxes, 4332 rules, 20 virtual grid rows",
+  "command": "flutter build linux --profile; NATIVAX_METRICS=1 NATIVAX_BENCH_FILE=tailwind_800.html"
+}

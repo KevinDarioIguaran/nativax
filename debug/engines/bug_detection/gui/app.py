@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Juez de auditoría JSON — visual explorer for the reports `nxaudit` writes.
 
-  python3 debug/engines/bug_detection/gui/app.py [--root .audit] [--unit PATH]
+  python3 debug/engines/bug_detection/gui/app.py [--root debug/artifacts/audit] [--unit PATH]
 
 Every run folder is an independent report. The folder tree on the left
 navigates any folder layout; opening a report loads only that report, and
@@ -27,9 +27,10 @@ from pathlib import Path
 from tkinter import filedialog, messagebox, ttk
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+sys.path.insert(0, str(Path(__file__).resolve().parents[3] / "debug" / "logic"))
 
-import jsondiff  # noqa: E402
-import store  # noqa: E402
+import jsondiff  # noqa: E402  (debug/logic)
+import audit_store as store  # noqa: E402  (debug/logic)
 from widgets import (ACCENT, BG, BORDER, FG, FONT, MONO, MUTED, PANEL, PANEL2, RED,  # noqa: E402
                      STATUS_COLORS, UNKNOWN, YELLOW, BarChart, DiffView, Histogram, JsonView, KeyValue,
                      LineChart, Table, button, copy, entry, fmt, label, style)
@@ -38,7 +39,7 @@ from nxaudit.catalog import COMPONENTS, PROPERTIES  # noqa: E402
 from nxaudit.compile import compile_screen, walk  # noqa: E402
 
 ROOT = store.ROOT
-DEFAULT_ROOT = ROOT / ".audit"
+DEFAULT_ROOT = ROOT / "debug" / "artifacts" / "audit"
 PREFS = Path(os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config")) / "nativax-audit-gui.json"
 
 SECTIONS = [
@@ -1180,7 +1181,7 @@ class App:
         vb.pack(side="right", padx=2)
         if not self._is_main_latest(self.unit):
             vb.configure(state="disabled")
-            label(bar, "verificar solo actúa sobre .audit/latest", fg=UNKNOWN, size=8).pack(side="right")
+            label(bar, "verificar solo actúa sobre debug/artifacts/audit/latest", fg=UNKNOWN, size=8).pack(side="right")
         button(bar, "Reproducir (replay)", lambda: self.engine(["replay", got.source], f"replay {self.issue_id}")).pack(
             side="right", padx=2)
 
@@ -1390,14 +1391,14 @@ class App:
 
     @staticmethod
     def _is_main_latest(unit) -> bool:
-        """`audit.py verify` acts on .audit/latest only: the report must be that
-        copy or the run it duplicates."""
-        latest = store.ROOT / ".audit" / "latest"
+        """`audit.py verify` acts on debug/artifacts/audit/latest only: the
+        report must be that copy or the run it duplicates."""
+        latest = store.ROOT / "debug" / "artifacts" / "audit" / "latest"
         if unit.path.resolve() == latest.resolve():
             return True
         got = store.read_json(latest / "summary.json")
         return bool(got.ok and unit.meta.run_id and (got.value or {}).get("run_id") == unit.meta.run_id
-                    and store.home_of(unit.path) == store.ROOT / ".audit")
+                    and store.home_of(unit.path) == store.ROOT / "debug" / "artifacts" / "audit")
 
     def open_source(self, rel, line=None):
         p = ROOT / rel
@@ -1842,7 +1843,7 @@ class App:
         self.reg_files.pack(fill="both", expand=True)
 
     def _fill_regressions(self):
-        home = store.home_of(self.unit.path) if self.unit else store.ROOT / ".audit"
+        home = store.home_of(self.unit.path) if self.unit else store.ROOT / "debug" / "artifacts" / "audit"
         got = store.read_json((home or Path("/nonexistent")) / "ledger.json")
         rows = [{"issue_id": k, **v} for k, v in (got.value or {}).items()] if got.ok else []
         self.reg_ledger.set_rows(rows)
@@ -2084,7 +2085,7 @@ class App:
 
 def main(argv=None):
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    p.add_argument("--root", default=str(DEFAULT_ROOT), help="carpeta raíz de informes (por defecto .audit)")
+    p.add_argument("--root", default=str(DEFAULT_ROOT), help="carpeta raíz de informes (por defecto debug/artifacts/audit)")
     p.add_argument("--unit", help="informe que abrir al iniciar")
     args = p.parse_args(argv)
     root = tk.Tk()

@@ -9,10 +9,11 @@ verdict. Designed for an AI/CI to answer "is it better or worse?" without a UI.
     python3 debug/engines/quality_gate/quality_gate.py                # reuse latest artifacts
     python3 debug/engines/quality_gate/quality_gate.py --compat none  # visual + performance only
     python3 debug/engines/quality_gate/quality_gate.py --json         # JSON on stdout
+    python3 debug/engines/quality_gate/quality_gate.py --out-dir DIR  # write the report elsewhere
 
 Exit codes: 0 = equal/better or baseline created, 2 = regression, 3 = missing
-measurements. The detailed snapshot is written to
-progress/reports/quality-gate-latest.json and .md.
+measurements. The detailed snapshot is written as quality-gate.json and
+quality-gate.md inside --out-dir (default progress/reports/).
 """
 from __future__ import annotations
 
@@ -26,13 +27,39 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[3]
-VISUAL_DIR = ROOT / ".visual" / "latest"
-VISUAL_FALLBACK = ROOT / ".visual" / "runs" / "50projects50days"
-PERF_DIR = ROOT / ".perf" / "latest"
-RESULTS_DIR = ROOT / ".conformance" / "results"
+ARTIFACTS = ROOT / "debug" / "artifacts"
+VISUAL_ROOT = ARTIFACTS / "visual"
+PERF_ROOT = ARTIFACTS / "perf"
+VISUAL_DIR = VISUAL_ROOT / "latest"
+VISUAL_FALLBACK = VISUAL_ROOT / "runs" / "50projects50days"
+PERF_DIR = PERF_ROOT / "latest"
+RESULTS_DIR = ARTIFACTS / "conformance" / "results"
 BASELINE_DEFAULT = ROOT / "progress" / "reports" / "quality-baseline.json"
-GATE_JSON = ROOT / "progress" / "reports" / "quality-gate-latest.json"
-GATE_MD = ROOT / "progress" / "reports" / "quality-gate-latest.md"
+REPORTS_DEFAULT = ROOT / "progress" / "reports"
+GATE_JSON = REPORTS_DEFAULT / "quality-gate-latest.json"
+GATE_MD = REPORTS_DEFAULT / "quality-gate-latest.md"
+
+
+def report_paths(out_dir):
+    """The (json, md) report paths inside `out_dir`."""
+    out_dir = Path(out_dir)
+    return (out_dir / GATE_JSON.name, out_dir / GATE_MD.name)
+
+
+def write_reports(out_dir, snapshot, comparison):
+    """Writes the JSON and Markdown reports into `out_dir`.
+
+    Separate from `main` so tests can verify report output without running
+    the suites, and so callers can keep tracked reports untouched by passing
+    their own directory.
+    """
+    json_path, md_path = report_paths(out_dir)
+    json_path.parent.mkdir(parents=True, exist_ok=True)
+    payload = dict(snapshot)
+    payload["comparison"] = comparison
+    json_path.write_text(json.dumps(payload, indent=2, ensure_ascii=False) + "\n")
+    md_path.write_text(markdown(payload, comparison))
+    return json_path, md_path
 
 VERDICTS = ("PASS", "WARN", "FAIL", "INVALID")
 
@@ -115,7 +142,7 @@ def perf_snapshot():
         work[row.get("scenario")] = nwork
         if ok and cwork > 0.0001:
             ratios[row.get("scenario")] = nwork / cwork
-    app = load_json(PERF_DIR / "app-idle.json") or load_json(ROOT / ".perf" / "app-idle.json")
+    app = load_json(PERF_DIR / "app-idle.json") or load_json(PERF_ROOT / "app-idle.json")
     return {
         "scenarios": len(rows),
         "verdicts": {v: sum(1 for row in rows if row.get("verdict") == v) for v in VERDICTS},
@@ -169,7 +196,7 @@ def run_compat(mode):
     if mode == "none":
         return
     cwd = ROOT / "debug" / "engines" / "compatibility"
-    if not (ROOT / ".conformance" / "suites").exists():
+    if not (ARTIFACTS / "conformance" / "suites").exists():
         print("[gate] compatibility suites not downloaded; skipping")
         return
     if mode == "full":
@@ -359,7 +386,7 @@ def _fmt(value):
         return str(value)
 
 
-def main():
+def main(argv=None):
     parser = argparse.ArgumentParser(description="Headless NativaX quality gate")
     parser.add_argument("--run", action="store_true", help="run the suites; otherwise reuse latest artifacts")
     parser.add_argument("--no-visual", action="store_true")
@@ -367,8 +394,11 @@ def main():
     parser.add_argument("--compat", choices=["fast", "full", "reuse", "none"], default="reuse")
     parser.add_argument("--baseline", default=str(BASELINE_DEFAULT))
     parser.add_argument("--save-baseline", action="store_true")
+    parser.add_argument("--out-dir", default=str(REPORTS_DEFAULT),
+                        help="directory for quality-gate.json/.md "
+                             "(default: progress/reports)")
     parser.add_argument("--json", action="store_true", help="print the JSON result")
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
 
     baseline_path = Path(args.baseline)
 
@@ -403,9 +433,7 @@ def main():
     baseline = load_json(baseline_path)
     comparison = compare(snapshot, baseline)
     snapshot["comparison"] = comparison
-    GATE_JSON.parent.mkdir(parents=True, exist_ok=True)
-    GATE_JSON.write_text(json.dumps(snapshot, indent=2, ensure_ascii=False) + "\n")
-    GATE_MD.write_text(markdown(snapshot, comparison))
+    _, gate_md = write_reports(args.out_dir, snapshot, comparison)
 
     if baseline is None or args.save_baseline:
         baseline_path.parent.mkdir(parents=True, exist_ok=True)
@@ -419,11 +447,11 @@ def main():
     if args.json:
         print(json.dumps(snapshot, indent=2, ensure_ascii=False))
         print(f"[gate] verdict: {comparison['verdict']}", file=sys.stderr)
-        print(f"[gate] report: {GATE_MD}", file=sys.stderr)
+        print(f"[gate] report: {gate_md}", file=sys.stderr)
     else:
         print(markdown(snapshot, comparison))
         print(f"\n[gate] verdict: {comparison['verdict']}")
-        print(f"[gate] report: {GATE_MD}")
+        print(f"[gate] report: {gate_md}")
     if comparison["verdict"] == "WORSE" or comparison["verdict"] == "MIXED":
         return 2
     return 0

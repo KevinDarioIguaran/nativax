@@ -28,7 +28,7 @@ claimed here without that evidence.
 - **Tests:** 77, covering formulas, PNG codec, staging, the Chrome e2e
   viewport and `--self-check` (Chromium vs Chromium must be 100/PASS).
 - **Defects:**
-  - output overwrites `.visual/latest`;
+  - output overwrites `debug/artifacts/visual/latest`;
   - there is no overlay image and no region list (only 12 worst 16×16
     tiles);
   - capture timestamps are not recorded with a timezone.
@@ -53,7 +53,7 @@ claimed here without that evidence.
   `app-idle.json`, SVG charts, and the container `matrix.json`.
 - **Tests:** 15 (CDP e2e, evaluation, report).
 - **Defects:**
-  - `.perf/latest` is overwritten;
+  - `debug/artifacts/perf/latest` is overwritten;
   - the verdict uses fixed targets with no repetition variance, so one
     noisy run can flip it;
   - the hardware, build mode and repetition count of a run are only
@@ -66,7 +66,7 @@ claimed here without that evidence.
 ## 3. Compatibility — `tools/conformance` → `debug/engines/compatibility`
 
 - **Purpose:** pass rates on Test262, html5lib, URL, WPT DOM/CSS/tree.
-- **Outputs:** `.conformance/results/<suite>-<ts>.{jsonl,md,summary.json}`.
+- **Outputs:** `debug/artifacts/conformance/results/<suite>-<ts>.{jsonl,md,summary.json}`.
 - **Tests:** 4 (tree runner).
 - **Defects:** a flat results folder; Spanish README and reports.
 - **Untested:**
@@ -87,7 +87,8 @@ claimed here without that evidence.
   - batches with per-batch samples;
   - `analysis.dart` classifies cases as PASS/FAIL/SKIP/ERROR/INCONCLUSIVE;
   - `compare.dart` compares two runs.
-- **Outputs:** `benchmarks/leaks/*.{json,jsonl,md}` plus `baseline`/`current`.
+- **Outputs:** `debug/benchmarks/leaks/<run_id>/*.{json,jsonl,md}` plus
+  `manifest.json`.
 - **Tests:** 10 (analysis, report).
 - **Defects:**
   - the result model does not separate a proven leak (monotonic retained
@@ -101,7 +102,7 @@ claimed here without that evidence.
 ## 5. Security — `tools/security` → `debug/engines/security`
 
 - **Purpose:** probe the JS–Dart bridge and host APIs with attack cases.
-- **Outputs:** `benchmarks/security/*`.
+- **Outputs:** `debug/benchmarks/security/<run_id>/*` plus `manifest.json`.
 - **Tests:** 4.
 - **Known result (README):** 13 PASS, 1 FAIL (`internal.callback_globals`
   exposes `__nx_*` on `globalThis`), 1 SKIP.
@@ -113,8 +114,9 @@ claimed here without that evidence.
 
 - **Purpose:** warm-up and rounds over the JS engine, bridge, DOM, style
   recalculation and a native Dart reference.
-- **Outputs:** `benchmarks/results/bench-<ts>.{json,md}`; some baselines are
-  tracked.
+- **Outputs:** `debug/benchmarks/microbench/<run_id>/bench-<ts>.{json,md}`
+  plus `manifest.json`; some baselines are tracked in
+  `debug/benchmarks/baselines/`.
 - **Tests:** 10.
 - **Validation strategy:** variance across repeated runs; the comparison
   uses confidence intervals, not single means.

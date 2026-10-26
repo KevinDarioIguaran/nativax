@@ -22,9 +22,10 @@ from pathlib import Path
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
 sys.path.insert(0, str(HERE.parent))
+sys.path.insert(0, str(HERE.parents[2] / "logic"))
 
-import jsondiff  # noqa: E402
-import store  # noqa: E402
+import jsondiff  # noqa: E402  (debug/logic)
+import audit_store as store  # noqa: E402  (debug/logic)
 from widgets import Table  # noqa: E402
 
 import test_audit  # noqa: E402

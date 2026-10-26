@@ -1,4 +1,7 @@
 import 'dart:convert';
+import 'dart:io';
+
+import 'package:path/path.dart' as p;
 
 /// Outcome of one conformance test.
 ///
@@ -108,6 +111,47 @@ class RunSummary {
         command: json['command'] as String?,
       );
 
+  /// Loads a run from a summary file.
+  ///
+  /// Current summaries are metadata-only and point at a sibling JSONL through
+  /// `resultsFile`; historical summaries embed the full `results` array. Both
+  /// forms load into the same [RunSummary], so baselines keep working across
+  /// the format change. If a summary declares `resultsFile` but the file is
+  /// missing or broken, this returns null instead of fabricating an empty
+  /// baseline that would report every test as new.
+  static RunSummary? load(File summaryFile) {
+    try {
+      final raw = jsonDecode(summaryFile.readAsStringSync());
+      if (raw is! Map) return null;
+      final json = raw.cast<String, Object?>();
+      final inline = json['results'];
+      if (inline is List && inline.isNotEmpty) {
+        return RunSummary.fromJson(json);
+      }
+      final declared = json['resultsFile'] as String?;
+      final name = declared ??
+          p.basename(summaryFile.path).replaceFirst(
+              RegExp(r'\.summary\.json$'), '.jsonl');
+      final resultsFile =
+          File(p.join(summaryFile.parent.path, p.basename(name)));
+      if (!resultsFile.existsSync()) {
+        return declared == null ? RunSummary.fromJson(json) : null;
+      }
+      final results = <Map<String, Object?>>[];
+      for (final line in resultsFile.readAsLinesSync()) {
+        if (line.trim().isEmpty) continue;
+        results.add((jsonDecode(line) as Map).cast<String, Object?>());
+      }
+      return RunSummary.fromJson({...json, 'results': results});
+    } on FormatException {
+      return null;
+    } on FileSystemException {
+      return null;
+    } on TypeError {
+      return null;
+    }
+  }
+
   final String suite;
   final DateTime startedAt;
   final int durationMs;
@@ -164,7 +208,15 @@ class RunSummary {
     return out;
   }
 
-  Map<String, Object?> toJson() => {
+  /// Run-level metadata.
+  ///
+  /// `includeResults: false` is the canonical summary on disk: per-test rows
+  /// live once in the JSONL named by `resultsFile`, not duplicated here.
+  Map<String, Object?> toJson({
+    bool includeResults = true,
+    String? resultsFile,
+  }) =>
+      {
         'suite': suite,
         'startedAt': startedAt.toIso8601String(),
         'durationMs': durationMs,
@@ -172,11 +224,18 @@ class RunSummary {
         if (suiteVersion != null) 'suiteVersion': suiteVersion,
         if (command != null) 'command': command,
         'counts': byStatus,
+        'total': total,
         'passRate': passRate,
-        'results': [for (final r in results) r.toJson()],
+        if (resultsFile != null) 'resultsFile': resultsFile,
+        if (includeResults) 'results': [for (final r in results) r.toJson()],
       };
 
-  String toJsonString() => const JsonEncoder.withIndent('  ').convert(toJson());
+  String toJsonString({
+    bool includeResults = true,
+    String? resultsFile,
+  }) =>
+      const JsonEncoder.withIndent('  ').convert(
+          toJson(includeResults: includeResults, resultsFile: resultsFile));
 }
 
 class FeatureStats {

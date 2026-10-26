@@ -1,4 +1,7 @@
-# Suite de seguridad
+# Security suite
+
+Probes the host/JS trust boundaries with bounded attack cases. It is not an OS
+sandbox and does not prove the runtime “secure”.
 
 ```bash
 cd debug/engines/security
@@ -7,17 +10,40 @@ dart run bin/security.dart run --list
 dart run bin/security.dart run --only bridge
 ```
 
-Salidas en `benchmarks/security/` (JSON + Markdown, ignoradas por git).
+Outputs (gitignored): `debug/benchmarks/security/<run_id>/` with JSON,
+Markdown, and `manifest.json`.
 
-## Estado real (Linux)
+## Latest recorded result
 
-13 PASS, 1 FAIL, 1 SKIP.
+`debug/benchmarks/security/20261026T024956Z-f47240e/`:
 
-- FAIL abierto: `internal.callback_globals` (`__nx_dispatch`,
-  `__nx_eventDone`, `__nx_releaseListener` visibles en `globalThis`).
-- SKIP: política de recursos Flutter, no ejecutable desde CLI pura.
+| PASS | FAIL | SKIP | ERROR | Total |
+|---:|---:|---:|---:|---:|
+| 44 | 0 | 1 | 0 | 45 |
 
-Ver `../../docs/security/audit.md`, `../../docs/security/threat-model.md`,
-`../../docs/security/test-plan.md` y `../../docs/security/platform-matrix.md`.
+The SKIP is `platform.flutter_resource_policy` (Flutter-only). The suite runs
+QuickJS, not V8.
 
-No se declara NativaX “100 % seguro”; un PASS solo cubre el ataque probado.
+Coverage includes host globals, raw bridge hardening, trusted events,
+`innerHTML`/`javascript:` XSS, forged ids, engine isolation, execution and
+microtask limits, parser input, storage quota, disposal, and generated
+global/URL/`innerHTML` matrices.
+
+A PASS means the specific attack did not produce the unauthorized effect. A
+SKIP is not protection. V8 time/job/stack limits are not enforced, so these
+QuickJS limit results do not transfer to V8.
+
+See:
+
+- [`../../../docs/security/audit.md`](../../../docs/security/audit.md)
+- [`../../../docs/security/threat-model.md`](../../../docs/security/threat-model.md)
+- [`../../../docs/security/test-plan.md`](../../../docs/security/test-plan.md)
+- [`../../../docs/security/platform-matrix.md`](../../../docs/security/platform-matrix.md)
+
+## Tests
+
+```bash
+cd debug/engines/security
+dart test
+dart analyze
+```

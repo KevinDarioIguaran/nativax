@@ -16,8 +16,8 @@ back to the exact JSON node.
 python3 debug/engines/bug_detection/audit.py run --budget 400 --batch 50 --seed 2   # real audit
 python3 debug/engines/bug_detection/audit.py benchmark --budget 120                 # deliberate faults
 python3 debug/engines/bug_detection/audit.py self-check --budget 80                 # Chromium vs Chromium
-python3 debug/engines/bug_detection/audit.py reanalyze .audit/runs/<run>            # oracles only, no execution
-python3 debug/engines/bug_detection/audit.py replay  .audit/latest/issues/NX-XXXXXXXX.json
+python3 debug/engines/bug_detection/audit.py reanalyze debug/artifacts/audit/runs/<run>            # oracles only, no execution
+python3 debug/engines/bug_detection/audit.py replay  debug/artifacts/audit/latest/issues/NX-XXXXXXXX.json
 python3 debug/engines/bug_detection/audit.py verify  NX-XXXXXXXX                    # after a fix
 python3 debug/engines/bug_detection/audit.py promote NX-XXXXXXXX                    # minimal case -> regressions/
 python3 debug/engines/bug_detection/audit.py generate --family random --count 20 --out /tmp/s

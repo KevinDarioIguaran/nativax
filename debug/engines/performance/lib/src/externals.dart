@@ -1,7 +1,8 @@
 import 'dart:io';
 
 /// External benchmarks. Small MIT/Apache fixtures are vendored under
-/// `fixtures/`; unlicensed suites are downloaded at runtime into `.perf/` and
+/// `fixtures/`; unlicensed suites are downloaded at runtime into
+/// `debug/artifacts/perf/` and
 /// never redistributed.
 class ExternalSuite {
   const ExternalSuite({
@@ -92,7 +93,7 @@ ExternalSuite? externalSuiteById(String id) {
 String fixtureDir(String repoRoot, ExternalSuite suite) =>
     '$repoRoot/debug/engines/performance/fixtures/${suite.id}';
 String fetchedDir(String repoRoot, ExternalSuite suite) =>
-    '$repoRoot/.perf/suites/${suite.id}';
+    '$repoRoot/debug/artifacts/perf/suites/${suite.id}';
 
 /// Returns the directory that contains `index.html`, or null when unavailable.
 String? resolveExternalPage(String repoRoot, ExternalSuite suite) {

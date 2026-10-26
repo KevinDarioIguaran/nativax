@@ -15,7 +15,7 @@ visual_args=(--suite 50projects50days)
 gui=0
 for arg in "$@"; do
   case "$arg" in
-    --all-visual) visual_args=(--all --catalog .visual/catalog.json) ;;
+    --all-visual) visual_args=(--all --catalog debug/artifacts/visual/catalog.json) ;;
     --gui) gui=1 ;;
     *) echo "unknown option: $arg" >&2; exit 64 ;;
   esac
@@ -24,13 +24,13 @@ done
 echo "=== visual fidelity (${visual_args[*]}) ==="
 dart run debug/engines/visual_comparison/bin/visual_check.dart \
   "${visual_args[@]}" \
-  --out .visual/latest || true
+  --out debug/artifacts/visual/latest || true
 
 echo
 echo "=== performance (245 scenarios + app idle) ==="
 dart run debug/engines/performance/bin/perf.dart run \
   --app-idle \
-  --out .perf/latest || true
+  --out debug/artifacts/perf/latest || true
 
 echo
 echo "=== recommendations ==="
@@ -38,12 +38,12 @@ python3 debug/engines/recommendations/recommend.py --out progress/reports/recomm
 
 echo
 echo "Reports:"
-echo "  .visual/latest/report.md            visual summary"
-echo "  .visual/latest/results.json         visual table"
-echo "  .perf/latest/report.md              performance summary"
-echo "  .perf/latest/results.json           performance table"
-echo "  .perf/latest/app-idle.json          real app idle"
-echo "  .perf/latest/charts/*.svg           charts"
+echo "  debug/artifacts/visual/latest/report.md          visual summary"
+echo "  debug/artifacts/visual/latest/results.json       visual table"
+echo "  debug/artifacts/perf/latest/report.md            performance summary"
+echo "  debug/artifacts/perf/latest/results.json         performance table"
+echo "  debug/artifacts/perf/latest/app-idle.json        real app idle"
+echo "  debug/artifacts/perf/latest/charts/*.svg         charts"
 echo "  progress/reports/nativa-quality-latest.md  consolidated report"
 echo "  progress/reports/recommendations-latest.md  automatic recommendations"
 

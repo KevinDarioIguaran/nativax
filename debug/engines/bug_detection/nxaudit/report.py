@@ -26,7 +26,7 @@ def build_issue_report(issue: dict, diagnosis: dict, *, run_id: str, scenarios: 
     minimal = (minimization or {}).get("scenario") if (minimization or {}).get("reproduced") else None
     loc = dict(diagnosis["location"])
     loc["minimal_json_path"] = _path_in(minimal, f.get("element_id")) if minimal else None
-    replay = f"python3 debug/engines/bug_detection/audit.py replay .audit/latest/issues/{issue['issue_id']}.json"
+    replay = f"python3 debug/engines/bug_detection/audit.py replay debug/artifacts/audit/latest/issues/{issue['issue_id']}.json"
     hyps = diagnosis["hypotheses"]
     confirmed = any(h["status"] == "confirmed" for h in hyps)
     expected, actual = f.get("expected"), f.get("actual")
@@ -70,8 +70,8 @@ def build_issue_report(issue: dict, diagnosis: dict, *, run_id: str, scenarios: 
             "message": f.get("message") or "",
             "consequential_findings": issue.get("consequential_findings", 0),
             "stack": f.get("stack") or [],
-            "artifacts": [f".audit/latest/issues/{issue['issue_id']}.json",
-                          f".audit/latest/issues/{issue['issue_id']}.md"],
+            "artifacts": [f"debug/artifacts/audit/latest/issues/{issue['issue_id']}.json",
+                          f"debug/artifacts/audit/latest/issues/{issue['issue_id']}.md"],
         },
         "root_cause": {
             "status": "confirmed" if confirmed else "unconfirmed",

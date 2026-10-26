@@ -4,18 +4,18 @@
   python3 debug/engines/bug_detection/audit.py run --budget 200 --batch 40 --seed 1
   python3 debug/engines/bug_detection/audit.py benchmark --budget 80      # deliberate faults
   python3 debug/engines/bug_detection/audit.py self-check --budget 40     # Chromium vs Chromium
-  python3 debug/engines/bug_detection/audit.py reanalyze .audit/runs/<run>   # oracles only
+  python3 debug/engines/bug_detection/audit.py reanalyze debug/artifacts/audit/runs/<run>   # oracles only
   python3 debug/engines/bug_detection/audit.py generate --family random --count 20 --out DIR
   python3 debug/engines/bug_detection/audit.py validate FILE...
   python3 debug/engines/bug_detection/audit.py html SCENARIO.json
-  python3 debug/engines/bug_detection/audit.py replay .audit/latest/issues/NX-XXXXXXXX.json
+  python3 debug/engines/bug_detection/audit.py replay debug/artifacts/audit/latest/issues/NX-XXXXXXXX.json
   python3 debug/engines/bug_detection/audit.py verify NX-XXXXXXXX
   python3 debug/engines/bug_detection/audit.py promote NX-XXXXXXXX
   python3 debug/engines/bug_detection/audit.py catalog
 
-Outputs: .audit/runs/<run>/ (results.jsonl, summary.{json,md}, metrics.json,
-coverage.json, issues/NX-*.{json,md}), copied to .audit/latest/, and
-progress/reports/audit-latest.md.
+Outputs: debug/artifacts/audit/runs/<run>/ (results.jsonl, summary.{json,md},
+metrics.json, coverage.json, issues/NX-*.{json,md}), copied to
+debug/artifacts/audit/latest/, and progress/reports/audit-latest.md.
 """
 from __future__ import annotations
 
@@ -220,7 +220,7 @@ def cmd_catalog(_args):
     write_json(AUDIT / "catalog.json", doc)
     unparsed = [p for p, v in doc["properties"].items() if v["nativa_css_parses"] is False]
     log(f"{len(doc['components'])} components, {len(doc['properties'])} properties; "
-        f"not parsed by nativa_css: {unparsed or 'none'} -> .audit/catalog.json")
+        f"not parsed by nativa_css: {unparsed or 'none'} -> debug/artifacts/audit/catalog.json")
     return 0
 
 

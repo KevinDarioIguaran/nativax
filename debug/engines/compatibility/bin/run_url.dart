@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'dart:io';
 
 import 'package:path/path.dart' as p;
@@ -63,9 +62,7 @@ RunSummary? _loadBaseline(String root, String? explicit) {
   if (explicit != null) {
     final f = File(explicit);
     if (!f.existsSync()) return null;
-    return RunSummary.fromJson(
-        (const JsonDecoder().convert(f.readAsStringSync()) as Map)
-            .cast<String, Object?>());
+    return RunSummary.load(f);
   }
   final dir = Directory(resultsDir(root));
   if (!dir.existsSync()) return null;
@@ -78,8 +75,5 @@ RunSummary? _loadBaseline(String root, String? explicit) {
       .toList()
     ..sort((a, b) => b.path.compareTo(a.path));
   if (candidates.isEmpty) return null;
-  return RunSummary.fromJson(
-      (const JsonDecoder().convert(candidates.first.readAsStringSync())
-              as Map)
-          .cast<String, Object?>());
+  return RunSummary.load(candidates.first);
 }

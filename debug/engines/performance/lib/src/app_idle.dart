@@ -83,7 +83,7 @@ Future<AppIdleResult> measureAppIdle({
     }
   }
 
-  final pageDir = Directory('$repoRoot/.perf/app-idle')
+  final pageDir = Directory('$repoRoot/debug/artifacts/perf/app-idle')
     ..createSync(recursive: true);
   File('${pageDir.path}/index.html').writeAsStringSync(
     '<!doctype html><html><head><meta charset="utf-8">'

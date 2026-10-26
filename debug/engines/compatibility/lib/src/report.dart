@@ -43,7 +43,10 @@ class ConformanceReport {
       jsonl.writeln(jsonEncode(r.toJson()));
     }
     File(jsonlPath).writeAsStringSync(jsonl.toString());
-    File(summaryPath).writeAsStringSync(summary.toJsonString());
+    File(summaryPath).writeAsStringSync(summary.toJsonString(
+      includeResults: false,
+      resultsFile: p.basename(jsonlPath),
+    ));
 
     Directory(p.dirname(markdownPath)).createSync(recursive: true);
     File(markdownPath).writeAsStringSync(render(summary, baseline: baseline));

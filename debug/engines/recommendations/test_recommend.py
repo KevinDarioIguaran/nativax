@@ -1,5 +1,7 @@
 """Tests for the evidence-based report recommendation engine."""
+import json
 import sys
+import tempfile
 import unittest
 from pathlib import Path
 
@@ -115,6 +117,33 @@ class RecommendationsTest(unittest.TestCase):
         self.assertIn("Recomendaciones automáticas", text)
         self.assertIn("Criterio de aceptación", text)
         self.assertIn("NativaX no decodifica", text)
+
+
+class LoadLatestRunTest(unittest.TestCase):
+    def test_reads_newest_run_directory_and_skips_manifest(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            area = Path(tmp) / "leaks"
+            for run_id, value in (
+                ("20261020T213018Z", 1),
+                ("20261021T101010Z", 2),
+            ):
+                run = area / run_id
+                run.mkdir(parents=True)
+                (run / "leaks-x.json").write_text(json.dumps({"run": value}))
+                (run / "manifest.json").write_text(json.dumps({"run": 999}))
+            data = recommend.load_latest_run(area)
+            self.assertEqual(data["run"], 2)
+            self.assertTrue(
+                data["_path"].endswith("20261021T101010Z/leaks-x.json")
+            )
+
+    def test_falls_back_to_flat_legacy_reports(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            area = Path(tmp) / "security"
+            area.mkdir()
+            (area / "security-a.json").write_text(json.dumps({"run": 1}))
+            data = recommend.load_latest_run(area)
+            self.assertEqual(data["run"], 1)
 
 
 if __name__ == "__main__":

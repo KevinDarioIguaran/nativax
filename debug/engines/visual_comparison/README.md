@@ -26,7 +26,7 @@ dart run debug/engines/visual_comparison/bin/visual_check.dart --resume --only p
 dart run debug/engines/visual_comparison/bin/visual_check.dart --self-check --limit 1
 ```
 
-Outputs land in `.visual/latest/` (git-ignored) by default. The run exits `1`
+Outputs land in `debug/artifacts/visual/latest/` (git-ignored) by default. The run exits `1`
 when any page is `FAIL`/`INVALID`, or below `--fail-under <pct>`.
 
 ## Headless pipeline
@@ -93,7 +93,7 @@ the pixel report still shows the positional consequence separately.
 ## Output tree
 
 ```
-.visual/latest/
+debug/artifacts/visual/latest/
 ├── report.md                 # human summary + worst offenders
 ├── report.json               # full run, full per-page detail
 ├── results.json              # results table, one row per page  ←
@@ -133,7 +133,7 @@ nativax_png, diff_png, elements_json, failure`.
 | `mdn-dom-examples` | 134 | CC0-1.0 | `03ae1ffb…` |
 | **Total** | **300** | | |
 
-The four MDN/Odin suites are downloaded on demand to `.visual/suites/`
+The four MDN/Odin suites are downloaded on demand to `debug/artifacts/visual/suites/`
 (git-ignored; about 270 MB) and are never redistributed. `--list` prints every
 page without rendering. In the Tkinter panel, **Fidelidad visual** lists all
 300 with pending rows; **Visual 300** runs them. The catalog report is
@@ -144,7 +144,7 @@ page without rendering. In the Tkinter panel, **Fidelidad visual** lists all
 at commit `c92b0bc3a87fc95d44b89552b7b6a2eeb36ca481` (51 page directories;
 `_project_starter_` is skipped). See `fixtures/50projects50days/NOTICE.md`.
 `--suite <id>` uses the vendored copy when present and otherwise downloads the
-pinned archive into `.visual/suites/<id>`.
+pinned archive into `debug/artifacts/visual/suites/<id>`.
 
 External Google Fonts, CDNs and remote images are blocked in both engines, so
 those pages are compared on their local HTML/CSS/JS plus the system font

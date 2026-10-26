@@ -23,8 +23,8 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
 
-AUDIT_DIR = Path(__file__).resolve().parents[1]
-ROOT = AUDIT_DIR.parents[2]
+ROOT = Path(__file__).resolve().parents[2]
+AUDIT_DIR = ROOT / "debug" / "engines" / "bug_detection"
 sys.path.insert(0, str(AUDIT_DIR))
 
 from nxaudit.diagnose import fingerprint  # noqa: E402  (engine's own function)
