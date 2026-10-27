@@ -6,13 +6,13 @@ import 'package:nativa_dom_bindings/nativa_dom_bindings.dart';
 import 'package:nativa_html/nativa_html.dart';
 import 'package:nativa_js/nativa_js.dart';
 
-import 'engine.dart';
+import 'faults.dart';
 import 'model.dart';
 import 'matrix_cases.dart';
 
 class _Harness {
   _Harness({KeyValueStorage? storage, bool harden = false}) {
-    document = HtmlParser()
+    document = newParser()
         .parseDocument('<!doctype html><html><body></body></html>')
         .value;
     engine = newEngine();
@@ -26,7 +26,8 @@ class _Harness {
         localStorage: storage,
       ),
     )..install();
-    if (harden) bindings.harden();
+    applyDomFault(engine);
+    if (harden) hardenBindings(bindings);
   }
 
   late final Document document;
@@ -360,7 +361,7 @@ List<SecurityCase> securityCases() => [
     description: 'Oversized HTML must be rejected before tokenizing.',
     run: () async {
       try {
-        HtmlParser(
+        newParser(
           limits: const HtmlParserLimits(maxInputLength: 64),
         ).parseDocument('x' * 1000);
         return _fail('HtmlLimitException', 'parse completed');
@@ -375,7 +376,7 @@ List<SecurityCase> securityCases() => [
     severity: 'medium',
     description: 'localStorage must enforce its quota and raise a typed error.',
     run: () async {
-      final h = _Harness(storage: MemoryStorage(quota: 8));
+      final h = _Harness(storage: newStorage(quota: 8));
       try {
         final name = h.engine.evaluate('''
               try { localStorage.setItem('key', '0123456789'); 'no-error'; }

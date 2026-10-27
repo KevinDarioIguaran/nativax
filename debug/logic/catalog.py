@@ -18,6 +18,7 @@ unit's files; comparisons are explicit calls with two refs.
 from __future__ import annotations
 
 import json
+import re
 import sys
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
@@ -220,17 +221,43 @@ def counts_by_type(refs: list[ReportRef]) -> dict[str, dict[str, int]]:
     return out
 
 
+def _near(a: str, b: str) -> bool:
+    """Damerau edit distance ≤ 1 (one insertion, deletion, substitution or
+    adjacent transposition)."""
+    if a == b:
+        return True
+    la, lb = len(a), len(b)
+    if abs(la - lb) > 1:
+        return False
+    i = 0
+    while i < min(la, lb) and a[i] == b[i]:
+        i += 1
+    if la == lb:
+        return a[i + 1:] == b[i + 1:] or (a[i:i + 2] == b[i:i + 2][::-1] and a[i + 2:] == b[i + 2:])
+    return a[i + 1:] == b[i:] if la > lb else a[i:] == b[i + 1:]
+
+
+_WORD = re.compile(r"[a-z0-9_]+")
+
+
 def search(refs: list[ReportRef], query: str) -> list[ReportRef]:
     """Case-insensitive substring match over id, type, area, engine, commit,
-    summary and errors. Every term must match (AND)."""
+    summary and errors. Every term must match (AND). A term of 4+ characters
+    that matches no report at all falls back to words at Damerau distance 1,
+    so a one-letter typo still finds its reports while exact terms stay exact."""
     terms = [t for t in query.lower().split() if t]
     if not terms:
         return list(refs)
-    out = []
+    hays = []
     for r in refs:
         hay = " ".join(str(x) for x in (r.id, r.type, r.area, r.engine, r.commit, r.summary, r.status,
                                          r.path, " ".join(r.errors))).lower()
-        if all(t in hay for t in terms):
+        hays.append((r, hay))
+    fuzzy = {t for t in terms if len(t) >= 4 and not any(t in hay for _, hay in hays)}
+    out = []
+    for r, hay in hays:
+        words = set(_WORD.findall(hay)) if fuzzy else ()
+        if all((t in hay) if t not in fuzzy else any(_near(t, w) for w in words) for t in terms):
             out.append(r)
     return out
 

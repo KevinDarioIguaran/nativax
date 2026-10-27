@@ -1,0 +1,149 @@
+{
+  "schema": "nativax.search_audit/1",
+  "corpus": 240,
+  "queries": 15,
+  "mean_precision_non_typo": 1.0,
+  "mean_recall_non_typo": 1.0,
+  "typo_recall": [
+    1.0,
+    1.0
+  ],
+  "counts_by_type_consistent": true,
+  "rows": [
+    {
+      "class": "exact id",
+      "query": "PERF-20261013T130000Z-97d0f19-037",
+      "expected": 1,
+      "returned": 1,
+      "tp": 1,
+      "precision": 1.0,
+      "recall": 1.0
+    },
+    {
+      "class": "exact id, other case",
+      "query": "perf-20261013t130000z-97d0f19-037",
+      "expected": 1,
+      "returned": 1,
+      "tp": 1,
+      "precision": 1.0,
+      "recall": 1.0
+    },
+    {
+      "class": "id prefix",
+      "query": "PERF-20261013T",
+      "expected": 2,
+      "returned": 2,
+      "tp": 2,
+      "precision": 1.0,
+      "recall": 1.0
+    },
+    {
+      "class": "run number",
+      "query": "-037",
+      "expected": 1,
+      "returned": 1,
+      "tp": 1,
+      "precision": 1.0,
+      "recall": 1.0
+    },
+    {
+      "class": "area",
+      "query": "leaks",
+      "expected": 40,
+      "returned": 40,
+      "tp": 40,
+      "precision": 1.0,
+      "recall": 1.0
+    },
+    {
+      "class": "type",
+      "query": "visual_comparison",
+      "expected": 40,
+      "returned": 40,
+      "tp": 40,
+      "precision": 1.0,
+      "recall": 1.0
+    },
+    {
+      "class": "commit",
+      "query": "97d0f19",
+      "expected": 60,
+      "returned": 60,
+      "tp": 60,
+      "precision": 1.0,
+      "recall": 1.0
+    },
+    {
+      "class": "commit + area (AND)",
+      "query": "f760cec leaks",
+      "expected": 20,
+      "returned": 20,
+      "tp": 20,
+      "precision": 1.0,
+      "recall": 1.0
+    },
+    {
+      "class": "engine",
+      "query": "v8",
+      "expected": 120,
+      "returned": 120,
+      "tp": 120,
+      "precision": 1.0,
+      "recall": 1.0
+    },
+    {
+      "class": "error text",
+      "query": "missing field",
+      "expected": 80,
+      "returned": 80,
+      "tp": 80,
+      "precision": 1.0,
+      "recall": 1.0
+    },
+    {
+      "class": "path",
+      "query": "artifacts/runs/security",
+      "expected": 40,
+      "returned": 40,
+      "tp": 40,
+      "precision": 1.0,
+      "recall": 1.0
+    },
+    {
+      "class": "typo (1 char)",
+      "query": "lekas",
+      "expected": 40,
+      "returned": 40,
+      "tp": 40,
+      "precision": 1.0,
+      "recall": 1.0
+    },
+    {
+      "class": "typo in commit",
+      "query": "97d0f91",
+      "expected": 60,
+      "returned": 60,
+      "tp": 60,
+      "precision": 1.0,
+      "recall": 1.0
+    },
+    {
+      "class": "no match",
+      "query": "zzzz-not-there",
+      "expected": 0,
+      "returned": 0,
+      "tp": 0,
+      "precision": 1.0,
+      "recall": 1.0
+    },
+    {
+      "class": "empty query",
+      "query": "",
+      "expected": 240,
+      "returned": 240,
+      "tp": 240,
+      "precision": 1.0,
+      "recall": 1.0
+    }
+  ]
+}

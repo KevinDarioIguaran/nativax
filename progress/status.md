@@ -48,7 +48,7 @@ browser/site compatibility. Details: [`conformance.md`](conformance.md).
 |---|---|---|---|
 | Headless performance | 2026-10-24 | 17 of 270 scenarios: 5 PASS / 2 WARN / 10 FAIL | [`perf-latest.md`](reports/perf-latest.md) |
 | Linux app idle | 2026-10-24 | 105.0 MB RSS, 0.00 % CPU | [`perf-latest.md`](reports/perf-latest.md) |
-| Visual 50projects50days | 2026-10-24 | 51 pages: 6 PASS / 5 WARN / 40 FAIL; mean 52.59 % | [`visual-50projects50days-latest.md`](reports/visual-50projects50days-latest.md) |
+| Visual 50projects50days | 2026-10-26 | 51 pages: 2 PASS / 18 WARN / 31 FAIL; mean 89.62 % (text raster limits PASS) | [`visual-50projects50days-latest.md`](reports/visual-50projects50days-latest.md) |
 | Leaks | 2026-10-25 | only `control.release`: 1 PASS / 0 FAIL | `debug/benchmarks/leaks/20261026T030350Z-f47240e/` |
 | Security | 2026-10-25 | 45 cases: 44 PASS / 0 FAIL / 1 SKIP | `debug/benchmarks/security/20261026T024956Z-f47240e/` |
 

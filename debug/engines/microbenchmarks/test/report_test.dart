@@ -4,18 +4,18 @@ import 'package:nativa_benchmark/benchmark.dart';
 import 'package:test/test.dart';
 
 RunMetadata _metadata() => RunMetadata(
-      engine: 'QuickJS-ng',
-      engineVersion: '0.17.0',
-      dartVersion: 'test',
-      os: 'linux',
-      osVersion: 'test',
-      arch: 'x64',
-      mode: 'JIT',
-      clock: 'Stopwatch',
-      clockFrequencyHz: 1000000,
-      clockResolutionMs: 0.001,
-      timestamp: DateTime.utc(2026, 1, 1),
-    );
+  engine: 'QuickJS-ng',
+  engineVersion: '0.17.0',
+  dartVersion: 'test',
+  os: 'linux',
+  osVersion: 'test',
+  arch: 'x64',
+  mode: 'JIT',
+  clock: 'Stopwatch',
+  clockFrequencyHz: 1000000,
+  clockResolutionMs: 0.001,
+  timestamp: DateTime.utc(2026, 1, 1),
+);
 
 BenchmarkResult _result(String name, double medianMs, {double madMs = 1}) {
   return BenchmarkResult(
@@ -78,9 +78,7 @@ void main() {
       thresholdPct: 10,
       noiseMultiplier: 2,
     );
-    final status = {
-      for (final c in comparisons) c.name: c.status,
-    };
+    final status = {for (final c in comparisons) c.name: c.status};
     expect(status['js.regression'], 'regression');
     expect(status['js.improvement'], 'improvement');
     expect(status['js.noise'], 'noise');
@@ -100,5 +98,45 @@ void main() {
     final comparison = compareRuns(baseline, current).single;
     expect(comparison.status, 'missing');
     expect(comparison.currentMedianMs, 0);
+  });
+
+  test('several baselines add run-to-run noise and use the median', () {
+    RunReport run(double ms) => RunReport(
+      metadata: _metadata(),
+      results: [_result('js.drift', ms)],
+      command: 'run',
+    );
+    // A 15 % change is a regression against one baseline...
+    expect(compareRuns(run(100), run(115)).single.status, 'regression');
+    // ...but runs of the same commit spread 100–110 ms, so it is noise.
+    final c = compareRuns(
+      run(100),
+      run(115),
+      extraBaselines: [run(110), run(105)],
+    ).single;
+    expect(c.baselineMedianMs, 105);
+    expect(c.betweenRunPct, closeTo(9.52, 0.01));
+    expect(c.status, 'noise');
+    expect(compareRuns(run(100), run(115)).single.betweenRunPct, isNull);
+  });
+
+  test('several baselines add run-to-run noise and use the median', () {
+    RunReport run(double ms) => RunReport(
+      metadata: _metadata(),
+      results: [_result('js.drift', ms)],
+      command: 'run',
+    );
+    // A 15 % change is a regression against one baseline...
+    expect(compareRuns(run(100), run(115)).single.status, 'regression');
+    // ...but runs of the same commit spread 100–110 ms, so it is noise.
+    final c = compareRuns(
+      run(100),
+      run(115),
+      extraBaselines: [run(110), run(105)],
+    ).single;
+    expect(c.baselineMedianMs, 105);
+    expect(c.betweenRunPct, closeTo(9.52, 0.01));
+    expect(c.status, 'noise');
+    expect(compareRuns(run(100), run(115)).single.betweenRunPct, isNull);
   });
 }

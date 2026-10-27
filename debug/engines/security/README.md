@@ -40,6 +40,16 @@ See:
 - [`../../../docs/security/test-plan.md`](../../../docs/security/test-plan.md)
 - [`../../../docs/security/platform-matrix.md`](../../../docs/security/platform-matrix.md)
 
+## Does the suite catch real vulnerabilities?
+
+`dart run bin/security.dart evaluate` runs the suite against nine deliberate
+vulnerabilities (`lib/src/faults.dart`). Examples: an exposed `process`
+global, `innerHTML` that runs scripts, shared globals between engines, and an
+ignored quota. Measured on 2026-10-26: **9/9 detected**, every listed
+detector case failed (19/19), no other case failed, and the baseline had 0
+failures. Method and limitations:
+[`metrics-security.md`](../../architecture/metrics-security.md).
+
 ## Tests
 
 ```bash

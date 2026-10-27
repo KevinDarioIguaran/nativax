@@ -32,10 +32,20 @@ Options:
 ```bash
 cd debug/engines/microbenchmarks
 dart run bin/benchmark.dart compare \
-  --baseline debug/benchmarks/microbench/<run-a>/bench-*.json \
+  --baseline debug/benchmarks/microbench/<run-a1>/bench-*.json \
+  --baseline debug/benchmarks/microbench/<run-a2>/bench-*.json \
+  --baseline debug/benchmarks/microbench/<run-a3>/bench-*.json \
   --current debug/benchmarks/microbench/<run-b>/bench-*.json \
   --threshold 10 --noise 2
 ```
+
+Pass **several baseline runs of the same commit**. Their medians give the
+run-to-run noise that a single run cannot measure. On this machine, one
+baseline produced 12.1 % false alarms between runs of the same commit, and
+3 baselines produced 5.7 %
+([`metrics-microbenchmarks.md`](../../architecture/metrics-microbenchmarks.md)).
+`tool/audit_comparator.dart` measures the comparator on synthetic samples
+with a known change.
 
 A difference is a regression only when it exceeds **both** the threshold and
 the measured noise (`MAD / median × noise`). Differences inside noise are

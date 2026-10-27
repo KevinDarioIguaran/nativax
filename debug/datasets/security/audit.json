@@ -1,0 +1,126 @@
+{
+  "schema": "nativa_security.audit/1",
+  "cases": 45,
+  "baseline": {
+    "pass": 44,
+    "skip": 1,
+    "failing": []
+  },
+  "faults": 9,
+  "faultsDetected": 9,
+  "faultDetectionRate": 1.0,
+  "expectedCaseFailures": 19,
+  "observedExpectedFailures": 19,
+  "caseSensitivity": 1.0,
+  "rows": [
+    {
+      "fault": "hostGlobal",
+      "description": "A host object (`process`) is exposed on globalThis",
+      "detected": true,
+      "expectedCases": 2,
+      "detectingCases": [
+        "engine.host_globals",
+        "matrix.global.process"
+      ],
+      "missedCases": [],
+      "collateralFailures": []
+    },
+    {
+      "fault": "rawBridge",
+      "description": "harden() is skipped: the raw __nx bridge stays reachable",
+      "detected": true,
+      "expectedCases": 1,
+      "detectingCases": [
+        "bridge.raw_host_hardened"
+      ],
+      "missedCases": [],
+      "collateralFailures": []
+    },
+    {
+      "fault": "innerHtmlExecutes",
+      "description": "innerHTML runs <script> bodies and on* handler attributes",
+      "detected": true,
+      "expectedCases": 9,
+      "detectingCases": [
+        "xss.inner_html_does_not_execute",
+        "matrix.inner_html.1",
+        "matrix.inner_html.2",
+        "matrix.inner_html.3",
+        "matrix.inner_html.4",
+        "matrix.inner_html.5",
+        "matrix.inner_html.6",
+        "matrix.inner_html.7",
+        "matrix.inner_html.9"
+      ],
+      "missedCases": [],
+      "collateralFailures": []
+    },
+    {
+      "fault": "javascriptUrl",
+      "description": "Clicking an <a href=\"javascript:…\"> evaluates the URL",
+      "detected": true,
+      "expectedCases": 2,
+      "detectingCases": [
+        "xss.javascript_url_not_executed",
+        "matrix.url.1"
+      ],
+      "missedCases": [],
+      "collateralFailures": []
+    },
+    {
+      "fault": "sharedGlobals",
+      "description": "Every new engine is the same runtime (globals shared across pages)",
+      "detected": true,
+      "expectedCases": 1,
+      "detectingCases": [
+        "sandbox.engine_isolation"
+      ],
+      "missedCases": [],
+      "collateralFailures": []
+    },
+    {
+      "fault": "microtaskUnbounded",
+      "description": "The per-drain microtask limit is disabled",
+      "detected": true,
+      "expectedCases": 1,
+      "detectingCases": [
+        "limits.microtask_limit"
+      ],
+      "missedCases": [],
+      "collateralFailures": []
+    },
+    {
+      "fault": "parserLimitIgnored",
+      "description": "HTML parser input limits are ignored",
+      "detected": true,
+      "expectedCases": 1,
+      "detectingCases": [
+        "limits.parser_input_limit"
+      ],
+      "missedCases": [],
+      "collateralFailures": []
+    },
+    {
+      "fault": "quotaIgnored",
+      "description": "localStorage quota is not enforced",
+      "detected": true,
+      "expectedCases": 1,
+      "detectingCases": [
+        "storage.quota"
+      ],
+      "missedCases": [],
+      "collateralFailures": []
+    },
+    {
+      "fault": "disposeIgnored",
+      "description": "dispose() leaves the engine usable",
+      "detected": true,
+      "expectedCases": 1,
+      "detectingCases": [
+        "lifecycle.disposed_engine_rejects_calls"
+      ],
+      "missedCases": [],
+      "collateralFailures": []
+    }
+  ]
+}

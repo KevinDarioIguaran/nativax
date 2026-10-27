@@ -22,7 +22,7 @@ Options:
   -w, --width <px>       reference window width (default 800)
   -H, --height <px>      layout viewport height (default 900). The Chromium
                          window/measurement offset is calibrated automatically.
-  --out <dir>            output directory (default .visual/latest)
+  --out <dir>            output directory (default debug/artifacts/visual/latest)
   --chrome <exe>         Chromium binary (default google-chrome / CHROME env)
   --scheme <light|dark>  prefers-color-scheme for both engines
   --setup-js <js>        script run after load in both engines
@@ -49,7 +49,8 @@ class _Cli {
   final suites = <String>[];
   int width = 800;
   int height = 900;
-  String out = '.visual/latest';
+  String out = 'debug/artifacts/visual/latest';
+  bool outGiven = false;
   String chrome = Platform.environment['CHROME'] ?? 'google-chrome';
   String scheme = 'light';
   String setupJs = '';
@@ -108,6 +109,7 @@ _Cli _parse(List<String> args) {
     final out = takeValue(arg, '--out', i);
     if (out != null) {
       cli.out = out;
+      cli.outGiven = true;
       if (arg == '--out') i++;
       continue;
     }
@@ -203,6 +205,9 @@ Future<void> main(List<String> arguments) async {
   }
 
   final repoRoot = _findRepoRoot();
+  if (!cli.outGiven) {
+    cli.out = '$repoRoot/debug/artifacts/visual/latest';
+  }
   final out = Directory(cli.out).absolute.path;
   Directory(out).createSync(recursive: true);
 
@@ -388,7 +393,7 @@ Future<void> main(List<String> arguments) async {
     index++;
     final prefix =
         '[${index.toString().padLeft(digits)}/${selected.length}] ${page.id}';
-    stdout.write('$prefix ... ');
+    stdout.writeln('$prefix ...');
     final stopwatch = Stopwatch()..start();
     PageJudgeResult result;
     try {

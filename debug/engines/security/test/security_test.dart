@@ -8,8 +8,10 @@ void main() {
     final cases = matrixSecurityCases();
     expect(cases, hasLength(30));
     expect(cases.map((c) => c.id).toSet(), hasLength(30));
-    expect(cases.map((c) => c.category).toSet(),
-        containsAll(['sandbox', 'navigation', 'xss']));
+    expect(
+      cases.map((c) => c.category).toSet(),
+      containsAll(['sandbox', 'navigation', 'xss']),
+    );
   });
 
   test('security suite runs with controlled statuses', () async {
@@ -17,48 +19,59 @@ void main() {
     expect(results, hasLength(securityCases().length));
     expect(results.where((r) => r.status == SecurityStatus.error), isEmpty);
     expect(
-      results.any((r) => r.id == 'events.programmatic_click_not_trusted' &&
-          r.status == SecurityStatus.pass),
+      results.any(
+        (r) =>
+            r.id == 'events.programmatic_click_not_trusted' &&
+            r.status == SecurityStatus.pass,
+      ),
       isTrue,
     );
     expect(
-      results.any((r) => r.id == 'xss.inner_html_does_not_execute' &&
-          r.status == SecurityStatus.pass),
+      results.any(
+        (r) =>
+            r.id == 'xss.inner_html_does_not_execute' &&
+            r.status == SecurityStatus.pass,
+      ),
       isTrue,
     );
     // Former finding S-03: host callbacks now live in a private registry.
     expect(
-      results.any((r) => r.id == 'internal.callback_globals' &&
-          r.status == SecurityStatus.pass),
+      results.any(
+        (r) =>
+            r.id == 'internal.callback_globals' &&
+            r.status == SecurityStatus.pass,
+      ),
       isTrue,
     );
   });
 
-  test('runner turns exceptions into ERROR without aborting the suite',
-      () async {
-    final results = await SecurityRunner().run([
-      SecurityCase(
-        id: 'throws',
-        category: 'test',
-        severity: 'low',
-        description: 'test',
-        run: () async => throw StateError('boom'),
-      ),
-      SecurityCase(
-        id: 'ok',
-        category: 'test',
-        severity: 'low',
-        description: 'test',
-        run: () async => const SecurityCheck(
-          status: SecurityStatus.pass,
-          expected: 'ok',
-          observed: 'ok',
+  test(
+    'runner turns exceptions into ERROR without aborting the suite',
+    () async {
+      final results = await SecurityRunner().run([
+        SecurityCase(
+          id: 'throws',
+          category: 'test',
+          severity: 'low',
+          description: 'test',
+          run: () async => throw StateError('boom'),
         ),
-      ),
-    ]);
-    expect(results[0].status, SecurityStatus.error);
-    expect(results[1].status, SecurityStatus.pass);
-  });
+        SecurityCase(
+          id: 'ok',
+          category: 'test',
+          severity: 'low',
+          description: 'test',
+          run: () async => const SecurityCheck(
+            status: SecurityStatus.pass,
+            expected: 'ok',
+            observed: 'ok',
+          ),
+        ),
+      ]);
+      expect(results[0].status, SecurityStatus.error);
+      expect(results[1].status, SecurityStatus.pass);
+    },
+  );
 
   test('writes and reloads a security report', () async {
     final dir = Directory.systemTemp.createTempSync('nativa_security_');
@@ -86,5 +99,30 @@ void main() {
     expect(loaded.results.single.id, 'case');
     expect(loaded.results.single.status, SecurityStatus.pass);
     expect(File(files.markdown).readAsStringSync(), contains('case'));
+  });
+
+  test(
+    'every deliberate vulnerability is caught by its detector cases',
+    () async {
+      final audit = await evaluateSuite(securityCases);
+      expect((audit['baseline'] as Map)['failing'], isEmpty);
+      for (final row in (audit['rows'] as List).cast<Map>()) {
+        expect(row['missedCases'], isEmpty, reason: '${row['fault']}');
+        expect(row['collateralFailures'], isEmpty, reason: '${row['fault']}');
+      }
+      expect(audit['faultsDetected'], SecurityFault.values.length);
+    },
+  );
+
+  test('with no fault the helpers leave the suite unchanged', () async {
+    final plain = await SecurityRunner().run(securityCases());
+    final zoned = await withFault(
+      null,
+      () => SecurityRunner().run(securityCases()),
+    );
+    expect(
+      [for (final r in zoned) '${r.id}:${r.status}'],
+      [for (final r in plain) '${r.id}:${r.status}'],
+    );
   });
 }

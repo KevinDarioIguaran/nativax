@@ -382,6 +382,13 @@ class ExecutionSafetyTest(unittest.TestCase):
 
 
 class EndToEndTest(unittest.TestCase):
+    def test_fault_choice_follows_content_not_id(self):
+        # The explorer caches observations by content; two scenarios with
+        # equal content must get the same injected fault whatever their id.
+        scen = next(s for s in (gen.random_screen(i) for i in range(60)) if faults.applicable(s))
+        twin = dict(scen, scenario_id="mutation.other." + scen["scenario_id"])
+        self.assertEqual(faults.choose(scen), faults.choose(twin))
+
     def test_full_pipeline_offline_with_injected_faults(self):
         with tempfile.TemporaryDirectory() as tmp:
             home = Path(tmp)

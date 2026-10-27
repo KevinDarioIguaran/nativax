@@ -71,17 +71,17 @@ class SecurityResult {
   final String remediation;
 
   Map<String, Object?> toJson() => {
-        'id': id,
-        'category': category,
-        'severity': severity,
-        'description': description,
-        'status': status.name,
-        'expected': expected,
-        'observed': observed,
-        'durationMs': durationMs,
-        'evidence': evidence,
-        'remediation': remediation,
-      };
+    'id': id,
+    'category': category,
+    'severity': severity,
+    'description': description,
+    'status': status.name,
+    'expected': expected,
+    'observed': observed,
+    'durationMs': durationMs,
+    'evidence': evidence,
+    'remediation': remediation,
+  };
 }
 
 class SecurityRun {
@@ -90,9 +90,9 @@ class SecurityRun {
   final List<SecurityResult> results;
 
   Map<String, Object?> toJson() => {
-        'metadata': metadata.toJson(),
-        'results': [for (final r in results) r.toJson()],
-      };
+    'metadata': metadata.toJson(),
+    'results': [for (final r in results) r.toJson()],
+  };
 }
 
 class SecurityMetadata {
@@ -121,17 +121,17 @@ class SecurityMetadata {
   final Map<String, String> limits;
 
   Map<String, Object?> toJson() => {
-        'engine': engine,
-        'engineVersion': engineVersion,
-        'dartVersion': dartVersion,
-        'mode': mode,
-        'os': os,
-        'osVersion': osVersion,
-        'arch': arch,
-        'timestamp': timestamp.toIso8601String(),
-        'command': command,
-        'limits': limits,
-      };
+    'engine': engine,
+    'engineVersion': engineVersion,
+    'dartVersion': dartVersion,
+    'mode': mode,
+    'os': os,
+    'osVersion': osVersion,
+    'arch': arch,
+    'timestamp': timestamp.toIso8601String(),
+    'command': command,
+    'limits': limits,
+  };
 }
 
 SecurityMetadata collectSecurityMetadata({
@@ -179,8 +179,7 @@ String _version(String root) {
 }
 
 String findSecurityRepoRoot([String? start]) {
-  var dir = Directory(
-      start == null ? Directory.current.absolute.path : start);
+  var dir = Directory(start == null ? Directory.current.absolute.path : start);
   while (true) {
     final pubspec = File('${dir.path}/pubspec.yaml');
     if (pubspec.existsSync() &&

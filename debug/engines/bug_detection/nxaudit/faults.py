@@ -10,7 +10,8 @@ any nondeterminism between two Chromium runs).
 from __future__ import annotations
 
 import copy
-import hashlib
+
+from .generate import content_hash
 
 # id -> (description, component type it applies to, expected finding kind,
 #        expected property or None)
@@ -62,7 +63,10 @@ def choose(scenario) -> str | None:
     options = applicable(scenario)
     if not options:
         return None
-    h = int(hashlib.sha1(scenario["scenario_id"].encode()).hexdigest(), 16)
+    # Keyed by content, not id: the explorer reuses one observation for
+    # scenarios with equal content and different ids, so an id-keyed choice
+    # scored one fault against the observation injected with another.
+    h = int(content_hash(scenario), 16)
     if h % 10 >= 7:
         return None
     return options[h % len(options)]

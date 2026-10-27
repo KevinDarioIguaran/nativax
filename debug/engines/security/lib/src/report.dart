@@ -6,10 +6,7 @@ import 'package:path/path.dart' as p;
 import 'model.dart';
 
 class SecurityReportFiles {
-  const SecurityReportFiles({
-    required this.json,
-    required this.markdown,
-  });
+  const SecurityReportFiles({required this.json, required this.markdown});
   final String json;
   final String markdown;
 }
@@ -27,8 +24,9 @@ SecurityReportFiles writeSecurityReport(
   for (final path in [jsonFile, mdFile]) {
     Directory(p.dirname(path)).createSync(recursive: true);
   }
-  File(jsonFile).writeAsStringSync(
-      const JsonEncoder.withIndent('  ').convert(run.toJson()));
+  File(
+    jsonFile,
+  ).writeAsStringSync(const JsonEncoder.withIndent('  ').convert(run.toJson()));
   File(mdFile).writeAsStringSync(renderSecurityMarkdown(run));
   return SecurityReportFiles(json: jsonFile, markdown: mdFile);
 }
@@ -47,7 +45,8 @@ SecurityRun loadSecurityRun(String path) {
       os: meta['os'] as String? ?? '',
       osVersion: meta['osVersion'] as String? ?? '',
       arch: meta['arch'] as String? ?? '',
-      timestamp: DateTime.tryParse(meta['timestamp'] as String? ?? '') ??
+      timestamp:
+          DateTime.tryParse(meta['timestamp'] as String? ?? '') ??
           DateTime.fromMillisecondsSinceEpoch(0),
       command: meta['command'] as String? ?? '',
       limits: (meta['limits'] as Map?)?.cast<String, String>() ?? const {},
@@ -78,18 +77,24 @@ String renderSecurityMarkdown(SecurityRun run) {
     ..writeln('# NativaX security audit results')
     ..writeln()
     ..writeln('- Fecha: ${run.metadata.timestamp.toIso8601String()}')
-    ..writeln('- Motor: ${run.metadata.engine} '
-        '${run.metadata.engineVersion}')
+    ..writeln(
+      '- Motor: ${run.metadata.engine} '
+      '${run.metadata.engineVersion}',
+    )
     ..writeln('- Dart: ${run.metadata.dartVersion} (${run.metadata.mode})')
-    ..writeln('- OS: ${run.metadata.os} ${run.metadata.osVersion} '
-        '(${run.metadata.arch})')
+    ..writeln(
+      '- OS: ${run.metadata.os} ${run.metadata.osVersion} '
+      '(${run.metadata.arch})',
+    )
     ..writeln('- Comando: `${run.metadata.command}`')
     ..writeln()
     ..writeln('| Caso | Categoría | Severidad | Estado | Observado |')
     ..writeln('|---|---|---|---|---|');
   for (final r in run.results) {
-    b.writeln('| `${r.id}` | ${r.category} | ${r.severity} | '
-        '${r.status.label} | ${r.observed.replaceAll('|', '\\|')} |');
+    b.writeln(
+      '| `${r.id}` | ${r.category} | ${r.severity} | '
+      '${r.status.label} | ${r.observed.replaceAll('|', '\\|')} |',
+    );
   }
   b
     ..writeln()
@@ -117,12 +122,18 @@ String renderSecurityMarkdown(SecurityRun run) {
   b
     ..writeln('## Limitaciones')
     ..writeln()
-    ..writeln('- Esta suite cubre las fronteras verificables desde Dart/CLI. '
-        'Flutter, Android, iOS, Windows y macOS requieren ejecución propia.')
-    ..writeln('- `PASS` significa que el ataque probado no produjo el efecto '
-        'no autorizado; no es una garantía de sandbox del sistema operativo.')
+    ..writeln(
+      '- Esta suite cubre las fronteras verificables desde Dart/CLI. '
+      'Flutter, Android, iOS, Windows y macOS requieren ejecución propia.',
+    )
+    ..writeln(
+      '- `PASS` significa que el ataque probado no produjo el efecto '
+      'no autorizado; no es una garantía de sandbox del sistema operativo.',
+    )
     ..writeln('- Un `SKIP` no es una protección verificada.')
-    ..writeln('- No se declara NativaX “100 % seguro” ni “a prueba de '
-        'exploits”.');
+    ..writeln(
+      '- No se declara NativaX “100 % seguro” ni “a prueba de '
+      'exploits”.',
+    );
   return b.toString();
 }

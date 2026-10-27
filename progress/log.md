@@ -48,6 +48,35 @@ Measured on Linux x64, JavaScriptCore GTK 2.52.5, same tree, QuickJS -> JSC:
 
 Not measured: macOS, iOS, Android, Windows, and V8 (no `libnx_v8.so` here).
 
+## 2026-10-26 — Visual fidelity fixes (50projects50days)
+
+Scope: renderer/cascade fixes found with the Chromium visual judge. Evidence:
+`progress/reports/visual-50projects50days-latest.md` (2 PASS / 18 WARN /
+31 FAIL, mean 89.62 %; same judge before: 2 / 7 / 42, mean 78.77 %).
+
+- `nativa_css`: the style caches ignored ancestors' classes, so
+  `.panel.active h3` styled every panel's `h3`; elements matched by
+  descendant/child-combinator rules now share styles only with siblings.
+  UA form controls use Chromium's computed borders/overflow.
+- `nativa_render`: pixel-snapped box decorations; body background
+  (incl. gradients) propagates to the canvas; outer `box-shadow` clipped
+  outside the border box and blur converted to CSS sigma; `letter-spacing`
+  offset; inline atomics baseline-aligned with margins and safe dry
+  baselines; definite widths overflow block containers; column flex
+  definiteness and fit-content; flex automatic minimum size; shrink-to-fit
+  absolute boxes; fixed boxes inside transformed ancestors; collapsible
+  spaces around `<br>`; empty lines have no height; 13px checkbox/radio;
+  text fields without Material's 1.5 line height and with Chromium-like
+  default widths; block-level controls are not stretched; label text taps.
+- Harness: screenshots now paint blurred shadows (`debugDisableShadows`),
+  a measurement correction, not a compatibility gain.
+- Not fixed: glyph rasterization differs from Chromium (see report), so pages
+  with text stay WARN. Default input width is a fit (±2px).
+
+Tests: `nativa_render` 133 pass (19 new in `visual_fidelity_test.dart`,
+`pixel_snap_test.dart`), `nativa_css` 113 pass (1 new), `nativax` pass.
+`./tools/test_all.sh` and performance benchmarks were not run.
+
 ## 2026-10-26 — Documentation and evidence consolidation
 
 Scope: make maintained documentation English and source-backed, consolidate

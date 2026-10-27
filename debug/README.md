@@ -45,6 +45,22 @@ debug/
 The JSON interface audit (`debug/engines/bug_detection`) is an AI-facing tool;
 it is run from the command line, not from the dashboard.
 
+## How accurate is each engine?
+
+Every engine is audited against data whose answer is known (injected faults,
+synthetic pairs, deliberate vulnerabilities, known leaks); never against its
+own output. Measured on 2026-10-26:
+
+| Engine | Result | Details |
+|---|---|---|
+| Bug detection | 287/287 injected faults detected, 251/251 localized, 0/193 clean scenarios flagged, 0 issues in 240 Chromium-vs-Chromium scenarios | [metrics-bug-detection.md](architecture/metrics-bug-detection.md) |
+| Visual regions | 11/13 truth boxes localized (was 5/11), 7.4× fewer regions on 283 real pages | [metrics-visual.md](architecture/metrics-visual.md) |
+| Memory leaks | 0 false alarms on 45 control runs; `proven_leak` precision 100 %, alarm recall 85.7 % | [metrics-memory.md](architecture/metrics-memory.md) |
+| Security | 9/9 deliberate vulnerabilities detected, 0 baseline failures | [metrics-security.md](architecture/metrics-security.md) |
+| Microbenchmark comparator | 0.7 % false alarms on synthetic samples; 5.7 % on real same-commit runs with 3 baselines (12.1 % with one) | [metrics-microbenchmarks.md](architecture/metrics-microbenchmarks.md) |
+| Report search | precision/recall 1.0 on 15 query classes, including 1-letter typos | [metrics-microbenchmarks.md](architecture/metrics-microbenchmarks.md#part-b--report-search) |
+| Recommendations, quality gate | see their own metrics documents | [recommendations](architecture/metrics-recommendations.md), [gate](architecture/metrics-gate-compat.md) |
+
 ## Canonical vs derived
 
 Canonical evidence:

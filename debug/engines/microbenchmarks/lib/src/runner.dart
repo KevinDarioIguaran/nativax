@@ -112,7 +112,12 @@ double percentChange(double baseline, double current) {
 }
 
 /// Compares two runs. A change is only a regression when it exceeds both the
-/// configured threshold and the baseline's measured noise (MAD/median × noise).
+/// configured threshold and the measured noise × [noiseMultiplier]. Noise is
+/// the larger of the within-run spread (MAD/median of the rounds) and, when
+/// more than one baseline run is given, the run-to-run spread of the
+/// baseline medians ((max − min) / median). A single baseline cannot measure
+/// run-to-run noise; `metrics-microbenchmarks.md` shows that it dominates on
+/// real machines.
 class Comparison {
   Comparison({
     required this.name,
@@ -121,6 +126,7 @@ class Comparison {
     required this.changePct,
     required this.noisePct,
     required this.status,
+    this.betweenRunPct,
   });
 
   final String name;
@@ -128,6 +134,9 @@ class Comparison {
   final double currentMedianMs;
   final double changePct;
   final double noisePct;
+
+  /// Run-to-run spread of the baseline medians; null with one baseline.
+  final double? betweenRunPct;
 
   /// `regression`, `improvement`, `stable`, `noise`, `missing`.
   final String status;
@@ -138,6 +147,7 @@ List<Comparison> compareRuns(
   RunReport current, {
   double thresholdPct = 10,
   double noiseMultiplier = 2,
+  List<RunReport> extraBaselines = const [],
 }) {
   final results = <Comparison>[];
   for (final before in baseline.results) {
@@ -153,8 +163,23 @@ List<Comparison> compareRuns(
       ));
       continue;
     }
-    final change = percentChange(before.medianMs, after.medianMs);
-    final noise = math.max(before.relativeSpread, after.relativeSpread);
+    final others = [
+      for (final run in extraBaselines) ?run.byName(before.name),
+    ];
+    final medians = [before.medianMs, for (final o in others) o.medianMs];
+    final reference = median(medians);
+    double? between;
+    if (medians.length > 1 && reference > 0) {
+      final sorted = List.of(medians)..sort();
+      between = (sorted.last - sorted.first) / reference * 100;
+    }
+    final change = percentChange(reference, after.medianMs);
+    final noise = [
+      before.relativeSpread,
+      after.relativeSpread,
+      for (final o in others) o.relativeSpread,
+      ?between,
+    ].reduce(math.max);
     final limit = math.max(thresholdPct, noise * noiseMultiplier);
     String status;
     if (change.abs() <= limit) {
@@ -166,10 +191,11 @@ List<Comparison> compareRuns(
     }
     results.add(Comparison(
       name: before.name,
-      baselineMedianMs: before.medianMs,
+      baselineMedianMs: reference,
       currentMedianMs: after.medianMs,
       changePct: change,
       noisePct: noise,
+      betweenRunPct: between,
       status: status,
     ));
   }

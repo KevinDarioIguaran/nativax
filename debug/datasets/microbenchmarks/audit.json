@@ -1,0 +1,631 @@
+{
+  "schema": "nativa_benchmark.comparator_audit/1",
+  "defaults": {
+    "thresholdPct": 10,
+    "noiseMultiplier": 2
+  },
+  "rounds": 15,
+  "repeatsPerCell": 200,
+  "seed": 20261026,
+  "falseAlarmRate": 0.007,
+  "detectionRate": 0.855625,
+  "signErrors": 0,
+  "cells": [
+    {
+      "noiseCvPct": 1.0,
+      "trueChangePct": -50.0,
+      "truth": "improvement",
+      "counts": {
+        "improvement": 200
+      },
+      "correctRate": 1.0
+    },
+    {
+      "noiseCvPct": 1.0,
+      "trueChangePct": -30.0,
+      "truth": "improvement",
+      "counts": {
+        "improvement": 200
+      },
+      "correctRate": 1.0
+    },
+    {
+      "noiseCvPct": 1.0,
+      "trueChangePct": -20.0,
+      "truth": "improvement",
+      "counts": {
+        "improvement": 200
+      },
+      "correctRate": 1.0
+    },
+    {
+      "noiseCvPct": 1.0,
+      "trueChangePct": -15.0,
+      "truth": "improvement",
+      "counts": {
+        "improvement": 200
+      },
+      "correctRate": 1.0
+    },
+    {
+      "noiseCvPct": 1.0,
+      "trueChangePct": -10.0,
+      "truth": null,
+      "counts": {
+        "improvement": 93,
+        "noise": 107
+      },
+      "correctRate": null
+    },
+    {
+      "noiseCvPct": 1.0,
+      "trueChangePct": -5.0,
+      "truth": "noise",
+      "counts": {
+        "noise": 200
+      },
+      "correctRate": 1.0
+    },
+    {
+      "noiseCvPct": 1.0,
+      "trueChangePct": 0.0,
+      "truth": "noise",
+      "counts": {
+        "noise": 200
+      },
+      "correctRate": 1.0
+    },
+    {
+      "noiseCvPct": 1.0,
+      "trueChangePct": 5.0,
+      "truth": "noise",
+      "counts": {
+        "noise": 200
+      },
+      "correctRate": 1.0
+    },
+    {
+      "noiseCvPct": 1.0,
+      "trueChangePct": 10.0,
+      "truth": null,
+      "counts": {
+        "regression": 106,
+        "noise": 94
+      },
+      "correctRate": null
+    },
+    {
+      "noiseCvPct": 1.0,
+      "trueChangePct": 15.0,
+      "truth": "regression",
+      "counts": {
+        "regression": 200
+      },
+      "correctRate": 1.0
+    },
+    {
+      "noiseCvPct": 1.0,
+      "trueChangePct": 20.0,
+      "truth": "regression",
+      "counts": {
+        "regression": 200
+      },
+      "correctRate": 1.0
+    },
+    {
+      "noiseCvPct": 1.0,
+      "trueChangePct": 30.0,
+      "truth": "regression",
+      "counts": {
+        "regression": 200
+      },
+      "correctRate": 1.0
+    },
+    {
+      "noiseCvPct": 1.0,
+      "trueChangePct": 50.0,
+      "truth": "regression",
+      "counts": {
+        "regression": 200
+      },
+      "correctRate": 1.0
+    },
+    {
+      "noiseCvPct": 3.0,
+      "trueChangePct": -50.0,
+      "truth": "improvement",
+      "counts": {
+        "improvement": 200
+      },
+      "correctRate": 1.0
+    },
+    {
+      "noiseCvPct": 3.0,
+      "trueChangePct": -30.0,
+      "truth": "improvement",
+      "counts": {
+        "improvement": 200
+      },
+      "correctRate": 1.0
+    },
+    {
+      "noiseCvPct": 3.0,
+      "trueChangePct": -20.0,
+      "truth": "improvement",
+      "counts": {
+        "improvement": 200
+      },
+      "correctRate": 1.0
+    },
+    {
+      "noiseCvPct": 3.0,
+      "trueChangePct": -15.0,
+      "truth": "improvement",
+      "counts": {
+        "improvement": 200
+      },
+      "correctRate": 1.0
+    },
+    {
+      "noiseCvPct": 3.0,
+      "trueChangePct": -10.0,
+      "truth": null,
+      "counts": {
+        "noise": 114,
+        "improvement": 86
+      },
+      "correctRate": null
+    },
+    {
+      "noiseCvPct": 3.0,
+      "trueChangePct": -5.0,
+      "truth": "noise",
+      "counts": {
+        "noise": 200
+      },
+      "correctRate": 1.0
+    },
+    {
+      "noiseCvPct": 3.0,
+      "trueChangePct": 0.0,
+      "truth": "noise",
+      "counts": {
+        "noise": 200
+      },
+      "correctRate": 1.0
+    },
+    {
+      "noiseCvPct": 3.0,
+      "trueChangePct": 5.0,
+      "truth": "noise",
+      "counts": {
+        "noise": 200
+      },
+      "correctRate": 1.0
+    },
+    {
+      "noiseCvPct": 3.0,
+      "trueChangePct": 10.0,
+      "truth": null,
+      "counts": {
+        "regression": 105,
+        "noise": 95
+      },
+      "correctRate": null
+    },
+    {
+      "noiseCvPct": 3.0,
+      "trueChangePct": 15.0,
+      "truth": "regression",
+      "counts": {
+        "regression": 200
+      },
+      "correctRate": 1.0
+    },
+    {
+      "noiseCvPct": 3.0,
+      "trueChangePct": 20.0,
+      "truth": "regression",
+      "counts": {
+        "regression": 200
+      },
+      "correctRate": 1.0
+    },
+    {
+      "noiseCvPct": 3.0,
+      "trueChangePct": 30.0,
+      "truth": "regression",
+      "counts": {
+        "regression": 200
+      },
+      "correctRate": 1.0
+    },
+    {
+      "noiseCvPct": 3.0,
+      "trueChangePct": 50.0,
+      "truth": "regression",
+      "counts": {
+        "regression": 200
+      },
+      "correctRate": 1.0
+    },
+    {
+      "noiseCvPct": 5.0,
+      "trueChangePct": -50.0,
+      "truth": "improvement",
+      "counts": {
+        "improvement": 200
+      },
+      "correctRate": 1.0
+    },
+    {
+      "noiseCvPct": 5.0,
+      "trueChangePct": -30.0,
+      "truth": "improvement",
+      "counts": {
+        "improvement": 200
+      },
+      "correctRate": 1.0
+    },
+    {
+      "noiseCvPct": 5.0,
+      "trueChangePct": -20.0,
+      "truth": "improvement",
+      "counts": {
+        "improvement": 200
+      },
+      "correctRate": 1.0
+    },
+    {
+      "noiseCvPct": 5.0,
+      "trueChangePct": -15.0,
+      "truth": "improvement",
+      "counts": {
+        "improvement": 199,
+        "noise": 1
+      },
+      "correctRate": 0.995
+    },
+    {
+      "noiseCvPct": 5.0,
+      "trueChangePct": -10.0,
+      "truth": null,
+      "counts": {
+        "noise": 107,
+        "improvement": 93
+      },
+      "correctRate": null
+    },
+    {
+      "noiseCvPct": 5.0,
+      "trueChangePct": -5.0,
+      "truth": "noise",
+      "counts": {
+        "noise": 200
+      },
+      "correctRate": 1.0
+    },
+    {
+      "noiseCvPct": 5.0,
+      "trueChangePct": 0.0,
+      "truth": "noise",
+      "counts": {
+        "noise": 200
+      },
+      "correctRate": 1.0
+    },
+    {
+      "noiseCvPct": 5.0,
+      "trueChangePct": 5.0,
+      "truth": "noise",
+      "counts": {
+        "noise": 196,
+        "regression": 4
+      },
+      "correctRate": 0.98
+    },
+    {
+      "noiseCvPct": 5.0,
+      "trueChangePct": 10.0,
+      "truth": null,
+      "counts": {
+        "noise": 113,
+        "regression": 87
+      },
+      "correctRate": null
+    },
+    {
+      "noiseCvPct": 5.0,
+      "trueChangePct": 15.0,
+      "truth": "regression",
+      "counts": {
+        "regression": 193,
+        "noise": 7
+      },
+      "correctRate": 0.965
+    },
+    {
+      "noiseCvPct": 5.0,
+      "trueChangePct": 20.0,
+      "truth": "regression",
+      "counts": {
+        "regression": 200
+      },
+      "correctRate": 1.0
+    },
+    {
+      "noiseCvPct": 5.0,
+      "trueChangePct": 30.0,
+      "truth": "regression",
+      "counts": {
+        "regression": 200
+      },
+      "correctRate": 1.0
+    },
+    {
+      "noiseCvPct": 5.0,
+      "trueChangePct": 50.0,
+      "truth": "regression",
+      "counts": {
+        "regression": 200
+      },
+      "correctRate": 1.0
+    },
+    {
+      "noiseCvPct": 10.0,
+      "trueChangePct": -50.0,
+      "truth": "improvement",
+      "counts": {
+        "improvement": 200
+      },
+      "correctRate": 1.0
+    },
+    {
+      "noiseCvPct": 10.0,
+      "trueChangePct": -30.0,
+      "truth": "improvement",
+      "counts": {
+        "improvement": 197,
+        "noise": 3
+      },
+      "correctRate": 0.985
+    },
+    {
+      "noiseCvPct": 10.0,
+      "trueChangePct": -20.0,
+      "truth": "improvement",
+      "counts": {
+        "improvement": 172,
+        "noise": 28
+      },
+      "correctRate": 0.86
+    },
+    {
+      "noiseCvPct": 10.0,
+      "trueChangePct": -15.0,
+      "truth": "improvement",
+      "counts": {
+        "improvement": 97,
+        "noise": 103
+      },
+      "correctRate": 0.485
+    },
+    {
+      "noiseCvPct": 10.0,
+      "trueChangePct": -10.0,
+      "truth": null,
+      "counts": {
+        "noise": 172,
+        "improvement": 28
+      },
+      "correctRate": null
+    },
+    {
+      "noiseCvPct": 10.0,
+      "trueChangePct": -5.0,
+      "truth": "noise",
+      "counts": {
+        "noise": 197,
+        "improvement": 3
+      },
+      "correctRate": 0.985
+    },
+    {
+      "noiseCvPct": 10.0,
+      "trueChangePct": 0.0,
+      "truth": "noise",
+      "counts": {
+        "noise": 199,
+        "improvement": 1
+      },
+      "correctRate": 0.995
+    },
+    {
+      "noiseCvPct": 10.0,
+      "trueChangePct": 5.0,
+      "truth": "noise",
+      "counts": {
+        "noise": 192,
+        "regression": 8
+      },
+      "correctRate": 0.96
+    },
+    {
+      "noiseCvPct": 10.0,
+      "trueChangePct": 10.0,
+      "truth": null,
+      "counts": {
+        "noise": 163,
+        "regression": 37
+      },
+      "correctRate": null
+    },
+    {
+      "noiseCvPct": 10.0,
+      "trueChangePct": 15.0,
+      "truth": "regression",
+      "counts": {
+        "regression": 104,
+        "noise": 96
+      },
+      "correctRate": 0.52
+    },
+    {
+      "noiseCvPct": 10.0,
+      "trueChangePct": 20.0,
+      "truth": "regression",
+      "counts": {
+        "noise": 43,
+        "regression": 157
+      },
+      "correctRate": 0.785
+    },
+    {
+      "noiseCvPct": 10.0,
+      "trueChangePct": 30.0,
+      "truth": "regression",
+      "counts": {
+        "regression": 197,
+        "noise": 3
+      },
+      "correctRate": 0.985
+    },
+    {
+      "noiseCvPct": 10.0,
+      "trueChangePct": 50.0,
+      "truth": "regression",
+      "counts": {
+        "regression": 200
+      },
+      "correctRate": 1.0
+    },
+    {
+      "noiseCvPct": 20.0,
+      "trueChangePct": -50.0,
+      "truth": "improvement",
+      "counts": {
+        "improvement": 199,
+        "noise": 1
+      },
+      "correctRate": 0.995
+    },
+    {
+      "noiseCvPct": 20.0,
+      "trueChangePct": -30.0,
+      "truth": "improvement",
+      "counts": {
+        "improvement": 106,
+        "noise": 94
+      },
+      "correctRate": 0.53
+    },
+    {
+      "noiseCvPct": 20.0,
+      "trueChangePct": -20.0,
+      "truth": "improvement",
+      "counts": {
+        "noise": 167,
+        "improvement": 33
+      },
+      "correctRate": 0.165
+    },
+    {
+      "noiseCvPct": 20.0,
+      "trueChangePct": -15.0,
+      "truth": "improvement",
+      "counts": {
+        "noise": 184,
+        "improvement": 16
+      },
+      "correctRate": 0.08
+    },
+    {
+      "noiseCvPct": 20.0,
+      "trueChangePct": -10.0,
+      "truth": null,
+      "counts": {
+        "noise": 197,
+        "improvement": 3
+      },
+      "correctRate": null
+    },
+    {
+      "noiseCvPct": 20.0,
+      "trueChangePct": -5.0,
+      "truth": "noise",
+      "counts": {
+        "noise": 200
+      },
+      "correctRate": 1.0
+    },
+    {
+      "noiseCvPct": 20.0,
+      "trueChangePct": 0.0,
+      "truth": "noise",
+      "counts": {
+        "noise": 200
+      },
+      "correctRate": 1.0
+    },
+    {
+      "noiseCvPct": 20.0,
+      "trueChangePct": 5.0,
+      "truth": "noise",
+      "counts": {
+        "noise": 195,
+        "regression": 5
+      },
+      "correctRate": 0.975
+    },
+    {
+      "noiseCvPct": 20.0,
+      "trueChangePct": 10.0,
+      "truth": null,
+      "counts": {
+        "noise": 191,
+        "regression": 9
+      },
+      "correctRate": null
+    },
+    {
+      "noiseCvPct": 20.0,
+      "trueChangePct": 15.0,
+      "truth": "regression",
+      "counts": {
+        "noise": 170,
+        "regression": 30
+      },
+      "correctRate": 0.15
+    },
+    {
+      "noiseCvPct": 20.0,
+      "trueChangePct": 20.0,
+      "truth": "regression",
+      "counts": {
+        "regression": 51,
+        "noise": 149
+      },
+      "correctRate": 0.255
+    },
+    {
+      "noiseCvPct": 20.0,
+      "trueChangePct": 30.0,
+      "truth": "regression",
+      "counts": {
+        "noise": 88,
+        "regression": 112
+      },
+      "correctRate": 0.56
+    },
+    {
+      "noiseCvPct": 20.0,
+      "trueChangePct": 50.0,
+      "truth": "regression",
+      "counts": {
+        "regression": 182,
+        "noise": 18
+      },
+      "correctRate": 0.91
+    }
+  ]
+}

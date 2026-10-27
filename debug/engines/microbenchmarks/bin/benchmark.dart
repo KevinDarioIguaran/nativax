@@ -154,7 +154,7 @@ Future<void> _run(List<String> args) async {
 }
 
 Future<void> _compare(List<String> args) async {
-  String? baselinePath;
+  final baselinePaths = <String>[];
   String? currentPath;
   String? markdownPath;
   var threshold = 10.0;
@@ -162,7 +162,7 @@ Future<void> _compare(List<String> args) async {
   for (var i = 0; i < args.length; i++) {
     switch (args[i]) {
       case '--baseline':
-        baselinePath = args[++i];
+        baselinePaths.add(args[++i]);
       case '--current':
         currentPath = args[++i];
       case '--threshold':
@@ -180,19 +180,27 @@ Future<void> _compare(List<String> args) async {
         return;
     }
   }
-  if (baselinePath == null || currentPath == null) {
+  if (baselinePaths.isEmpty || currentPath == null) {
     stderr.writeln('compare requires --baseline and --current JSON files');
     exitCode = 64;
     return;
   }
-  final baseline = loadReport(baselinePath);
+  final baselinePath = baselinePaths.join(', ');
+  final baseline = loadReport(baselinePaths.first);
   final current = loadReport(currentPath);
   final comparisons = compareRuns(
     baseline,
     current,
     thresholdPct: threshold,
     noiseMultiplier: noise,
+    extraBaselines: [for (final path in baselinePaths.skip(1)) loadReport(path)],
   );
+  if (baselinePaths.length == 1) {
+    stderr.writeln(
+      'warning: one baseline run measures only within-run noise; pass '
+      '--baseline twice or more (same commit) to include run-to-run noise',
+    );
+  }
   final markdown = renderComparison(
     comparisons,
     baselinePath: baselinePath,
@@ -222,6 +230,6 @@ void _usage() {
     ..writeln('    --json FILE      explicit JSON path')
     ..writeln('    --md FILE        explicit Markdown path')
     ..writeln('    --list           list cases and exit')
-    ..writeln('  dart run bin/benchmark.dart compare --baseline FILE --current FILE')
+    ..writeln('  dart run bin/benchmark.dart compare --baseline FILE [--baseline FILE…] --current FILE')
     ..writeln('    [--threshold PCT] [--noise MULT] [--md FILE]');
 }

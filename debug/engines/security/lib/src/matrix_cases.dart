@@ -3,15 +3,14 @@ import 'dart:convert';
 import 'package:nativa_css/nativa_css.dart';
 import 'package:nativa_dom/nativa_dom.dart';
 import 'package:nativa_dom_bindings/nativa_dom_bindings.dart';
-import 'package:nativa_html/nativa_html.dart';
 import 'package:nativa_js/nativa_js.dart';
 
-import 'engine.dart';
+import 'faults.dart';
 import 'model.dart';
 
 class _Harness {
   _Harness() {
-    document = HtmlParser()
+    document = newParser()
         .parseDocument('<!doctype html><html><body></body></html>')
         .value;
     engine = newEngine();
@@ -24,6 +23,7 @@ class _Harness {
         platform: 'linux',
       ),
     )..install();
+    applyDomFault(engine);
   }
 
   late final Document document;
