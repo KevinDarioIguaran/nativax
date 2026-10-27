@@ -31,7 +31,7 @@ class WorkerScript {
 class WorkerRuntime {
   WorkerRuntime._(this.engine, this.timers, this.bindings);
 
-  final QuickJsEngine engine;
+  final JscEngine engine;
   final TimerHost timers;
   final DomBindings bindings;
   bool _closed = false;
@@ -53,9 +53,9 @@ class WorkerRuntime {
       maxJobsPerDrain: 1000000,
     ),
     bool canBlock = false,
-    void Function(QuickJsEngine engine)? beforeScript,
+    void Function(JscEngine engine)? beforeScript,
   }) {
-    final engine = QuickJsEngine(engineConfig);
+    final engine = JscEngine(engineConfig);
     if (canBlock) engine.canBlock = true;
     late final WorkerRuntime runtime;
     void error(Object e) {

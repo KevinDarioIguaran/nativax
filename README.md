@@ -17,7 +17,7 @@ HTML bytes
 ```
 
 JavaScript runs on a real engine behind the `JavaScriptEngine` contract:
-QuickJS-ng everywhere, and V8 on desktop when its native library is available.
+JavaScriptCore (JSC) on every platform, loaded from the host system library.
 Scripts receive ids, scalars, and JSON; they never receive Dart objects.
 
 > **Maturity:** experimental, pre-1.0. Linux x86_64 is the only platform with
@@ -111,7 +111,7 @@ Start at [`docs/README.md`](docs/README.md). High-value entry points:
 | Project | Current location | Responsibility |
 |---|---|---|
 | **NativaX** | `packages/nativax` | Public runtime, view, lifecycle, workers, templates |
-| **NativaJS** | `packages/nativa_js` | QuickJS-ng, V8 bridge, timers, WebAssembly, limits, WebGL bridge |
+| **NativaJS** | `packages/nativa_js` | JavaScriptCore (JSC), timers, WebAssembly, limits, WebGL bridge |
 | **NativaWeb** | `packages/nativa_html`, `nativa_dom`, `nativa_css`, `nativa_dom_bindings` | HTML, DOM, CSS, and browser-style APIs |
 | **NativaRender** | `packages/nativa_render` | CSS layout, Flutter RenderObjects, painting, SVG/canvas integration |
 | **NativaFlow** | `packages/nativax/lib/src/workers.dart`, `packages/nativa_dom_bindings/lib/src/worker_runtime.dart` | Workers, isolates, messaging |
@@ -226,7 +226,7 @@ and [`docs/information-architecture.md`](docs/information-architecture.md).
 
 ## Legal and platform boundaries
 
-NativaX does not bundle Chromium or a browser runtime. QuickJS-ng, wasm3, and
+NativaX does not bundle Chromium or a browser runtime. JavaScriptCore, wasm3, and
 third-party fixtures have their own licenses; see the package/vendor notices.
 Only Linux x86_64 has current build and test evidence. Android, iOS, macOS, and
 Windows require their own toolchain and verification before any support claim.

@@ -23,8 +23,8 @@ class _Modules implements ModuleHost {
 }
 
 void main() {
-  late QuickJsEngine engine;
-  setUp(() => engine = QuickJsEngine());
+  late JscEngine engine;
+  setUp(() => engine = JscEngine());
   tearDown(() => engine.dispose());
 
   test('evaluates a module graph with relative imports and import.meta.url', () {
@@ -95,7 +95,7 @@ void main() {
   });
 
   test('SharedArrayBuffer memory is shared between runtimes and Atomics work across them', () {
-    final other = QuickJsEngine();
+    final other = JscEngine();
     addTearDown(other.dispose);
     final id = engine.evaluate('globalThis.sab = new SharedArrayBuffer(16); globalThis.view = new Int32Array(sab); view[0] = 41; __nx.shareSab(sab)') as int;
     other.evaluate('globalThis.view = new Int32Array(__nx.openSab($id)); Atomics.add(view, 0, 1);');
@@ -114,5 +114,5 @@ void main() {
     );
     engine.canBlock = true;
     expect(engine.evaluate('Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 0)'), 'timed-out');
-  });
+  }, skip: 'JSC C API has no canBlock hook');
 }

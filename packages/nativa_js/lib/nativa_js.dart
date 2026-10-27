@@ -7,5 +7,4 @@ export 'src/event_loop.dart';
 export 'src/exceptions.dart';
 export 'src/javascript_engine.dart';
 export 'src/jit.dart';
-export 'src/quickjs_engine.dart';
-export 'src/v8_engine.dart';
+export 'src/jsc_engine.dart';

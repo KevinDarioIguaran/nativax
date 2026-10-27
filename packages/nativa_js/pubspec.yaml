@@ -1,5 +1,5 @@
 name: nativa_js
-description: QuickJS-ng JavaScript engine for NativaX, compiled from source through a Dart build hook and bound through FFI.
+description: JavaScriptCore (JSC) JavaScript engine for NativaX, bound through FFI to the host platform library.
 version: 0.1.0
 publish_to: none
 resolution: workspace

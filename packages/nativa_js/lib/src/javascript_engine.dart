@@ -44,7 +44,7 @@ class JavaScriptEngineConfig {
 }
 
 /// Engine-neutral contract. NativaX ships one implementation
-/// ([QuickJsEngine]); the interface exists so tests and future adapters (for
+/// ([JscEngine]); the interface exists so tests and future adapters (for
 /// example JavaScriptCore) can plug in without touching the DOM bindings.
 ///
 /// The API is synchronous on purpose: DOM bindings require script code to call

@@ -316,7 +316,7 @@ class _DomHarness {
     : document = HtmlParser()
           .parseDocument('<!doctype html><html><body></body></html>')
           .value {
-    engine = QuickJsEngine(
+    engine = JscEngine(
       const JavaScriptEngineConfig(
         memoryLimitBytes: 128 * 1024 * 1024,
         executionBudget: Duration(seconds: 5),
@@ -333,7 +333,7 @@ class _DomHarness {
   }
 
   final Document document;
-  late final QuickJsEngine engine;
+  late final JscEngine engine;
   late final DomBindings bindings;
   TimerHost? timers;
 
@@ -418,7 +418,7 @@ LeakCase _js({
   expectation: 'released',
   truth: truth,
   run: (ctx) async {
-    final engine = QuickJsEngine(
+    final engine = JscEngine(
       const JavaScriptEngineConfig(
         memoryLimitBytes: 128 * 1024 * 1024,
         executionBudget: Duration(seconds: 5),

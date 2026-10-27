@@ -58,7 +58,7 @@ class WebHarness {
     styles = StyleEngine(document: document, media: const MediaContext(width: 800, height: 600))
       ..authorSheets = [StyleSheet.parse(css)];
     document.addMutationListener(styles.handleMutation);
-    engine = QuickJsEngine();
+    engine = JscEngine();
     installConsole(engine, logs.add);
     timers = TimerHost(engine, onError: errors.add);
     bindings = DomBindings(
@@ -74,7 +74,7 @@ class WebHarness {
 
   late final Document document;
   late final StyleEngine styles;
-  late final QuickJsEngine engine;
+  late final JscEngine engine;
   late final TimerHost timers;
   late final DomBindings bindings;
   final logs = <ConsoleMessage>[];

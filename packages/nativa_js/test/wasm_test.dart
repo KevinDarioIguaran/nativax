@@ -57,8 +57,8 @@ final Uint8List _loopModule = Uint8List.fromList(const [
 ]);
 
 void main() {
-  late QuickJsEngine engine;
-  setUp(() => engine = QuickJsEngine());
+  late JscEngine engine;
+  setUp(() => engine = JscEngine());
   tearDown(() => engine.dispose());
 
   test('compiles, validates and instantiates a module', () {

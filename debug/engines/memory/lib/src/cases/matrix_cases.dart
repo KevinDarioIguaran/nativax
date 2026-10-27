@@ -91,7 +91,7 @@ for (let i = 0; i < N; i++) {
         scenario: 'Matrix JS churn: ${entry.key}',
         expectation: 'released',
         run: (ctx) async {
-          final engine = QuickJsEngine(
+          final engine = JscEngine(
             JavaScriptEngineConfig(
               memoryLimitBytes: 128 * 1024 * 1024,
               executionBudget: const Duration(seconds: 5),
@@ -228,7 +228,7 @@ form.remove();
           final doc = HtmlParser()
               .parseDocument('<!doctype html><html><body></body></html>')
               .value;
-          final engine = QuickJsEngine(
+          final engine = JscEngine(
             JavaScriptEngineConfig(
               memoryLimitBytes: 128 * 1024 * 1024,
               executionBudget: const Duration(seconds: 5),
@@ -286,7 +286,7 @@ form.remove();
               final doc = HtmlParser()
                   .parseDocument('<!doctype html><html><body></body></html>')
                   .value;
-              final engine = QuickJsEngine();
+              final engine = JscEngine();
               final bindings = DomBindings(
                 engine: engine,
                 document: doc,

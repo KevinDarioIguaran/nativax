@@ -113,7 +113,7 @@ LeakCase _case({
       scenario: scenario,
       expectation: 'released',
       run: (ctx) async {
-        final engine = QuickJsEngine(JavaScriptEngineConfig(
+        final engine = JscEngine(JavaScriptEngineConfig(
           memoryLimitBytes: 128 * 1024 * 1024,
           executionBudget: const Duration(seconds: 5),
         ));

@@ -13,7 +13,6 @@
 #include <stdint.h>
 
 #include "nativax_bridge.h"
-#include "quickjs.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -21,7 +20,7 @@ extern "C" {
 
 /* Installs the internal `__nx_gl_native` object on ctx's global object (the
  * host prelude captures and removes it). */
-void nx_gl_install(JSContext *ctx);
+void nx_gl_install(void *ctx);
 
 /* Restores the GL context that was current on this thread before script code
  * made a WebGL context current. Called after every entry into script code,

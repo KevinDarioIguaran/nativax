@@ -77,13 +77,13 @@ const String nativaxHostPrelude = r'''
 })();
 ''';
 
-/// [JavaScriptEngine] backed by QuickJS-ng, compiled from source by this
-/// package's build hook.
+/// [JavaScriptEngine] backed by JavaScriptCore (JSC), loaded from the
+/// host platform's system library.
 ///
-/// One instance owns one QuickJS runtime and one context; instances share no
-/// script state. Instances must be used from the isolate that created them.
-final class QuickJsEngine implements JavaScriptEngine {
-  QuickJsEngine([this.config = const JavaScriptEngineConfig()]) {
+/// One instance owns one JSC context; instances share no script state.
+/// Instances must be used from the isolate that created them.
+final class JscEngine implements JavaScriptEngine {
+  JscEngine([this.config = const JavaScriptEngineConfig()]) {
     b.nx_jit_init();
     _callback = NativeCallable<b.NxHostCallbackNative>.isolateLocal(_onHost);
     _rt = b.nx_runtime_new(
@@ -94,7 +94,7 @@ final class QuickJsEngine implements JavaScriptEngine {
     );
     if (_rt == nullptr) {
       _callback.close();
-      throw JavaScriptEngineStateException('QuickJS runtime creation failed');
+      throw JavaScriptEngineStateException('JSC runtime creation failed');
     }
     _hostFunctions['__module'] = _moduleRequest;
     _hostFunctions['__module_error'] = (args) {
@@ -201,11 +201,13 @@ final class QuickJsEngine implements JavaScriptEngine {
     _checkAlive();
     return _enter(() {
       final name = _toNative(functionName);
-      final arg = _toNative(argument == null ? '' : jsonEncode(argument));
+      final argStr = argument == null ? '' : jsonEncode(argument);
+      final arg = _toNative(argStr);
       try {
         return _invoke(
-          (out, outLen) =>
-              b.nx_call(_rt, name.ptr, arg.ptr, arg.length, out, outLen),
+          (out, outLen) {
+            return b.nx_call(_rt, name.ptr, arg.ptr, arg.length, out, outLen);
+          },
           label: 'call:$functionName',
         );
       } finally {
@@ -277,10 +279,6 @@ final class QuickJsEngine implements JavaScriptEngine {
       _depth--;
       if (outermost) {
         if (!_disposed) b.nx_set_budget_ms(_rt, 0);
-        // A WebGL context made current by this task must not stay current:
-        // the next task of this isolate may run on another thread, and the
-        // UI thread's own GL context (Flutter's) must be restored.
-        b.nx_gl_release_current();
       }
     }
   }
@@ -454,7 +452,7 @@ final class QuickJsEngine implements JavaScriptEngine {
       }
     }
     final bytes = utf8.encode(reply);
-    // QuickJS' JSON parser requires a NUL-terminated buffer.
+    // JSC's JSON parser requires a NUL-terminated buffer.
     final buf = b.nx_alloc(bytes.length + 1).cast<Uint8>();
     final view = buf.asTypedList(bytes.length + 1);
     view.setAll(0, bytes);

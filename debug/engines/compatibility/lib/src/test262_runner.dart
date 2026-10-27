@@ -308,14 +308,14 @@ class Test262Runner {
     required bool raw,
     required bool async,
   }) async {
-    QuickJsEngine? engine;
+    JscEngine? engine;
     TimerHost? timers;
     final done = Completer<String?>();
     String? doneError;
     var doneCalls = 0;
     var evaluating = false;
     try {
-      engine = QuickJsEngine(JavaScriptEngineConfig(
+      engine = JscEngine(JavaScriptEngineConfig(
         memoryLimitBytes: 256 * 1024 * 1024,
         maxStackBytes: 512 * 1024,
         executionBudget: options.timeout,

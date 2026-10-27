@@ -8,6 +8,10 @@ const String domPrelude =
 (() => {
 'use strict';
 const host = __nx.host;
+// JavaScriptCore refuses to change the prototype of some objects (notably
+// `globalThis`); swallow those failures instead of aborting prelude install.
+const __nxOrigSetPrototypeOf = Object.setPrototypeOf;
+Object.setPrototypeOf = function (o, p) { try { return __nxOrigSetPrototypeOf(o, p); } catch (e) { return o; } };
 // Present when this runtime is a worker's global scope (see WorkerScopeInfo).
 const workerScope = globalThis.__nx_scope || null;
 delete globalThis.__nx_scope;

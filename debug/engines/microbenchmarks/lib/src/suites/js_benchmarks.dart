@@ -8,11 +8,11 @@ import '../model.dart';
 /// and renderer work so the results measure the engine, not the bridge.
 class JsBenchmarks {
   JsBenchmarks() {
-    engine = QuickJsEngine();
+    engine = JscEngine();
     engine.registerHostFunction('noop', (args) => args.isEmpty ? 0 : args[0]);
   }
 
-  late final QuickJsEngine engine;
+  late final JscEngine engine;
 
   List<BenchmarkCase> cases() {
     final parseText = jsonEncode(

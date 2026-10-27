@@ -15,7 +15,7 @@ class DomBenchmarks {
       '.item { display: block; }</style></head><body></body></html>',
     );
     document = parsed.value;
-    engine = QuickJsEngine(const JavaScriptEngineConfig(
+    engine = JscEngine(const JavaScriptEngineConfig(
       maxJobsPerDrain: 1000000,
       memoryLimitBytes: 256 * 1024 * 1024,
       executionBudget: Duration(seconds: 10),
@@ -39,7 +39,7 @@ class DomBenchmarks {
   }
 
   late final Document document;
-  late final QuickJsEngine engine;
+  late final JscEngine engine;
   late final DomBindings bindings;
   late final StyleEngine styleEngine;
   final List<Element> _styled = [];

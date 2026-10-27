@@ -221,7 +221,7 @@ class WptRunner {
       );
     }
 
-    QuickJsEngine? engine;
+    JscEngine? engine;
     TimerHost? timers;
     DomBindings? bindings;
     final completed = Completer<void>();
@@ -229,7 +229,7 @@ class WptRunner {
     final scriptErrors = <String>[];
     var timedOut = false;
     try {
-      engine = QuickJsEngine(
+      engine = JscEngine(
         JavaScriptEngineConfig(
           memoryLimitBytes: 256 * 1024 * 1024,
           maxStackBytes: 4 * 1024 * 1024,

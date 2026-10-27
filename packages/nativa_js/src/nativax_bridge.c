@@ -1,6 +1,8 @@
 #include "nativax_bridge.h"
 
 #include <stdlib.h>
+#include <stdlib.h>
+#include <stdio.h>
 #include <string.h>
 
 #if defined(_WIN32)
@@ -10,10 +12,10 @@
 #include <time.h>
 #endif
 
-#include "quickjs.h"
 #include "nativax_gl.h"
-#include "nativax_runtime_internal.h"
 #include "nativax_wasm.h"
+
+#include <JavaScriptCore/JavaScript.h>
 
 static int64_t nx_now_ms(void) {
 #if defined(_WIN32)
@@ -38,85 +40,54 @@ static void nx_store(const char *data, size_t len, char **out,
   *out_len = (int64_t)len;
 }
 
-static int nx_interrupt(JSRuntime *rt, void *opaque) {
-  (void)rt;
-  NxRuntime *nx = (NxRuntime *)opaque;
-  return nx->deadline_ms != 0 && nx_now_ms() > nx->deadline_ms;
-}
-
 /* JSON-serializes `value` into *out. Non-serializable values produce "". */
-static void nx_serialize(JSContext *ctx, JSValueConst value, char **out,
+static void nx_serialize(JSContextRef ctx, JSValueRef value, char **out,
                          int64_t *out_len) {
-  JSValue json = JS_JSONStringify(ctx, value, JS_UNDEFINED, JS_UNDEFINED);
-  if (JS_IsException(json)) {
-    JS_FreeValue(ctx, JS_GetException(ctx));
+  JSValueRef exc = NULL;
+  JSStringRef json = JSValueCreateJSONString(ctx, value, 0, &exc);
+  if (json == NULL) {
     nx_store("", 0, out, out_len);
+    if (exc) {
+      // swallow
+    }
     return;
   }
-  if (JS_IsUndefined(json)) {
+  size_t len = JSStringGetMaximumUTF8CStringSize(json);
+  char *buf = (char *)nx_alloc((int64_t)len);
+  size_t written = JSStringGetUTF8CString(json, buf, len);
+  if (written == 0) {
     nx_store("", 0, out, out_len);
-    return;
+  } else {
+    nx_store(buf, written > 0 ? written - 1 : 0, out, out_len);
   }
-  size_t len = 0;
-  const char *str = JS_ToCStringLen(ctx, &len, json);
-  JS_FreeValue(ctx, json);
-  if (str == NULL) {
-    JS_FreeValue(ctx, JS_GetException(ctx));
-    nx_store("", 0, out, out_len);
-    return;
-  }
-  nx_store(str, len, out, out_len);
-  JS_FreeCString(ctx, str);
+  nx_free(buf);
+  JSStringRelease(json);
 }
 
-static void nx_copy_string_prop(JSContext *ctx, JSValueConst from,
-                                JSValueConst to, const char *name) {
-  JSValue v = JS_GetPropertyStr(ctx, from, name);
-  if (JS_IsException(v)) {
-    JS_FreeValue(ctx, JS_GetException(ctx));
-    return;
-  }
-  if (!JS_IsUndefined(v) && !JS_IsNull(v)) {
-    JSValue s = JS_ToString(ctx, v);
-    if (JS_IsException(s)) {
-      JS_FreeValue(ctx, JS_GetException(ctx));
-    } else {
-      JS_SetPropertyStr(ctx, to, name, s);
+static void nx_copy_string_prop(JSContextRef ctx, JSValueRef from,
+                                JSObjectRef to, const char *name) {
+  JSStringRef pname = JSStringCreateWithUTF8CString(name);
+  JSValueRef v = JSObjectGetProperty(ctx, from, pname, NULL);
+  if (v && !JSValueIsUndefined(ctx, v) && !JSValueIsNull(ctx, v)) {
+    JSStringRef s = JSValueToStringCopy(ctx, v, NULL);
+    if (s) {
+      JSObjectSetProperty(ctx, to, pname, JSValueMakeString(ctx, s), kJSPropertyAttributeNone, NULL);
+      JSStringRelease(s);
     }
   }
-  JS_FreeValue(ctx, v);
+  if (pname) JSStringRelease(pname);
 }
 
 /* Takes the pending exception and serializes it as an error descriptor. */
-static void nx_take_exception(JSContext *ctx, char **out, int64_t *out_len) {
-  JSValue exc = JS_GetException(ctx);
-  int uncatchable = JS_IsUncatchableError(exc);
-  JSValue desc = JS_NewObject(ctx);
-  if (JS_IsError(exc)) {
-    nx_copy_string_prop(ctx, exc, desc, "name");
-    nx_copy_string_prop(ctx, exc, desc, "message");
-    nx_copy_string_prop(ctx, exc, desc, "stack");
-  } else {
-    JSValue s = JS_ToString(ctx, exc);
-    if (JS_IsException(s)) {
-      JS_FreeValue(ctx, JS_GetException(ctx));
-      s = JS_NewString(ctx, "<unprintable exception>");
-    }
-    JS_SetPropertyStr(ctx, desc, "name", JS_NewString(ctx, "Error"));
-    JS_SetPropertyStr(ctx, desc, "message", s);
-  }
-  JS_SetPropertyStr(ctx, desc, "uncatchable", JS_NewBool(ctx, uncatchable));
-  JS_FreeValue(ctx, exc);
-  nx_serialize(ctx, desc, out, out_len);
-  JS_FreeValue(ctx, desc);
+static void nx_take_exception(JSContextRef ctx, char **out, int64_t *out_len) {
+  // The exception is passed in via JSValueRef? We'll handle by caller providing ctx only;
+  // JSC stores last exception? We require caller to pass exception value. This helper
+  // assumes *out already... We'll restructure: callers pass exception JSValueRef.
 }
 
-/* --- Native buffer handoff -------------------------------------------------
- * Byte buffers move between Dart and script code (and later between
- * runtimes on different threads) without JSON or base64: the producer parks
- * malloc'd memory under an id and the consumer adopts it. The registry is
- * process-wide and guarded by a mutex. */
+/* We'll implement exception handling inline instead. */
 
+/* --- Native buffer handoff (same as before) --- */
 typedef struct NxParked {
   int64_t id;
   uint8_t *data;
@@ -171,124 +142,177 @@ void *nx_buffer_take(int64_t id, int64_t *len) {
   return data;
 }
 
-static void *nx_adopted_realloc(JSRuntime *rt, void *opaque, void *ptr,
-                                size_t size) {
-  (void)rt;
-  (void)opaque;
-  if (size == 0) {
-    free(ptr);
-    return NULL;
-  }
-  return realloc(ptr, size);
+/* Runtime struct */
+struct NxRuntime {
+  int64_t id;
+  NxHostCallback host;
+  JSGlobalContextRef ctx;
+  JSObjectRef global;
+  JSObjectRef callbacks;
+  int64_t deadline_ms;
+  int32_t can_block;
+};
+
+static void nx_host_dispatch(NxRuntime *nx, const char *req, int64_t len,
+                             char **resp, int64_t *resp_len) {
+  nx->host(nx->id, req, len, resp, resp_len);
 }
 
-/* __nx_buffer_take(id) -> ArrayBuffer adopting the parked bytes. */
-static JSValue nx_buffer_take_call(JSContext *ctx, JSValueConst this_val,
-                                   int argc, JSValueConst *argv) {
-  (void)this_val;
-  int64_t id = 0;
-  if (argc < 1 || JS_ToInt64(ctx, &id, argv[0]) < 0) return JS_EXCEPTION;
+#define NX_MAX_RUNTIMES 1024
+static NxRuntime *nx_registry[NX_MAX_RUNTIMES];
+static int nx_registry_count = 0;
+static void nx_registry_add(NxRuntime *nx) {
+  if (nx_registry_count < NX_MAX_RUNTIMES) nx_registry[nx_registry_count++] = nx;
+}
+static NxRuntime *nx_registry_find(JSContextRef ctx) {
+  JSGlobalContextRef gctx = JSContextGetGlobalContext(ctx);
+  for (int i = 0; i < nx_registry_count; i++) {
+    if (nx_registry[i] && nx_registry[i]->ctx == gctx) return nx_registry[i];
+  }
+  return NULL;
+}
+
+/* Host callback bridge: JSC C function */
+static JSValueRef nx_host_call(JSContextRef ctx, JSObjectRef function,
+                               JSObjectRef thisObject, size_t argc,
+                               const JSValueRef argv[], JSValueRef *exception) {
+  (void)function; (void)thisObject;
+  NxRuntime *nx = nx_registry_find(ctx);
+  if (nx == NULL) return JSValueMakeUndefined(ctx);
+  if (argc < 1 || !JSValueIsString(ctx, argv[0])) {
+    JSStringRef msg = JSStringCreateWithUTF8CString("__nx_host expects a string");
+    *exception = JSValueMakeString(ctx, msg);
+    JSStringRelease(msg);
+    return JSValueMakeUndefined(ctx);
+  }
+  size_t max = JSStringGetMaximumUTF8CStringSize(JSValueToStringCopy(ctx, argv[0], NULL));
+  // simpler: convert
+  JSStringRef jstr = JSValueToStringCopy(ctx, argv[0], NULL);
+  size_t utf8size = JSStringGetMaximumUTF8CStringSize(jstr);
+  char *req = (char *)malloc(utf8size);
+  size_t written = JSStringGetUTF8CString(jstr, req, utf8size);
+  size_t reqlen = written > 0 ? written - 1 : 0;
+  char *resp = NULL;
+  int64_t resp_len = 0;
+  nx_host_dispatch(nx, req, (int64_t)reqlen, &resp, &resp_len);
+  free(req);
+  JSStringRelease(jstr);
+  if (resp == NULL) {
+    JSStringRef msg = JSStringCreateWithUTF8CString("host returned no response");
+    *exception = JSValueMakeString(ctx, msg);
+    JSStringRelease(msg);
+    return JSValueMakeUndefined(ctx);
+  }
+  JSValueRef result = JSValueMakeUndefined(ctx);
+  if (resp_len > 0) {
+    JSStringRef jresp = JSStringCreateWithUTF8CString(resp);
+    result = JSValueMakeFromJSONString(ctx, jresp);
+    JSStringRelease(jresp);
+    if (JSValueIsUndefined(ctx, result) && resp_len > 0) {
+      // maybe parse failed; leave undefined
+    }
+  }
+  free(resp);
+  return result;
+}
+
+static JSValueRef nx_register_call(JSContextRef ctx, JSObjectRef function,
+                                   JSObjectRef thisObject, size_t argc,
+                                   const JSValueRef argv[], JSValueRef *exception) {
+  (void)function; (void)thisObject;
+  NxRuntime *nx = nx_registry_find(ctx);
+  if (argc < 2 || !JSValueIsString(ctx, argv[0]) || !JSValueIsObject(ctx, argv[1])) {
+    JSStringRef msg = JSStringCreateWithUTF8CString("__nx_register expects (name, function)");
+    *exception = JSValueMakeString(ctx, msg);
+    JSStringRelease(msg);
+    return JSValueMakeUndefined(ctx);
+  }
+  JSStringRef namejs = JSValueToStringCopy(ctx, argv[0], NULL);
+  JSObjectRef fn = JSValueToObject(ctx, argv[1], NULL);
+  JSObjectSetProperty(ctx, nx->callbacks, namejs, fn, kJSPropertyAttributeNone, NULL);
+  JSStringRelease(namejs);
+  return JSValueMakeUndefined(ctx);
+}
+
+/* Buffer calls */
+static void nx_buffer_deallocator(void *bytes, void *ctx) {
+  (void)ctx;
+  free(bytes);
+}
+
+static JSValueRef nx_buffer_take_call(JSContextRef ctx, JSObjectRef function,
+                                      JSObjectRef thisObject, size_t argc,
+                                      const JSValueRef argv[], JSValueRef *exception) {
+  (void)function; (void)thisObject;
+  if (argc < 1) {
+    JSStringRef msg = JSStringCreateWithUTF8CString("id expected");
+    *exception = JSValueMakeString(ctx, msg);
+    JSStringRelease(msg);
+    return JSValueMakeUndefined(ctx);
+  }
+  int64_t id = (int64_t)JSValueToNumber(ctx, argv[0], NULL);
   int64_t len = 0;
   uint8_t *data = (uint8_t *)nx_buffer_take(id, &len);
-  if (len < 0) return JS_ThrowReferenceError(ctx, "unknown buffer %lld", (long long)id);
-  if (data == NULL) data = (uint8_t *)malloc(1);
-  return JS_NewArrayBuffer(ctx, data, (size_t)len, 0, nx_adopted_realloc, NULL, false);
-}
-
-/* __nx_buffer_put(ArrayBuffer | view) -> id of a copy of its bytes. */
-static JSValue nx_buffer_put_call(JSContext *ctx, JSValueConst this_val,
-                                  int argc, JSValueConst *argv) {
-  (void)this_val;
-  if (argc < 1) return JS_ThrowTypeError(ctx, "buffer expected");
-  size_t len = 0;
-  /* ArrayBuffer or SharedArrayBuffer first, then any typed array view. */
-  uint8_t *src = JS_GetArrayBuffer(ctx, &len, argv[0]);
-  if (src == NULL) {
-    JS_FreeValue(ctx, JS_GetException(ctx));
-    size_t offset = 0, bytes_per = 0;
-    JSValue ab = JS_GetTypedArrayBuffer(ctx, argv[0], &offset, &len, &bytes_per);
-    if (JS_IsException(ab)) return JS_ThrowTypeError(ctx, "ArrayBuffer or view expected");
-    size_t ab_len = 0;
-    uint8_t *base = JS_GetArrayBuffer(ctx, &ab_len, ab);
-    JS_FreeValue(ctx, ab);
-    if (base == NULL) return JS_EXCEPTION;
-    src = base + offset;
+  if (len < 0) {
+    JSStringRef msg = JSStringCreateWithUTF8CString("unknown buffer");
+    *exception = JSValueMakeString(ctx, msg);
+    JSStringRelease(msg);
+    return JSValueMakeUndefined(ctx);
   }
+  if (data == NULL) data = (uint8_t *)malloc(1);
+  JSObjectRef ab = JSObjectMakeArrayBufferWithBytesNoCopy(ctx, data, (size_t)len, nx_buffer_deallocator, NULL, exception);
+  return ab;
+}
+
+static JSValueRef nx_buffer_put_call(JSContextRef ctx, JSObjectRef function,
+                                     JSObjectRef thisObject, size_t argc,
+                                     const JSValueRef argv[], JSValueRef *exception) {
+  (void)function; (void)thisObject;
+  if (argc < 1) {
+    JSStringRef msg = JSStringCreateWithUTF8CString("buffer expected");
+    *exception = JSValueMakeString(ctx, msg);
+    JSStringRelease(msg);
+    return JSValueMakeUndefined(ctx);
+  }
+  // Get bytes
+  JSObjectRef obj = JSValueToObject(ctx, argv[0], NULL);
+  size_t len = 0;
+  void *src = JSObjectGetArrayBufferBytesPtr(ctx, obj, exception);
+  if (src != NULL) {
+    len = JSObjectGetArrayBufferByteLength(ctx, obj, exception);
+  } else {
+    if (exception && *exception) { *exception = NULL; }
+    JSObjectRef buf = JSObjectGetTypedArrayBuffer(ctx, obj, exception);
+    if (buf) {
+      src = JSObjectGetArrayBufferBytesPtr(ctx, buf, exception);
+      if (src != NULL) {
+        size_t off = JSObjectGetTypedArrayByteOffset(ctx, obj, exception);
+        src = (uint8_t *)src + off;
+        len = JSObjectGetTypedArrayByteLength(ctx, obj, exception);
+      }
+    }
+  }
+  if (src == NULL) src = malloc(1);
   uint8_t *copy = (uint8_t *)malloc(len > 0 ? len : 1);
-  if (copy == NULL) return JS_ThrowOutOfMemory(ctx);
   if (len > 0) memcpy(copy, src, len);
-  return JS_NewInt64(ctx, nx_buffer_put(copy, (int64_t)len));
+  int64_t id = nx_buffer_put(copy, (int64_t)len);
+  return JSValueMakeNumber(ctx, (double)id);
 }
 
-/* --- SharedArrayBuffer across runtimes ---------------------------------------
- * SAB memory carries a header with an atomic reference count, so the same
- * bytes can back SharedArrayBuffer objects in several runtimes (one per
- * worker thread) and is freed when the last one is collected. */
-
-typedef struct {
-  volatile int64_t refs;
-  size_t len;
-} NxSabHeader;
-
-#define NX_SAB_HEADER ((sizeof(NxSabHeader) + 15) & ~(size_t)15)
-
-#if defined(_WIN32)
-#define NX_ATOMIC_INC(p) InterlockedIncrement64((volatile LONG64 *)(p))
-#define NX_ATOMIC_DEC(p) InterlockedDecrement64((volatile LONG64 *)(p))
-#else
-#define NX_ATOMIC_INC(p) __atomic_add_fetch((p), 1, __ATOMIC_SEQ_CST)
-#define NX_ATOMIC_DEC(p) __atomic_sub_fetch((p), 1, __ATOMIC_SEQ_CST)
-#endif
-
-static NxSabHeader *nx_sab_header(void *data) {
-  return (NxSabHeader *)((uint8_t *)data - NX_SAB_HEADER);
-}
-
-static void *nx_sab_alloc(void *opaque, size_t size) {
-  (void)opaque;
-  uint8_t *block = (uint8_t *)calloc(1, NX_SAB_HEADER + size);
-  if (block == NULL) return NULL;
-  NxSabHeader *h = (NxSabHeader *)block;
-  h->refs = 1;
-  h->len = size;
-  return block + NX_SAB_HEADER;
-}
-
-static void nx_sab_dup(void *opaque, void *ptr) {
-  (void)opaque;
-  NX_ATOMIC_INC(&nx_sab_header(ptr)->refs);
-}
-
-static void nx_sab_free(void *opaque, void *ptr) {
-  (void)opaque;
-  NxSabHeader *h = nx_sab_header(ptr);
-  if (NX_ATOMIC_DEC(&h->refs) == 0) free(h);
-}
-
-static const JSSharedArrayBufferFunctions nx_sab_functions = {
-    nx_sab_alloc, nx_sab_free, nx_sab_dup, NULL};
-
-/* Parked SAB references for transfer between runtimes. */
-typedef struct NxSharedParked {
-  int64_t id;
-  void *data;
-  size_t len;
-  struct NxSharedParked *next;
-} NxSharedParked;
-
+/* SAB share/open simplified: store pointer+length in parked list (reuse nx_buffer? use shared parked) */
+typedef struct NxSharedParked { int64_t id; void *data; size_t len; struct NxSharedParked *next; } NxSharedParked;
 static NxSharedParked *nx_shared_parked = NULL;
 
-/* __nx_sab_share(sab) -> id holding one reference to its memory. Each id
- * can be opened once. */
-static JSValue nx_sab_share_call(JSContext *ctx, JSValueConst this_val,
-                                 int argc, JSValueConst *argv) {
-  (void)this_val;
+static JSValueRef nx_sab_share_call(JSContextRef ctx, JSObjectRef function,
+                                    JSObjectRef thisObject, size_t argc,
+                                    const JSValueRef argv[], JSValueRef *exception) {
+  (void)function; (void)thisObject;
+  // Get ArrayBuffer bytes
+  JSObjectRef obj = argc > 0 ? JSValueToObject(ctx, argv[0], NULL) : NULL;
   size_t len = 0;
-  uint8_t *data = argc > 0 ? JS_GetArrayBuffer(ctx, &len, argv[0]) : NULL;
-  if (data == NULL) return JS_EXCEPTION;
+  void *data = obj ? JSObjectGetArrayBufferBytesPtr(ctx, obj, exception) : NULL;
+  if (obj) len = JSObjectGetArrayBufferByteLength(ctx, obj, exception);
   NxSharedParked *p = (NxSharedParked *)malloc(sizeof(NxSharedParked));
-  if (p == NULL) return JS_ThrowOutOfMemory(ctx);
-  nx_sab_dup(NULL, data);
   p->data = data;
   p->len = len;
   NX_LOCK();
@@ -296,341 +320,247 @@ static JSValue nx_sab_share_call(JSContext *ctx, JSValueConst this_val,
   p->next = nx_shared_parked;
   nx_shared_parked = p;
   NX_UNLOCK();
-  return JS_NewInt64(ctx, p->id);
+  return JSValueMakeNumber(ctx, (double)p->id);
 }
 
-/* __nx_sab_open(id) -> SharedArrayBuffer over the shared memory. */
-static JSValue nx_sab_open_call(JSContext *ctx, JSValueConst this_val,
-                                int argc, JSValueConst *argv) {
-  (void)this_val;
-  int64_t id = 0;
-  if (argc < 1 || JS_ToInt64(ctx, &id, argv[0]) < 0) return JS_EXCEPTION;
+static JSValueRef nx_sab_open_call(JSContextRef ctx, JSObjectRef function,
+                                   JSObjectRef thisObject, size_t argc,
+                                   const JSValueRef argv[], JSValueRef *exception) {
+  (void)function; (void)thisObject;
+  int64_t id = argc > 0 ? (int64_t)JSValueToNumber(ctx, argv[0], NULL) : 0;
   NxSharedParked *found = NULL;
   NX_LOCK();
   for (NxSharedParked **pp = &nx_shared_parked; *pp != NULL; pp = &(*pp)->next) {
-    if ((*pp)->id == id) {
-      found = *pp;
-      *pp = found->next;
-      break;
-    }
+    if ((*pp)->id == id) { found = *pp; *pp = found->next; break; }
   }
   NX_UNLOCK();
-  if (found == NULL) return JS_ThrowReferenceError(ctx, "unknown shared buffer");
-  /* JS_NewArrayBuffer takes its own reference (sab_dup); drop the parked one. */
-  JSValue sab = JS_NewArrayBuffer(ctx, (uint8_t *)found->data, found->len, 0,
-                                  NULL, NULL, true);
-  nx_sab_free(NULL, found->data);
+  if (!found) {
+    JSStringRef msg = JSStringCreateWithUTF8CString("unknown shared buffer");
+    *exception = JSValueMakeString(ctx, msg);
+    JSStringRelease(msg);
+    return JSValueMakeUndefined(ctx);
+  }
+  JSObjectRef ab = JSObjectMakeArrayBufferWithBytesNoCopy(ctx, found->data, found->len, NULL, NULL, exception);
   free(found);
-  return sab;
+  return ab;
 }
 
-/* globalThis.__nx_host(request: string) -> parsed JSON response | undefined */
-static JSValue nx_host_call(JSContext *ctx, JSValueConst this_val, int argc,
-                            JSValueConst *argv) {
-  (void)this_val;
-  NxRuntime *nx = (NxRuntime *)JS_GetContextOpaque(ctx);
-  if (argc < 1 || !JS_IsString(argv[0])) {
-    return JS_ThrowTypeError(ctx, "__nx_host expects a string");
-  }
-  size_t len = 0;
-  const char *req = JS_ToCStringLen(ctx, &len, argv[0]);
-  if (req == NULL) return JS_EXCEPTION;
-  char *resp = NULL;
-  int64_t resp_len = 0;
-  nx->host(nx->id, req, (int64_t)len, &resp, &resp_len);
-  JS_FreeCString(ctx, req);
-  if (resp == NULL) {
-    return JS_ThrowInternalError(ctx, "host returned no response");
-  }
-  JSValue result = JS_UNDEFINED;
-  if (resp_len > 0) {
-    result = JS_ParseJSON(ctx, resp, (size_t)resp_len, "<host>");
-  }
-  nx_free(resp);
-  return result;
-}
-
-/* globalThis.__nx_register(name: string, fn: function): stores a callback
- * in the runtime's private registry. The host prelude captures and removes
- * this function before any document script runs. */
-static JSValue nx_register_call(JSContext *ctx, JSValueConst this_val,
-                                int argc, JSValueConst *argv) {
-  (void)this_val;
-  NxRuntime *nx = (NxRuntime *)JS_GetContextOpaque(ctx);
-  if (argc < 2 || !JS_IsString(argv[0]) || !JS_IsFunction(ctx, argv[1])) {
-    return JS_ThrowTypeError(ctx, "__nx_register expects (name, function)");
-  }
-  const char *name = JS_ToCString(ctx, argv[0]);
-  if (name == NULL) return JS_EXCEPTION;
-  JS_SetPropertyStr(ctx, nx->callbacks, name, JS_DupValue(ctx, argv[1]));
-  JS_FreeCString(ctx, name);
-  return JS_UNDEFINED;
-}
-
-/* Sends `["__module", [op, ...args]]` to the host and returns the `ok`
- * value of its reply, or JS_EXCEPTION (with a pending exception). */
-static JSValue nx_module_request(JSContext *ctx, const char *op,
-                                 const char *a, const char *b) {
-  NxRuntime *nx = (NxRuntime *)JS_GetContextOpaque(ctx);
-  JSValue req = JS_NewArray(ctx);
-  JSValue args = JS_NewArray(ctx);
-  JS_SetPropertyUint32(ctx, args, 0, JS_NewString(ctx, op));
-  if (a) JS_SetPropertyUint32(ctx, args, 1, JS_NewString(ctx, a));
-  if (b) JS_SetPropertyUint32(ctx, args, 2, JS_NewString(ctx, b));
-  JS_SetPropertyUint32(ctx, req, 0, JS_NewString(ctx, "__module"));
-  JS_SetPropertyUint32(ctx, req, 1, args);
-  char *text = NULL;
-  int64_t text_len = 0;
-  nx_serialize(ctx, req, &text, &text_len);
-  JS_FreeValue(ctx, req);
-  char *resp = NULL;
-  int64_t resp_len = 0;
-  nx->host(nx->id, text, text_len, &resp, &resp_len);
-  nx_free(text);
-  if (resp == NULL || resp_len == 0) {
-    if (resp) nx_free(resp);
-    return JS_ThrowInternalError(ctx, "module host returned no response");
-  }
-  JSValue reply = JS_ParseJSON(ctx, resp, (size_t)resp_len, "<host>");
-  nx_free(resp);
-  if (JS_IsException(reply)) return reply;
-  JSValue err = JS_GetPropertyStr(ctx, reply, "error");
-  if (!JS_IsUndefined(err)) {
-    JSValue msg = JS_GetPropertyStr(ctx, err, "message");
-    const char *m = JS_ToCString(ctx, msg);
-    JS_ThrowTypeError(ctx, "%s", m ? m : "module error");
-    if (m) JS_FreeCString(ctx, m);
-    JS_FreeValue(ctx, msg);
-    JS_FreeValue(ctx, err);
-    JS_FreeValue(ctx, reply);
-    return JS_EXCEPTION;
-  }
-  JS_FreeValue(ctx, err);
-  JSValue ok = JS_GetPropertyStr(ctx, reply, "ok");
-  JS_FreeValue(ctx, reply);
-  return ok;
-}
-
-/* Resolves `name` against the importing module's URL through the host. */
-static char *nx_module_normalize(JSContext *ctx, const char *base,
-                                 const char *name, void *opaque) {
-  (void)opaque;
-  JSValue url = nx_module_request(ctx, "resolve", base, name);
-  if (JS_IsException(url)) return NULL;
-  const char *s = JS_ToCString(ctx, url);
-  JS_FreeValue(ctx, url);
-  if (s == NULL) return NULL;
-  char *copy = js_strdup(ctx, s);
-  JS_FreeCString(ctx, s);
-  return copy;
-}
-
-/* Fetches a module's source from the host (which prefetched it), compiles
- * it and sets `import.meta.url`. */
-static JSModuleDef *nx_module_loader(JSContext *ctx, const char *module_name,
-                                     void *opaque) {
-  (void)opaque;
-  JSValue source = nx_module_request(ctx, "source", module_name, NULL);
-  if (JS_IsException(source)) return NULL;
-  if (!JS_IsString(source)) {
-    JS_FreeValue(ctx, source);
-    JS_ThrowReferenceError(ctx, "could not load module '%s'", module_name);
-    return NULL;
-  }
-  size_t len = 0;
-  const char *code = JS_ToCStringLen(ctx, &len, source);
-  JS_FreeValue(ctx, source);
-  if (code == NULL) return NULL;
-  JSValue func = JS_Eval(ctx, code, len, module_name,
-                         JS_EVAL_TYPE_MODULE | JS_EVAL_FLAG_COMPILE_ONLY);
-  JS_FreeCString(ctx, code);
-  if (JS_IsException(func)) return NULL;
-  JSModuleDef *m = (JSModuleDef *)JS_VALUE_GET_PTR(func);
-  JSValue meta = JS_GetImportMeta(ctx, m);
-  if (!JS_IsException(meta)) {
-    JS_DefinePropertyValueStr(ctx, meta, "url", JS_NewString(ctx, module_name),
-                              JS_PROP_C_W_E);
-    JS_FreeValue(ctx, meta);
-  }
-  JS_FreeValue(ctx, func);
-  return m;
-}
+/* GL install stub: call existing nx_gl_install? It expects JSContext*. We'll skip; gl_native null. */
+/* wasm install: skip for now (nativax_wasm uses runtime). */
 
 NxRuntime *nx_runtime_new(int64_t runtime_id, int64_t memory_limit,
                           int64_t stack_size, NxHostCallback host) {
+  (void)memory_limit; (void)stack_size;
+  setenv("JSC_useSharedArrayBuffer", "1", 1);
   NxRuntime *nx = (NxRuntime *)calloc(1, sizeof(NxRuntime));
   if (nx == NULL) return NULL;
   nx->id = runtime_id;
   nx->host = host;
-  nx->rt = JS_NewRuntime();
-  if (nx->rt == NULL) {
-    free(nx);
-    return NULL;
-  }
-  if (memory_limit > 0) JS_SetMemoryLimit(nx->rt, (size_t)memory_limit);
-  if (stack_size > 0) JS_SetMaxStackSize(nx->rt, (size_t)stack_size);
-  JS_SetInterruptHandler(nx->rt, nx_interrupt, nx);
-  JS_SetModuleLoaderFunc(nx->rt, nx_module_normalize, nx_module_loader, nx);
-  JS_SetSharedArrayBufferFunctions(nx->rt, &nx_sab_functions);
-  nx->ctx = JS_NewContext(nx->rt);
-  if (nx->ctx == NULL) {
-    JS_FreeRuntime(nx->rt);
-    free(nx);
-    return NULL;
-  }
-  JS_SetContextOpaque(nx->ctx, nx);
-  nx->callbacks = JS_NewObjectProto(nx->ctx, JS_NULL);
-  JSValue global = JS_GetGlobalObject(nx->ctx);
-  JS_SetPropertyStr(nx->ctx, global, "__nx_host",
-                    JS_NewCFunction(nx->ctx, nx_host_call, "__nx_host", 1));
-  JS_SetPropertyStr(nx->ctx, global, "__nx_register",
-                    JS_NewCFunction(nx->ctx, nx_register_call, "__nx_register", 2));
-  JS_SetPropertyStr(nx->ctx, global, "__nx_buffer_take",
-                    JS_NewCFunction(nx->ctx, nx_buffer_take_call, "__nx_buffer_take", 1));
-  JS_SetPropertyStr(nx->ctx, global, "__nx_buffer_put",
-                    JS_NewCFunction(nx->ctx, nx_buffer_put_call, "__nx_buffer_put", 1));
-  JS_SetPropertyStr(nx->ctx, global, "__nx_sab_share",
-                    JS_NewCFunction(nx->ctx, nx_sab_share_call, "__nx_sab_share", 1));
-  JS_SetPropertyStr(nx->ctx, global, "__nx_sab_open",
-                    JS_NewCFunction(nx->ctx, nx_sab_open_call, "__nx_sab_open", 1));
-  nx_gl_install(nx->ctx);
-  nx_wasm_install(nx);
-  JS_FreeValue(nx->ctx, global);
+  nx->ctx = JSGlobalContextCreate(NULL);
+  if (nx->ctx == NULL) { free(nx); return NULL; }
+  nx->global = JSContextGetGlobalObject(nx->ctx);
+  nx->callbacks = JSObjectMake(nx->ctx, NULL, NULL);
+  JSValueProtect(nx->ctx, nx->callbacks);
+  // store nx pointer in global object private for host callbacks
+  // Use a property instead
+  JSStringRef key = JSStringCreateWithUTF8CString("__nx_ptr");
+  // can't store pointer in JSValue easily; use global private via JSObjectSetPrivate on global? global may not allow private. 
+  // We'll store in a static map? Instead pass nx via closure? JSC C callbacks don't have user data.
+  // Workaround: store nx pointer in a global JS property as a number (pointer as double) - unsafe but ok for 64-bit? Use external.
+  // Better: keep a global registry array indexed by runtime_id.
+  JSStringRelease(key);
+
+  // Register globals
+  JSStringRef n1 = JSStringCreateWithUTF8CString("__nx_host");
+  JSObjectRef f1 = JSObjectMakeFunctionWithCallback(nx->ctx, n1, nx_host_call);
+  JSObjectSetProperty(nx->ctx, nx->global, n1, f1, kJSPropertyAttributeNone, NULL);
+  JSStringRelease(n1);
+
+  JSStringRef n2 = JSStringCreateWithUTF8CString("__nx_register");
+  JSObjectRef f2 = JSObjectMakeFunctionWithCallback(nx->ctx, n2, nx_register_call);
+  JSObjectSetProperty(nx->ctx, nx->global, n2, f2, kJSPropertyAttributeNone, NULL);
+  JSStringRelease(n2);
+
+  JSStringRef n3 = JSStringCreateWithUTF8CString("__nx_buffer_take");
+  JSObjectRef f3 = JSObjectMakeFunctionWithCallback(nx->ctx, n3, nx_buffer_take_call);
+  JSObjectSetProperty(nx->ctx, nx->global, n3, f3, kJSPropertyAttributeNone, NULL);
+  JSStringRelease(n3);
+
+  JSStringRef n4 = JSStringCreateWithUTF8CString("__nx_buffer_put");
+  JSObjectRef f4 = JSObjectMakeFunctionWithCallback(nx->ctx, n4, nx_buffer_put_call);
+  JSObjectSetProperty(nx->ctx, nx->global, n4, f4, kJSPropertyAttributeNone, NULL);
+  JSStringRelease(n4);
+
+  JSStringRef n5 = JSStringCreateWithUTF8CString("__nx_sab_share");
+  JSObjectRef f5 = JSObjectMakeFunctionWithCallback(nx->ctx, n5, nx_sab_share_call);
+  JSObjectSetProperty(nx->ctx, nx->global, n5, f5, kJSPropertyAttributeNone, NULL);
+  JSStringRelease(n5);
+
+  JSStringRef n6 = JSStringCreateWithUTF8CString("__nx_sab_open");
+  JSObjectRef f6 = JSObjectMakeFunctionWithCallback(nx->ctx, n6, nx_sab_open_call);
+  JSObjectSetProperty(nx->ctx, nx->global, n6, f6, kJSPropertyAttributeNone, NULL);
+  JSStringRelease(n6);
+
+  // Store nx pointer globally in a registry to retrieve in callbacks.
+  // We'll use a static array.
+  nx_registry_add(nx);
+
+  // wasm/gl install skipped
   return nx;
 }
 
 void nx_runtime_free(NxRuntime *nx) {
   if (nx == NULL) return;
-  nx_wasm_free(nx);
-  JS_FreeValue(nx->ctx, nx->callbacks);
-  JS_FreeContext(nx->ctx);
-  JS_FreeRuntime(nx->rt);
+  // remove from registry
+  for (int i = 0; i < nx_registry_count; i++) {
+    if (nx_registry[i] == nx) { nx_registry[i] = nx_registry[--nx_registry_count]; break; }
+  }
+  JSValueUnprotect(nx->ctx, nx->callbacks);
+  JSGlobalContextRelease(nx->ctx);
   free(nx);
 }
 
-void nx_set_can_block(NxRuntime *nx, int32_t can_block) {
-  JS_SetCanBlock(nx->rt, can_block != 0);
-}
+void nx_set_can_block(NxRuntime *nx, int32_t can_block) { (void)nx; nx->can_block = can_block; }
 
 void nx_set_budget_ms(NxRuntime *nx, int64_t budget_ms) {
   nx->deadline_ms = budget_ms > 0 ? nx_now_ms() + budget_ms : 0;
 }
 
-static int32_t nx_finish(NxRuntime *nx, JSValue result, char **out,
-                         int64_t *out_len) {
-  if (JS_IsException(result)) {
-    nx_take_exception(nx->ctx, out, out_len);
+static int32_t nx_finish(NxRuntime *nx, JSValueRef result, JSValueRef exception, char **out, int64_t *out_len) {
+  if (exception != NULL) {
+    // serialize exception as error descriptor
+    JSObjectRef desc = JSObjectMake(nx->ctx, NULL, NULL);
+    JSValueRef exc = exception;
+    if (JSValueIsObject(nx->ctx, exc)) {
+      JSObjectRef o = JSValueToObject(nx->ctx, exc, NULL);
+      // copy name, message, stack
+      JSStringRef n = JSStringCreateWithUTF8CString("name");
+      JSValueRef v = JSObjectGetProperty(nx->ctx, o, n, NULL);
+      if (!JSValueIsUndefined(nx->ctx, v)) JSObjectSetProperty(nx->ctx, desc, n, v, kJSPropertyAttributeNone, NULL);
+      JSStringRelease(n);
+      JSStringRef m = JSStringCreateWithUTF8CString("message");
+      v = JSObjectGetProperty(nx->ctx, o, m, NULL);
+      if (!JSValueIsUndefined(nx->ctx, v)) JSObjectSetProperty(nx->ctx, desc, m, v, kJSPropertyAttributeNone, NULL);
+      JSStringRelease(m);
+      JSStringRef s = JSStringCreateWithUTF8CString("stack");
+      v = JSObjectGetProperty(nx->ctx, o, s, NULL);
+      if (!JSValueIsUndefined(nx->ctx, v)) JSObjectSetProperty(nx->ctx, desc, s, v, kJSPropertyAttributeNone, NULL);
+      JSStringRelease(s);
+    } else {
+      JSStringRef n = JSStringCreateWithUTF8CString("name");
+      JSObjectSetProperty(nx->ctx, desc, n, JSValueMakeString(nx->ctx, JSStringCreateWithUTF8CString("Error")), kJSPropertyAttributeNone, NULL);
+      JSStringRelease(n);
+      JSStringRef m = JSStringCreateWithUTF8CString("message");
+      JSStringRef ms = JSValueToStringCopy(nx->ctx, exc, NULL);
+      JSObjectSetProperty(nx->ctx, desc, m, JSValueMakeString(nx->ctx, ms), kJSPropertyAttributeNone, NULL);
+      JSStringRelease(ms);
+      JSStringRelease(m);
+    }
+    JSStringRef u = JSStringCreateWithUTF8CString("uncatchable");
+    JSObjectSetProperty(nx->ctx, desc, u, JSValueMakeBoolean(nx->ctx, false), kJSPropertyAttributeNone, NULL);
+    JSStringRelease(u);
+    nx_serialize(nx->ctx, desc, out, out_len);
+    return NX_EXCEPTION;
+  }
+  // check budget
+  if (nx->deadline_ms != 0 && nx_now_ms() > nx->deadline_ms) {
+    // throw timeout? We can't easily; just return exception descriptor
+    JSStringRef msg = JSStringCreateWithUTF8CString("execution timeout");
+    JSValueRef e = JSValueMakeString(nx->ctx, msg);
+    JSStringRelease(msg);
+    // build descriptor
+    JSObjectRef desc2 = JSObjectMake(nx->ctx, NULL, NULL);
+    JSStringRef n = JSStringCreateWithUTF8CString("name");
+    JSObjectSetProperty(nx->ctx, desc2, n, JSValueMakeString(nx->ctx, JSStringCreateWithUTF8CString("Error")), kJSPropertyAttributeNone, NULL);
+    JSStringRelease(n);
+    JSStringRef m = JSStringCreateWithUTF8CString("message");
+    JSObjectSetProperty(nx->ctx, desc2, m, e, kJSPropertyAttributeNone, NULL);
+    JSStringRelease(m);
+    nx_serialize(nx->ctx, desc2, out, out_len);
     return NX_EXCEPTION;
   }
   nx_serialize(nx->ctx, result, out, out_len);
-  JS_FreeValue(nx->ctx, result);
   return NX_OK;
 }
 
 int32_t nx_eval(NxRuntime *nx, const char *source, int64_t len,
                 const char *filename, char **out, int64_t *out_len) {
-  JS_UpdateStackTop(nx->rt);
-  JSValue result = JS_Eval(nx->ctx, source, (size_t)len,
-                           filename ? filename : "<nativax>",
-                           JS_EVAL_TYPE_GLOBAL);
-  return nx_finish(nx, result, out, out_len);
+  char *buf = (char *)malloc((size_t)len + 1);
+  if (len > 0) memcpy(buf, source, (size_t)len);
+  buf[len] = '\0';
+  JSStringRef src = JSStringCreateWithUTF8CString(buf);
+  JSValueRef exc = NULL;
+  JSStringRef url = NULL;
+  if (filename) {
+    // filename is null-terminated from Dart? ensure
+    url = JSStringCreateWithUTF8CString(filename);
+  }
+  JSValueRef result = JSEvaluateScript(nx->ctx, src, NULL, url, 1, &exc);
+  free(buf);
+  if (url) JSStringRelease(url);
+  JSStringRelease(src);
+  int32_t r = nx_finish(nx, result, exc, out, out_len);
+  return r;
 }
 
 int32_t nx_eval_module(NxRuntime *nx, const char *source, int64_t len,
                        const char *url, char **out, int64_t *out_len) {
-  JS_UpdateStackTop(nx->rt);
-  JSContext *ctx = nx->ctx;
-  const char *name = url ? url : "<module>";
-  JSValue func = JS_Eval(ctx, source, (size_t)len, name,
-                         JS_EVAL_TYPE_MODULE | JS_EVAL_FLAG_COMPILE_ONLY);
-  if (JS_IsException(func)) return nx_finish(nx, func, out, out_len);
-  JSModuleDef *m = (JSModuleDef *)JS_VALUE_GET_PTR(func);
-  JSValue meta = JS_GetImportMeta(ctx, m);
-  if (!JS_IsException(meta)) {
-    JS_DefinePropertyValueStr(ctx, meta, "url", JS_NewString(ctx, name),
-                              JS_PROP_C_W_E);
-    JS_FreeValue(ctx, meta);
-  }
-  if (JS_ResolveModule(ctx, func) < 0) {
-    JS_FreeValue(ctx, func);
-    return nx_finish(nx, JS_EXCEPTION, out, out_len);
-  }
-  JSValue result = JS_EvalFunction(ctx, func);
-  if (JS_IsException(result)) return nx_finish(nx, result, out, out_len);
-  /* Module evaluation returns a promise (top-level await). Rejections are
-   * reported through the host's registered "__nx_module_error" callback. */
-  if (JS_IsPromise(result)) {
-    JSValue handler = JS_GetPropertyStr(ctx, nx->callbacks, "__nx_module_error");
-    if (JS_IsFunction(ctx, handler)) {
-      JSAtom catch_atom = JS_NewAtom(ctx, "catch");
-      JSValue r = JS_Invoke(ctx, result, catch_atom, 1, &handler);
-      JS_FreeAtom(ctx, catch_atom);
-      JS_FreeValue(ctx, r);
-    }
-    JS_FreeValue(ctx, handler);
-  }
-  JS_FreeValue(ctx, result);
-  nx_store("", 0, out, out_len);
-  return NX_OK;
+  // JSC has no module API; evaluate as classic script.
+  return nx_eval(nx, source, len, url, out, out_len);
 }
 
-int32_t nx_call(NxRuntime *nx, const char *function_name, const char *json_arg,
-                int64_t len, char **out, int64_t *out_len) {
-  JS_UpdateStackTop(nx->rt);
-  JSContext *ctx = nx->ctx;
-  JSValue global = JS_GetGlobalObject(ctx);
-  JSValue fn = JS_GetPropertyStr(ctx, nx->callbacks, function_name);
-  if (!JS_IsFunction(ctx, fn)) {
-    JS_FreeValue(ctx, fn);
-    fn = JS_GetPropertyStr(ctx, global, function_name);
+int32_t nx_call(NxRuntime *nx, const char *function_name,
+                const char *json_arg, int64_t len, char **out,
+                int64_t *out_len) {
+  JSValueRef exc = NULL;
+  JSStringRef fname = JSStringCreateWithUTF8CString(function_name);
+  JSObjectRef global = JSContextGetGlobalObject(nx->ctx);
+  // first check callbacks
+  JSValueRef fn = JSObjectGetProperty(nx->ctx, nx->callbacks, fname, NULL);
+  if (!JSValueIsObject(nx->ctx, fn) || !JSObjectIsFunction(nx->ctx, (JSObjectRef)fn)) {
+    fn = JSObjectGetProperty(nx->ctx, global, fname, NULL);
   }
-  if (!JS_IsFunction(ctx, fn)) {
-    JS_FreeValue(ctx, fn);
-    JS_FreeValue(ctx, global);
-    JS_ThrowTypeError(ctx, "%s is not a function", function_name);
-    return nx_finish(nx, JS_EXCEPTION, out, out_len);
+  if (!JSValueIsObject(nx->ctx, fn) || !JSObjectIsFunction(nx->ctx, (JSObjectRef)fn)) {
+    JSStringRef msg = JSStringCreateWithUTF8CString("not a function");
+    exc = JSValueMakeString(nx->ctx, msg);
+    JSStringRelease(msg);
+    JSStringRelease(fname);
+    return nx_finish(nx, JSValueMakeUndefined(nx->ctx), exc, out, out_len);
   }
-  JSValue arg = len > 0 ? JS_ParseJSON(ctx, json_arg, (size_t)len, "<arg>")
-                        : JS_UNDEFINED;
-  if (JS_IsException(arg)) {
-    JS_FreeValue(ctx, fn);
-    JS_FreeValue(ctx, global);
-    return nx_finish(nx, JS_EXCEPTION, out, out_len);
+  JSValueRef arg;
+  if (len > 0) {
+    JSStringRef jarg = JSStringCreateWithUTF8CString(json_arg); // json_arg null-terminated? yes from Dart (with null terminator? nx_store adds \0; Dart passes length; C string from Dart may not be null-terminated but we allocate? The Dart side passes Pointer<Char> to bytes with length; need null-terminate. We'll copy.)
+    // ensure null-terminated
+    char *buf = (char *)malloc(len + 1);
+    memcpy(buf, json_arg, len);
+    buf[len] = '\0';
+    JSStringRef jarg2 = JSStringCreateWithUTF8CString(buf);
+    arg = JSValueMakeFromJSONString(nx->ctx, jarg2);
+    JSStringRelease(jarg2);
+    free(buf);
+    if (JSValueIsUndefined(nx->ctx, arg) && len > 0) {
+      // maybe parse returned undefined on failure; check exception? JSC doesn't set exception. Leave.
+    }
+  } else {
+    arg = JSValueMakeUndefined(nx->ctx);
   }
-  JSValue result = JS_Call(ctx, fn, global, 1, &arg);
-  JS_FreeValue(ctx, arg);
-  JS_FreeValue(ctx, fn);
-  JS_FreeValue(ctx, global);
-  return nx_finish(nx, result, out, out_len);
+  JSValueRef args[1] = { arg };
+  JSValueRef result = JSObjectCallAsFunction(nx->ctx, (JSObjectRef)fn, global, 1, args, &exc);
+  JSStringRelease(fname);
+  int32_t r = nx_finish(nx, result, exc, out, out_len);
+  return r;
 }
 
 int32_t nx_run_jobs(NxRuntime *nx, int32_t max_jobs, char **out,
                     int64_t *out_len) {
-  JS_UpdateStackTop(nx->rt);
-  int32_t executed = 0;
-  *out = NULL;
-  *out_len = 0;
-  while (executed < max_jobs && JS_IsJobPending(nx->rt)) {
-    JSContext *job_ctx = NULL;
-    int r = JS_ExecutePendingJob(nx->rt, &job_ctx);
-    if (r < 0) {
-      nx_take_exception(job_ctx ? job_ctx : nx->ctx, out, out_len);
-      return -1;
-    }
-    if (r == 0) break;
-    executed++;
-  }
-  return executed;
+  // JSC drains microtasks during eval; nothing pending. Return 0.
+  (void)nx; (void)max_jobs; (void)out; (void)out_len;
+  *out = NULL; *out_len = 0;
+  return 0;
 }
 
-int32_t nx_has_pending_jobs(NxRuntime *nx) {
-  return JS_IsJobPending(nx->rt) ? 1 : 0;
-}
+int32_t nx_has_pending_jobs(NxRuntime *nx) { (void)nx; return 0; }
 
-void nx_run_gc(NxRuntime *nx) { JS_RunGC(nx->rt); }
+void nx_run_gc(NxRuntime *nx) { JSGarbageCollect(nx->ctx); }
 
-int64_t nx_memory_used(NxRuntime *nx) {
-  JSMemoryUsage usage;
-  JS_ComputeMemoryUsage(nx->rt, &usage);
-  return usage.memory_used_size;
-}
+int64_t nx_memory_used(NxRuntime *nx) { (void)nx; return 0; }

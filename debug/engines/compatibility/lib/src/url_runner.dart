@@ -44,7 +44,7 @@ class UrlRunner {
         ? cases
         : cases.take(options.limit!).toList();
 
-    final engine = QuickJsEngine();
+    final engine = JscEngine();
     final document = dom.Document();
     final bindings = DomBindings(
       engine: engine,
@@ -98,7 +98,7 @@ class UrlRunner {
   }
 
   TestResult _runCase(
-    QuickJsEngine engine,
+    JscEngine engine,
     String id,
     Map data,
     String input,

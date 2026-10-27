@@ -13,7 +13,7 @@ class _Harness {
     document = HtmlParser()
         .parseDocument('<!doctype html><html><body></body></html>')
         .value;
-    engine = QuickJsEngine();
+    engine = JscEngine();
     bindings = DomBindings(
       engine: engine,
       document: document,
@@ -26,7 +26,7 @@ class _Harness {
   }
 
   late final Document document;
-  late final QuickJsEngine engine;
+  late final JscEngine engine;
   late final DomBindings bindings;
 
   void dispose() {
@@ -97,7 +97,7 @@ List<SecurityCase> matrixSecurityCases() {
         severity: 'critical',
         description: 'Generated sandbox check: $name must be undefined.',
         run: () async {
-          final engine = QuickJsEngine();
+          final engine = JscEngine();
           try {
             final type = engine.evaluate(
               'typeof globalThis[${jsonEncode(name)}]',

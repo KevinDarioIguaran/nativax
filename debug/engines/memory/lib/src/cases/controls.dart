@@ -11,7 +11,7 @@ LeakCase releaseControl() => LeakCase(
       run: (ctx) async {
         await ctx.sample(0, activeRuntimes: 0);
         for (var batch = 1; batch <= ctx.profile.batches; batch++) {
-          final engine = QuickJsEngine();
+          final engine = JscEngine();
           engine.evaluate('let n = 0; for (let i = 0; i < 1000; i++) n += i;');
           engine.dispose();
           await ctx.sample(batch, activeRuntimes: 0);
@@ -27,11 +27,11 @@ LeakCase retainedControl() => LeakCase(
       scenario: 'Create QuickJS runtimes and retain them on purpose',
       expectation: 'retained',
       run: (ctx) async {
-        final kept = <QuickJsEngine>[];
+        final kept = <JscEngine>[];
         await ctx.sample(0, activeRuntimes: 0);
         try {
           for (var batch = 1; batch <= ctx.profile.batches; batch++) {
-            kept.add(QuickJsEngine()
+            kept.add(JscEngine()
               ..evaluate('globalThis.__retained = { value: 42 };'));
             await ctx.sample(batch, activeRuntimes: kept.length);
           }

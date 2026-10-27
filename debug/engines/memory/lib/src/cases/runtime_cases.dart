@@ -15,7 +15,7 @@ List<LeakCase> runtimeLeakCases() => [
           await ctx.sample(0, activeRuntimes: 0);
           for (var batch = 1; batch <= ctx.profile.batches; batch++) {
             for (var i = 0; i < 5; i++) {
-              final engine = QuickJsEngine();
+              final engine = JscEngine();
               engine.evaluate('globalThis.__n = 1;');
               engine.dispose();
             }
@@ -35,7 +35,7 @@ List<LeakCase> runtimeLeakCases() => [
             final doc = HtmlParser()
                 .parseDocument('<!doctype html><html><body></body></html>')
                 .value;
-            final engine = QuickJsEngine();
+            final engine = JscEngine();
             final bindings = DomBindings(
               engine: engine,
               document: doc,

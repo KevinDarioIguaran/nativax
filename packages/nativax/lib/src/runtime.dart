@@ -80,7 +80,7 @@ class NativaXRuntimeConfig {
 
   final JavaScriptEngineConfig engine;
 
-  /// Optional backend factory. Defaults to QuickJS-ng; `V8Engine` can be
+  /// Optional backend factory. Defaults to JSC; custom factories can
   /// injected for the native V8 prototype.
   final JavaScriptEngine Function(JavaScriptEngineConfig config)? engineFactory;
   final TimerLimits timers;
@@ -154,20 +154,7 @@ class NativaXRuntime {
       platformServices: platformServices,
       forceQuickJs: forceQuickJs,
     );
-    if (runtime.engine is! V8Engine || !runtime._overBudget) return runtime;
-    runtime.dispose();
-    config.onDiagnostic?.call(
-      'V8 reached the ${config.engine.memoryLimitBytes}-byte memory limit '
-      'during startup; the page was reloaded on QuickJS',
-    );
-    return _create(
-      source: source,
-      config: config,
-      environment: environment,
-      documentUrl: documentUrl,
-      platformServices: platformServices,
-      forceQuickJs: true,
-    );
+    return runtime;
   }
 
   static Future<NativaXRuntime> _create({
@@ -181,13 +168,12 @@ class NativaXRuntime {
     // Errors go to the host; a V8 memory-limit stop also marks the runtime
     // over budget (QuickJS fallback).
     NativaXRuntime? created;
-    var overBudget = false;
     void reportError(Object error) {
       if (error is JavaScriptMemoryLimitException) {
-        overBudget = true;
         created?._reportOverBudget();
+      } else {
+        config.onScriptError?.call(error);
       }
-      config.onScriptError?.call(error);
     }
 
     final parsed = HtmlParser().parseDocument(source);
@@ -360,9 +346,8 @@ class NativaXRuntime {
 
     final engine =
         config.engineFactory?.call(config.engine) ??
-        // V8Engine has no ES modules yet: module pages stay on QuickJS.
         (forceQuickJs || _hasModuleScripts(document)
-            ? QuickJsEngine(config.engine)
+            ? JscEngine(config.engine)
             : createDefaultJavaScriptEngine(config.engine));
     final services =
         platformServices ?? config.services ?? const PlatformServices();
@@ -505,7 +490,7 @@ class NativaXRuntime {
       parseErrors: parsed.errors,
       styleSheets: styleSheets,
       linkedSheets: linkedSheets,
-    ).._overBudget = overBudget;
+    );
   }
 
   static bool _hasModuleScripts(dom.Document document) => document
@@ -514,25 +499,15 @@ class NativaXRuntime {
 
   /// `v8`, `quickjs`, or the engine's type for a custom [engineFactory].
   String get engineName => switch (engine) {
-    V8Engine() => 'v8',
-    QuickJsEngine() => 'quickjs',
+    JscEngine() => 'jsc',
     _ => engine.runtimeType.toString(),
   };
 
-  bool _overBudget = false;
-  bool _overBudgetReported = false;
-
-  /// Called once when the V8 engine hits its memory limit after startup.
-  /// [NativaXView] reloads the page on QuickJS (page state is lost).
+  /// Legacy hook retained for API compatibility; JSC has no memory-limit
+  /// reload path.
   void Function()? onEngineOverBudget;
 
-  void _reportOverBudget() {
-    _overBudget = true;
-    if (_overBudgetReported || _disposed || engine is! V8Engine) return;
-    _overBudgetReported = true;
-    final callback = onEngineOverBudget;
-    if (callback != null) scheduleMicrotask(callback);
-  }
+  void _reportOverBudget() {}
 
   bool _containsStyle(dom.Node node) {
     if (node is dom.Element && node.localName == 'style') return true;
