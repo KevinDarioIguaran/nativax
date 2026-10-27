@@ -51,6 +51,22 @@ void main() {
     );
   });
 
+  // 50projects50days/expanding-cards: `.panel.active h3` matched the h3 of
+  // every panel because both panels have equal styles and the cache key
+  // ignored the ancestors' classes.
+  test('ancestor-dependent rules do not leak through the style cache', () {
+    final (doc, engine) = _doc(
+      '<!doctype html><html><body><div class="c">'
+          '<div class="panel active"><h3>a</h3></div>'
+          '<div class="panel"><h3>b</h3></div>'
+          '</div></body></html>',
+      '.panel h3 { opacity: 0 } .panel.active h3 { opacity: 1 }',
+    );
+    final h = doc.querySelectorAll('h3');
+    expect(engine.styleOf(h[0]).opacity, 1);
+    expect(engine.styleOf(h[1]).opacity, 0);
+  });
+
   test(':has() subject is invalidated by descendant changes', () {
     final (doc, engine) = _doc(
       '<!doctype html><html><body>'

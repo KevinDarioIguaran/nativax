@@ -4,6 +4,7 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter/widgets.dart';
 import 'package:nativa_css/nativa_css.dart';
 
+import 'css_box.dart';
 import 'css_item.dart';
 import 'layout_profile.dart';
 
@@ -161,14 +162,40 @@ class RenderCssFlex extends RenderBox
     return a == 'normal' ? 'stretch' : a;
   }
 
+  /// `min-width: auto` of a row item (CSS Flexbox §4.5): its min-content
+  /// width, but a specified `width` only caps it, so a wide fixed-width
+  /// item still shrinks down to its content. Scroll containers use 0.
+  double _automaticMinWidth(RenderBox c, CssItemParentData pd, double crossAvail) {
+    final minContent = c.getMinIntrinsicWidth(crossAvail);
+    if (pd.width == null) return minContent;
+    RenderObject? o = c;
+    while (o is RenderObjectWithChildMixin<RenderBox> && o is! RenderCssBox) {
+      o = o.child;
+    }
+    if (o is! RenderCssBox) return minContent;
+    if (o.clipsOverflow) return 0;
+    return math.min(minContent, o.contentMinWidth(crossAvail));
+  }
+
   bool _autoCross(_Item item) =>
       _isRow ? item.pd.autoHeight : item.pd.autoWidth;
+
+  /// The widest a column item may be: its fit-content width (CSS Flexbox
+  /// §9.4 step 7) unless it stretches. Rows size the cross axis by content.
+  double _crossLimit(_Item item, double crossAvail) {
+    if (_isRow || !crossAvail.isFinite || !_autoCross(item)) return crossAvail;
+    if (_alignOf(item) == 'stretch' && !item.autoCrossStart && !item.autoCrossEnd) return crossAvail;
+    return math.min(crossAvail, item.child.getMaxIntrinsicWidth(double.infinity));
+  }
 
   Size _run(BoxConstraints constraints, {required bool dry}) {
     final cbw = constraints.hasBoundedWidth ? constraints.maxWidth : null;
     final cbh = constraints.hasTightHeight ? constraints.maxHeight : null;
     final mainMax = _isRow ? constraints.maxWidth : constraints.maxHeight;
-    final mainDefinite = mainMax.isFinite;
+    // A column's height is definite only when it is fixed; a loose maximum
+    // (an ancestor's viewport bound) does not make it fill that space.
+    final mainDefinite = _isRow ? mainMax.isFinite : constraints.hasTightHeight;
+    final mainMin = _isRow ? constraints.minWidth : constraints.minHeight;
     final crossMax = _isRow ? constraints.maxHeight : constraints.maxWidth;
     final crossDefinite = _isRow
         ? constraints.hasTightHeight
@@ -247,7 +274,7 @@ class RenderCssFlex extends RenderBox
             crossAvail.isFinite;
         final cc = stretchCross
             ? BoxConstraints.tightFor(width: crossAvail)
-            : BoxConstraints(maxWidth: crossAvail);
+            : BoxConstraints(maxWidth: _crossLimit(item, crossAvail));
         if (dry) {
           item.base = c.getDryLayout(cc).height;
         } else {
@@ -263,14 +290,14 @@ class RenderCssFlex extends RenderBox
       }
       // Automatic minimum size (min-width: auto): the min-content size on
       // the main axis for rows. Columns use 0 (documented simplification).
-      item.minMain = _isRow ? c.getMinIntrinsicWidth(crossAvail) : 0;
+      item.minMain = _isRow ? _automaticMinWidth(c, pd, crossAvail) : 0;
       item.hypothetical = math.max(item.base, item.minMain);
       items.add(item);
     }
 
     // 2. Collect lines.
     final lines = <List<_Item>>[];
-    if (_wrap == 'nowrap' || !mainDefinite) {
+    if (_wrap == 'nowrap' || !mainMax.isFinite) {
       lines.add(items);
     } else {
       var line = <_Item>[];
@@ -299,7 +326,9 @@ class RenderCssFlex extends RenderBox
       final gaps = mainGap * math.max(0, line.length - 1);
       final usedHypo =
           line.fold<double>(0, (s, i) => s + i.outerHypothetical) + gaps;
-      final available = mainDefinite ? mainMax : usedHypo;
+      // An indefinite column still grows to its min-height and shrinks to
+      // its max-height (CSS Flexbox §9.2 step 2).
+      final available = mainDefinite ? mainMax : usedHypo.clamp(mainMin, mainMax).toDouble();
       final growing = available > usedHypo;
       for (final i in line) {
         i.target = i.hypothetical;
@@ -375,7 +404,7 @@ class RenderCssFlex extends RenderBox
         final crossAvail = crossMax.isFinite
             ? math.max(0.0, crossMax - i.crossStart - i.crossEnd)
             : null;
-        i.size = measureItem(i, crossAvail);
+        i.size = measureItem(i, crossAvail == null ? null : _crossLimit(i, crossAvail));
         cross = math.max(cross, _cross(i.size) + i.crossStart + i.crossEnd);
       }
       lineCross.add(cross);
@@ -640,6 +669,10 @@ class RenderCssFlex extends RenderBox
   @override
   double? computeDistanceToActualBaseline(TextBaseline baseline) =>
       defaultComputeDistanceToHighestActualBaseline(baseline);
+
+  @override
+  double? computeDryBaseline(covariant BoxConstraints constraints, TextBaseline baseline) =>
+      cssDryFirstBaseline(firstChild, constraints, baseline);
 
   @override
   void paint(PaintingContext context, Offset offset) =>

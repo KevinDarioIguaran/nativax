@@ -7,6 +7,7 @@ import 'package:nativa_css/nativa_css.dart' hide MediaQuery;
 
 import 'css_item.dart';
 import 'layout_profile.dart';
+import 'dry_baseline.dart';
 
 /// The CSS box model inputs for one element, derived from its
 /// [ComputedStyle]. Percentages stay unresolved until layout, where
@@ -28,6 +29,7 @@ class CssBoxSpec {
     this.radii = const [ResolvedLength.zero, ResolvedLength.zero, ResolvedLength.zero, ResolvedLength.zero],
     this.borderBox = false,
     this.clip = false,
+    this.scrollContainer = false,
     this.background,
     this.backgroundImage,
     this.gradient,
@@ -61,6 +63,10 @@ class CssBoxSpec {
 
   /// `overflow` other than `visible`: clip to the padding box.
   final bool clip;
+
+  /// `overflow` is `hidden`, `scroll` or `auto` (not `clip`): a scroll
+  /// container, whose automatic minimum size in flex layout is zero.
+  final bool scrollContainer;
   final Color? background;
   final DecorationImage? backgroundImage;
 
@@ -94,6 +100,7 @@ class CssBoxSpec {
       listEquals(other.radii, radii) &&
       other.borderBox == borderBox &&
       other.clip == clip &&
+      other.scrollContainer == scrollContainer &&
       other.background == background &&
       other.backgroundImage == backgroundImage &&
       other.gradient == gradient &&
@@ -105,7 +112,7 @@ class CssBoxSpec {
   @override
   int get hashCode => Object.hash(width, height, minWidth, minHeight, maxWidth, maxHeight,
       Object.hashAll(padding), Object.hashAll(border), Object.hashAll(borderColors), Object.hashAll(borderStyles),
-      Object.hashAll(radii), borderBox, clip, background, backgroundImage, gradient,
+      Object.hashAll(radii), borderBox, Object.hash(clip, scrollContainer), background, backgroundImage, gradient,
       Object.hashAll(shadows), outlineWidth, outlineColor, outlineOffset);
 }
 
@@ -291,15 +298,34 @@ class CssContainingBlock extends SingleChildRenderObjectWidget {
     this.width,
     this.height,
     this.scope,
+    this.shrinkToFitInset,
+    this.percentShift = Offset.zero,
+    this.containerPadding = EdgeInsets.zero,
     super.child,
   });
   final double? width;
   final double? height;
   final CssContainingBlockSize? scope;
 
+  /// When set, `width: auto` shrinks to fit (CSS 2.1 §10.3.7): the child
+  /// gets `min(max(min-content, available), max-content)`, where available
+  /// is the containing block width minus this (the horizontal offsets).
+  final double? shrinkToFitInset;
+
+  /// Percentage offsets resolved against the laid-out containing block, as
+  /// fractions of its width/height (`left: 50%` is `Offset(0.5, 0)`). The
+  /// box is shifted at paint time, when that size is known.
+  final Offset percentShift;
+
+  /// Padding of the positioned ancestor: its `Stack` is the content box,
+  /// the containing block is the padding box.
+  final EdgeInsets containerPadding;
+
   @override
   RenderCssContainingBlock createRenderObject(BuildContext context) =>
-      RenderCssContainingBlock(width, height, scope);
+      RenderCssContainingBlock(width, height, scope, shrinkToFitInset)
+        ..percentShift = percentShift
+        ..containerPadding = containerPadding;
 
   @override
   void updateRenderObject(
@@ -308,15 +334,103 @@ class CssContainingBlock extends SingleChildRenderObjectWidget {
   ) {
     renderObject
       ..containingSize = (width, height)
-      ..scope = scope;
+      ..scope = scope
+      ..shrinkToFitInset = shrinkToFitInset
+      ..percentShift = percentShift
+      ..containerPadding = containerPadding;
   }
 }
 
 class RenderCssContainingBlock extends RenderProxyBox {
-  RenderCssContainingBlock(this._staticWidth, this._staticHeight, this._scope);
+  RenderCssContainingBlock(this._staticWidth, this._staticHeight, this._scope, [this._shrinkToFitInset]);
   double? _staticWidth;
   double? _staticHeight;
   CssContainingBlockSize? _scope;
+  double? _shrinkToFitInset;
+
+  Offset _percentShift = Offset.zero;
+  set percentShift(Offset v) {
+    if (v == _percentShift) return;
+    _percentShift = v;
+    markNeedsPaint();
+  }
+
+  EdgeInsets _containerPadding = EdgeInsets.zero;
+  set containerPadding(EdgeInsets v) {
+    if (v == _containerPadding) return;
+    _containerPadding = v;
+    markNeedsPaint();
+  }
+
+  /// The resolved percentage shift: the containing block is the nearest
+  /// `Stack` (the positioned ancestor's content box) plus its padding.
+  Offset get _shift {
+    if (_percentShift == Offset.zero) return Offset.zero;
+    for (var p = parent; p != null; p = p.parent) {
+      if (p is RenderStack) {
+        if (!p.hasSize) return Offset.zero;
+        return Offset(
+          _percentShift.dx * (p.size.width + _containerPadding.horizontal),
+          _percentShift.dy * (p.size.height + _containerPadding.vertical),
+        );
+      }
+    }
+    return Offset.zero;
+  }
+
+  @override
+  void paint(PaintingContext context, Offset offset) => super.paint(context, offset + _shift);
+
+  @override
+  bool hitTestChildren(BoxHitTestResult result, {required Offset position}) {
+    final shift = _shift;
+    return result.addWithPaintOffset(
+      offset: shift,
+      position: position,
+      hitTest: (result, transformed) => super.hitTestChildren(result, position: transformed),
+    );
+  }
+
+  @override
+  void applyPaintTransform(RenderBox child, Matrix4 transform) {
+    final shift = _shift;
+    transform.translateByDouble(shift.dx, shift.dy, 0, 1);
+  }
+
+  set shrinkToFitInset(double? v) {
+    if (v == _shrinkToFitInset) return;
+    _shrinkToFitInset = v;
+    markNeedsLayout();
+  }
+
+  BoxConstraints _inner(BoxConstraints c) {
+    final inset = _shrinkToFitInset;
+    final width = _width;
+    final child = this.child;
+    if (inset == null || width == null || child == null || c.hasTightWidth) return c;
+    final min = child.getMinIntrinsicWidth(double.infinity);
+    final max = child.getMaxIntrinsicWidth(double.infinity);
+    return c.tighten(width: c.constrainWidth(math.min(math.max(min, width - inset), max)));
+  }
+
+  @override
+  Size computeDryLayout(covariant BoxConstraints constraints) =>
+      child?.getDryLayout(_inner(constraints)) ?? constraints.smallest;
+
+  @override
+  double? computeDryBaseline(covariant BoxConstraints constraints, TextBaseline baseline) =>
+      cssDryBaseline(child, _inner(constraints), baseline);
+
+  @override
+  void performLayout() {
+    final c = child;
+    if (c == null) {
+      size = constraints.smallest;
+      return;
+    }
+    c.layout(_inner(constraints), parentUsesSize: true);
+    size = constraints.constrain(c.size);
+  }
 
   double? get _width => _scope?.width ?? _staticWidth;
   double? get _height => _scope?.height ?? _staticHeight;
@@ -553,6 +667,17 @@ class RenderCssBox extends RenderBox with RenderObjectWithChildMixin<RenderBox> 
 
   EdgeInsets get _intrinsicInset => _padding(null) + _borderInsets;
 
+  /// The min-content width of the content alone, ignoring `width` (the
+  /// content size suggestion of a flex item, CSS Flexbox §4.5).
+  double contentMinWidth(double height) {
+    final inset = _intrinsicInset;
+    return _clampW((child?.getMinIntrinsicWidth(height) ?? 0) + inset.horizontal, inset.horizontal);
+  }
+
+  /// Whether the box is a scroll container (its automatic minimum size is
+  /// zero).
+  bool get clipsOverflow => _spec.scrollContainer;
+
   @override
   double computeMinIntrinsicWidth(double height) {
     final inset = _intrinsicInset;
@@ -585,6 +710,18 @@ class RenderCssBox extends RenderBox with RenderObjectWithChildMixin<RenderBox> 
     if (child == null) return null;
     final d = child.getDistanceToActualBaseline(baseline);
     return d == null ? null : d + (child.parentData! as BoxParentData).offset.dy;
+  }
+
+  @override
+  double? computeDryBaseline(covariant BoxConstraints constraints, TextBaseline baseline) {
+    final child = this.child;
+    if (child == null) return null;
+    final (cbwPd, _) = _containingBlock;
+    final cbw = cbwPd ?? (constraints.hasBoundedWidth ? constraints.maxWidth : null);
+    final inset = _padding(cbw) + _borderInsets;
+    final inner = _boxConstraints(constraints, inset).deflate(inset);
+    final d = cssDryBaseline(child, inner, baseline);
+    return d == null ? null : d + inset.top;
   }
 
   BorderRadius _radius(Size s) {
@@ -626,7 +763,6 @@ class RenderCssBox extends RenderBox with RenderObjectWithChildMixin<RenderBox> 
       color: _spec.background,
       image: _spec.backgroundImage,
       gradient: _spec.gradient == null ? null : cssGradient(_spec.gradient!, s),
-      boxShadow: _spec.shadows.isEmpty ? null : _spec.shadows,
       border: _spec.border.every((b) => b == 0) || _spec._customBorder ? null : border,
       borderRadius: _hasRadius ? _radius(s) : null,
     );
@@ -727,14 +863,52 @@ class RenderCssBox extends RenderBox with RenderObjectWithChildMixin<RenderBox> 
     }
   }
 
+  /// Outer box shadows, painted only outside the border box (CSS
+  /// Backgrounds 3 §7.1.1): a box without a background must not show its
+  /// own shadow through it, as Flutter's [BoxDecoration] does. The first
+  /// shadow is on top.
+  void _paintShadows(Canvas canvas, Rect rect) {
+    final border = _hasRadius ? _radius(rect.size).toRRect(rect) : RRect.fromRectAndRadius(rect, Radius.zero);
+    canvas.save();
+    canvas.clipPath(Path()
+      ..fillType = PathFillType.evenOdd
+      ..addRect(rect.inflate(1e5))
+      ..addRRect(border));
+    for (final shadow in _spec.shadows.reversed) {
+      canvas.drawRRect(border.shift(shadow.offset).inflate(shadow.spreadRadius), shadow.toPaint());
+    }
+    canvas.restore();
+  }
+
+  /// Rounds [rect]'s edges to whole device pixels when the canvas only
+  /// translates (DPR 1, no scale/rotation); otherwise returns it unchanged.
+  static Rect _pixelSnap(Canvas canvas, Rect rect) {
+    final m = canvas.getTransform();
+    // Column-major 4x4: identity linear part means a pure translation.
+    if (m[0] != 1 || m[1] != 0 || m[4] != 0 || m[5] != 1 || m[15] != 1) return rect;
+    final tx = m[12], ty = m[13];
+    double snap(double v, double t) => (v + t).roundToDouble() - t;
+    return Rect.fromLTRB(
+      snap(rect.left, tx),
+      snap(rect.top, ty),
+      snap(rect.right, tx),
+      snap(rect.bottom, ty),
+    );
+  }
+
   @override
   void paint(PaintingContext context, Offset offset) {
     LayoutProfile.begin('box.paint');
     try {
     if (_spec.hasDecoration) {
-      final decoration = _decorationFor(size);
+      // Browsers paint box decorations on the pixel-snapped border box
+      // (round each edge to the device pixel grid), so fractional layout
+      // positions do not produce antialiased background edges.
+      final snapped = _pixelSnap(context.canvas, offset & size);
+      if (_spec.shadows.isNotEmpty) _paintShadows(context.canvas, snapped);
+      final decoration = _decorationFor(snapped.size);
       _painter ??= decoration.createBoxPainter(markNeedsPaint);
-      _painter!.paint(context.canvas, offset, _imageConfiguration.copyWith(size: size));
+      _painter!.paint(context.canvas, snapped.topLeft, _imageConfiguration.copyWith(size: snapped.size));
       _paintStyledBorder(context.canvas, offset);
     }
     final child = this.child;
@@ -800,4 +974,57 @@ class RenderCssBox extends RenderBox with RenderObjectWithChildMixin<RenderBox> 
 
   /// Insets (padding + border) used in the last layout, for tests.
   EdgeInsets get debugInset => _inset;
+}
+
+/// The canvas background propagated from the root element or `body`
+/// (CSS Backgrounds 3 §2.11.2). Paints [gradient] over the whole canvas,
+/// at least [minHeight] tall, repeating vertically in tiles as tall as the
+/// child (the root element's box).
+class CssCanvasBackground extends SingleChildRenderObjectWidget {
+  const CssCanvasBackground({super.key, required this.gradient, required this.minHeight, super.child});
+  final GradientValue gradient;
+  final double minHeight;
+
+  @override
+  RenderCssCanvasBackground createRenderObject(BuildContext context) =>
+      RenderCssCanvasBackground(gradient, minHeight);
+
+  @override
+  void updateRenderObject(BuildContext context, RenderCssCanvasBackground renderObject) {
+    renderObject
+      ..gradient = gradient
+      ..minHeight = minHeight;
+  }
+}
+
+class RenderCssCanvasBackground extends RenderProxyBox {
+  RenderCssCanvasBackground(this._gradient, this._minHeight);
+
+  GradientValue _gradient;
+  set gradient(GradientValue v) {
+    if (v == _gradient) return;
+    _gradient = v;
+    markNeedsPaint();
+  }
+
+  double _minHeight;
+  set minHeight(double v) {
+    if (v == _minHeight) return;
+    _minHeight = v;
+    markNeedsPaint();
+  }
+
+  @override
+  void paint(PaintingContext context, Offset offset) {
+    if (size.width > 0 && size.height > 0) {
+      final tile = size;
+      final shader = cssGradient(_gradient, tile);
+      final total = math.max(size.height, _minHeight);
+      for (var y = 0.0; y < total; y += tile.height) {
+        final rect = Offset(offset.dx, offset.dy + y) & tile;
+        context.canvas.drawRect(rect, Paint()..shader = shader.createShader(rect));
+      }
+    }
+    super.paint(context, offset);
+  }
 }

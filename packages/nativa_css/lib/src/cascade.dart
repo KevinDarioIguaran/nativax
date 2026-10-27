@@ -173,6 +173,15 @@ class StyleEngine {
   final Set<String> _structuralAncestorTags = {};
   final Set<String> _structuralAncestorClasses = {};
   final Set<String> _structuralAncestorIds = {};
+  // Subjects of rules with descendant/child combinators.
+  bool _ancestorUniversal = false;
+  // For universal subjects: features of the compound left of the combinator.
+  final Set<String> _universalAncestorTags = {};
+  final Set<String> _universalAncestorClasses = {};
+  final Set<String> _universalAncestorIds = {};
+  final Set<String> _ancestorTags = {};
+  final Set<String> _ancestorClasses = {};
+  final Set<String> _ancestorIds = {};
   bool _usesViewportUnits = false;
   final Map<String, Set<String>> _attributeTags = {};
   final Set<String> _attributeUniversal = {};
@@ -308,6 +317,28 @@ class StyleEngine {
     return false;
   }
 
+  /// Whether a rule with a descendant/child combinator may match [e].
+  bool _needsAncestorKey(Element e) {
+    if (_ancestorUniversal || _ancestorTags.contains(e.localName)) return true;
+    final id = e.getAttribute('id');
+    if (id != null && _ancestorIds.contains(id)) return true;
+    for (final c in e.classList) {
+      if (_ancestorClasses.contains(c)) return true;
+    }
+    if (_universalAncestorTags.isEmpty && _universalAncestorClasses.isEmpty && _universalAncestorIds.isEmpty) {
+      return false;
+    }
+    for (Element? p = e.parentElement; p != null; p = p.parentElement) {
+      if (_universalAncestorTags.contains(p.localName)) return true;
+      final pid = p.getAttribute('id');
+      if (pid != null && _universalAncestorIds.contains(pid)) return true;
+      for (final c in p.classList) {
+        if (_universalAncestorClasses.contains(c)) return true;
+      }
+    }
+    return false;
+  }
+
   bool _needsStructuralKey(Element e) {
     if (_structuralUniversal) return true;
     if (_structuralTags.contains(e.localName)) return true;
@@ -396,6 +427,15 @@ class StyleEngine {
       ..write(pseudo ?? '')
       ..write('\u0000')
       ..write(parent == null ? 0 : parent.hashCode);
+    // Rules with descendant/child combinators that can match this element
+    // depend on its ancestors' classes, ids and attributes, which neither
+    // its own signature nor its parent's (value-equal) style capture: such
+    // elements share only with siblings, whose ancestors are the same.
+    if (_needsAncestorKey(e)) {
+      b
+        ..write('\u0000')
+        ..write(identityHashCode(e.parentElement));
+    }
     final doc = e.ownerDocument;
     b
       ..write('\u0000')
@@ -863,6 +903,13 @@ class StyleEngine {
     _structuralAncestorTags.clear();
     _structuralAncestorClasses.clear();
     _structuralAncestorIds.clear();
+    _ancestorUniversal = false;
+    _universalAncestorTags.clear();
+    _universalAncestorClasses.clear();
+    _universalAncestorIds.clear();
+    _ancestorTags.clear();
+    _ancestorClasses.clear();
+    _ancestorIds.clear();
     _usesViewportUnits = false;
     var order = 0;
 
@@ -956,6 +1003,33 @@ class StyleEngine {
               c == Combinator.nextSibling || c == Combinator.subsequentSibling,
         )) {
           _usesSiblingCombinators = true;
+        }
+        if (sel.combinators.any((c) => c == Combinator.descendant || c == Combinator.child)) {
+          final parts = sel.subject.parts;
+          final id = parts.whereType<IdSelector>().firstOrNull;
+          final cls = parts.whereType<ClassSelector>().firstOrNull;
+          final tag = parts.whereType<TypeSelector>().firstOrNull;
+          if (id != null) {
+            _ancestorIds.add(id.id);
+          } else if (cls != null) {
+            _ancestorClasses.add(cls.name);
+          } else if (tag != null) {
+            _ancestorTags.add(tag.name);
+          } else {
+            final left = sel.compounds[1].parts;
+            final lId = left.whereType<IdSelector>().firstOrNull;
+            final lCls = left.whereType<ClassSelector>().firstOrNull;
+            final lTag = left.whereType<TypeSelector>().firstOrNull;
+            if (lId != null) {
+              _universalAncestorIds.add(lId.id);
+            } else if (lCls != null) {
+              _universalAncestorClasses.add(lCls.name);
+            } else if (lTag != null) {
+              _universalAncestorTags.add(lTag.name);
+            } else {
+              _ancestorUniversal = true;
+            }
+          }
         }
         if (structuralRule) {
           final parts = sel.subject.parts;

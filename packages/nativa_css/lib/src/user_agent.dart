@@ -13,6 +13,7 @@ summary { list-style-type: none; cursor: pointer }
 head, script, style, title, meta, link, template, noscript, base, datalist,
 option, [hidden], dialog:not([open]), area, param, source, track { display: none }
 details:not([open]) > :not(summary:first-of-type) { display: none }
+audio:not([controls]) { display: none }
 dialog {
   position: absolute; left: 0; right: 0; margin: auto; border: 1.5px solid #000000;
   padding: 1em; background-color: #ffffff; color: #000000;
@@ -57,20 +58,23 @@ hr { border: 1px solid #b0b0b0; margin-top: 0.5em; margin-bottom: 0.5em }
 img { display: inline-block }
 button, input, textarea, select {
   display: inline-block; font-size: 13.333px; font-family: Arial; color: #000000;
-  border: 1px solid #767676; border-radius: 2px;
+  border: 1px solid #767676;
 }
 button {
   padding: 1px 6px; background-color: #efefef; cursor: pointer;
-  text-align: center;
+  text-align: center; border: 2px outset #000000;
 }
 input, textarea { padding: 1px 2px; background-color: #ffffff; cursor: text }
-select { padding: 0 0; background-color: #ffffff }
+input { border: 2px inset #767676; overflow: clip }
+textarea { overflow: auto }
+select { padding: 0 0; background-color: #ffffff; overflow: clip }
 option { font-weight: normal; padding: 0 2px 1px; white-space: nowrap }
 input[type=checkbox], input[type=radio] { border: none; padding: 0; background-color: transparent; margin: 3px 3px 3px 4px }
+input[type=radio] { margin: 3px 3px 0 5px }
 input[type=range] { border: none; padding: 0; background-color: transparent; margin: 2px }
 input[type=color] { width: 50px; height: 27px; padding: 1px 2px; background-color: #efefef }
 input[type=file] { border: none; padding: 0; background-color: transparent }
-input[type=submit], input[type=button], input[type=reset] { padding: 1px 6px; background-color: #efefef; cursor: pointer; text-align: center }
+input[type=submit], input[type=button], input[type=reset] { padding: 1px 6px; background-color: #efefef; cursor: pointer; text-align: center; border: 2px outset #000000 }
 input[type=hidden] { display: none }
 input::placeholder, textarea::placeholder { color: #757575 }
 textarea { white-space: pre-wrap; font-family: monospace }

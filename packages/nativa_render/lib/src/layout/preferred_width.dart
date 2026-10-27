@@ -1,5 +1,6 @@
 import 'package:flutter/rendering.dart';
 import 'package:flutter/widgets.dart';
+import 'dry_baseline.dart';
 
 /// Reports [width] as its intrinsic width and fills at most that width
 /// (replaced elements with a natural size).
@@ -46,6 +47,10 @@ class RenderPreferredWidth extends RenderProxyBox {
       child?.getDryLayout(_inner(constraints)) ?? constraints.constrain(Size(_width, 0));
 
   @override
+  double? computeDryBaseline(covariant BoxConstraints constraints, TextBaseline baseline) =>
+      cssDryBaseline(child, _inner(constraints), baseline);
+
+  @override
   void performLayout() {
     final c = child;
     if (c == null) {
@@ -88,5 +93,15 @@ class RenderCenterVertically extends RenderShiftedBox {
     c.layout(_inner(constraints), parentUsesSize: true);
     size = constraints.constrain(c.size);
     (c.parentData! as BoxParentData).offset = Offset(0, (size.height - c.size.height) / 2);
+  }
+
+  @override
+  double? computeDryBaseline(covariant BoxConstraints constraints, TextBaseline baseline) {
+    final c = child;
+    if (c == null) return null;
+    final d = cssDryBaseline(c, _inner(constraints), baseline);
+    if (d == null) return null;
+    final s = c.getDryLayout(_inner(constraints));
+    return d + (constraints.constrain(s).height - s.height) / 2;
   }
 }

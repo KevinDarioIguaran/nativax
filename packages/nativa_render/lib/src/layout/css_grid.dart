@@ -840,6 +840,10 @@ class RenderCssGrid extends RenderBox
       defaultComputeDistanceToFirstActualBaseline(baseline);
 
   @override
+  double? computeDryBaseline(covariant BoxConstraints constraints, TextBaseline baseline) =>
+      cssDryFirstBaseline(firstChild, constraints, baseline);
+
+  @override
   void paint(PaintingContext context, Offset offset) =>
       LayoutProfile.measure('grid.paint', () => paintStacked(context, offset));
 

@@ -175,7 +175,7 @@ TextStyle textStyleFor(ComputedStyle s, {bool inlineBackground = false, bool nor
               Shadow(
                 color: toColor(sh.color.color ?? s.color),
                 offset: Offset(sh.x.value, sh.y.value),
-                blurRadius: sh.blur.value,
+                blurRadius: cssBlurToFlutter(sh.blur.value),
               ),
           ],
   );
@@ -264,6 +264,36 @@ TextAlign textAlignFor(ComputedStyle s) => switch (s.textAlign) {
 const sides = ['top', 'right', 'bottom', 'left'];
 const corners = ['top-left', 'top-right', 'bottom-right', 'bottom-left'];
 
+/// Average and maximum glyph widths (em) used by Chromium to size text
+/// controls, for the faces that back the generic families: Liberation
+/// Sans/Serif and DejaVu Sans Mono (`xAvgCharWidth` and the bounding-box
+/// width plus Skia's rounding, fitted against Chromium 152).
+(double avg, double max) _controlCharEm(ComputedStyle s) {
+  final family = (mapFontFamily(s.fontFamily).$1 ?? nativaxDefaultFontFamily ?? 'serif').toLowerCase();
+  if (family.contains('mono') || family.contains('courier')) return (0.602, 1.45);
+  if (family.contains('serif') && !family.contains('sans') || family.contains('times')) return (0.5488, 1.99);
+  return (0.5796, 2.016);
+}
+
+/// Content width of `<input size=N>` without a CSS width: Chromium uses
+/// `N × avgCharWidth + (maxCharWidth − avgCharWidth)`.
+double textInputContentWidth(ComputedStyle s, int size) {
+  final (avg, max) = _controlCharEm(s);
+  return ((size - 1) * avg + max) * s.fontSize;
+}
+
+/// Content width of `<textarea cols=N>` without a CSS width: `N ×
+/// avgCharWidth` plus the 15px scrollbar gutter Chromium reserves.
+double textAreaContentWidth(ComputedStyle s, int cols) => cols * _controlCharEm(s).$1 * s.fontSize + 15;
+
+/// Converts a CSS shadow blur radius (Gaussian sigma = blur / 2) to
+/// Flutter's `blurRadius` (sigma = radius × 0.57735 + 0.5).
+double cssBlurToFlutter(double blur) {
+  if (blur <= 0) return 0;
+  // Flutter cannot go below sigma 0.5; the tiniest blurs stay at that floor.
+  return math.max(0.001, (blur / 2 - 0.5) / 0.57735);
+}
+
 /// Builds the box spec. [report] receives approximations worth surfacing
 /// (for example dashed borders drawn solid).
 CssBoxSpec boxSpecFor(
@@ -272,6 +302,7 @@ CssBoxSpec boxSpecFor(
   ResolvedLength? widthHint,
   ResolvedLength? heightHint,
   void Function(String message)? report,
+  bool canvasPropagated = false,
 }) {
   String borderStyle(String side) {
     final style = s.borderStyleOf(side);
@@ -295,18 +326,18 @@ CssBoxSpec boxSpecFor(
     radii: [for (final c in corners) s.radiusOf(c)],
     borderBox: s.borderBox,
     clip: s.overflowX != 'visible' || s.overflowY != 'visible',
-    background: s.backgroundColor.alpha > 0 ? toColor(s.backgroundColor) : null,
+    scrollContainer: const {'hidden', 'scroll', 'auto'}.contains(s.overflowX) ||
+        const {'hidden', 'scroll', 'auto'}.contains(s.overflowY),
+    background: !canvasPropagated && s.backgroundColor.alpha > 0 ? toColor(s.backgroundColor) : null,
     backgroundImage: backgroundImage,
-    gradient: s.backgroundGradient,
+    gradient: canvasPropagated ? null : s.backgroundGradient,
     shadows: [
       for (final sh in s.boxShadows)
         if (!sh.inset)
           BoxShadow(
             color: toColor(sh.color.color ?? s.color),
             offset: Offset(sh.x.value, sh.y.value),
-            // CSS blur radius = 2 × Gaussian sigma; Flutter's blurRadius
-            // already follows that convention.
-            blurRadius: sh.blur.value,
+            blurRadius: cssBlurToFlutter(sh.blur.value),
             spreadRadius: sh.spread.value,
           ),
     ],

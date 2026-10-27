@@ -2,6 +2,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/rendering.dart';
 import 'package:flutter/widgets.dart';
+import '../layout/dry_baseline.dart';
 
 /// The top band of a `<fieldset>` with a rendered `<legend>`: the legend is
 /// shrink-to-fit (it only wraps when it does not fit the fieldset), and the
@@ -151,6 +152,14 @@ class RenderFieldsetLegendBar extends RenderShiftedBox {
     c.layout(_legendConstraints(c, w), parentUsesSize: true);
     (c.parentData! as BoxParentData).offset = Offset(_inset, 0);
     size = constraints.constrain(Size(w, c.size.height));
+  }
+
+  @override
+  double? computeDryBaseline(covariant BoxConstraints constraints, TextBaseline baseline) {
+    final c = child;
+    if (c == null) return null;
+    final w = constraints.hasBoundedWidth ? constraints.maxWidth : computeMaxIntrinsicWidth(double.infinity);
+    return cssDryBaseline(c, _legendConstraints(c, w), baseline);
   }
 
   @override

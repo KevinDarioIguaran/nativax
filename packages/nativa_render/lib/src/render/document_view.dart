@@ -10,6 +10,7 @@ import 'package:nativa_dom/nativa_dom.dart' as dom;
 import 'canvas2d.dart';
 import 'node_view.dart';
 import 'render_types.dart';
+import '../layout/css_box.dart';
 import '../layout/virtualization.dart';
 import '../layout/layout_profile.dart';
 import 'draw_trace.dart';
@@ -751,8 +752,12 @@ class _NativaXDocumentViewState extends State<NativaXDocumentView>
 
           final document = widget.document;
           final body = document.body;
-          final root = document.documentElement;
-          final canvas = _canvasColor(body, root);
+          final canvasSource = canvasBackgroundSource(document, widget.styleEngine);
+          final canvasStyle = canvasSource == null ? null : widget.styleEngine.styleOf(canvasSource);
+          final canvas = canvasStyle != null && canvasStyle.backgroundColor.alpha > 0
+              ? Color(canvasStyle.backgroundColor.argb)
+              : const Color(0xffffffff);
+          final canvasGradient = canvasStyle?.backgroundGradient;
 
           final content = body == null
               ? const SizedBox.shrink()
@@ -805,7 +810,9 @@ class _NativaXDocumentViewState extends State<NativaXDocumentView>
             controller: _scroll,
             child: ConstrainedBox(
               constraints: BoxConstraints(minHeight: height),
-              child: content,
+              child: canvasGradient == null
+                  ? content
+                  : CssCanvasBackground(gradient: canvasGradient, minHeight: height, child: content),
             ),
           );
           final scroll = _dropTarget(scroll0);
@@ -881,7 +888,8 @@ class _NativaXDocumentViewState extends State<NativaXDocumentView>
         final style = widget.styleEngine.styleOf(c);
         if (style.display == Display.none) continue;
         if (style.position == 'fixed') {
-          if (!modal.contains(c)) out.add(c);
+          // Under a transformed ancestor it is laid out in that ancestor.
+          if (!modal.contains(c) && !createsFixedContainingBlockAbove(c, widget.styleEngine)) out.add(c);
           continue;
         }
         walk(c);
@@ -890,22 +898,5 @@ class _NativaXDocumentViewState extends State<NativaXDocumentView>
 
     walk(body);
     return _fixedCache = out;
-  }
-
-  Color _canvasColor(dom.Element? body, dom.Element? root) {
-    Color? color;
-    if (body != null) {
-      final style = widget.styleEngine.styleOf(body);
-      if (style.backgroundColor.alpha > 0) {
-        color = Color(style.backgroundColor.argb);
-      }
-    }
-    if (color == null && root != null) {
-      final style = widget.styleEngine.styleOf(root);
-      if (style.backgroundColor.alpha > 0) {
-        color = Color(style.backgroundColor.argb);
-      }
-    }
-    return color ?? const Color(0xffffffff);
   }
 }

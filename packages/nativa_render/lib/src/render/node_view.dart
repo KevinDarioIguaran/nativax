@@ -29,6 +29,7 @@ import 'svg.dart';
 import 'render_types.dart';
 import 'draw_trace.dart';
 import 'widget_cache.dart';
+import '../layout/dry_baseline.dart';
 
 /// Tags that never generate a box. They are excluded before asking the style
 /// engine, so scripts/styles in real pages do not pay selector matching.
@@ -335,6 +336,30 @@ class NativeXLayerView extends StatelessWidget {
   }
 }
 
+/// Whether an ancestor of [element] (or, for a pseudo-element, [element]
+/// itself) is the containing block of fixed-position descendants.
+bool createsFixedContainingBlockAbove(dom.Element element, StyleEngine engine, {bool includeSelf = false}) {
+  for (dom.Element? e = includeSelf ? element : element.parentElement; e != null; e = e.parentElement) {
+    final s = engine.styleOf(e);
+    if (s.transform != null || s.filter != null || s.perspective != null) return true;
+  }
+  return false;
+}
+
+bool _hasBackground(ComputedStyle s) =>
+    s.backgroundColor.alpha > 0 || s.backgroundGradient != null || s.backgroundImage != null;
+
+/// The element whose background paints the canvas (CSS Backgrounds 3
+/// §2.11.2): the root element when it has one, otherwise `body`. null when
+/// neither has a background.
+dom.Element? canvasBackgroundSource(dom.Document document, StyleEngine engine) {
+  final root = document.documentElement;
+  if (root != null && _hasBackground(engine.styleOf(root))) return root;
+  final body = document.body;
+  if (body != null && _hasBackground(engine.styleOf(body))) return body;
+  return null;
+}
+
 class _Builder {
   _Builder({
     required this.styleEngine,
@@ -421,11 +446,25 @@ class _Builder {
     }
     final s = styleOfChild(c);
     if (s == null) return c is! dom.Text;
-    return s.display == Display.none || s.position == 'fixed';
+    return s.display == Display.none || (s.position == 'fixed' && _viewportFixed(c));
   }
 
-  bool _isAbsolute(Object c) => styleOfChild(c)?.position == 'absolute';
-  bool _isFixed(Object c) => styleOfChild(c)?.position == 'fixed';
+  /// `position: fixed` whose containing block is the viewport. A transform,
+  /// filter or perspective on an ancestor makes that ancestor the containing
+  /// block instead (CSS Transforms 1 §2), so the box is laid out like an
+  /// absolutely positioned one inside it.
+  bool _viewportFixed(Object c) {
+    final element = c is _Pseudo ? c.element : c;
+    if (element is! dom.Element) return true;
+    return !createsFixedContainingBlockAbove(element, styleEngine);
+  }
+
+  bool _isAbsolute(Object c) {
+    final position = styleOfChild(c)?.position;
+    return position == 'absolute' || (position == 'fixed' && !_viewportFixed(c));
+  }
+
+  bool _isFixed(Object c) => styleOfChild(c)?.position == 'fixed' && _viewportFixed(c);
 
   bool _isInline(Object c) =>
       c is dom.Text || (styleOfChild(c)?.isInlineLevel ?? false);
@@ -507,6 +546,9 @@ class _Builder {
       key: ObjectKey(element),
       parentFlex: parentFlex,
       replaced: _replacedElements.contains(element.localName),
+      // Block-level form controls keep their intrinsic width (a block
+      // `<input>` or `<button>` does not fill the line in browsers).
+      control: const {'input', 'select', 'textarea', 'button'}.contains(element.localName),
     );
   }
 
@@ -528,9 +570,10 @@ class _Builder {
     Key? key,
     required bool parentFlex,
     bool replaced = false,
+    bool control = false,
   }) {
     final autoWidth =
-        style.width == null && (parentFlex || !style.isInlineLevel);
+        style.width == null && (parentFlex || (!style.isInlineLevel && !control));
     return CssItem(
       key: key,
       margin: [
@@ -664,17 +707,74 @@ class _Builder {
       e.localName == 'input' &&
       const {'checkbox', 'radio', 'range'}.contains(e.inputType);
 
+  /// Buttons and text fields whose UA `outset`/`inset` border was not
+  /// changed by the author keep `appearance: auto`: browsers lay them out
+  /// with the 2px computed border but paint a 1px #767676 rounded frame.
+  static bool _themedBorder(dom.Element e, ComputedStyle s) {
+    final tag = e.localName;
+    if (tag != 'button' && tag != 'input') return false;
+    if (s['appearance'] case Keyword(name: 'none')) return false;
+    for (final side in const ['top', 'right', 'bottom', 'left']) {
+      final style = s.borderStyleOf(side);
+      if (style != 'outset' && style != 'inset') return false;
+      if (s.borderWidthOf(side) != 2) return false;
+    }
+    return true;
+  }
+
+  static CssBoxSpec _themedSpec(CssBoxSpec spec) => CssBoxSpec(
+        width: spec.width,
+        height: spec.height,
+        minWidth: spec.minWidth,
+        minHeight: spec.minHeight,
+        maxWidth: spec.maxWidth,
+        maxHeight: spec.maxHeight,
+        padding: [for (final p in spec.padding) p.isPercent ? p : ResolvedLength.px(p.value + 1)],
+        border: const [1, 1, 1, 1],
+        borderColors: List.filled(4, const Color(0xff767676)),
+        radii: List.filled(4, const ResolvedLength.px(2)),
+        borderBox: spec.borderBox,
+        clip: spec.clip,
+        scrollContainer: spec.scrollContainer,
+        background: spec.background,
+        backgroundImage: spec.backgroundImage,
+        gradient: spec.gradient,
+        shadows: spec.shadows,
+        outlineWidth: spec.outlineWidth,
+        outlineColor: spec.outlineColor,
+        outlineOffset: spec.outlineOffset,
+      );
+
   Widget buildBox(dom.Element element, ComputedStyle style) {
     final image = _backgroundImage(element, style);
     var content = buildContent(element, style);
-    if (_isScrollable(style)) content = _scrollContainer(style, content);
+    // A textarea scrolls inside its own text field.
+    if (_isScrollable(style) && element.localName != 'textarea') {
+      content = _scrollContainer(style, content);
+    }
     // Buttons centre their contents vertically when taller than them.
     if (element.localName == 'button' &&
         !style.isFlexContainer &&
         !style.isGridContainer) {
       content = CenterVertically(child: content);
     }
-    var spec = boxSpecFor(style, backgroundImage: image, report: onDiagnostic);
+    // A definite px width with `aspect-ratio` gives a definite height (in
+    // the same box-sizing box), without depending on parent constraints.
+    final ratio = style.aspectRatio;
+    final fixedWidth = style.width;
+    final aspectHeight = style.height == null && ratio != null && ratio > 0 &&
+            fixedWidth != null && !fixedWidth.isPercent
+        ? ResolvedLength.px(fixedWidth.value / ratio)
+        : null;
+    var spec = boxSpecFor(style, backgroundImage: image, heightHint: aspectHeight, report: onDiagnostic);
+    // body's colour and gradient were propagated to the canvas (images
+    // still paint on body's own box).
+    if (element.localName == 'body' &&
+        identical(canvasBackgroundSource(element.ownerDocument, styleEngine), element)) {
+      spec = boxSpecFor(style,
+          backgroundImage: image, heightHint: aspectHeight, report: onDiagnostic, canvasPropagated: true);
+    }
+    if (_themedBorder(element, style)) spec = _themedSpec(spec);
     if (_nativeAppearance(element)) {
       spec = CssBoxSpec(
         width: spec.width,
@@ -695,7 +795,7 @@ class _Builder {
         : CssBox(spec: spec, child: content);
     // Apply an author-supplied aspect ratio when the height is auto, so
     // `aspect-ratio` is honoured for ordinary boxes, not only for images.
-    if (style.height == null && style.aspectRatio != null && style.aspectRatio! > 0) {
+    if (aspectHeight == null && style.height == null && ratio != null && ratio > 0) {
       box = AspectRatio(aspectRatio: style.aspectRatio!, child: box);
     }
     final perspective = style.perspective;
@@ -747,6 +847,7 @@ class _Builder {
       ],
       borderBox: spec.borderBox,
       clip: spec.clip,
+      scrollContainer: spec.scrollContainer,
       background: spec.background,
       gradient: spec.gradient,
       shadows: spec.shadows,
@@ -830,10 +931,9 @@ class _Builder {
           multiline: true,
           builder: this,
         );
-        if (style.width != null) return child;
         final cols = int.tryParse(element.getAttribute('cols') ?? '') ?? 20;
         return PreferredWidth(
-          width: cols * style.fontSize * 0.6,
+          width: textAreaContentWidth(style, cols),
           child: child,
         );
       case 'select':
@@ -1395,10 +1495,21 @@ class _Builder {
   double? _px(ResolvedLength? length) => length?.resolve(null);
 
   Offset _relativeOffset(ComputedStyle style) {
-    final left = _px(style.left);
-    final right = _px(style.right);
-    final top = _px(style.top);
-    final bottom = _px(style.bottom);
+    // Percentages in relative offsets are relative to the containing block.
+    // NativaX does not always have that size at paint time, so fall back to
+    // the viewport rather than silently dropping the offset.
+    final mq = MediaQuery.maybeOf(context);
+    final basisWidth = mq?.size.width ?? 800.0;
+    final basisHeight = mq?.size.height ?? 600.0;
+    double? resolve(ResolvedLength? length, double basis) {
+      if (length == null) return null;
+      if (!length.isPercent) return length.value;
+      return length.resolve(basis);
+    }
+    final left = resolve(style.left, basisWidth);
+    final right = resolve(style.right, basisWidth);
+    final top = resolve(style.top, basisHeight);
+    final bottom = resolve(style.bottom, basisHeight);
     return Offset(
       left ?? (right == null ? 0 : -right),
       top ?? (bottom == null ? 0 : -bottom),
@@ -1457,13 +1568,13 @@ class _Builder {
         children: [
           for (final entry in entries)
             if (entry.$2 < 0)
-              _absoluteWidget(
-                entry.$1, padding, containerWidth, containerHeight, block),
+              _absoluteWidget(entry.$1, padding, containerWidth,
+                  containerHeight, block, ps.isFlexContainer ? ps : null),
           normalChild,
           for (final entry in entries)
             if (entry.$2 >= 0)
-              _absoluteWidget(
-                entry.$1, padding, containerWidth, containerHeight, block),
+              _absoluteWidget(entry.$1, padding, containerWidth,
+                  containerHeight, block, ps.isFlexContainer ? ps : null),
         ],
       ),
     );
@@ -1475,6 +1586,7 @@ class _Builder {
     double? containerWidth,
     double? containerHeight,
     CssContainingBlockSize? block,
+    ComputedStyle? flexParent,
   ]) {
     final style = styleOfChild(node)!;
     final element = node is _Pseudo ? node.element : node as dom.Element;
@@ -1483,7 +1595,7 @@ class _Builder {
     // block; use the parent size when it is known and fall back to the
     // viewport otherwise. This keeps `top: 50%; left: 50%` centred instead
     // of being dropped as an unresolvable percentage.
-    final isFixed = style.position == 'fixed';
+    final isFixed = style.position == 'fixed' && _viewportFixed(node);
     final mq = isFixed ? MediaQuery.maybeOf(context) : null;
     final basisWidth = isFixed
         ? (mq?.size.width ?? containerWidth ?? 800.0)
@@ -1531,6 +1643,10 @@ class _Builder {
       width: basisWidth,
       height: isFixed ? basisHeight : containerHeight,
       scope: isFixed ? null : block,
+      // `width: auto` without both horizontal offsets shrinks to fit.
+      shrinkToFitInset: !hasWidth && (left == null || right == null) && node is! _Pseudo
+          ? (left ?? 0) + (right ?? 0)
+          : null,
       child: box,
     );
     final shiftTop = math.min(0.0, marginTop);
@@ -1554,7 +1670,7 @@ class _Builder {
     // width/height gives it loose constraints and a percentage can resolve
     // against the viewport, overflowing by a scrollbar's width.
     final fixedFull =
-        style.position == 'fixed' &&
+        isFixed &&
         (style.width == null || style.width!.isPercent) &&
         (style.height == null || style.height!.isPercent) &&
         (left == null || left == 0) &&
@@ -1572,6 +1688,37 @@ class _Builder {
     // `auto` offsets keep the static position, which is in the content box.
     // With an explicit size, an over-constrained right/bottom is ignored.
     final pad = containerPadding;
+    // In a flex container the static position is that of a sole flex item
+    // (CSS Flexbox §4.1): `justify-content`/`align-items` place it.
+    if (flexParent != null) {
+      final row = _isRow(flexParent.flexDirection);
+      final self = style.alignSelf;
+      final align = self == 'auto' ? flexParent.alignItems : self;
+      double? side(String keyword) => switch (keyword) {
+            'center' || 'space-around' || 'space-evenly' => 0,
+            'flex-end' || 'end' || 'right' || 'self-end' => 1,
+            _ => null,
+          };
+      final ax = left == null && right == null ? side(row ? flexParent.justifyContent : align) : null;
+      final ay = top == null && bottom == null ? side(row ? align : flexParent.justifyContent) : null;
+      if (ax != null || ay != null) {
+        return Positioned(
+          key: node is _Pseudo
+              ? ValueKey('${identityHashCode(element)}::${node.kind}')
+              : ObjectKey(element),
+          left: ax != null ? 0 : (left == null ? null : left - pad.left + shiftLeft),
+          right: ax != null ? 0 : (right == null || (hasWidth && left != null) ? null : right - pad.right + shiftRight),
+          top: ay != null ? 0 : (top == null ? null : top - pad.top + shiftTop),
+          bottom: ay != null ? 0 : (bottom == null || (hasHeight && top != null) ? null : bottom - pad.bottom + shiftBottom),
+          child: Align(
+            alignment: Alignment(ax ?? -1, ay ?? -1),
+            widthFactor: ax == null ? 1 : null,
+            heightFactor: ay == null ? 1 : null,
+            child: box,
+          ),
+        );
+      }
+    }
     return Positioned(
       key: node is _Pseudo
           ? ValueKey('${identityHashCode(element)}::${node.kind}')
@@ -2004,28 +2151,23 @@ class _Builder {
       case 'hidden':
         return const SizedBox.shrink();
       case 'checkbox':
-        return Material(
-          type: MaterialType.transparency,
-          child: Checkbox(
-            value: element.checked,
-            onChanged: element.disabled
-                ? null
-                : (_) => element.click(trusted: true),
-            activeColor: accent,
-            materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-            visualDensity: VisualDensity.compact,
-          ),
-        );
       case 'radio':
-        return GestureDetector(
-          behavior: HitTestBehavior.opaque,
-          onTap: element.disabled ? null : () => element.click(trusted: true),
-          child: CustomPaint(
-            size: const Size(20, 20),
-            painter: _RadioPainter(
-              checked: element.checked,
-              color: accent ?? const Color(0xff1a73e8),
-              disabled: element.disabled,
+        // Browsers draw both controls as 13x13 px boxes (Chromium's accent
+        // colour is #0075ff).
+        return Semantics(
+          checked: element.checked,
+          inMutuallyExclusiveGroup: element.inputType == 'radio',
+          child: GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: element.disabled ? null : () => element.click(trusted: true),
+            child: CustomPaint(
+              size: const Size(13, 13),
+              painter: _ToggleMarkPainter(
+                radio: element.inputType == 'radio',
+                checked: element.checked,
+                color: accent ?? const Color(0xff0075ff),
+                disabled: element.disabled,
+              ),
             ),
           ),
         );
@@ -2068,10 +2210,13 @@ class _Builder {
           multiline: false,
           builder: this,
         );
-        if (style.width != null) return child;
+        // Even with a CSS width (which then decides the layout), the
+        // control's min-content stays its `size`-based width, so a flex row
+        // does not compress it below that (Chromium keeps fixed-width
+        // inputs and overflows instead).
         final size = int.tryParse(element.getAttribute('size') ?? '') ?? 20;
         return PreferredWidth(
-          width: size * style.fontSize * 0.55,
+          width: textInputContentWidth(style, size),
           child: child,
         );
     }
@@ -2250,11 +2395,14 @@ class _InlineTextState extends State<_InlineText> {
   Widget build(BuildContext context) {
     final recognizers = <TapGestureRecognizer>[];
     final spans = <InlineSpan>[];
-    final whitespace = _Whitespace(false);
+    // A collapsible space at the start of a line is removed (CSS Text 3
+    // §4.1.2), as is one at the end of the block.
+    final whitespace = _Whitespace(true);
     _offset = 0;
     for (final node in widget.nodes) {
       _visit(node, widget.style, spans, whitespace, recognizers);
     }
+    if (whitespace.afterSpace) _dropTrailingBreak(spans, ' ');
     // A line break that ends the block does not open an empty last line.
     _dropTrailingBreak(spans);
 
@@ -2273,17 +2421,32 @@ class _InlineTextState extends State<_InlineText> {
         widget.style.overflowX != 'visible';
     final noWrap =
         widget.style.whiteSpace == 'pre' || widget.style.whiteSpace == 'nowrap';
+    final textStyle = textStyleFor(widget.style);
     final text = Text.rich(
       TextSpan(children: spans),
-      style: textStyleFor(widget.style),
+      style: textStyle,
+      // Every line box starts with the block's strut (CSS 2.1 §10.8.1), so
+      // a line holding only an inline-block is still as tall as the text.
+      // A line with no text and no atomic inline (only empty elements and
+      // collapsed spaces) has no height at all (CSS 2.1 §9.4.2).
+      strutStyle: _hasLineContent(spans)
+          ? StrutStyle.fromTextStyle(textStyle)
+          : const StrutStyle(fontSize: 0.001, height: 1, forceStrutHeight: true),
       textAlign: textAlignFor(widget.style),
       softWrap: !noWrap,
       maxLines: ellipsis && noWrap ? 1 : null,
       overflow: ellipsis ? TextOverflow.ellipsis : TextOverflow.clip,
     );
-    return LayoutProfile.enabled
-        ? LayoutTimed(kind: 'text', child: text)
+    // SkParagraph puts half of `letter-spacing` before each glyph; CSS puts
+    // all of it after. Shift the paragraph back so glyphs land where
+    // browsers paint them.
+    final spacing = widget.style.letterSpacing ?? 0;
+    final Widget shifted = spacing != 0 && Directionality.maybeOf(context) != TextDirection.rtl
+        ? Transform.translate(offset: Offset(-spacing / 2, 0), child: text)
         : text;
+    return LayoutProfile.enabled
+        ? LayoutTimed(kind: 'text', child: shifted)
+        : shifted;
   }
 
   void _visit(
@@ -2361,15 +2524,21 @@ class _InlineTextState extends State<_InlineText> {
       case 'noscript':
         return;
       case 'br':
+        // Collapsible spaces around a forced break are removed (CSS Text 3
+        // §4.1.2): the one before it hangs, the one after starts a line.
+        final collapse = style.whiteSpace == 'normal' ||
+            style.whiteSpace == 'nowrap' ||
+            style.whiteSpace == 'pre-line';
+        if (collapse && whitespace.afterSpace) _dropTrailingBreak(spans, ' ');
         _add(spans, const TextSpan(text: '\n'));
-        whitespace.afterSpace = false;
+        whitespace.afterSpace = collapse;
         return;
       case 'img':
         _add(
           spans,
-          WidgetSpan(
-            alignment: PlaceholderAlignment.middle,
-            child: widget.builder._interact(
+          _atomicSpan(
+            childStyle,
+            widget.builder._interact(
               node,
               childStyle,
               _ElementAnchor(
@@ -2379,6 +2548,7 @@ class _InlineTextState extends State<_InlineText> {
             ),
           ),
         );
+        whitespace.afterSpace = false;
         return;
       case 'input':
       case 'textarea':
@@ -2390,9 +2560,9 @@ class _InlineTextState extends State<_InlineText> {
       case 'svg':
         _add(
           spans,
-          WidgetSpan(
-            alignment: PlaceholderAlignment.middle,
-            child: widget.builder._interact(
+          _atomicSpan(
+            childStyle,
+            widget.builder._interact(
               node,
               childStyle,
               _ElementAnchor(
@@ -2402,6 +2572,7 @@ class _InlineTextState extends State<_InlineText> {
             ),
           ),
         );
+        whitespace.afterSpace = false;
         return;
     }
 
@@ -2447,13 +2618,12 @@ class _InlineTextState extends State<_InlineText> {
         childStyle.display == Display.inlineFlex ||
         childStyle.display == Display.inlineGrid ||
         node.localName == 'button' ||
-        node.localName == 'label' ||
         _hasBoxDecoration(childStyle)) {
       _add(
         spans,
-        WidgetSpan(
-          alignment: PlaceholderAlignment.middle,
-          child: widget.builder._interact(
+        _atomicSpan(
+          childStyle,
+          widget.builder._interact(
             node,
             childStyle,
             widget.builder.paintEffects(
@@ -2495,21 +2665,79 @@ class _InlineTextState extends State<_InlineText> {
       TextSpan(
         style: textStyleFor(childStyle, inlineBackground: true),
         recognizer: recognizer,
-        children: children,
+        // Flutter only asks the innermost span under the pointer for a
+        // recognizer, so the text runs inside carry the element's own.
+        children: recognizer == null ? children : _withRecognizer(children, recognizer),
       ),
     );
   }
 
-  /// Removes one final `\n` from the last text run, recursing into nested
-  /// spans. Returns false when the last run is not text (a placeholder).
-  static bool _dropTrailingBreak(List<InlineSpan> spans) {
+  static bool _hasLineContent(List<InlineSpan> spans) {
+    for (final span in spans) {
+      if (span is! TextSpan) return true;
+      if (span.text?.isNotEmpty ?? false) return true;
+      final children = span.children;
+      if (children != null && _hasLineContent(children)) return true;
+    }
+    return false;
+  }
+
+  static List<InlineSpan> _withRecognizer(List<InlineSpan> spans, GestureRecognizer recognizer) => [
+        for (final span in spans)
+          if (span is TextSpan && span.recognizer == null)
+            TextSpan(
+              text: span.text,
+              style: span.style,
+              recognizer: recognizer,
+              semanticsLabel: span.semanticsLabel,
+              children: span.children == null ? null : _withRecognizer(span.children!, recognizer),
+            )
+          else
+            span,
+      ];
+
+  /// An atomic inline (inline-block, replaced element, control) placed on
+  /// the line by its margin box and `vertical-align`. Negative and
+  /// percentage margins are not applied.
+  static WidgetSpan _atomicSpan(ComputedStyle style, Widget child) {
+    double m(String side) {
+      final l = style.marginOf(side);
+      return l == null || l.isPercent ? 0 : math.max(0, l.value);
+    }
+
+    final margin = EdgeInsets.fromLTRB(m('left'), m('top'), m('right'), m('bottom'));
+    return WidgetSpan(
+      alignment: _placeholderAlignment(style),
+      baseline: TextBaseline.alphabetic,
+      child: CssInlineAtomic(
+        child: margin == EdgeInsets.zero ? child : Padding(padding: margin, child: child),
+      ),
+    );
+  }
+
+  /// `vertical-align` for an atomic inline (inline-block, button…). CSS
+  /// aligns them on the baseline by default.
+  static PlaceholderAlignment _placeholderAlignment(ComputedStyle style) {
+    final va = style['vertical-align'];
+    return switch (va is Keyword ? va.name : 'baseline') {
+      'middle' => PlaceholderAlignment.middle,
+      'top' || 'text-top' => PlaceholderAlignment.top,
+      'bottom' || 'text-bottom' => PlaceholderAlignment.bottom,
+      _ => PlaceholderAlignment.baseline,
+    };
+  }
+
+  /// Removes one final `\n` (or [char]) from the last text run, recursing
+  /// into nested spans. Returns false when the last run is not text (a
+  /// placeholder).
+  static bool _dropTrailingBreak(List<InlineSpan> spans, [String char = '\n']) {
     for (var i = spans.length - 1; i >= 0; i--) {
       final span = spans[i];
       if (span is! TextSpan) return false;
       final children = span.children;
       if (children != null && children.isNotEmpty) {
         final copy = List<InlineSpan>.of(children);
-        if (_dropTrailingBreak(copy)) {
+        if (_dropTrailingBreak(copy, char)) {
           spans[i] = TextSpan(
             text: span.text,
             style: span.style,
@@ -2523,7 +2751,7 @@ class _InlineTextState extends State<_InlineText> {
       }
       final text = span.text;
       if (text == null || text.isEmpty) continue;
-      if (!text.endsWith('\n')) return false;
+      if (!text.endsWith(char)) return false;
       spans[i] = TextSpan(
         text: text.substring(0, text.length - 1),
         style: span.style,
@@ -2560,38 +2788,57 @@ class _Whitespace {
   bool afterSpace;
 }
 
-class _RadioPainter extends CustomPainter {
-  _RadioPainter({
+class _ToggleMarkPainter extends CustomPainter {
+  _ToggleMarkPainter({
+    required this.radio,
     required this.checked,
     required this.color,
     required this.disabled,
   });
+  final bool radio;
   final bool checked;
   final Color color;
   final bool disabled;
 
   @override
   void paint(Canvas canvas, Size size) {
-    final center = size.center(Offset.zero);
-    final r = size.shortestSide / 2 - 1;
-    final ring = Paint()
+    final ink = disabled ? const Color(0x61000000) : color;
+    final border = disabled ? const Color(0x4d767676) : const Color(0xff767676);
+    final fill = Paint()..color = const Color(0xffffffff);
+    final stroke = Paint()
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.5
-      ..color = disabled
-          ? const Color(0x61000000)
-          : (checked ? color : const Color(0xff767676));
-    canvas.drawCircle(center, r, ring);
-    if (checked)
-      canvas.drawCircle(
-        center,
-        r * 0.55,
-        Paint()..color = disabled ? const Color(0x61000000) : color,
-      );
+      ..strokeWidth = 1;
+    if (radio) {
+      final center = size.center(Offset.zero);
+      final r = size.shortestSide / 2 - 0.85;
+      canvas.drawCircle(center, r, fill);
+      canvas.drawCircle(center, r, stroke..color = checked ? ink : border);
+      if (checked) canvas.drawCircle(center, r * 0.6, Paint()..color = ink);
+      return;
+    }
+    final box = RRect.fromRectAndRadius((Offset.zero & size).deflate(0.5), const Radius.circular(2));
+    if (!checked) {
+      canvas.drawRRect(box, fill);
+      canvas.drawRRect(box, stroke..color = border);
+      return;
+    }
+    canvas.drawRRect(box.inflate(0.5), Paint()..color = ink);
+    final w = size.width, h = size.height;
+    canvas.drawPath(
+      Path()
+        ..moveTo(w * 0.22, h * 0.52)
+        ..lineTo(w * 0.42, h * 0.72)
+        ..lineTo(w * 0.78, h * 0.3),
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 2
+        ..color = const Color(0xffffffff),
+    );
   }
 
   @override
-  bool shouldRepaint(_RadioPainter old) =>
-      old.checked != checked || old.color != color || old.disabled != disabled;
+  bool shouldRepaint(_ToggleMarkPainter old) =>
+      old.radio != radio || old.checked != checked || old.color != color || old.disabled != disabled;
 }
 
 /// A generated `::before`/`::after` box.
@@ -2684,7 +2931,9 @@ class _TextControlState extends State<_TextControl> {
 
   @override
   Widget build(BuildContext context) {
-    final style = textStyleFor(widget.style);
+    // `inherit: false` keeps Material's bodyLarge (line height 1.5) out of
+    // the field: CSS `line-height: normal` comes from the font.
+    final style = textStyleFor(widget.style).copyWith(inherit: false, textBaseline: TextBaseline.alphabetic);
     final element = widget.element;
     final maxLength = int.tryParse(element.getAttribute('maxlength') ?? '');
     final rows = int.tryParse(element.getAttribute('rows') ?? '') ?? 2;
@@ -2701,6 +2950,7 @@ class _TextControlState extends State<_TextControl> {
           controller: _controller,
           focusNode: _focus,
           style: style,
+          textAlign: textAlignFor(widget.style),
           cursorColor: style.color,
           enabled: !element.disabled,
           readOnly: element.hasAttribute('readonly'),

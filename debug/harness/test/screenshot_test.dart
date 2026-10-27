@@ -67,6 +67,9 @@ void main() {
     final width = double.tryParse(env['NATIVAX_SHOT_WIDTH'] ?? '') ?? 800;
     final height = double.tryParse(env['NATIVAX_SHOT_HEIGHT'] ?? '') ?? 3000;
     await tester.runAsync(loadHarnessFonts);
+    // flutter_test draws shadows unblurred by default; the capture must
+    // paint them as the app does (reset before the invariant check below).
+    debugDisableShadows = false;
     tester.view.physicalSize = Size(width, height);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.reset);
@@ -133,6 +136,7 @@ void main() {
       final png = await image.toByteData(format: ui.ImageByteFormat.png);
       File(out!).writeAsBytesSync(png!.buffer.asUint8List());
     });
+    debugDisableShadows = true;
     for (final e in errors) {
       // ignore: avoid_print
       print('SCRIPT ERROR: $e');

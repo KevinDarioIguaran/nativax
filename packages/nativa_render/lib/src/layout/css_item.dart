@@ -1,6 +1,7 @@
 import 'package:flutter/rendering.dart';
 import 'package:flutter/widgets.dart';
 import 'package:nativa_css/nativa_css.dart';
+import 'dry_baseline.dart';
 
 /// Per-child layout inputs for [RenderCssBlock] and [RenderCssFlex], plus the
 /// containing block size those parents report back to [RenderCssBox] so it
@@ -202,4 +203,19 @@ class CssItem extends ParentDataWidget<CssItemParentData> {
 /// Only used for [CssItem.debugTypicalAncestorWidgetClass] diagnostics.
 abstract class CssBlockFlowMarker extends Widget {
   const CssBlockFlowMarker({super.key});
+}
+
+/// Dry baseline of a CSS container: the first child that has one, measured
+/// against the container's width and placed below its top margin. An
+/// approximation (items are not positioned); only used for dry sizing.
+double? cssDryFirstBaseline(RenderBox? first, BoxConstraints constraints, TextBaseline baseline) {
+  for (var c = first; c != null; c = (c.parentData! as ContainerBoxParentData<RenderBox>).nextSibling) {
+    final pd = c.parentData;
+    final top = pd is CssItemParentData
+        ? pd.resolveMargin(pd.marginTop, constraints.hasBoundedWidth ? constraints.maxWidth : 0)
+        : 0.0;
+    final d = cssDryBaseline(c, BoxConstraints(maxWidth: constraints.maxWidth), baseline);
+    if (d != null) return d + top;
+  }
+  return null;
 }

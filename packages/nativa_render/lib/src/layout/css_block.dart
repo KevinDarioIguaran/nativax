@@ -116,6 +116,10 @@ class RenderCssBlock extends RenderBox
           avail = math.max(0.0, maxW - mL - mR);
         }
         cc = BoxConstraints.tightFor(width: avail);
+      } else if (w != null && pd.width != null) {
+        // A definite `width` is not clamped by the containing block: wider
+        // children overflow it (CSS 2.1 §10.3.3, over-constrained margins).
+        cc = const BoxConstraints();
       } else if (w != null) {
         cc = BoxConstraints(maxWidth: math.max(0, w - mL - mR));
       } else {
@@ -157,7 +161,7 @@ class RenderCssBlock extends RenderBox
         if (w != null) {
           final free = w - s.width - mL - mR;
           if (pd.marginLeft == null && pd.marginRight == null) {
-            x = (w - s.width) / 2;
+            x = math.max(0, free) / 2;
           } else if (pd.marginLeft == null) {
             x = mL + math.max(0, free);
           }
@@ -239,6 +243,10 @@ class RenderCssBlock extends RenderBox
   @override
   double? computeDistanceToActualBaseline(TextBaseline baseline) =>
       defaultComputeDistanceToFirstActualBaseline(baseline);
+
+  @override
+  double? computeDryBaseline(covariant BoxConstraints constraints, TextBaseline baseline) =>
+      cssDryFirstBaseline(firstChild, constraints, baseline);
 
   @override
   void paint(PaintingContext context, Offset offset) =>
