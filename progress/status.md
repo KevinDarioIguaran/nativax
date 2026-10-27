@@ -69,6 +69,10 @@ score, not CSS support. Security is QuickJS-only and has no OS sandbox.
 - **Documentation audit:** **PASS**, 100 maintained files, 0 issues.
 - There are 56 Dart test files. Package tests and Python/debug tests can be run
   separately; see [`../docs/testing.md`](../docs/testing.md).
+- JavaScriptCore (`JscEngine`) is opt-in (`NATIVAX_ENGINE=jsc`) and only
+  measured on Linux x64 (JSC GTK 2.52.5): Security 43/45 PASS (microtask job
+  limit not enforced), Test262 99.17 % vs QuickJS 99.76 %, JS microbenchmarks
+  59-99 % faster. See `log.md` 2026-10-27. No modules, WebGL, SAB or workers.
 - V8 unit/smoke tests skip unless `NATIVAX_V8_LIB` is supplied. A skip is not
   verification. V8 currently does not enforce execution budget, job limit, or
   stack limit and has no module/WebAssembly/WebGL/SAB host path.

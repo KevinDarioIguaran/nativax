@@ -230,8 +230,10 @@ From `nativa_js` (partly re-exported by `nativax`):
   `callGlobal`, `registerHostFunction`, `drainMicrotasks`,
   `hasPendingMicrotasks`, `memoryUsed`, `collectGarbage`, `dispose`.
 - `JavaScriptEngineConfig`: memory, stack, budget, jobs, microtask slice.
-- `QuickJsEngine`, `V8Engine`.
-- `createDefaultJavaScriptEngine(config, {environment})`.
+- `QuickJsEngine`, `V8Engine`, `JscEngine` (opt-in JavaScriptCore;
+  `JscEngine.isAvailable([path])`, `memoryExhausted`, `enforceMemoryLimit()`).
+- `createDefaultJavaScriptEngine(config, {environment})`,
+  `createJavaScriptEngineNamed(name, [config])` (`quickjs`, `v8`, `jsc`).
 - `TimerHost`, `TimerLimits`.
 - `ConsoleMessage`, `ConsoleLevel`, `installConsole`.
 - exceptions: `JavaScriptException`, `JavaScriptMemoryLimitException`,

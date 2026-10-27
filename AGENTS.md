@@ -23,7 +23,9 @@ Chromium, CEF, Electron, or a local HTTP server for presentation.
   Windows) the page engine is V8 (`createDefaultJavaScriptEngine`) when
   `libnx_v8.so` loads; QuickJS-ng is the default everywhere else (iOS, Android,
   no JIT), for pages with ES modules (V8 has no modules yet), for workers, and
-  the fallback when V8 is missing or hits the memory limit. Both stay behind
+  the fallback when V8 is missing or hits the memory limit. JavaScriptCore
+  (`JscEngine`, the host's JSC loaded at run time) is opt-in with
+  `NATIVAX_ENGINE=jsc` and falls back the same way. All stay behind
   the same `JavaScriptEngine` contract; never replace the engine with a toy
   interpreter or text search.
 - Scripts receive only ids, scalars, and JSON; never Dart objects or `JSValue`.

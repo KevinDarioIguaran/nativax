@@ -5,6 +5,49 @@ Newest first. Historical Spanish sessions are in
 evidence, not current instructions. Numbers below are copied from recorded
 outputs, not reconstructed from memory.
 
+## 2026-10-27 — Opt-in JavaScriptCore engine
+
+Scope: add `JscEngine` (nativa_js) as an optional backend behind
+`JavaScriptEngine`, without changing the default engine. It binds the host's
+JavaScriptCore through `dart:ffi` at run time (Linux `libjavascriptcoregtk`,
+Apple system framework, `NATIVAX_JSC_LIB` elsewhere); nothing is linked at
+build time, and where JSC does not load the usual engine is used.
+
+- Limits: the execution budget interrupts running code
+  (`JSContextGroupSetExecutionTimeLimit`), also through nested
+  script -> host -> script entries. The heap is checked against the memory
+  limit between entries (sampled, <5 % overhead) and once after page startup;
+  over it the page reloads on QuickJS like V8. A single runaway allocation
+  inside one entry is bounded only by the time budget.
+- Not on JSC: ES modules (module pages stay on QuickJS), WebGL, cross-runtime
+  SharedArrayBuffer, workers, and the per-drain microtask job limit.
+- `adoptGlobalPrototype` in the DOM prelude: JSC's global has an immutable
+  prototype, so Window members are copied onto it and `instanceof` recognises
+  it. QuickJS still uses `Object.setPrototypeOf`.
+- `forceQuickJs` (the memory-limit reload) now wins over `engineFactory`.
+- Debug harnesses (microbenchmarks, security, Test262, memory runtime cases)
+  read `NATIVAX_ENGINE` (default `quickjs`).
+
+Measured on Linux x64, JavaScriptCore GTK 2.52.5, same tree, QuickJS -> JSC:
+
+- Microbenchmarks (3 warmup / 15 rounds, `compare --threshold 10 --noise 2`):
+  `js.*` -59 % to -96 %, `js_steady.*` -56 % to -99 %, `bridge.noop` -17.7 %,
+  `dom.*` -23 % to -50 % (`create_nodes`, `innerHTML`, `style_recompute`
+  within noise).
+- Security: QuickJS 44 PASS / 0 FAIL / 1 SKIP; JSC 43 PASS / 1 FAIL / 1 SKIP.
+  The failure is `limits.microtask_limit`: JSC stops the endless promise chain
+  with the time budget, not with `maxJobsPerDrain`.
+- Test262 (`language/{expressions,statements,types,literals}`, 21,098 tests):
+  QuickJS 19,943 PASS / 47 FAIL / 1,108 SKIP (99.76 %, 55.6 s); JSC 19,824
+  PASS / 166 FAIL / 1,108 SKIP (99.17 %, 186.8 s). Most JSC-only failures are
+  `using` / `await using` syntax. The longer JSC wall time is not explained by
+  engine creation (1.38 ms vs 0.98 ms per create+eval+dispose); cause not
+  established.
+- Leaks (`--profile quick --only runtime`): 12 PASS on both; only
+  `runtime.engine_cycles` and `runtime.bindings_cycles` select the engine.
+
+Not measured: macOS, iOS, Android, Windows, and V8 (no `libnx_v8.so` here).
+
 ## 2026-10-26 — Documentation and evidence consolidation
 
 Scope: make maintained documentation English and source-backed, consolidate

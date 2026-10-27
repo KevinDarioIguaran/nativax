@@ -19,6 +19,8 @@ enforce it equally (see below).
 `createDefaultJavaScriptEngine` implements the default page rule:
 
 ```text
+NATIVAX_ENGINE == "jsc" and JavaScriptCore loads
+        -> JavaScriptCore (opt-in)
 desktop (Linux/macOS/Windows)
   and NATIVAX_ENGINE != "quickjs"
   and no live V8 instance
@@ -30,8 +32,9 @@ otherwise
 
 `NativaXRuntime._create` adds two page-level rules before that:
 
-1. `<script type="module">` forces QuickJS, because V8 has no module evaluator.
-2. `forceQuickJs: true` forces QuickJS.
+1. `<script type="module">` forces QuickJS, because V8 and JSC have no module
+   evaluator.
+2. `forceQuickJs: true` forces QuickJS, even over a custom `engineFactory`.
 
 `NativaXView` makes the force flag sticky after a post-startup V8 heap stop, so a
 reload stays on QuickJS.
@@ -82,6 +85,32 @@ V8 is the desktop fast path:
 This is a deliberate but incomplete backend. A desktop page that runs an
 infinite loop on V8 can block the UI isolate; QuickJS is the engine with the
 wall-clock budget. Do not describe the two as feature-identical.
+
+## JavaScriptCore (opt-in)
+
+`JscEngine` binds the host's JavaScriptCore through `dart:ffi` at run time;
+nothing is linked at build time, so no platform build depends on it:
+
+- Linux: `libjavascriptcoregtk-4.1.so.0` (then `-6.0.so.1`, `-4.0.so.18`);
+  macOS/iOS: the system `JavaScriptCore.framework`; Android/Windows: only a
+  library the app bundles, via `NATIVAX_JSC_LIB` or `libraryPath`.
+- `isAvailable` is false when the library or
+  `JSContextGroupSetExecutionTimeLimit` is missing; selection then falls back.
+- `executionBudget` interrupts running code (uncatchable, also through nested
+  script -> host -> script entries); the engine stays usable afterwards.
+- The memory limit is checked between top-level entries from
+  `JSGetMemoryUsageStatistics` (sampled at under 5 % overhead) and once after
+  page startup. Over it, `memoryExhausted` is set and the page reloads on
+  QuickJS like V8. One runaway allocation inside a single entry is bounded only
+  by the time budget.
+- Not supported: `evaluateModule`, WebGL (`__nx.gl` is null), cross-runtime
+  SharedArrayBuffer, workers, and `maxJobsPerDrain` (JSC drains promise jobs
+  itself; an endless chain is stopped by the time budget instead).
+- JSC's global object has an immutable prototype; the DOM prelude copies the
+  `Window` chain onto it (`adoptGlobalPrototype`).
+
+Measured on Linux x64 only (JSC GTK 2.52.5); see `progress/log.md`
+2026-10-27. Other platforms are untested.
 
 ## What “default” means in practice
 
