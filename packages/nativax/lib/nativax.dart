@@ -27,6 +27,7 @@ export 'package:nativa_js/nativa_js.dart'
         JavaScriptException,
         JavaScriptMemoryLimitException,
         JavaScriptTimeoutException,
+        JscEngine,
         QuickJsEngine,
         createDefaultJavaScriptEngine,
         TimerLimits,

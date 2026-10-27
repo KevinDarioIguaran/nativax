@@ -3,6 +3,7 @@ import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:nativa_js/nativa_js.dart' show JavaScriptEngine;
 import 'package:nativax/nativax.dart';
 import 'package:nativa_css/nativa_css.dart' show CssColor;
 
@@ -190,6 +191,99 @@ body { font-family: 'Font Awesome 6 Free', sans-serif; }
       );
       addTearDown(runtime.dispose);
       expect(runtime.engineName, 'quickjs');
+    });
+  });
+
+  group('JavaScriptCore engine (opt-in)', () {
+    final jscSkip =
+        JscEngine.isAvailable() ? false : 'JavaScriptCore is not available';
+    JavaScriptEngine jsc(JavaScriptEngineConfig c) => JscEngine(c);
+
+    test('runs a page with the DOM bindings', () async {
+      final runtime = await NativaXRuntime.create(
+        source: '<ul id="l"></ul><script>'
+            'const l = document.getElementById("l");'
+            'for (let i = 0; i < 3; i++) { const li = document.createElement("li");'
+            ' li.textContent = "i" + i; l.appendChild(li); }'
+            'globalThis.n = document.querySelectorAll("li").length;'
+            'Promise.resolve().then(() => { globalThis.p = 1; });'
+            '</script>',
+        config: NativaXRuntimeConfig(engineFactory: jsc),
+      );
+      addTearDown(runtime.dispose);
+      expect(runtime.engineName, 'jsc');
+      expect(runtime.engine.evaluate('n'), 3);
+      expect(runtime.engine.evaluate('p'), 1);
+      expect(runtime.document.getElementById('l')!.children.length, 3);
+      // JSC's global has an immutable prototype; Window members still work.
+      expect(
+        runtime.engine.evaluate(
+          '[window instanceof Window, window instanceof EventTarget,'
+          ' document instanceof Window, typeof window.addEventListener]',
+        ),
+        [true, true, false, 'function'],
+      );
+      expect(
+        runtime.engine.evaluate(
+          'let hits = 0; window.addEventListener("ping", () => hits++);'
+          ' window.dispatchEvent(new Event("ping")); hits',
+        ),
+        1,
+      );
+    }, skip: jscSkip);
+
+    test('an event listener runs and a runaway handler is interrupted',
+        () async {
+      final errors = <Object>[];
+      final runtime = await NativaXRuntime.create(
+        source: '<button id="b">b</button><script>'
+            'globalThis.clicks = 0;'
+            'document.getElementById("b").addEventListener("click", () => {'
+            ' clicks++; if (clicks > 1) { while (true) {} } });</script>',
+        config: NativaXRuntimeConfig(
+          engineFactory: jsc,
+          engine: const JavaScriptEngineConfig(
+            executionBudget: Duration(milliseconds: 200),
+          ),
+          onScriptError: errors.add,
+        ),
+      );
+      addTearDown(runtime.dispose);
+      final button = runtime.document.getElementById('b')!;
+      button.dispatchEvent(Event('click'));
+      expect(runtime.engine.evaluate('clicks'), 1);
+      button.dispatchEvent(Event('click'));
+      expect(errors.whereType<JavaScriptTimeoutException>(), isNotEmpty);
+      expect(runtime.engine.evaluate('clicks'), 2);
+    }, skip: jscSkip, timeout: const Timeout(Duration(seconds: 20)));
+
+    test('a startup over the JSC heap limit reloads the page on QuickJS',
+        () async {
+      final diagnostics = <String>[];
+      final runtime = await NativaXRuntime.create(
+        source: '<p id="x">ok</p><script>globalThis.keep = [];'
+            'for (let i = 0; i < 64; i++) keep.push(new Uint8Array(1 << 20));'
+            '</script>',
+        config: NativaXRuntimeConfig(
+          engineFactory: jsc,
+          engine: const JavaScriptEngineConfig(
+            memoryLimitBytes: 16 * 1024 * 1024,
+          ),
+          onDiagnostic: diagnostics.add,
+        ),
+      );
+      addTearDown(runtime.dispose);
+      expect(diagnostics.any((d) => d.contains('JSC reached')), isTrue);
+      expect(runtime.engineName, 'quickjs');
+      expect(runtime.document.getElementById('x'), isNotNull);
+    }, skip: jscSkip);
+
+    test('pages with ES modules stay on QuickJS', () async {
+      final runtime = await NativaXRuntime.create(
+        source: '<script type="module">globalThis.m = 1</script>',
+      );
+      addTearDown(runtime.dispose);
+      expect(runtime.engineName, isNot('jsc'));
     });
   });
 

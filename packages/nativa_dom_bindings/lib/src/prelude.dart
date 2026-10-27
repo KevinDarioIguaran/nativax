@@ -8,6 +8,32 @@ const String domPrelude =
 (() => {
 'use strict';
 const host = __nx.host;
+// Puts [proto] in the global object's prototype chain. JavaScriptCore's
+// global object has an immutable prototype (as browsers' Window does); there
+// the chain's members are copied onto the global and `instanceof` is taught
+// to recognise it.
+const adoptGlobalPrototype = (proto) => {
+  try {
+    Object.setPrototypeOf(globalThis, proto);
+    return;
+  } catch (_) {}
+  const own = new Set(Reflect.ownKeys(globalThis));
+  for (let p = proto; p && p !== Object.prototype; p = Object.getPrototypeOf(p)) {
+    for (const key of Reflect.ownKeys(p)) {
+      if (key === 'constructor' || own.has(key)) continue;
+      own.add(key);
+      Object.defineProperty(globalThis, key, Object.getOwnPropertyDescriptor(p, key));
+    }
+    const ctor = p.constructor;
+    if (typeof ctor === 'function') {
+      const base = Function.prototype[Symbol.hasInstance];
+      Object.defineProperty(ctor, Symbol.hasInstance, {
+        value(v) { return v === globalThis ? this.prototype === ctor.prototype : base.call(this, v); },
+        configurable: true,
+      });
+    }
+  }
+};
 // Present when this runtime is a worker's global scope (see WorkerScopeInfo).
 const workerScope = globalThis.__nx_scope || null;
 delete globalThis.__nx_scope;
@@ -1698,7 +1724,7 @@ if (workerScope) {
     toString() { return this.href; }
   }
   for (const [name, value] of Object.entries({ WorkerGlobalScope, DedicatedWorkerGlobalScope, WorkerLocation })) hidden(globalThis, name, value);
-  Object.setPrototypeOf(globalThis, DedicatedWorkerGlobalScope.prototype);
+  adoptGlobalPrototype(DedicatedWorkerGlobalScope.prototype);
   hidden(globalThis, ID, win[ID]);
   const port = adoptPort(workerScope.port);
   port.addEventListener('message', (e) => globalThis.dispatchEvent(new MessageEvent('message', { data: e.data, ports: e.ports })));
@@ -1737,7 +1763,7 @@ for (const [name, value] of Object.entries({
   Document, XMLDocument, HTMLDocument, DOMImplementation, Attr, CDATASection, DOMTokenList, CSSStyleDeclaration, NodeList, HTMLCollection, Window, MediaQueryList, DOMException,
 })) hidden(globalThis, name, value);
 
-Object.setPrototypeOf(globalThis, Window.prototype);
+adoptGlobalPrototype(Window.prototype);
 hidden(globalThis, ID, win[ID]);
 for (const [name, value] of Object.entries({
   window: globalThis, self: globalThis, globalThis, document, navigator, matchMedia, nativax,

@@ -134,9 +134,9 @@ class NativaXRuntime {
   /// runs `<script>` elements in document order.
   ///
   /// Without [NativaXRuntimeConfig.engineFactory] the page runs on
-  /// [createDefaultJavaScriptEngine] (V8 on desktop when available). When V8
-  /// hits the memory limit during startup the page is created again on
-  /// QuickJS; after startup [onEngineOverBudget] reports it. [forceQuickJs]
+  /// [createDefaultJavaScriptEngine] (V8 on desktop when available,
+  /// JavaScriptCore with `NATIVAX_ENGINE=jsc`). When V8 or JSC hits the
+  /// memory limit during startup the page is created again on QuickJS; after startup [onEngineOverBudget] reports it. [forceQuickJs]
   /// keeps QuickJS.
   static Future<NativaXRuntime> create({
     required String source,
@@ -154,10 +154,10 @@ class NativaXRuntime {
       platformServices: platformServices,
       forceQuickJs: forceQuickJs,
     );
-    if (runtime.engine is! V8Engine || !runtime._overBudget) return runtime;
+    if (!runtime._reloadsOnQuickJs || !runtime._overBudget) return runtime;
     runtime.dispose();
     config.onDiagnostic?.call(
-      'V8 reached the ${config.engine.memoryLimitBytes}-byte memory limit '
+      '${runtime.engineName.toUpperCase()} reached the ${config.engine.memoryLimitBytes}-byte memory limit '
       'during startup; the page was reloaded on QuickJS',
     );
     return _create(
@@ -358,12 +358,15 @@ class NativaXRuntime {
       );
     }
 
-    final engine =
-        config.engineFactory?.call(config.engine) ??
-        // V8Engine has no ES modules yet: module pages stay on QuickJS.
-        (forceQuickJs || _hasModuleScripts(document)
-            ? QuickJsEngine(config.engine)
-            : createDefaultJavaScriptEngine(config.engine));
+    // forceQuickJs (a memory-limit reload) wins over a custom factory.
+    final engine = forceQuickJs
+        ? QuickJsEngine(config.engine)
+        : config.engineFactory?.call(config.engine) ??
+              // V8Engine and JscEngine have no ES modules: module pages stay
+              // on QuickJS.
+              (_hasModuleScripts(document)
+                  ? QuickJsEngine(config.engine)
+                  : createDefaultJavaScriptEngine(config.engine));
     final services =
         platformServices ?? config.services ?? const PlatformServices();
     // Preludes that need the raw host bridge must be installed before the
@@ -484,6 +487,16 @@ class NativaXRuntime {
       }
     }
 
+    // JSC samples its heap between entries; check it once before deciding
+    // whether startup went over the limit.
+    if (engine is JscEngine) {
+      try {
+        engine.enforceMemoryLimit();
+      } catch (error) {
+        reportError(error);
+      }
+    }
+
     bindings.documentReady();
     bindings.readyState = 'interactive';
     document.dispatchEvent(dom.Event('readystatechange')..isTrusted = true);
@@ -512,14 +525,18 @@ class NativaXRuntime {
       .querySelectorAll('script')
       .any((s) => (s.getAttribute('type') ?? '').toLowerCase() == 'module');
 
-  /// `v8`, `quickjs`, or the engine's type for a custom [engineFactory].
+  /// `v8`, `jsc`, `quickjs`, or the engine's type for a custom [engineFactory].
   String get engineName => switch (engine) {
     V8Engine() => 'v8',
+    JscEngine() => 'jsc',
     QuickJsEngine() => 'quickjs',
     _ => engine.runtimeType.toString(),
   };
 
   bool _overBudget = false;
+
+  /// Engines whose memory-limit stop is answered by reloading on QuickJS.
+  bool get _reloadsOnQuickJs => engine is V8Engine || engine is JscEngine;
   bool _overBudgetReported = false;
 
   /// Called once when the V8 engine hits its memory limit after startup.
@@ -528,7 +545,7 @@ class NativaXRuntime {
 
   void _reportOverBudget() {
     _overBudget = true;
-    if (_overBudgetReported || _disposed || engine is! V8Engine) return;
+    if (_overBudgetReported || _disposed || !_reloadsOnQuickJs) return;
     _overBudgetReported = true;
     final callback = onEngineOverBudget;
     if (callback != null) scheduleMicrotask(callback);
