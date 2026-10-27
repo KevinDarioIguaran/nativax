@@ -110,9 +110,6 @@ class _GamePlayerAppState extends State<GamePlayerApp> {
                   source: source,
                   padding: EdgeInsets.zero,
                   config: NativaXRuntimeConfig(
-                    engineFactory: Platform.environment['NATIVAX_ENGINE'] == 'v8'
-                        ? V8Engine.new
-                        : null,
                     engine: const JavaScriptEngineConfig(
                       memoryLimitBytes: 512 << 20,
                       executionBudget: Duration(seconds: 30),

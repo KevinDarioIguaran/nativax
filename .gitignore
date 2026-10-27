@@ -18,3 +18,4 @@ debug/benchmarks/security/
 
 # Python bytecode from the tooling.
 __pycache__/
+tools/v8-spike/

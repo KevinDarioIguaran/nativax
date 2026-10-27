@@ -27,6 +27,9 @@ void main() {
       'a': [1, true, null],
     });
     expect(engine.evaluate('undefined'), isNull);
+    // No JSON form: null, not an error.
+    expect(engine.evaluate('const o = {}; o.self = o; o'), isNull);
+    expect(engine.evaluate('10n'), isNull);
   }, skip: skip);
 
   test('NUL characters survive in source and arguments', () {
@@ -109,6 +112,17 @@ void main() {
     expect(engine.evaluate('r'), 1);
   }, skip: skip);
 
+  test('queueMicrotask runs callbacks in order before the entry returns', () {
+    engine.evaluate(
+      'globalThis.order = []; queueMicrotask(() => order.push(2)); order.push(1);',
+    );
+    expect(engine.evaluate('order'), [1, 2]);
+    expect(
+      () => engine.evaluate('queueMicrotask(1)'),
+      throwsA(isA<JavaScriptException>().having((e) => e.name, 'name', 'TypeError')),
+    );
+  }, skip: skip);
+
   test('byte buffers move both ways', () {
     final id = NativeBuffers.put(Uint8List.fromList([1, 2, 3]));
     expect(
@@ -119,12 +133,6 @@ void main() {
     expect(NativeBuffers.take(back), [9, 8]);
   }, skip: skip);
 
-  test('modules are rejected explicitly', () {
-    expect(
-      () => engine.evaluateModule('export const x = 1;', url: 'm.js'),
-      throwsA(isA<JavaScriptEngineStateException>()),
-    );
-  }, skip: skip);
 
   test('reports heap usage and disposes idempotently', () {
     expect(engine.memoryUsed, greaterThan(0));
@@ -150,15 +158,13 @@ void main() {
     expect(small.evaluate('1 + 1'), 2);
   }, skip: skip);
 
-  test('NATIVAX_ENGINE=jsc selects JavaScriptCore by default', () {
-    final picked = createDefaultJavaScriptEngine(
-      const JavaScriptEngineConfig(),
-      environment: const {'NATIVAX_ENGINE': 'jsc'},
-    );
+  test('the default engine is JavaScriptCore', () {
+    final picked = createDefaultJavaScriptEngine(const JavaScriptEngineConfig());
     addTearDown(picked.dispose);
     expect(picked, isA<JscEngine>());
-    final named = createJavaScriptEngineNamed('quickjs');
-    addTearDown(named.dispose);
-    expect(named, isA<QuickJsEngine>());
+    expect(
+      () => createJavaScriptEngineNamed('quickjs'),
+      throwsA(isA<JavaScriptEngineStateException>()),
+    );
   }, skip: skip);
 }

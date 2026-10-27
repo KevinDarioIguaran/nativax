@@ -148,7 +148,7 @@ SecurityMetadata collectSecurityMetadata({
     // Unknown.
   }
   return SecurityMetadata(
-    engine: 'QuickJS-ng',
+    engine: 'JavaScriptCore',
     engineVersion: _version(repoRoot),
     dartVersion: Platform.version.split(' ').first,
     mode: const bool.fromEnvironment('dart.vm.product') ? 'AOT' : 'JIT',

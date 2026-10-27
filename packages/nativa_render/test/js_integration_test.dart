@@ -15,7 +15,7 @@ void main() {
       '</body></html>',
     );
     final document = parsed.value;
-    final engine = QuickJsEngine();
+    final engine = JscEngine();
     final bindings = DomBindings(
       engine: engine,
       document: document,

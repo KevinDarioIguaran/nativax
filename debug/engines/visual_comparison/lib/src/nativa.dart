@@ -68,14 +68,6 @@ Future<NativaOutcome> renderWithNativa({
     throw VisualException('harness not found: $harnessDirectory');
   }
 
-  // Pages run on V8 by default on desktop: point the harness at the cdylib
-  // built in tools/v8-spike unless the caller chose one.
-  final v8 = '$repoRoot/tools/v8-spike/target/release/libnx_v8.so';
-  final v8Env =
-      Platform.environment['NATIVAX_V8_LIB'] == null && File(v8).existsSync()
-      ? {'NATIVAX_V8_LIB': v8}
-      : const <String, String>{};
-
   Future<ProcResult> attempt() => runProcess(
     'flutter',
     ['test', 'test/screenshot_test.dart', '--reporter=compact', '--no-pub'],
@@ -90,7 +82,6 @@ Future<NativaOutcome> renderWithNativa({
       'NATIVAX_SHOT_WAIT': waitMs.toString(),
       'NATIVAX_SHOT_JS': '$probeSource\n${setupJs.trim()}',
       'NATIVAX_SHOT_DUMP': '__visualProbe()',
-      ...v8Env,
     },
   );
 

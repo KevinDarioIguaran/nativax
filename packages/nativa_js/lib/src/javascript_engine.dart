@@ -18,10 +18,12 @@ class JavaScriptEngineConfig {
     this.microtaskSlice = Duration.zero,
   });
 
-  /// Heap ceiling enforced by QuickJS' allocator. 0 disables the limit.
+  /// Heap ceiling, checked between script entries from the engine's heap
+  /// statistics. 0 disables the limit.
   final int memoryLimitBytes;
 
-  /// Maximum native stack QuickJS may use before throwing `RangeError`.
+  /// Native stack hint. JavaScriptCore manages its own stack limit and
+  /// throws `RangeError` on overflow; this value is not applied there.
   ///
   /// Scripts run on the calling thread (the Flutter UI thread), so this must
   /// stay well below that thread's stack (as low as 512 KiB on iOS
@@ -34,18 +36,20 @@ class JavaScriptEngineConfig {
   final Duration executionBudget;
 
   /// Upper bound on promise jobs executed per drain, as a guard against
-  /// self-rescheduling microtask loops.
+  /// self-rescheduling microtask loops. JavaScriptCore drains its own queue
+  /// and does not apply it; there the execution budget stops such loops.
   final int maxJobsPerDrain;
 
   /// Optional wall-clock slice for one microtask drain. When non-zero, the
   /// engine yields back to the host after this much work and leaves remaining
   /// promise jobs queued. Zero preserves browser-like full drains.
+  /// JavaScriptCore always drains fully and does not apply it.
   final Duration microtaskSlice;
 }
 
 /// Engine-neutral contract. NativaX ships one implementation
-/// ([QuickJsEngine]); the interface exists so tests and future adapters (for
-/// example JavaScriptCore) can plug in without touching the DOM bindings.
+/// ([JscEngine], JavaScriptCore); the interface keeps the DOM bindings and
+/// tests independent of it.
 ///
 /// The API is synchronous on purpose: DOM bindings require script code to call
 /// back into Dart and receive results synchronously, as browsers do. Long
@@ -89,9 +93,10 @@ abstract interface class JavaScriptEngine {
   void dispose();
 }
 
-/// Module resolution for [JavaScriptEngine.evaluateModule]. Module loading
-/// in QuickJS is synchronous, so the host must have every source ready
-/// (prefetched) when [source] is called.
+/// Module resolution for [JavaScriptEngine.evaluateModule]. Loading is
+/// synchronous, so the host must have every source ready (prefetched) when
+/// [source] is called. [JscEngine] does not link modules and only reports
+/// errors through [onError].
 abstract interface class ModuleHost {
   /// The absolute URL of [specifier] imported from the module at [base].
   /// Throw [JavaScriptHostError] to reject the import.

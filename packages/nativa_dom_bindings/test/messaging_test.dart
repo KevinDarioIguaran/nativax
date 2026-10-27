@@ -66,12 +66,11 @@ void main() {
     expect(out, ['sync', 'hello', 'reply:over the transferred port']);
   });
 
-  test('module workers load their graph and see a worker global scope', () async {
+  test('module workers without imports run with a worker global scope', () async {
     h = WebHarness('<p>x</p>', network: _Scripts({
-      'https://app.test/w/main.js': "import { twice } from './lib.js'; self.onmessage = (e) => postMessage({ r: twice(e.data), "
+      'https://app.test/w/main.js': "const twice = (x) => x * 2; self.onmessage = (e) => postMessage({ r: twice(e.data), "
           "scope: [typeof window, typeof document, self === globalThis, self instanceof DedicatedWorkerGlobalScope, "
-          "location.href, typeof importScripts, crossOriginIsolated] });",
-      'https://app.test/w/lib.js': 'export const twice = (x) => x * 2;',
+          "location.href, typeof importScripts, crossOriginIsolated, import.meta.url] });",
     }));
     final out = await h.async(r'''
       const w = new Worker(new URL('./w/main.js', location.href), { type: 'module' });
@@ -80,8 +79,22 @@ void main() {
     ''', ms: 300);
     expect(out, {
       'r': 42,
-      'scope': ['undefined', 'undefined', true, true, 'https://app.test/w/main.js', 'function', true],
+      'scope': ['undefined', 'undefined', true, true, 'https://app.test/w/main.js', 'function', true,
+          'https://app.test/w/main.js'],
     });
+  });
+
+  test('module workers load their import graph', () async {
+    h = WebHarness('<p>x</p>', network: _Scripts({
+      'https://app.test/w/main.js': "import { twice } from './lib.js'; self.onmessage = (e) => postMessage(twice(e.data));",
+      'https://app.test/w/lib.js': 'export const twice = (x) => x * 2;',
+    }));
+    final out = await h.async(r'''
+      const w = new Worker(new URL('./w/main.js', location.href), { type: 'module' });
+      w.onmessage = (e) => { out = e.data; w.terminate(); };
+      w.postMessage(21);
+    ''', ms: 300);
+    expect(out, 42);
   });
 
   test('SharedArrayBuffer and Atomics are shared with a worker', () async {

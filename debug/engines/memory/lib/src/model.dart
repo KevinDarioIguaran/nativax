@@ -214,7 +214,7 @@ class LeakContext {
         release: true,
       );
 
-  Future<void> gc([QuickJsEngine? engine]) async {
+  Future<void> gc([JscEngine? engine]) async {
     engine?.collectGarbage();
     // Give Dart's event loop a chance to run finalizers/GC bookkeeping.
     await Future<void>.delayed(const Duration(milliseconds: 1));

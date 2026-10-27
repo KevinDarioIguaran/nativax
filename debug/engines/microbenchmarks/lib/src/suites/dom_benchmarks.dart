@@ -17,8 +17,8 @@ class DomBenchmarks {
       '.item { display: block; }</style></head><body></body></html>',
     );
     document = parsed.value;
-    // NATIVAX_ENGINE picks the engine (quickjs by default, or jsc / v8).
-    engine = createJavaScriptEngineNamed(Platform.environment['NATIVAX_ENGINE'] ?? 'quickjs', const JavaScriptEngineConfig(
+    // NATIVAX_ENGINE picks the engine (jsc, the only engine).
+    engine = createJavaScriptEngineNamed(Platform.environment['NATIVAX_ENGINE'] ?? 'jsc', const JavaScriptEngineConfig(
       maxJobsPerDrain: 1000000,
       memoryLimitBytes: 256 * 1024 * 1024,
       executionBudget: Duration(seconds: 10),

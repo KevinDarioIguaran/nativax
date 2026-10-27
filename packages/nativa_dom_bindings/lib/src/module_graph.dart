@@ -4,7 +4,7 @@ import 'package:nativa_js/nativa_js.dart';
 
 /// ES module graph of one document or worker: resolves specifiers against
 /// the importing module and serves sources that [prefetch] loaded through
-/// [load], because QuickJS links modules synchronously.
+/// [load], because modules are linked synchronously.
 class ModuleGraph implements ModuleHost {
   ModuleGraph({required this.load, this.onModuleError, Map<String, String>? sources})
       : _sources = sources ?? {};

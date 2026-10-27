@@ -105,7 +105,7 @@ JavaScriptEngine newEngine([
 ]) {
   switch (activeFault) {
     case SecurityFault.microtaskUnbounded:
-      return QuickJsEngine(
+      return JscEngine(
         JavaScriptEngineConfig(
           memoryLimitBytes: config.memoryLimitBytes,
           maxStackBytes: config.maxStackBytes,
@@ -119,20 +119,20 @@ JavaScriptEngine newEngine([
       if (shared.isEmpty || shared.first.isDisposed) {
         shared
           ..clear()
-          ..add(QuickJsEngine(config));
+          ..add(JscEngine(config));
       }
       return _Forward(shared.first, refCounted: true);
     case SecurityFault.disposeIgnored:
-      final engine = QuickJsEngine(config);
+      final engine = JscEngine(config);
       (Zone.current[_keptKey] as List<JavaScriptEngine>).add(engine);
       return _Forward(engine, ignoreDispose: true);
     case SecurityFault.hostGlobal:
-      return QuickJsEngine(config)
+      return JscEngine(config)
         ..evaluate('globalThis.process = { env: {}, exit() {} };');
     default:
-      // NATIVAX_ENGINE picks the engine (quickjs by default, or jsc / v8).
+      // NATIVAX_ENGINE picks the engine (jsc, the only engine).
       return createJavaScriptEngineNamed(
-        Platform.environment['NATIVAX_ENGINE'] ?? 'quickjs',
+        Platform.environment['NATIVAX_ENGINE'] ?? 'jsc',
         config,
       );
   }

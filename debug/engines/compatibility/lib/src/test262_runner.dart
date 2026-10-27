@@ -213,9 +213,10 @@ class Test262Runner {
       );
     }
 
-    // QuickJS-ng does not implement proper tail calls. Running these tests
-    // can exhaust the native stack before the engine's stack check fires, so
-    // they are an explicit engine gap rather than a runner bug.
+    // Tail-call tests recurse deeply; an engine without proper tail calls can
+    // exhaust the native stack before its stack check fires. They stay
+    // excluded by runner policy (JavaScriptCore implements proper tail calls,
+    // but enabling them is a separate, measured compatibility change).
     final engineGaps = meta.features
         .where((f) => f == 'tail-call-optimization')
         .toList();
@@ -228,7 +229,7 @@ class Test262Runner {
         id,
         ResultStatus.skip,
         reason: excluded.contains('tail-call-optimization')
-            ? 'engine gap: QuickJS-ng does not implement tail-call optimization'
+            ? 'runner policy: tail-call-optimization tests are excluded'
             : 'feature policy: ${excluded.join(', ')}',
         features: meta.features,
       );
@@ -315,9 +316,9 @@ class Test262Runner {
     var doneCalls = 0;
     var evaluating = false;
     try {
-      // NATIVAX_ENGINE picks the engine (quickjs by default, or jsc).
+      // NATIVAX_ENGINE picks the engine (jsc, the only engine).
       engine = createJavaScriptEngineNamed(
-          Platform.environment['NATIVAX_ENGINE'] ?? 'quickjs',
+          Platform.environment['NATIVAX_ENGINE'] ?? 'jsc',
           JavaScriptEngineConfig(
         memoryLimitBytes: 256 * 1024 * 1024,
         maxStackBytes: 512 * 1024,

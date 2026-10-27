@@ -11,7 +11,7 @@ class JavaScriptException implements Exception {
   final String name;
   final String message;
 
-  /// The QuickJS stack trace, when available.
+  /// The engine's stack trace, when available.
   final String? stack;
 
   @override

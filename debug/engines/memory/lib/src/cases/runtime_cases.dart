@@ -18,7 +18,7 @@ List<LeakCase> runtimeLeakCases() => [
           for (var batch = 1; batch <= ctx.profile.batches; batch++) {
             for (var i = 0; i < 5; i++) {
               final engine = createJavaScriptEngineNamed(
-                Platform.environment['NATIVAX_ENGINE'] ?? 'quickjs',
+                Platform.environment['NATIVAX_ENGINE'] ?? 'jsc',
               );
               engine.evaluate('globalThis.__n = 1;');
               engine.dispose();
@@ -40,7 +40,7 @@ List<LeakCase> runtimeLeakCases() => [
                 .parseDocument('<!doctype html><html><body></body></html>')
                 .value;
             final engine = createJavaScriptEngineNamed(
-                Platform.environment['NATIVAX_ENGINE'] ?? 'quickjs',
+                Platform.environment['NATIVAX_ENGINE'] ?? 'jsc',
               );
             final bindings = DomBindings(
               engine: engine,

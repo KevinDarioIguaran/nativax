@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:nativa_dom_bindings/nativa_dom_bindings.dart' show MemoryStorage, PlatformServices, ThemeModeRequest;
+import 'package:nativa_js/nativa_js.dart' show JavaScriptMemoryLimitException;
 import 'package:nativa_render/nativa_render.dart';
 
 import 'flutter_environment.dart';
@@ -74,9 +75,6 @@ class _NativaXViewState extends State<NativaXView> {
     super.dispose();
   }
 
-  /// Set once V8 ran out of memory; later loads stay on QuickJS.
-  bool _forceQuickJs = false;
-
   void _reload() {
     _runtime?.dispose();
     _runtime = null;
@@ -84,13 +82,19 @@ class _NativaXViewState extends State<NativaXView> {
     _load();
   }
 
+  /// The page went over the memory limit: stop it and show the error
+  /// (there is no other engine to reload it on).
   void _overBudget() {
     if (!mounted) return;
-    widget.config.onDiagnostic?.call(
-      'V8 reached the memory limit; reloading the page on QuickJS',
-    );
-    _forceQuickJs = true;
-    _reload();
+    _runtime?.dispose();
+    setState(() {
+      _runtime = null;
+      _error = JavaScriptMemoryLimitException(
+        message:
+            'the page reached the '
+            '${widget.config.engine.memoryLimitBytes}-byte memory limit',
+      );
+    });
   }
 
   Future<void> _load() async {
@@ -101,7 +105,6 @@ class _NativaXViewState extends State<NativaXView> {
         config: widget.config,
         environment: _environment,
         platformServices: widget.config.services ?? _defaultServices(),
-        forceQuickJs: _forceQuickJs,
       );
       if (!mounted || generation != _generation) {
         runtime.dispose();

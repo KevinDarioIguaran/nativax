@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'dart:math' as math;
 
+import 'package:nativa_js/nativa_js.dart' show JscEngine;
 import 'package:path/path.dart' as p;
 
 import 'classification.dart';
@@ -317,7 +318,7 @@ LeakResult analyzeLeak(
     durationMs: durationMs,
     thresholdBytes: threshold,
     evidence: [
-      if (usesEngine) 'heap QuickJS (JS_ComputeMemoryUsage)'
+      if (usesEngine) 'heap JavaScriptCore (JSGetMemoryUsageStatistics)'
       else 'process RSS (Dart ProcessInfo.currentRss)',
       trend,
       if (resourceDeltas.isNotEmpty)
@@ -385,8 +386,8 @@ LeakRunMetadata collectLeakMetadata({
     // Keep unknown.
   }
   return LeakRunMetadata(
-    engine: 'QuickJS-ng',
-    engineVersion: _quickJsVersion(repoRoot),
+    engine: 'JavaScriptCore',
+    engineVersion: JscEngine.version(),
     dartVersion: Platform.version.split(' ').first,
     mode: _mode(),
     os: Platform.operatingSystem,
@@ -404,18 +405,6 @@ String _mode() {
   const profile = bool.fromEnvironment('dart.vm.profile');
   if (profile) return 'profile';
   return 'JIT';
-}
-
-String _quickJsVersion(String root) {
-  final f = File(p.join(root, 'packages', 'nativa_js', 'third_party',
-      'quickjs', 'quickjs.h'));
-  if (!f.existsSync()) return 'unknown';
-  final text = f.readAsStringSync();
-  String v(String name, String fallback) =>
-      RegExp('#define\\s+$name\\s+(\\d+)').firstMatch(text)?.group(1) ??
-      fallback;
-  return '${v('QJS_VERSION_MAJOR', '0')}.${v('QJS_VERSION_MINOR', '0')}.'
-      '${v('QJS_VERSION_PATCH', '0')}';
 }
 
 String findLeakRepoRoot([String? start]) {

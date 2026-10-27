@@ -1,8 +1,17 @@
+import 'package:nativa_js/nativa_js.dart' show JscEngine;
+
 import 'analysis.dart';
 import 'model.dart';
 
 class LeakRunner {
-  LeakRunner(this.profile, {this.onProgress});
+  /// Leak runs measure the engine heap with JavaScriptCore's JIT off:
+  /// compiled code and its metadata grow over the first batches as the JIT
+  /// tiers up, which reads as heap growth (measured: +80 KB over four
+  /// batches with the JIT, flat without). It only applies when no engine
+  /// exists yet in this process.
+  LeakRunner(this.profile, {this.onProgress}) {
+    JscEngine.configure(const {'useJIT': 'false'});
+  }
 
   final LeakProfile profile;
   final void Function(String id, int index, int total)? onProgress;

@@ -9,9 +9,9 @@ import '../model.dart';
 /// and renderer work so the results measure the engine, not the bridge.
 class JsBenchmarks {
   JsBenchmarks() {
-    // NATIVAX_ENGINE picks the engine (quickjs by default, or jsc / v8).
+    // NATIVAX_ENGINE picks the engine (jsc, the only engine).
     engine = createJavaScriptEngineNamed(
-      Platform.environment['NATIVAX_ENGINE'] ?? 'quickjs',
+      Platform.environment['NATIVAX_ENGINE'] ?? 'jsc',
     );
     engine.registerHostFunction('noop', (args) => args.isEmpty ? 0 : args[0]);
   }

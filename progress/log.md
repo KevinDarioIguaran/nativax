@@ -5,6 +5,35 @@ Newest first. Historical Spanish sessions are in
 evidence, not current instructions. Numbers below are copied from recorded
 outputs, not reconstructed from memory.
 
+## 2026-10-27 — JavaScriptCore as the only engine
+
+QuickJS-ng, V8, wasm3 and the MIR JIT were removed; `JscEngine` runs pages
+and workers. The native library now holds only memory, buffers, shared
+blocks and the futex (`nativax_native`).
+
+- ES modules: `ModuleTransform` rewrites modules for a registry in the
+  engine (imports, exports with live getters, cycles, `import()`,
+  `import.meta`). Imported bindings are snapshots.
+- SharedArrayBuffer: ArrayBuffers over reference-counted native blocks
+  shared across worker runtimes; `Atomics.wait/notify` via a native futex.
+- WebAssembly: JSC's own; async entry points compile synchronously because
+  JSC settles them on a run loop a Dart host never spins.
+- `queueMicrotask` shim; DOM wrappers released by a cache sweep after GC
+  (JSC never runs FinalizationRegistry callbacks without its run loop:
+  ~400 B leaked per wrapper otherwise).
+- Results without a JSON form return null (engine contract).
+
+Known gaps (recorded, not hidden):
+- WebGL is not wired to JSC yet: `getContext` returns null; the game stops
+  at "OffscreenCanvas is not available" (`game_boot_test`,
+  `game_play_test` fail).
+- A WebAssembly infinite loop is not interrupted by JSC's watchdog.
+- The per-drain microtask job limit cannot be enforced
+  (`limits.microtask_limit` fails; the time budget stops such loops).
+- Android and Windows ship no JSC; the app must bundle one.
+- Leak audit runs with JSC's JIT off; `audit.control.listeners_balanced`
+  shows a one-time ~6 KB step and is not asserted until recalibration.
+
 ## 2026-10-27 — Opt-in JavaScriptCore engine
 
 Scope: add `JscEngine` (nativa_js) as an optional backend behind

@@ -80,8 +80,8 @@ class NativaXRuntimeConfig {
 
   final JavaScriptEngineConfig engine;
 
-  /// Optional backend factory. Defaults to QuickJS-ng; `V8Engine` can be
-  /// injected for the native V8 prototype.
+  /// Optional engine factory (tests, instrumentation). Defaults to
+  /// [createDefaultJavaScriptEngine], JavaScriptCore.
   final JavaScriptEngine Function(JavaScriptEngineConfig config)? engineFactory;
   final TimerLimits timers;
   final NativaXResourceLoader resources;
@@ -134,41 +134,22 @@ class NativaXRuntime {
   /// runs `<script>` elements in document order.
   ///
   /// Without [NativaXRuntimeConfig.engineFactory] the page runs on
-  /// [createDefaultJavaScriptEngine] (V8 on desktop when available,
-  /// JavaScriptCore with `NATIVAX_ENGINE=jsc`). When V8 or JSC hits the
-  /// memory limit during startup the page is created again on QuickJS; after startup [onEngineOverBudget] reports it. [forceQuickJs]
-  /// keeps QuickJS.
+  /// [createDefaultJavaScriptEngine] (JavaScriptCore). A page over the
+  /// memory limit, during startup or later, is reported once through
+  /// [onEngineOverBudget] and [NativaXRuntimeConfig.onDiagnostic].
   static Future<NativaXRuntime> create({
     required String source,
     NativaXRuntimeConfig config = const NativaXRuntimeConfig(),
     HostEnvironment? environment,
     String? documentUrl,
     PlatformServices? platformServices,
-    bool forceQuickJs = false,
-  }) async {
-    final runtime = await _create(
-      source: source,
-      config: config,
-      environment: environment,
-      documentUrl: documentUrl,
-      platformServices: platformServices,
-      forceQuickJs: forceQuickJs,
-    );
-    if (!runtime._reloadsOnQuickJs || !runtime._overBudget) return runtime;
-    runtime.dispose();
-    config.onDiagnostic?.call(
-      '${runtime.engineName.toUpperCase()} reached the ${config.engine.memoryLimitBytes}-byte memory limit '
-      'during startup; the page was reloaded on QuickJS',
-    );
-    return _create(
-      source: source,
-      config: config,
-      environment: environment,
-      documentUrl: documentUrl,
-      platformServices: platformServices,
-      forceQuickJs: true,
-    );
-  }
+  }) => _create(
+    source: source,
+    config: config,
+    environment: environment,
+    documentUrl: documentUrl,
+    platformServices: platformServices,
+  );
 
   static Future<NativaXRuntime> _create({
     required String source,
@@ -176,14 +157,19 @@ class NativaXRuntime {
     required HostEnvironment? environment,
     required String? documentUrl,
     required PlatformServices? platformServices,
-    required bool forceQuickJs,
   }) async {
-    // Errors go to the host; a V8 memory-limit stop also marks the runtime
-    // over budget (QuickJS fallback).
+    // Errors go to the host; a memory-limit stop also marks the runtime
+    // over budget.
     NativaXRuntime? created;
     var overBudget = false;
     void reportError(Object error) {
       if (error is JavaScriptMemoryLimitException) {
+        if (!overBudget) {
+          config.onDiagnostic?.call(
+            'the page reached the ${config.engine.memoryLimitBytes}-byte '
+            'memory limit',
+          );
+        }
         overBudget = true;
         created?._reportOverBudget();
       }
@@ -358,15 +344,9 @@ class NativaXRuntime {
       );
     }
 
-    // forceQuickJs (a memory-limit reload) wins over a custom factory.
-    final engine = forceQuickJs
-        ? QuickJsEngine(config.engine)
-        : config.engineFactory?.call(config.engine) ??
-              // V8Engine and JscEngine have no ES modules: module pages stay
-              // on QuickJS.
-              (_hasModuleScripts(document)
-                  ? QuickJsEngine(config.engine)
-                  : createDefaultJavaScriptEngine(config.engine));
+    final engine =
+        config.engineFactory?.call(config.engine) ??
+        createDefaultJavaScriptEngine(config.engine);
     final services =
         platformServices ?? config.services ?? const PlatformServices();
     // Preludes that need the raw host bridge must be installed before the
@@ -521,34 +501,36 @@ class NativaXRuntime {
     ).._overBudget = overBudget;
   }
 
-  static bool _hasModuleScripts(dom.Document document) => document
-      .querySelectorAll('script')
-      .any((s) => (s.getAttribute('type') ?? '').toLowerCase() == 'module');
-
-  /// `v8`, `jsc`, `quickjs`, or the engine's type for a custom [engineFactory].
+  /// `jsc`, or the engine's type for a custom [engineFactory].
   String get engineName => switch (engine) {
-    V8Engine() => 'v8',
     JscEngine() => 'jsc',
-    QuickJsEngine() => 'quickjs',
     _ => engine.runtimeType.toString(),
   };
 
   bool _overBudget = false;
-
-  /// Engines whose memory-limit stop is answered by reloading on QuickJS.
-  bool get _reloadsOnQuickJs => engine is V8Engine || engine is JscEngine;
   bool _overBudgetReported = false;
 
-  /// Called once when the V8 engine hits its memory limit after startup.
-  /// [NativaXView] reloads the page on QuickJS (page state is lost).
-  void Function()? onEngineOverBudget;
+  /// Whether the page went over the engine's memory limit.
+  bool get isOverBudget => _overBudget;
+
+  /// Called once when the page goes over the engine's memory limit (also
+  /// for a stop during startup, once the callback is set). [NativaXView]
+  /// stops the page and shows the error.
+  void Function()? get onEngineOverBudget => _onEngineOverBudget;
+  set onEngineOverBudget(void Function()? callback) {
+    _onEngineOverBudget = callback;
+    if (_overBudget && !_overBudgetReported) _reportOverBudget();
+  }
+
+  void Function()? _onEngineOverBudget;
 
   void _reportOverBudget() {
     _overBudget = true;
-    if (_overBudgetReported || _disposed || !_reloadsOnQuickJs) return;
+    if (_overBudgetReported || _disposed) return;
+    final callback = _onEngineOverBudget;
+    if (callback == null) return;
     _overBudgetReported = true;
-    final callback = onEngineOverBudget;
-    if (callback != null) scheduleMicrotask(callback);
+    scheduleMicrotask(callback);
   }
 
   bool _containsStyle(dom.Node node) {

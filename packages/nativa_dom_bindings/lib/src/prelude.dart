@@ -53,13 +53,22 @@ const cache = new Map();                  // id -> WeakRef(wrapper)
 // an element keeping only `ownerDocument` cannot lose that metadata when the
 // temporary document wrapper is collected.
 const documents = new Map();              // id -> document wrapper
-const finalizer = new FinalizationRegistry((id) => {
-  const ref = cache.get(id);
-  if (ref && ref.deref() === undefined) {
-    cache.delete(id);
-    host('node.release', id);
+// Collected wrappers are released by sweeping the cache: after every engine
+// GC and once per 4096 new wrappers (JSC also collects on allocation). Not a
+// FinalizationRegistry: JavaScriptCore runs its callbacks on a run loop an
+// embedding host does not spin, so every dead registration would stay
+// queued (a leak of ~400 B per wrapper).
+let sinceSweep = 0;
+const sweep = () => {
+  sinceSweep = 0;
+  for (const [id, ref] of cache) {
+    if (ref.deref() === undefined) {
+      cache.delete(id);
+      host('node.release', id);
+    }
   }
-});
+};
+register('__nx_after_gc', sweep);
 
 // Filled by the web platform prelude: tag name -> HTML*Element prototype.
 let elementProtos = null;
@@ -103,7 +112,7 @@ const wrap = (desc) => {
   w = Object.create(protoFor(desc[1], desc[2]));
   hidden(w, ID, id);
   cache.set(id, new WeakRef(w));
-  finalizer.register(w, id);
+  if (++sinceSweep >= 4096) sweep();
   if (desc[3] === true) strong.set(id, w);
   if (desc[1] === 9) documents.set(id, w);
   if (upgradeHook && desc[1] === 1) upgradeHook(w, desc[2]);
@@ -1652,7 +1661,7 @@ const navigator = {
   get language() { return env().languages[0] || 'en-US'; },
   get languages() { return Object.freeze(env().languages.slice()); },
   get platform() { return env().platform; },
-  userAgent: 'NativaX/0.1 (QuickJS-ng)',
+  userAgent: 'NativaX/0.1 (JavaScriptCore)',
   onLine: true,
 };
 

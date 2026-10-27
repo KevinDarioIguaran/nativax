@@ -262,11 +262,13 @@ const serializeWire = (value, transfer = []) => {
         return ['H', id, name, h.write(v, transferSet.has(v))];
       }
     }
+    // Before the ArrayBuffer check: NativaX's SharedArrayBuffer inherits
+    // from ArrayBuffer.prototype (see JscEngine).
+    if (isSab(v)) return ['SAB', id, shareSab(v)];
     if (v instanceof ArrayBuffer) {
       if (transferSet.has(v)) pending.push(v);
       return ['AB', id, putBuffer(v)];
     }
-    if (isSab(v)) return ['SAB', id, shareSab(v)];
     if (ArrayBuffer.isView(v)) {
       const ctor = v instanceof DataView ? 'DataView' : typedArrayNames.find((n) => globalThis[n] && v instanceof globalThis[n]);
       if (!ctor) throw cloneError('view');
@@ -596,7 +598,7 @@ register('__nx_async', (msg) => {
 const platformName = navigator.platform;
 const uaPlatform = { linux: 'X11; Linux x86_64', windows: 'Windows NT 10.0; Win64; x64', macos: 'Macintosh; Intel Mac OS X 10_15_7',
   android: 'Linux; Android 14', ios: 'iPhone; CPU iPhone OS 17_0 like Mac OS X' }[platformName] || 'Unknown';
-defineProperty(navigator, 'userAgent', { value: `Mozilla/5.0 (${uaPlatform}) NativaX/0.1 (QuickJS-ng)`, enumerable: true });
+defineProperty(navigator, 'userAgent', { value: `Mozilla/5.0 (${uaPlatform}) NativaX/0.1 (JavaScriptCore)`, enumerable: true });
 defineProperty(navigator, 'platform', { get() { return { linux: 'Linux x86_64', windows: 'Win32', macos: 'MacIntel', android: 'Linux armv8l', ios: 'iPhone' }[platformName] || platformName; }, enumerable: true });
 Object.assign(navigator, {
   appName: 'Netscape', appCodeName: 'Mozilla', appVersion: '5.0', product: 'Gecko', productSub: '20030107',

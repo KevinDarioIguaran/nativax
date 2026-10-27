@@ -8,7 +8,7 @@ import 'package:test/test.dart';
 class Harness {
   Harness(String html, {StaticEnvironment? env}) {
     document = HtmlParser().parseDocument(html).value;
-    engine = QuickJsEngine();
+    engine = JscEngine();
     environment = env ?? StaticEnvironment(localStorage: MemoryStorage());
     installConsole(engine, logs.add);
     bindings = DomBindings(
@@ -21,7 +21,7 @@ class Harness {
   }
 
   late final Document document;
-  late final QuickJsEngine engine;
+  late final JscEngine engine;
   late final StaticEnvironment environment;
   late final DomBindings bindings;
   final logs = <ConsoleMessage>[];

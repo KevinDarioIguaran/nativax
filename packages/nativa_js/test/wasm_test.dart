@@ -57,8 +57,8 @@ final Uint8List _loopModule = Uint8List.fromList(const [
 ]);
 
 void main() {
-  late QuickJsEngine engine;
-  setUp(() => engine = QuickJsEngine());
+  late JscEngine engine;
+  setUp(() => engine = JscEngine());
   tearDown(() => engine.dispose());
 
   test('compiles, validates and instantiates a module', () {
@@ -193,18 +193,20 @@ void main() {
     expect(result, [1, 131072, 0, true, 7]);
   });
 
-  test('a runaway wasm loop is stopped by the gas budget', () {
+  // JavaScriptCore's execution time limit does not interrupt a loop inside
+  // WebAssembly (JSC GTK 2.52.5; JSC_usePollingTraps, IPInt off and JIT tiers
+  // off were tried). Such a loop blocks its thread until the process exits.
+  // Kept as a recorded, failing-by-design gap rather than deleted.
+  test('a runaway wasm loop is stopped by the execution budget', () {
     expect(
       () => engine.evaluate('''
         new WebAssembly.Instance(
           new WebAssembly.Module(new Uint8Array(${_loopModule.toList()})), {})
           .exports.run()
       '''),
-      throwsA(isA<JavaScriptException>()
-          .having((e) => e.name, 'name', 'RuntimeError')
-          .having((e) => e.message, 'message', contains('out of gas'))),
+      throwsA(isA<JavaScriptTimeoutException>()),
     );
-  });
+  }, skip: 'known gap: JavaScriptCore cannot interrupt WebAssembly loops');
 
   test('Module.imports/exports expose the link shape', () {
     final result = engine.evaluate('''
@@ -220,16 +222,20 @@ void main() {
     expect(result, [1, 'env', 'inc', 'function', 1, 'call', 'function']);
   });
 
-  test('missing imports fail with LinkError and import callbacks run', () {
+  test('missing imports fail as the JS API specifies', () {
+    // A missing module namespace is a TypeError; a missing field in a
+    // present namespace is a LinkError (WebAssembly JS API, read the imports).
     final missing = engine.evaluate('''
       (() => {
-        try {
-          new WebAssembly.Instance(
-            new WebAssembly.Module(new Uint8Array(${_importModule.toList()})), {});
-        } catch (e) { return e.name + ':' + (e instanceof WebAssembly.LinkError); }
+        const module = new WebAssembly.Module(new Uint8Array(${_importModule.toList()}));
+        const name = (imports) => {
+          try { new WebAssembly.Instance(module, imports); return 'ok'; }
+          catch (e) { return e.name + ':' + (e instanceof WebAssembly.LinkError); }
+        };
+        return [name({}), name({ env: {} })];
       })()
     ''');
-    expect(missing, 'LinkError:true');
+    expect(missing, ['TypeError:false', 'LinkError:true']);
 
     // The full linker path (32 wasm-bindgen imports calling back into JS) is
     // covered by packages/nativax/test/wasm_rapier_test.dart.

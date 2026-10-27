@@ -35,12 +35,16 @@ const _triangle = r'''
 ''';
 
 void main() {
-  late WebHarness h;
-  tearDown(() => h.bindings.dispose());
+  WebHarness? harness;
+  // Skipped tests (no GL) never create a harness.
+  tearDown(() {
+    harness?.bindings.dispose();
+    harness = null;
+  });
 
   test('WebGL2 on an OffscreenCanvas: shaders, buffers, draw and readPixels', () {
     if (!GlSurfaces.available) return markTestSkipped('no EGL/OpenGL ES 3');
-    h = WebHarness('<p>x</p>');
+    final h = harness = WebHarness('<p>x</p>');
     final out = h.js('''(() => {
       const gl = new OffscreenCanvas(8, 8).getContext('webgl2');
       $_triangle
@@ -56,7 +60,7 @@ void main() {
 
   test('textures from ImageBitmap decoded natively (PNG)', () async {
     if (!GlSurfaces.available) return markTestSkipped('no EGL/OpenGL ES 3');
-    h = WebHarness('<p>x</p>');
+    final h = harness = WebHarness('<p>x</p>');
     // 2x1 PNG: red, blue.
     const png = 'iVBORw0KGgoAAAANSUhEUgAAAAIAAAABCAIAAAB7QOjdAAAAEElEQVR4nGP4z8DAwPCfAQAG/AH/i1Ce2gAAAABJRU5ErkJggg==';
     final out = await h.async('''
@@ -79,7 +83,7 @@ void main() {
 
   test('a worker renders into a transferred canvas and frames reach its surface', () async {
     if (!GlSurfaces.available) return markTestSkipped('no EGL/OpenGL ES 3');
-    h = WebHarness('<canvas id="c" width="16" height="16"></canvas>');
+    final h = harness = WebHarness('<canvas id="c" width="16" height="16"></canvas>');
     final out = await h.async('''
       const src = `onmessage = (e) => {
         const canvas = e.data.canvas;

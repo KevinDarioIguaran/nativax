@@ -11,7 +11,7 @@ class _Harness {
       : document =
             HtmlParser().parseDocument('<!doctype html><html><body></body></html>')
                 .value {
-    engine = QuickJsEngine(const JavaScriptEngineConfig(
+    engine = JscEngine(const JavaScriptEngineConfig(
       memoryLimitBytes: 128 * 1024 * 1024,
       executionBudget: Duration(seconds: 5),
     ));
@@ -30,7 +30,7 @@ class _Harness {
   }
 
   final Document document;
-  late final QuickJsEngine engine;
+  late final JscEngine engine;
   late final DomBindings bindings;
   TimerHost? timers;
 
@@ -151,7 +151,7 @@ List<LeakCase> domLeakCases() => [
         run: (ctx) async {
           await ctx.sample(0, timers: 0, activeRuntimes: 0);
           for (var batch = 1; batch <= ctx.profile.batches; batch++) {
-            final engine = QuickJsEngine();
+            final engine = JscEngine();
             final timers = TimerHost(engine);
             try {
               engine.evaluate('''

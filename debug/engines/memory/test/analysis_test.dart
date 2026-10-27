@@ -105,7 +105,7 @@ void main() {
     }
     final result = analyzeLeak(_case('released'), ctx, 1);
     expect(result.status, LeakStatus.fail);
-    expect(result.evidence.any((e) => e.contains('QuickJS')), isTrue);
+    expect(result.evidence.any((e) => e.contains('JavaScriptCore')), isTrue);
   });
 
   test(

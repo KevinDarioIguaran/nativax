@@ -27,7 +27,6 @@ from .probe import probe_source
 
 ROOT = Path(__file__).resolve().parents[4]
 HARNESS = ROOT / "debug" / "harness"
-V8_LIB = ROOT / "tools" / "v8-spike" / "target" / "release" / "libnx_v8.so"
 
 CHROME_FLAGS = [
     "--headless=new", "--disable-gpu", "--hide-scrollbars",
@@ -82,8 +81,6 @@ def run_nativa(scenarios: list[dict], work: Path, *, per_scenario_s: float = 12.
     pending = jobs
     attempt = 0
     env = dict(os.environ)
-    if "NATIVAX_V8_LIB" not in env and V8_LIB.exists():
-        env["NATIVAX_V8_LIB"] = str(V8_LIB)
     while pending and attempt < len(jobs) + 1:
         attempt += 1
         out = work / f"nativa-{attempt}.jsonl"

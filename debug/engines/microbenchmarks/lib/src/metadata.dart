@@ -1,21 +1,17 @@
 import 'dart:io';
 
+import 'package:nativa_js/nativa_js.dart' show JscEngine;
 import 'package:path/path.dart' as p;
 
 import 'model.dart';
 
 /// Builds the environment metadata included in every JSON report.
+/// [repoRoot] is accepted for compatibility; the engine version comes from
+/// the loaded JavaScriptCore.
 RunMetadata collectMetadata({String? repoRoot}) {
-  final root = repoRoot ?? findRepoRoot();
   return RunMetadata(
-    engine: switch (Platform.environment['NATIVAX_ENGINE'] ?? 'quickjs') {
-      'jsc' => 'JavaScriptCore',
-      'v8' => 'V8',
-      _ => 'QuickJS-ng',
-    },
-    engineVersion: (Platform.environment['NATIVAX_ENGINE'] ?? 'quickjs') == 'quickjs'
-        ? quickJsVersion(root)
-        : 'host library',
+    engine: 'JavaScriptCore',
+    engineVersion: JscEngine.version(),
     dartVersion: Platform.version.split(' ').first,
     os: Platform.operatingSystem,
     osVersion: Platform.operatingSystemVersion,
@@ -53,21 +49,6 @@ String _architecture() {
     // Fall through.
   }
   return 'unknown';
-}
-
-String quickJsVersion(String repoRoot) {
-  final header = File(p.join(repoRoot, 'packages', 'nativa_js',
-      'third_party', 'quickjs', 'quickjs.h'));
-  if (!header.existsSync()) return 'unknown';
-  final text = header.readAsStringSync();
-  String value(String name, String fallback) {
-    final match = RegExp('#define\\s+$name\\s+(\\d+)').firstMatch(text);
-    return match?.group(1) ?? fallback;
-  }
-
-  return '${value('QJS_VERSION_MAJOR', '0')}.'
-      '${value('QJS_VERSION_MINOR', '0')}.'
-      '${value('QJS_VERSION_PATCH', '0')}';
 }
 
 /// Locates the repository root by walking up until the benchmark workspace

@@ -7,7 +7,7 @@ void main() {
       markTestSkipped('no EGL/OpenGL ES 3 on this machine');
       return;
     }
-    final engine = QuickJsEngine();
+    final engine = JscEngine();
     addTearDown(engine.dispose);
     final surface = GlSurfaces.create();
     addTearDown(() => GlSurfaces.release(surface));
