@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:nativa_js/nativa_js.dart';
 
@@ -8,11 +9,14 @@ import '../model.dart';
 /// and renderer work so the results measure the engine, not the bridge.
 class JsBenchmarks {
   JsBenchmarks() {
-    engine = QuickJsEngine();
+    // NATIVAX_ENGINE picks the engine (quickjs by default, or jsc / v8).
+    engine = createJavaScriptEngineNamed(
+      Platform.environment['NATIVAX_ENGINE'] ?? 'quickjs',
+    );
     engine.registerHostFunction('noop', (args) => args.isEmpty ? 0 : args[0]);
   }
 
-  late final QuickJsEngine engine;
+  late final JavaScriptEngine engine;
 
   List<BenchmarkCase> cases() {
     final parseText = jsonEncode(

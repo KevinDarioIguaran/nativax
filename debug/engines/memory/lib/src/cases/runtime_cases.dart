@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:nativa_css/nativa_css.dart' show MediaContext;
 import 'package:nativa_dom_bindings/nativa_dom_bindings.dart';
 import 'package:nativa_html/nativa_html.dart';
@@ -15,7 +17,9 @@ List<LeakCase> runtimeLeakCases() => [
           await ctx.sample(0, activeRuntimes: 0);
           for (var batch = 1; batch <= ctx.profile.batches; batch++) {
             for (var i = 0; i < 5; i++) {
-              final engine = QuickJsEngine();
+              final engine = createJavaScriptEngineNamed(
+                Platform.environment['NATIVAX_ENGINE'] ?? 'quickjs',
+              );
               engine.evaluate('globalThis.__n = 1;');
               engine.dispose();
             }
@@ -35,7 +39,9 @@ List<LeakCase> runtimeLeakCases() => [
             final doc = HtmlParser()
                 .parseDocument('<!doctype html><html><body></body></html>')
                 .value;
-            final engine = QuickJsEngine();
+            final engine = createJavaScriptEngineNamed(
+                Platform.environment['NATIVAX_ENGINE'] ?? 'quickjs',
+              );
             final bindings = DomBindings(
               engine: engine,
               document: doc,

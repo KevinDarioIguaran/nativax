@@ -6,6 +6,7 @@ import 'package:nativa_dom_bindings/nativa_dom_bindings.dart';
 import 'package:nativa_html/nativa_html.dart';
 import 'package:nativa_js/nativa_js.dart';
 
+import 'engine.dart';
 import 'model.dart';
 import 'matrix_cases.dart';
 
@@ -14,7 +15,7 @@ class _Harness {
     document = HtmlParser()
         .parseDocument('<!doctype html><html><body></body></html>')
         .value;
-    engine = QuickJsEngine();
+    engine = newEngine();
     bindings = DomBindings(
       engine: engine,
       document: document,
@@ -29,7 +30,7 @@ class _Harness {
   }
 
   late final Document document;
-  late final QuickJsEngine engine;
+  late final JavaScriptEngine engine;
   late final DomBindings bindings;
 
   void dispose() {
@@ -73,7 +74,7 @@ List<SecurityCase> securityCases() => [
     description:
         'JS must not see OS, filesystem, process, network or Dart globals.',
     run: () async {
-      final engine = QuickJsEngine();
+      final engine = newEngine();
       try {
         final globals = [
           'process',
@@ -285,8 +286,8 @@ List<SecurityCase> securityCases() => [
     severity: 'critical',
     description: 'Two engines must not share JavaScript globals.',
     run: () async {
-      final a = QuickJsEngine();
-      final b = QuickJsEngine();
+      final a = newEngine();
+      final b = newEngine();
       try {
         a.evaluate('globalThis.leak = 42');
         final seen = b.evaluate('typeof globalThis.leak');
@@ -306,7 +307,7 @@ List<SecurityCase> securityCases() => [
     description:
         'An infinite JS loop must be interrupted by the execution budget.',
     run: () async {
-      final engine = QuickJsEngine(
+      final engine = newEngine(
         const JavaScriptEngineConfig(
           executionBudget: Duration(milliseconds: 50),
           memoryLimitBytes: 32 * 1024 * 1024,
@@ -333,7 +334,7 @@ List<SecurityCase> securityCases() => [
     severity: 'high',
     description: 'A self-rescheduling microtask must hit a hard limit.',
     run: () async {
-      final engine = QuickJsEngine(
+      final engine = newEngine(
         const JavaScriptEngineConfig(
           maxJobsPerDrain: 100,
           executionBudget: Duration(seconds: 2),
@@ -394,7 +395,7 @@ List<SecurityCase> securityCases() => [
     severity: 'high',
     description: 'A disposed engine must reject further evaluation.',
     run: () async {
-      final engine = QuickJsEngine();
+      final engine = newEngine();
       engine.dispose();
       try {
         engine.evaluate('1 + 1');

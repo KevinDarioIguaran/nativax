@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:nativa_css/nativa_css.dart';
 import 'package:nativa_dom/nativa_dom.dart';
 import 'package:nativa_dom_bindings/nativa_dom_bindings.dart';
@@ -15,7 +17,8 @@ class DomBenchmarks {
       '.item { display: block; }</style></head><body></body></html>',
     );
     document = parsed.value;
-    engine = QuickJsEngine(const JavaScriptEngineConfig(
+    // NATIVAX_ENGINE picks the engine (quickjs by default, or jsc / v8).
+    engine = createJavaScriptEngineNamed(Platform.environment['NATIVAX_ENGINE'] ?? 'quickjs', const JavaScriptEngineConfig(
       maxJobsPerDrain: 1000000,
       memoryLimitBytes: 256 * 1024 * 1024,
       executionBudget: Duration(seconds: 10),
@@ -39,7 +42,7 @@ class DomBenchmarks {
   }
 
   late final Document document;
-  late final QuickJsEngine engine;
+  late final JavaScriptEngine engine;
   late final DomBindings bindings;
   late final StyleEngine styleEngine;
   final List<Element> _styled = [];

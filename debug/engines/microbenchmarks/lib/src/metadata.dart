@@ -8,8 +8,14 @@ import 'model.dart';
 RunMetadata collectMetadata({String? repoRoot}) {
   final root = repoRoot ?? findRepoRoot();
   return RunMetadata(
-    engine: 'QuickJS-ng',
-    engineVersion: quickJsVersion(root),
+    engine: switch (Platform.environment['NATIVAX_ENGINE'] ?? 'quickjs') {
+      'jsc' => 'JavaScriptCore',
+      'v8' => 'V8',
+      _ => 'QuickJS-ng',
+    },
+    engineVersion: (Platform.environment['NATIVAX_ENGINE'] ?? 'quickjs') == 'quickjs'
+        ? quickJsVersion(root)
+        : 'host library',
     dartVersion: Platform.version.split(' ').first,
     os: Platform.operatingSystem,
     osVersion: Platform.operatingSystemVersion,

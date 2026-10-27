@@ -6,6 +6,7 @@ import 'package:nativa_dom_bindings/nativa_dom_bindings.dart';
 import 'package:nativa_html/nativa_html.dart';
 import 'package:nativa_js/nativa_js.dart';
 
+import 'engine.dart';
 import 'model.dart';
 
 class _Harness {
@@ -13,7 +14,7 @@ class _Harness {
     document = HtmlParser()
         .parseDocument('<!doctype html><html><body></body></html>')
         .value;
-    engine = QuickJsEngine();
+    engine = newEngine();
     bindings = DomBindings(
       engine: engine,
       document: document,
@@ -26,7 +27,7 @@ class _Harness {
   }
 
   late final Document document;
-  late final QuickJsEngine engine;
+  late final JavaScriptEngine engine;
   late final DomBindings bindings;
 
   void dispose() {
@@ -97,7 +98,7 @@ List<SecurityCase> matrixSecurityCases() {
         severity: 'critical',
         description: 'Generated sandbox check: $name must be undefined.',
         run: () async {
-          final engine = QuickJsEngine();
+          final engine = newEngine();
           try {
             final type = engine.evaluate(
               'typeof globalThis[${jsonEncode(name)}]',

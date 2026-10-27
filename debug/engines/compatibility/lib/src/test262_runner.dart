@@ -308,14 +308,17 @@ class Test262Runner {
     required bool raw,
     required bool async,
   }) async {
-    QuickJsEngine? engine;
+    JavaScriptEngine? engine;
     TimerHost? timers;
     final done = Completer<String?>();
     String? doneError;
     var doneCalls = 0;
     var evaluating = false;
     try {
-      engine = QuickJsEngine(JavaScriptEngineConfig(
+      // NATIVAX_ENGINE picks the engine (quickjs by default, or jsc).
+      engine = createJavaScriptEngineNamed(
+          Platform.environment['NATIVAX_ENGINE'] ?? 'quickjs',
+          JavaScriptEngineConfig(
         memoryLimitBytes: 256 * 1024 * 1024,
         maxStackBytes: 512 * 1024,
         executionBudget: options.timeout,
