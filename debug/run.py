@@ -284,8 +284,23 @@ def main(argv: list[str]) -> int:
         print("Use debug/common/chromium/capture.py and debug/judges/visual/compare.py")
         return 0
     if head == "compare-history":
-        print("No historical baseline comparison implemented yet")
-        return 0
+        rest = rest or []
+        old = rest[0] if len(rest) > 0 else None
+        new = rest[1] if len(rest) > 1 else "latest"
+        if old is None:
+            runs = None
+            try:
+                import json
+                idx = json.loads((DEBUG / "history" / "index.json").read_text())
+                if len(idx) >= 2:
+                    old = idx[-2]["run_id"]
+            except Exception:
+                old = None
+        cmd = [sys.executable, str(DEBUG / "history" / "history.py"), "compare"]
+        if old:
+            cmd.append(old)
+        cmd.append(new)
+        return subprocess.run(cmd).returncode
     if head == "benchmark":
         return subprocess.run([sys.executable, str(NATIVE / "debug" / "benchmarks" / "workloads" / "parse_benchmark.py")]).returncode
     if head == "certify":

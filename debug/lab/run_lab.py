@@ -37,6 +37,14 @@ for path in (str(DEBUG), str(HERE)):
 import harness  # noqa: E402
 from harness import Lab, registered, run_section, summarize, write_reports  # noqa: E402
 
+HISTORY_DIR = DEBUG / "history"
+if str(HISTORY_DIR) not in sys.path:
+    sys.path.insert(0, str(HISTORY_DIR))
+try:
+    import history as history_mod  # noqa: E402
+except Exception:  # pragma: no cover
+    history_mod = None
+
 
 def ensure_environment(auto: bool) -> bool:
     if (harness.BUILD / "nativax-debug").exists() and (harness.BUILD / "nativax-runtime").exists():
@@ -61,6 +69,7 @@ def main() -> int:
     ap.add_argument("--min-per-section", type=int, default=0,
                     help="fail when a section has fewer registered cases than this")
     ap.add_argument("--json", action="store_true", help="print the summary JSON")
+    ap.add_argument("--no-history", action="store_true", help="do not append a history snapshot")
     ap.add_argument("--no-report", action="store_true", help="do not write report files")
     ap.add_argument("--no-bootstrap", action="store_true",
                     help="never invoke bootstrap automatically")
@@ -137,6 +146,16 @@ def main() -> int:
     if args.json:
         print(json.dumps({"summary": total, "elapsed_seconds": round(elapsed, 2)},
                          indent=2))
+
+    if history_mod is not None and not args.no_history and all_results:
+        try:
+            cmd = " ".join(sys.argv)
+            path = history_mod.save_run(
+                all_results, sections=sections, elapsed=elapsed,
+                command=cmd, label=f"section-{','.join(str(s) for s in sections)}")
+            print(f"[lab] history snapshot: {path.relative_to(ROOT)}", flush=True)
+        except Exception as exc:  # noqa: BLE001
+            print(f"[lab] history snapshot failed: {exc}", file=sys.stderr)
 
     if total["fail"] or total["error"]:
         return 1
