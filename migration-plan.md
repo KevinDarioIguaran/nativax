@@ -110,7 +110,9 @@ documented in `docs/platforms.md`, not yet validated.
 | 7 — complete pipeline | `dcdfabf` feat(runtime): application host renders real HTML/CSS/JS documents |
 | 8 — dev server, hot reload, CLI | `ed97fa5` feat(dev): self-hosted dev server, hot reload and nativax CLI |
 | 9 — memory measurement + optimization | `7eaf71b` perf(memory): size style tables to the document and restyle in place |
-| 10 — validation and documentation | this commit: docs: architecture, dependencies, plan, risks and baseline |
+| 10 — validation and documentation | `bc4e51a` docs: architecture, dependencies, plan, risks and baseline |
+| 1 — audit closure (re-measured baseline) | `b07fe97` docs(audit): close phase 1 with re-verified measurements |
+| 2 — native platform layer + normalized input | `74af76a` feat(platform): native platform layer and normalized input (phase 2) |
 
 Phases 5 and 6 (HTML/DOM/CSS/layout subsystems) were already present on the
 branch and are extended by the phase 4 commit (inline style cascade) and the
