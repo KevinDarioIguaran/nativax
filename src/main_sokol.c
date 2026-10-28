@@ -13,6 +13,7 @@
 #include "nativax/app.h"
 #include "nativax/display_list.h"
 #include "nativax/gfx.h"
+#include "nativax/hotreload.h"
 #include "nativax/log.h"
 #include "nativax/raster.h"
 #include "nativax/text.h"
@@ -34,6 +35,7 @@ typedef struct AppState {
     const char* root;
     const char* entry;
     const char* screenshot;
+    const char* dev_url;
     int max_frames;
     int frame_count;
     int width, height; /* CSS px */
@@ -41,6 +43,7 @@ typedef struct AppState {
     bool stats;
     float dpi;
     NxApp* app;
+    NxHotReload* hr;
     double start_ms;
 } AppState;
 
@@ -50,6 +53,22 @@ static double now_ms(void) {
     struct timespec ts;
     clock_gettime(CLOCK_MONOTONIC, &ts);
     return (double)ts.tv_sec * 1000.0 + (double)ts.tv_nsec / 1e6;
+}
+
+/* ---- hot reload ---------------------------------------------------------- */
+
+static void on_reload(const char* json, void* user) {
+    NxApp* app = (NxApp*)user;
+    if (strstr(json, "\"kind\":\"css\"")) {
+        NX_INFO("hot reload: css -> styles + layout rebuilt (DOM/JS state kept)");
+        nx_app_reload_css(app);
+    } else if (strstr(json, "\"kind\":\"js\"")) {
+        NX_INFO("hot reload: js -> fresh context, scripts re-run (DOM kept)");
+        nx_app_reload_js(app);
+    } else {
+        NX_INFO("hot reload: %s -> full document reload", json);
+        nx_app_reload_document(app);
+    }
 }
 
 /* ---- screenshots --------------------------------------------------------- */
@@ -106,12 +125,15 @@ static void init_cb(void) {
     free(err);
     nx_app_set_dpi(g_state.app, g_state.dpi);
     nx_app_update(g_state.app, now_ms() - g_state.start_ms);
+
+    if (g_state.dev_url) g_state.hr = nx_hot_reload_connect(g_state.dev_url, on_reload, g_state.app);
     NX_INFO("runtime ready: %s/%s (%dx%d css px, dpi %.2f)", g_state.root, g_state.entry,
             g_state.width, g_state.height, g_state.dpi);
 }
 
 static void frame_cb(void) {
     if (!g_state.app) return;
+    if (g_state.hr) nx_hot_reload_poll(g_state.hr);
     nx_app_update(g_state.app, now_ms() - g_state.start_ms);
 
     int fb_w = (int)(g_state.width * g_state.dpi + 0.5f);
@@ -130,6 +152,7 @@ static void frame_cb(void) {
 }
 
 static void cleanup_cb(void) {
+    if (g_state.hr) nx_hot_reload_free(g_state.hr);
     if (g_state.stats && g_state.app) {
         char* json = nx_app_stats_json(g_state.app);
         if (json) {
@@ -232,6 +255,7 @@ static void usage(const char* argv0) {
             "  --size W H           window size in CSS px (default 1024 768)\n"
             "  --deterministic      pin DPI to 1.0 for reproducible screenshots\n"
             "  --screenshot FILE    write a PNG screenshot at frame 3\n"
+            "  --dev URL            connect to the dev server (ws://127.0.0.1:PORT/__nativax_ws)\n"
             "  --stats              print pipeline stats JSON on exit\n"
             "  --verbose            debug logging\n",
             argv0);
@@ -261,6 +285,8 @@ int main(int argc, char** argv) {
             g_state.deterministic = true;
         } else if (strcmp(argv[i], "--screenshot") == 0 && i + 1 < argc) {
             g_state.screenshot = argv[++i];
+        } else if (strcmp(argv[i], "--dev") == 0 && i + 1 < argc) {
+            g_state.dev_url = argv[++i];
         } else if (strcmp(argv[i], "--stats") == 0) {
             g_state.stats = true;
         } else if (strcmp(argv[i], "--verbose") == 0) {

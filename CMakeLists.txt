@@ -70,12 +70,27 @@ add_library(nativax_app STATIC
 target_include_directories(nativax_app PUBLIC include)
 target_link_libraries(nativax_app PUBLIC nativax_js)
 
+# Development tooling: HTTP/WebSocket dev server + hot-reload client.
+add_library(nativax_dev STATIC
+  src/devserver.c
+  src/hotreload.c
+)
+target_include_directories(nativax_dev PUBLIC include)
+target_link_libraries(nativax_dev PUBLIC nativax_core)
+
+# ---- CLI --------------------------------------------------------------------
+add_executable(nativax
+  src/cli_main.c
+)
+target_compile_definitions(nativax PRIVATE NATIVAX_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}")
+target_link_libraries(nativax PRIVATE nativax_dev nativax_core)
+
 # ---- runtime binary ----------------------------------------------------------
 add_executable(nativax-runtime
   src/main_sokol.c
 )
 target_compile_definitions(nativax-runtime PRIVATE NATIVAX_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}")
-target_link_libraries(nativax-runtime PRIVATE nativax_core nativax_app nativax_gfx)
+target_link_libraries(nativax-runtime PRIVATE nativax_core nativax_app nativax_dev nativax_gfx)
 
 # Diagnostic CLI: DOM/CSS artifact dumps (native/debug/run.py drives it).
 add_executable(nativax-debug
@@ -157,6 +172,14 @@ add_executable(nativax_app_tests
 target_compile_definitions(nativax_app_tests PRIVATE NATIVAX_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}")
 target_link_libraries(nativax_app_tests PRIVATE nativax_app)
 add_test(NAME unit_app COMMAND nativax_app_tests)
+
+# Dev server: HTTP, WebSocket handshake, broadcast and watcher messages.
+add_executable(nativax_devserver_tests
+  tests/test_devserver.c
+)
+target_compile_definitions(nativax_devserver_tests PRIVATE NATIVAX_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}")
+target_link_libraries(nativax_devserver_tests PRIVATE nativax_dev)
+add_test(NAME unit_devserver COMMAND nativax_devserver_tests)
 
 # Windowed GPU smoke: only when a display is available at configure time.
 if(DEFINED ENV{DISPLAY})
