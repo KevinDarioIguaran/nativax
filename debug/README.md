@@ -13,7 +13,7 @@ debug/
   lab/
     harness.py          # case registry, DOM/selector engine, Page/Lab, assertions
     run_lab.py          # CLI runner
-    sections/           # s01_html_dom.py ... s16_*.py (100 cases each)
+    sections/           # s01_html_dom.py ... s19_*.py (100 cases each, except imported subsets)
     cases/              # s01/001 .. s16/100, each with index.html, style.css, app.js
   artifacts/lab/        # git-ignored run cache
   reports/lab/          # generated JSON + Markdown reports (git-ignored)
