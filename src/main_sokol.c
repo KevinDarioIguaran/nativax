@@ -37,6 +37,9 @@ typedef struct AppState {
     const char* entry;
     const char* screenshot;
     const char* dev_url;
+    const char* probe;
+    const char* probe_out;
+    const char* input;
     int max_frames;
     int frame_count;
     int width, height; /* CSS px */
@@ -306,6 +309,115 @@ static void event_cb(const NxPlatformEvent* ev, void* user) {
 
 /* ---- headless ------------------------------------------------------------ */
 
+static char* read_text_file(const char* path) {
+    FILE* f = fopen(path, "rb");
+    if (!f) return NULL;
+    if (fseek(f, 0, SEEK_END) != 0) {
+        fclose(f);
+        return NULL;
+    }
+    long n = ftell(f);
+    if (n < 0 || n > 8 * 1024 * 1024) {
+        fclose(f);
+        return NULL;
+    }
+    rewind(f);
+    char* buf = (char*)malloc((size_t)n + 1);
+    if (!buf) {
+        fclose(f);
+        return NULL;
+    }
+    size_t rd = fread(buf, 1, (size_t)n, f);
+    buf[rd] = '\0';
+    fclose(f);
+    return buf;
+}
+
+static void json_print_escaped(const char* s) {
+    fputc('"', stdout);
+    for (const unsigned char* p = (const unsigned char*)s; *p; p++) {
+        switch (*p) {
+            case '"': fputs("\\\"", stdout); break;
+            case '\\': fputs("\\\\", stdout); break;
+            case '\n': fputs("\\n", stdout); break;
+            case '\r': fputs("\\r", stdout); break;
+            case '\t': fputs("\\t", stdout); break;
+            default:
+                if (*p < 0x20) printf("\\u%04x", *p);
+                else fputc(*p, stdout);
+        }
+    }
+    fputc('"', stdout);
+}
+
+/* Synthetic input for probes: "click:10,20;move:5,5;key:32,down;
+   down:1,1;up:1,1;wait:3" executed after load and before the probe. */
+static void run_input_spec(NxApp* app, const char* spec) {
+    char* copy = strdup(spec);
+    if (!copy) return;
+    char* save = NULL;
+    for (char* tok = strtok_r(copy, ";", &save); tok; tok = strtok_r(NULL, ";", &save)) {
+        while (*tok == ' ') tok++;
+        if (strncmp(tok, "click:", 6) == 0 || strncmp(tok, "move:", 5) == 0 ||
+            strncmp(tok, "down:", 5) == 0 || strncmp(tok, "up:", 3) == 0) {
+            float x = 0, y = 0;
+            const char* args = strchr(tok, ':') + 1;
+            if (sscanf(args, "%f,%f", &x, &y) != 2) continue;
+            if (strncmp(tok, "click:", 6) == 0) {
+                nx_app_pointer(app, x, y, true);
+                nx_app_pointer(app, x, y, false);
+            } else if (strncmp(tok, "move:", 5) == 0) {
+                nx_app_pointer_move(app, x, y);
+            } else if (strncmp(tok, "down:", 5) == 0) {
+                nx_app_pointer(app, x, y, true);
+            } else {
+                nx_app_pointer(app, x, y, false);
+            }
+        } else if (strncmp(tok, "key:", 4) == 0) {
+            int code = 0;
+            char dir[16] = "down";
+            if (sscanf(tok + 4, "%d,%15s", &code, dir) >= 1)
+                nx_app_key(app, code, strcmp(dir, "up") != 0);
+        } else if (strncmp(tok, "wait:", 5) == 0) {
+            int frames = atoi(tok + 5);
+            for (int i = 0; i < frames; i++) nx_app_update(app, 0.0);
+        }
+    }
+    free(copy);
+}
+
+static int run_probe(NxApp* app) {
+    if (!g_state.probe) return 0;
+    char* code = read_text_file(g_state.probe);
+    if (!code) {
+        fprintf(stderr, "nativax-runtime: cannot read probe %s\n", g_state.probe);
+        return 1;
+    }
+    char* err = NULL;
+    char* result = nx_js_eval_json(nx_app_js(app), code, &err);
+    FILE* out = g_state.probe_out ? fopen(g_state.probe_out, "w") : NULL;
+    if (!result) {
+        printf("{\"probe_error\":");
+        json_print_escaped(err ? err : "evaluation failed");
+        printf("}\n");
+        if (out) {
+            fprintf(out, "{\"probe_error\":");
+            fclose(out);
+        }
+        free(err);
+        free(code);
+        return 1;
+    }
+    printf("{\"probe\":%s}\n", result);
+    if (out) {
+        fprintf(out, "{\"probe\":%s}\n", result);
+        fclose(out);
+    }
+    free(result);
+    free(code);
+    return 0;
+}
+
 static int run_headless(void) {
     NxAppConfig cfg;
     memset(&cfg, 0, sizeof(cfg));
@@ -330,6 +442,12 @@ static int run_headless(void) {
 
     int frames = g_state.max_frames > 0 ? g_state.max_frames : 1;
     for (int i = 0; i < frames; i++) nx_app_update(app, (double)(i + 1) * 16.7);
+
+    if (g_state.input) {
+        run_input_spec(app, g_state.input);
+        nx_app_update(app, (double)(frames + 1) * 16.7);
+    }
+    int probe_rc = run_probe(app);
 
     if (g_state.screenshot) {
         NxRaster raster;
@@ -356,7 +474,7 @@ static int run_headless(void) {
     if (g_state.mem) print_mem_report();
     if (!g_state.stats && !g_state.mem) printf("nativax-runtime headless OK\n");
     nx_app_free(app);
-    return 0;
+    return probe_rc;
 }
 
 static void usage(const char* argv0) {
@@ -369,6 +487,10 @@ static void usage(const char* argv0) {
             "  --size W H           window size in CSS px (default 1024 768)\n"
             "  --deterministic      pin DPI to 1.0 for reproducible screenshots\n"
             "  --screenshot FILE    write a PNG screenshot at frame 3\n"
+            "  --probe FILE         evaluate a JS expression after load, print {\"probe\":...}\n"
+            "  --probe-out FILE     also write the probe result JSON to FILE\n"
+            "  --input SPEC         synthetic input before the probe, e.g.\n"
+            "                       \"click:40,30;key:32,down;wait:2\"\n"
             "  --dev URL            connect to the dev server (ws://127.0.0.1:PORT/__nativax_ws)\n"
             "  --stats              print pipeline stats JSON on exit\n"
             "  --mem                print RSS/peak memory JSON on exit\n"
@@ -406,6 +528,12 @@ int main(int argc, char** argv) {
             g_state.screenshot = argv[++i];
         } else if (strcmp(argv[i], "--dev") == 0 && i + 1 < argc) {
             g_state.dev_url = argv[++i];
+        } else if (strcmp(argv[i], "--probe") == 0 && i + 1 < argc) {
+            g_state.probe = argv[++i];
+        } else if (strcmp(argv[i], "--probe-out") == 0 && i + 1 < argc) {
+            g_state.probe_out = argv[++i];
+        } else if (strcmp(argv[i], "--input") == 0 && i + 1 < argc) {
+            g_state.input = argv[++i];
         } else if (strcmp(argv[i], "--stats") == 0) {
             g_state.stats = true;
         } else if (strcmp(argv[i], "--mem") == 0) {

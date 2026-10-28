@@ -2,3 +2,8 @@
 build/
 build-asan/
 debug/artifacts/
+debug/.venv/
+debug/reports/
+debug/lab/env.json
+debug/lab/__pycache__/
+debug/lab/sections/__pycache__/

@@ -47,4 +47,19 @@ void nxd_dump_display_list(FILE* out, const NxDisplayList* dl);
 /* box and text-run counts for summary.json */
 void nxd_layout_stats(const NxLayout* lay, int* boxes, int* runs);
 
+/* ---- machine-readable dumps (laboratory assertions) ---- */
+
+/* {"viewport":[w,h],"boxes":[{node,tag,id,class,x,y,w,h,cx,cy,cw,ch,
+     runs:[{text,x,y,w}]}]} in paint order (pre-order, viewport excluded). */
+void nxd_dump_layout_json(FILE* out, NxDocument* doc, const NxLayout* lay);
+
+/* {"styles":[{node,tag,id,class,display,width,height,margin,padding,border,
+     color,bg,font_size,font_weight,text_align,line_height,opacity,radius,
+     overflow,transform,flex:{...}}]} for every element slot with a style. */
+void nxd_dump_styles_json(FILE* out, NxDocument* doc, const NxLayout* lay);
+
+/* {"rules":[{selector,media,decls:[{name,value,important}]}],
+     "dropped_rules":n,"dropped_decls":n} */
+void nxd_dump_css_json(FILE* out, CsSheet* sheet);
+
 #endif /* NATIVAX_DEBUG_DUMP_H */

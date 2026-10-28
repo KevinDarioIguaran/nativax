@@ -371,21 +371,26 @@ static bool parse_color(const CsTok* t, int ntoks, float* r, float* g, float* b,
         }
     }
     /* rgb()/rgba() functional color (comma-separated numeric args) */
-    if (t->kind == CS_FUNCTION &&
-        (str_ieq(t->s, t->len, "rgb", 3) || str_ieq(t->s, t->len, "rgba", 4))) {
-        float v[4] = {0, 0, 0, 1};
-        int n = 0;
-        for (int i = 1; i < ntoks && n < 4; i++) {
-            if (t[i].kind == CS_NUMBER || t[i].kind == CS_PERCENTAGE) {
-                double x = t[i].num;
-                if (t[i].kind == CS_PERCENTAGE) x /= 100.0;
-                else if (x > 1.0) x /= 255.0;
-                v[n++] = (float)x;
+    if (t->kind == CS_FUNCTION) {
+        /* CS_FUNCTION keeps its name in `str`; `s` is NULL for these tokens. */
+        const char* fname = t->str ? t->str : t->s;
+        int flen = t->str ? (int)strlen(t->str) : t->len;
+        if (fname && (str_ieq(fname, flen, "rgb", 3) ||
+                      str_ieq(fname, flen, "rgba", 4))) {
+            float v[4] = {0, 0, 0, 1};
+            int n = 0;
+            for (int i = 1; i < ntoks && n < 4; i++) {
+                if (t[i].kind == CS_NUMBER || t[i].kind == CS_PERCENTAGE) {
+                    double x = t[i].num;
+                    if (t[i].kind == CS_PERCENTAGE) x /= 100.0;
+                    else if (x > 1.0) x /= 255.0;
+                    v[n++] = (float)x;
+                }
             }
-        }
-        if (n >= 3) {
-            *r = v[0]; *g = v[1]; *b = v[2]; *a = n == 4 ? v[3] : 1.0f;
-            return true;
+            if (n >= 3) {
+                *r = v[0]; *g = v[1]; *b = v[2]; *a = n == 4 ? v[3] : 1.0f;
+                return true;
+            }
         }
     }
     return false;

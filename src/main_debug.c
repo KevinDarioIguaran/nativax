@@ -198,7 +198,6 @@ int main(int argc, char** argv) {
     NxdDomStats st;
     memset(&st, 0, sizeof(st));
     nxd_dom_stats(doc, nx_doc_root(doc), 0, &st);
-
     int rules = 0, dropped_rules = 0, dropped_decls = 0;
     snprintf(path, sizeof(path), "%s/css.txt", out_dir);
     FILE* cf2 = fopen(path, "w");
@@ -223,8 +222,22 @@ int main(int argc, char** argv) {
         fclose(cf2);
     }
 
-    /* ---- layout.txt ----------------------------------------------------- */
-    int lay_boxes = 0, lay_runs = 0;
+    snprintf(path, sizeof(path), "%s/css.json", out_dir);
+    FILE* cj = fopen(path, "w");
+    if (!cj) {
+        fprintf(stderr, "nativax-debug: write %s: %s\n", path, strerror(errno));
+        ok = 0;
+    } else {
+        fputs("{\"sheets\":[", cj);
+        for (int i = 0; i < all_count; i++) {
+            if (i) fputc(',', cj);
+            nxd_dump_css_json(cj, (CsSheet*)all_sheets[i]);
+        }
+        fputs("]}\n", cj);
+        fclose(cj);
+    }
+
+    /* ---- layout.txt ----------------------------------------------------- */    int lay_boxes = 0, lay_runs = 0;
     snprintf(path, sizeof(path), "%s/layout.txt", out_dir);
     FILE* lf = fopen(path, "w");
     if (!lf) {
@@ -235,6 +248,26 @@ int main(int argc, char** argv) {
         fclose(lf);
     }
     if (lay) nxd_layout_stats(lay, &lay_boxes, &lay_runs);
+
+    snprintf(path, sizeof(path), "%s/layout.json", out_dir);
+    FILE* lj = fopen(path, "w");
+    if (!lj) {
+        fprintf(stderr, "nativax-debug: write %s: %s\n", path, strerror(errno));
+        ok = 0;
+    } else {
+        nxd_dump_layout_json(lj, doc, lay);
+        fclose(lj);
+    }
+
+    snprintf(path, sizeof(path), "%s/styles.json", out_dir);
+    FILE* sj = fopen(path, "w");
+    if (!sj) {
+        fprintf(stderr, "nativax-debug: write %s: %s\n", path, strerror(errno));
+        ok = 0;
+    } else {
+        nxd_dump_styles_json(sj, doc, lay);
+        fclose(sj);
+    }
 
     /* ---- displaylist.txt ----------------------------------------------- */
     if (lay) {

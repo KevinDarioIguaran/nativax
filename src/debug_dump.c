@@ -430,6 +430,7 @@ static void dump_json_node(FILE* out, NxDocument* doc, NxNodeRef node) {
         json_str(out, v ? v : "", -1);
     }
     if (any) fputc('}', out);
+    fprintf(out, ",\"node\":%d", (int)nx_node_index(node));
     fputs(",\"children\":[", out);
     bool first = true;
     for (NxNodeRef c = nx_node_first_child(doc, node); c;
@@ -548,4 +549,258 @@ void nxd_dump_display_list(FILE* out, const NxDisplayList* dl) {
     }
     fprintf(out, "transform_depth=%d clip_depth=%d\n", dl->transform_depth,
             dl->clip_depth);
+}
+
+/* ------------------------------------------------------------------ */
+/* JSON dumps for the laboratory                                       */
+/* ------------------------------------------------------------------ */
+
+static void json_len(FILE* out, const NxLength* L) {
+    fprintf(out, "{\"px\":%.4f,\"pct\":%.4f,\"auto\":%s,\"is_pct\":%s}",
+            L->px, L->pct, L->auto_ ? "true" : "false",
+            L->pct_ ? "true" : "false");
+}
+
+static const char* display_name(NxDisplayKind k) {
+    switch (k) {
+        case NX_DISPLAY_BLOCK: return "block";
+        case NX_DISPLAY_INLINE: return "inline";
+        case NX_DISPLAY_FLEX: return "flex";
+        case NX_DISPLAY_NONE: return "none";
+    }
+    return "unknown";
+}
+
+static const char* align_name(NxAlignKind k) {
+    switch (k) {
+        case NX_ALIGN_LEFT: return "left";
+        case NX_ALIGN_CENTER: return "center";
+        case NX_ALIGN_RIGHT: return "right";
+    }
+    return "unknown";
+}
+
+static const char* flex_dir_name(NxFlexDirection k) {
+    switch (k) {
+        case NX_FLEX_ROW: return "row";
+        case NX_FLEX_ROW_REVERSE: return "row-reverse";
+        case NX_FLEX_COLUMN: return "column";
+        case NX_FLEX_COLUMN_REVERSE: return "column-reverse";
+    }
+    return "unknown";
+}
+
+static const char* flex_wrap_name(NxFlexWrap k) {
+    switch (k) {
+        case NX_FLEX_NOWRAP: return "nowrap";
+        case NX_FLEX_WRAP: return "wrap";
+        case NX_FLEX_WRAP_REVERSE: return "wrap-reverse";
+    }
+    return "unknown";
+}
+
+static const char* justify_name(NxJustify k) {
+    switch (k) {
+        case NX_JUSTIFY_START: return "flex-start";
+        case NX_JUSTIFY_END: return "flex-end";
+        case NX_JUSTIFY_CENTER: return "center";
+        case NX_JUSTIFY_SPACE_BETWEEN: return "space-between";
+        case NX_JUSTIFY_SPACE_AROUND: return "space-around";
+        case NX_JUSTIFY_SPACE_EVENLY: return "space-evenly";
+    }
+    return "unknown";
+}
+
+static const char* flex_align_name(NxFlexAlign k) {
+    switch (k) {
+        case NX_FLEX_ALIGN_STRETCH: return "stretch";
+        case NX_FLEX_ALIGN_START: return "flex-start";
+        case NX_FLEX_ALIGN_END: return "flex-end";
+        case NX_FLEX_ALIGN_CENTER: return "center";
+        case NX_FLEX_ALIGN_BASELINE: return "baseline";
+    }
+    return "unknown";
+}
+
+static void json_node_ident(FILE* out, NxDocument* doc, NxNodeRef node) {
+    fprintf(out, "\"node\":%d,\"tag\":", (int)nx_node_index(node));
+    json_str(out, nx_node_name(doc, node), -1);
+    const char* id = nx_node_get_attr(doc, node, "id");
+    if (id) {
+        fputs(",\"id\":", out);
+        json_str(out, id, -1);
+    }
+    const char* cls = nx_node_get_attr(doc, node, "class");
+    if (cls) {
+        fputs(",\"class\":[", out);
+        const char* p = cls;
+        bool first = true;
+        while (*p) {
+            while (*p == ' ' || *p == '\t' || *p == '\n' || *p == '\r') p++;
+            if (!*p) break;
+            const char* s = p;
+            while (*p && *p != ' ' && *p != '\t' && *p != '\n' && *p != '\r') p++;
+            if (!first) fputc(',', out);
+            json_str(out, s, (int)(p - s));
+            first = false;
+        }
+        fputc(']', out);
+    }
+}
+
+static void json_layout_box(FILE* out, NxDocument* doc, const NxBox* b) {
+    if (!b) return;
+    fputc('{', out);
+    if (b->node) json_node_ident(out, doc, b->node);
+    else fputs("\"node\":-1,\"tag\":\"viewport\"", out);
+    fprintf(out, ",\"x\":%.4f,\"y\":%.4f,\"w\":%.4f,\"h\":%.4f",
+            b->x, b->y, b->w, b->h);
+    fprintf(out, ",\"cx\":%.4f,\"cy\":%.4f,\"cw\":%.4f,\"ch\":%.4f",
+            b->content_x, b->content_y, b->content_w, b->content_h);
+    fputs(",\"runs\":[", out);
+    for (int i = 0; i < b->run_count; i++) {
+        const NxTextRun* r = &b->runs[i];
+        if (i) fputc(',', out);
+        fputs("{\"text\":", out);
+        json_str(out, r->utf8 ? r->utf8 : "", r->len);
+        fprintf(out, ",\"x\":%.4f,\"y\":%.4f,\"w\":%.4f}", r->x, r->y, r->width);
+    }
+    fputs("],\"children\":[", out);
+    for (int i = 0; i < b->child_count; i++) {
+        if (i) fputc(',', out);
+        json_layout_box(out, doc, b->children[i]);
+    }
+    fputs("]}", out);
+}
+
+void nxd_dump_layout_json(FILE* out, NxDocument* doc, const NxLayout* lay) {
+    if (!lay) {
+        fputs("{\"viewport\":[0,0],\"boxes\":[],\"error\":\"no layout\"}\n", out);
+        return;
+    }
+    fprintf(out, "{\"viewport\":[%.4f,%.4f],\"boxes\":[",
+            lay->viewport_w, lay->viewport_h);
+    if (lay->root) {
+        for (int i = 0; i < lay->root->child_count; i++) {
+            if (i) fputc(',', out);
+            json_layout_box(out, doc, lay->root->children[i]);
+        }
+    }
+    fputs("]}\n", out);
+}
+
+static void json_style_decl(FILE* out, NxDocument* doc, NxNodeRef node,
+                            const NxComputedStyle* s) {
+    fputc('{', out);
+    json_node_ident(out, doc, node);
+    fprintf(out, ",\"display\":\"%s\"", display_name(s->display));
+    fputs(",\"width\":", out);
+    json_len(out, &s->width);
+    fputs(",\"height\":", out);
+    json_len(out, &s->height);
+    fputs(",\"margin\":[", out);
+    for (int i = 0; i < 4; i++) {
+        if (i) fputc(',', out);
+        json_len(out, &s->margin[i]);
+    }
+    fputs("],\"padding\":[", out);
+    for (int i = 0; i < 4; i++) {
+        if (i) fputc(',', out);
+        json_len(out, &s->padding[i]);
+    }
+    fprintf(out, "],\"border\":[%.4f,%.4f,%.4f,%.4f]", s->border[0],
+            s->border[1], s->border[2], s->border[3]);
+    fprintf(out, ",\"color\":[%.4f,%.4f,%.4f,%.4f]", s->r, s->g, s->b, s->a);
+    fprintf(out, ",\"bg\":[%.4f,%.4f,%.4f,%.4f]", s->br, s->bg, s->bb, s->ba);
+    fprintf(out, ",\"font_size\":%.4f,\"font_weight\":%d,\"text_align\":\"%s\"",
+            s->font_size, s->font_weight, align_name(s->align));
+    fprintf(out, ",\"line_height\":%.4f,\"opacity\":%.4f", s->line_height,
+            s->opacity);
+    fprintf(out, ",\"radius\":[%.4f,%.4f,%.4f,%.4f]", s->radius[0],
+            s->radius[1], s->radius[2], s->radius[3]);
+    fprintf(out, ",\"overflow_hidden\":%s", s->overflow_hidden ? "true" : "false");
+    fprintf(out, ",\"transform\":{\"set\":%s,\"a\":%.4f,\"b\":%.4f,\"c\":%.4f,"
+                 "\"d\":%.4f,\"e\":%.4f,\"f\":%.4f}",
+            s->transform_set ? "true" : "false", s->transform.a, s->transform.b,
+            s->transform.c, s->transform.d, s->transform.e, s->transform.f);
+    fprintf(out, ",\"flex\":{\"direction\":\"%s\",\"wrap\":\"%s\","
+                 "\"justify\":\"%s\",\"align_items\":\"%s\",\"gap\":%.4f,"
+                 "\"grow\":%.4f,\"shrink\":%.4f,\"basis\":",
+            flex_dir_name(s->flex_direction), flex_wrap_name(s->flex_wrap),
+            justify_name(s->justify_content), flex_align_name(s->align_items),
+            s->gap, s->flex_grow, s->flex_shrink);
+    json_len(out, &s->flex_basis);
+    fprintf(out, ",\"order\":%d}}", s->order);
+}
+
+static void json_styles_node(FILE* out, NxDocument* doc, NxNodeRef node,
+                             const NxLayout* lay, bool* first) {
+    if (!node) return;
+    NxNodeType type = nx_node_type(doc, node);
+    if (type == NX_NODE_ELEMENT) {
+        int idx = (int)nx_node_index(node);
+        if (idx >= 0 && idx < lay->styles_cap) {
+            if (!*first) fputc(',', out);
+            json_style_decl(out, doc, node, &lay->styles[idx]);
+            *first = false;
+        }
+    }
+    for (NxNodeRef c = nx_node_first_child(doc, node); c;
+         c = nx_node_next_sibling(doc, c))
+        json_styles_node(out, doc, c, lay, first);
+}
+
+void nxd_dump_styles_json(FILE* out, NxDocument* doc, const NxLayout* lay) {
+    if (!lay) {
+        fputs("{\"styles\":[],\"error\":\"no layout\"}\n", out);
+        return;
+    }
+    fputs("{\"styles\":[", out);
+    bool first = true;
+    json_styles_node(out, doc, nx_doc_root(doc), lay, &first);
+    fputs("]}\n", out);
+}
+
+static void json_decl_value(FILE* out, const CsDecl* dc) {
+    Fmt f = {NULL, 0, 0};
+    char val[512];
+    f.buf = val;
+    f.cap = (int)sizeof(val);
+    val[0] = '\0';
+    for (int t = 0; t < dc->ntoks; t++) {
+        if (dc->toks[t].kind == CS_WS) continue;
+        if (f.n > 0) fmt_lit(&f, " ");
+        fmt_tok(&f, &dc->toks[t]);
+    }
+    json_str(out, val, -1);
+}
+
+void nxd_dump_css_json(FILE* out, CsSheet* sheet) {
+    fprintf(out, "{\"rules\":[");
+    for (int i = 0; i < sheet->rule_count; i++) {
+        const CsRule* r = &sheet->rules[i];
+        char sel[512];
+        nxd_format_selector(&r->sel, sel, sizeof(sel));
+        if (i) fputc(',', out);
+        fputs("{\"selector\":", out);
+        json_str(out, sel, -1);
+        fputs(",\"media\":", out);
+        if (r->media) json_str(out, r->media, -1);
+        else fputs("null", out);
+        fprintf(out, ",\"pseudo_element\":%s,\"decls\":[",
+                r->is_pseudo_element ? "true" : "false");
+        for (int d = 0; d < r->decl_count; d++) {
+            const CsDecl* dc = &r->decls[d];
+            if (d) fputc(',', out);
+            fputs("{\"name\":", out);
+            json_str(out, dc->name, dc->name_len);
+            fputs(",\"value\":", out);
+            json_decl_value(out, dc);
+            fprintf(out, ",\"important\":%s}", dc->important ? "true" : "false");
+        }
+        fputs("]}", out);
+    }
+    fprintf(out, "],\"dropped_rules\":%d,\"dropped_decls\":%d,"
+                 "\"unknown_decls\":%d}\n",
+            sheet->dropped_rules, sheet->dropped_decls, sheet->unknown_decls);
 }
