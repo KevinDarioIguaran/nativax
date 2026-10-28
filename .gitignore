@@ -8,3 +8,4 @@ debug/lab/env.json
 debug/lab/__pycache__/
 debug/lab/sections/__pycache__/
 debug/history/__pycache__/
+debug/__pycache__/
