@@ -133,11 +133,14 @@ tearing the app down in `cleanup_cb` before `sg_shutdown()`.
 - CSS: selectors incl. attribute combinators and `:not()`, `@media`
   width/height/orientation; no `@import`, `@supports`, `@keyframes`, nesting.
 - Style: display block/inline/none, box edges, colors, font-size/weight,
-  text-align, line-height. Inline `style=""` participates after author rules.
+  text-align, line-height, border-radius, overflow, opacity, transform,
+  transform-origin. Inline `style=""` participates after author rules.
 - Layout: normal-flow blocks, inline text with word wrapping, percentages,
   auto margins. No flex/grid/float/absolute/inline-block boxes.
-- Paint: backgrounds, borders, text, images, opacity-free compositing,
-  scissor clipping. Inline elements do not paint their own box (documented).
+- Paint: backgrounds, borders (with radii), text, images, real group opacity
+  layers, transform stack, axis-aligned scissor clipping (clip follows the
+  border box, not rounded corners). Inline elements do not paint their own
+  box (documented).
 - JS: JavaScriptCore VM, timers/rAF via `js_loop`, DOM API from `js_dom`
   prelude. No modules, no fetch/XHR, no layout-box APIs (offsetWidth).
 - Input: pointer down/up/move, touch and keyboard events are normalized by the

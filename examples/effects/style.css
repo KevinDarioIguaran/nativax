@@ -1,0 +1,13 @@
+body { margin: 0; background: #101820; color: #f2f2f2; font-family: sans-serif; }
+header { padding: 24px; background: #1d3557; }
+h1 { margin: 0; font-size: 28px; }
+main { padding: 24px; }
+.badge { width: 160px; height: 64px; background: #e63946; border-radius: 24px; padding: 20px; margin-bottom: 24px; }
+.group { width: 240px; height: 72px; background: #457b9d; opacity: 0.5; margin-bottom: 24px; position: relative; }
+.chip { width: 120px; height: 56px; }
+.chip.a { background: #f1faee; transform: translate(30px, 8px); }
+.chip.b { background: #a8dadc; transform: translate(90px, -48px); }
+.clip { width: 200px; height: 60px; overflow: hidden; background: #2a9d8f; margin-bottom: 24px; }
+.clip p { width: 400px; font-size: 20px; margin: 8px; color: #ffffff; }
+.moved { width: 180px; height: 44px; background: #e9c46a; color: #000000; padding: 8px; transform: translate(120px, 0); margin-bottom: 24px; }
+.rotated { width: 100px; height: 40px; background: #264653; color: #ffffff; padding: 8px; transform: rotate(15deg); transform-origin: 0 0; }

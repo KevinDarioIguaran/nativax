@@ -18,4 +18,9 @@
    every run (v1 uses one font; per-element font selection is a later step). */
 bool nx_paint(NxDisplayList* dl, const NxLayout* lay, int32_t font);
 
+/* Effective local transform of a box (transform applied about
+   transform-origin). Identity when the box has no transform. Hit testing uses
+   this same matrix (inverted) so pointer coordinates match what is painted. */
+NxMat2x3 nx_box_transform(const NxBox* box);
+
 #endif /* NATIVAX_PAINT_H */

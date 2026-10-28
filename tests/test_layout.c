@@ -498,6 +498,53 @@ static void test_paint(void) {
     page_close(&p);
 }
 
+/* ---- phase 3 effects: parsing + paint integration ---- */
+static void test_effects_style(void) {
+    int32_t font = nx_font_load(font_path());
+    CHECK(font >= 0, "font loads");
+    if (font < 0) return;
+
+    Page p;
+    CHECK(page_open(&p,
+                    "<html><body><div id=\"a\">x</div></body></html>",
+                    "#a { border-radius: 4px 8px; opacity: 0.4; overflow: hidden; "
+                    "transform: translate(10px, 20px) scale(2); transform-origin: 0 0; }\n"),
+          "effects fixture");
+    NxLayout* lay = page_layout(&p, 800, 600, font);
+    CHECK(lay != NULL, "layout builds");
+    if (!lay) { page_close(&p); return; }
+
+    NxBox* a = box_by_id(lay, p.doc, "a");
+    CHECK(a != NULL, "box exists");
+    if (a && a->style) {
+        CHECK(fabsf(a->style->radius[0] - 4) < 0.01f && fabsf(a->style->radius[1] - 8) < 0.01f &&
+                  fabsf(a->style->radius[2] - 4) < 0.01f && fabsf(a->style->radius[3] - 8) < 0.01f,
+              "border-radius expansion (got %.1f %.1f %.1f %.1f)", a->style->radius[0],
+              a->style->radius[1], a->style->radius[2], a->style->radius[3]);
+        CHECK(fabsf(a->style->opacity - 0.4f) < 0.001f, "opacity parsed (got %g)", a->style->opacity);
+        CHECK(a->style->overflow_hidden, "overflow: hidden parsed");
+        CHECK(a->style->transform_set, "transform parsed");
+        CHECK(fabsf(a->style->transform.e - 10) < 0.001f && fabsf(a->style->transform.f - 20) < 0.001f,
+              "translate stored (got %.1f,%.1f)", a->style->transform.e, a->style->transform.f);
+        CHECK(fabsf(a->style->transform.a - 2) < 0.001f, "scale stored");
+        CHECK(fabsf(nx_len_resolve(&a->style->transform_origin[0], 0, 1).px) < 0.001f,
+              "transform-origin x");
+    }
+
+    /* paint emits a layer record */
+    NxDisplayList dl;
+    nx_dl_init(&dl);
+    CHECK(nx_paint(&dl, lay, font), "paint emits");
+    CHECK(dl.layer_count == 1, "opacity produced a layer (got %u)", dl.layer_count);
+    char desc[8192];
+    nx_dl_describe(&dl, desc, sizeof(desc));
+    CHECK(strstr(desc, "layer0") != NULL, "describe lists layer");
+
+    nx_dl_free(&dl);
+    nx_layout_free(lay);
+    page_close(&p);
+}
+
 /* ---- idempotent re-run --------------------------------------------------- */
 
 static void test_rerun(void) {
@@ -542,6 +589,7 @@ int main(void) {
     test_wrapping_and_align();
     test_display_none_and_inline_flatten();
     test_paint();
+    test_effects_style();
     test_rerun();
 
     printf("unit_layout: %d checks, %d failures\n", g_checks, g_failures);

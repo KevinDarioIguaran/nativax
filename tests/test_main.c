@@ -310,6 +310,101 @@ static void test_text_pages(void) {
     reset_all_state();
 }
 
+/* ---- phase 3 renderer effects ---- */
+static void test_effects(void) {
+    reset_all_state();
+    int32_t font = nx_font_load(font_path());
+    CHECK(font >= 0, "font loads for effects");
+    if (font < 0) return;
+
+    /* transform stack is a real stack */
+    NxDisplayList dl;
+    nx_dl_init(&dl);
+    nx_dl_reset(&dl);
+    NxMat2x3 m = nx_mat_translate(10, 20);
+    nx_dl_push_transform(&dl, &m);
+    NxMat2x3 m2 = nx_mat_scale(2, 2);
+    nx_dl_push_transform(&dl, &m2);
+    nx_dl_fill_rect(&dl, 0, 0, 5, 5, (NxColor){1, 0, 0, 1}, NULL);
+    /* point (0,0) -> scale -> (0,0) -> translate -> (10,20) */
+    CHECK(fabsf(dl.verts[0].x - 10.0f) < 0.01f && fabsf(dl.verts[0].y - 20.0f) < 0.01f,
+          "nested transform applied (got %.1f,%.1f)", dl.verts[0].x, dl.verts[0].y);
+    nx_dl_pop_transform(&dl);
+    nx_dl_pop_transform(&dl);
+    nx_dl_reset(&dl);
+    nx_dl_fill_rect(&dl, 3, 4, 5, 5, (NxColor){0, 0, 0, 1}, NULL);
+    CHECK(fabsf(dl.verts[0].x - 3.0f) < 0.01f && fabsf(dl.verts[0].y - 4.0f) < 0.01f,
+          "pop restores identity");
+
+    /* layer records and forced boundaries */
+    nx_dl_reset(&dl);
+    nx_dl_fill_rect(&dl, 0, 0, 1, 1, (NxColor){1, 0, 0, 1}, NULL);
+    uint32_t groups_before = dl.group_count;
+    nx_dl_begin_layer(&dl, 0.5f);
+    nx_dl_fill_rect(&dl, 0, 0, 1, 1, (NxColor){0, 1, 0, 1}, NULL);
+    nx_dl_end_layer(&dl);
+    nx_dl_fill_rect(&dl, 0, 0, 1, 1, (NxColor){0, 0, 1, 1}, NULL);
+    CHECK(dl.layer_count == 1, "one layer recorded (got %u)", dl.layer_count);
+    CHECK(dl.layers[0].opacity > 0.49f && dl.layers[0].opacity < 0.51f, "layer opacity stored");
+    CHECK(dl.layers[0].parent == -1, "top-level layer parent -1");
+    CHECK(dl.layers[0].group_count >= 1, "layer has at least one group");
+    /* the layer must not have merged with the preceding same-texture group */
+    CHECK(dl.group_count > groups_before, "layer forced a new group");
+
+    /* nested layers */
+    nx_dl_reset(&dl);
+    nx_dl_begin_layer(&dl, 1.0f);
+    nx_dl_begin_layer(&dl, 0.25f);
+    nx_dl_fill_rect(&dl, 0, 0, 1, 1, (NxColor){1, 1, 1, 1}, NULL);
+    nx_dl_end_layer(&dl);
+    nx_dl_end_layer(&dl);
+    CHECK(dl.layer_count == 2, "two layers (got %u)", dl.layer_count);
+    CHECK(dl.layers[1].parent == 0, "inner layer parent is outer (got %d)", dl.layers[1].parent);
+
+    /* group opacity composites the whole range once (not per primitive) */
+    NxRaster r;
+    nx_raster_init(&r, 20, 20);
+    nx_raster_clear(&r, (NxColor){0, 0, 0, 1});
+    NxDisplayList dl2;
+    nx_dl_init(&dl2);
+    nx_dl_reset(&dl2);
+    nx_dl_begin_layer(&dl2, 0.5f);
+    nx_dl_fill_rect(&dl2, 0, 0, 20, 20, (NxColor){0, 0, 1, 1}, NULL);
+    nx_dl_fill_rect(&dl2, 10, 0, 10, 20, (NxColor){1, 0, 0, 1}, NULL);
+    nx_dl_end_layer(&dl2);
+    nx_raster_run(&r, &dl2);
+    uint8_t* px = r.pixels + ((size_t)10 * 20 + 15) * 4;
+    /* right half: red at 50% over black, NOT blended with the blue underneath */
+    CHECK(px[0] > 120 && px[0] < 140 && px[1] < 20 && px[2] < 20,
+          "group opacity applied once (got %d %d %d)", px[0], px[1], px[2]);
+    nx_raster_free(&r);
+    nx_dl_free(&dl2);
+
+    /* rounded corners: corner pixel stays background, center is filled */
+    nx_raster_init(&r, 20, 20);
+    nx_raster_clear(&r, (NxColor){0, 0, 0, 1});
+    nx_dl_reset(&dl);
+    float rad[4] = {8, 8, 8, 8};
+    nx_dl_fill_rect(&dl, 0, 0, 20, 20, (NxColor){1, 0, 0, 1}, rad);
+    nx_raster_run(&r, &dl);
+    uint8_t* corner = r.pixels + 0;
+    uint8_t* center = r.pixels + ((size_t)10 * 20 + 10) * 4;
+    CHECK(corner[0] < 10 && corner[1] < 10 && corner[2] < 10, "rounded corner is background (got %d %d %d)",
+          corner[0], corner[1], corner[2]);
+    CHECK(center[0] > 180 && center[1] < 20 && center[2] < 20, "rounded center is red (got %d %d %d)",
+          center[0], center[1], center[2]);
+    nx_raster_free(&r);
+
+    /* matrix invert */
+    NxMat2x3 t = nx_mat_translate(5, 7);
+    NxMat2x3 inv;
+    CHECK(nx_mat_invert(&t, &inv), "translate invertible");
+    NxMat2x3 id = nx_mat_mul(&t, &inv);
+    CHECK(fabsf(id.a - 1) < 1e-5f && fabsf(id.e) < 1e-5f, "inverse is correct");
+
+    nx_dl_free(&dl);
+    reset_all_state();
+}
 int main(int argc, char** argv) {
     if (argc > 1 && strcmp(argv[1], "--dump-atlas") == 0) {
         /* debug aid: rasterize a phrase and dump glyph atlas pages */
@@ -353,6 +448,7 @@ int main(int argc, char** argv) {
     test_images();
     test_raster_golden();
     test_text_pages();
+    test_effects();
 
     fprintf(stderr, "%d checks, %d failures\n", g_checks, g_failures);
     return g_failures == 0 ? 0 : 1;

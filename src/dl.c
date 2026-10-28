@@ -75,6 +75,21 @@ NxMat2x3 nx_mat_mul(const NxMat2x3* m, const NxMat2x3* n) {
     };
 }
 
+bool nx_mat_invert(const NxMat2x3* m, NxMat2x3* out) {
+    float det = m->a * m->d - m->b * m->c;
+    if (fabsf(det) < 1e-9f) return false;
+    float inv = 1.0f / det;
+    NxMat2x3 r;
+    r.a = m->d * inv;
+    r.b = -m->b * inv;
+    r.c = -m->c * inv;
+    r.d = m->a * inv;
+    r.e = (m->c * m->f - m->d * m->e) * inv;
+    r.f = (m->b * m->e - m->a * m->f) * inv;
+    *out = r;
+    return true;
+}
+
 static void xform_pt(const NxDisplayList* dl, float x, float y, float* ox, float* oy) {
     const NxMat2x3* m = &dl->transform;
     *ox = m->a * x + m->c * y + m->e;
@@ -101,15 +116,28 @@ void nx_dl_init(NxDisplayList* dl) {
 
 void nx_dl_reset(NxDisplayList* dl) {
     dl->vert_count = dl->index_count = dl->group_count = 0;
+    dl->layer_count = 0;
     dl->transform = nx_mat_identity();
+    dl->transform_depth = 0;
     dl->clip_depth = 0;
+    dl->layer_depth = 0;
+    dl->force_new_group = false;
 }
 
 void nx_dl_free(NxDisplayList* dl) {
     free(dl->verts);
     free(dl->indices);
     free(dl->groups);
+    free(dl->layers);
+    free(dl->layer_stack);
+    free(dl->layer_first_group);
     memset(dl, 0, sizeof(*dl));
+}
+
+static void ensure_layers(NxDisplayList* dl) {
+    if (dl->layer_count < dl->layer_cap) return;
+    dl->layer_cap = dl->layer_cap ? dl->layer_cap * 2 : 16;
+    dl->layers = realloc(dl->layers, (size_t)dl->layer_cap * sizeof(NxDrawLayer));
 }
 
 static void ensure_verts(NxDisplayList* dl, uint32_t n) {
@@ -127,7 +155,9 @@ static void ensure_indices(NxDisplayList* dl, uint32_t n) {
 }
 
 void nx_dl_begin_group(NxDisplayList* dl, int32_t texture, bool alpha_only) {
-    if (dl->group_count > 0) {
+    bool forced = dl->force_new_group;
+    dl->force_new_group = false;
+    if (!forced && dl->group_count > 0) {
         NxDrawGroup* prev = &dl->groups[dl->group_count - 1];
         if (prev->texture == texture && prev->alpha_only == alpha_only &&
             prev->has_scissor == (dl->clip_depth > 0)) {
@@ -204,9 +234,14 @@ static void emit_poly(NxDisplayList* dl, const float* xy, int n, NxColor color, 
 
 /* ---- transforms / clips ---- */
 void nx_dl_push_transform(NxDisplayList* dl, const NxMat2x3* m) {
+    if (dl->transform_depth >= 32) return;
+    dl->transform_stack[dl->transform_depth++] = dl->transform;
     dl->transform = nx_mat_mul(&dl->transform, m);
 }
-void nx_dl_pop_transform(NxDisplayList* dl) { (void)dl; /* single-slot build; see paint.c */ }
+void nx_dl_pop_transform(NxDisplayList* dl) {
+    if (dl->transform_depth > 0)
+        dl->transform = dl->transform_stack[--dl->transform_depth];
+}
 
 void nx_dl_push_clip(NxDisplayList* dl, float x, float y, float w, float h) {
     if (dl->clip_depth >= 32) return;
@@ -232,6 +267,47 @@ void nx_dl_push_clip(NxDisplayList* dl, float x, float y, float w, float h) {
 
 void nx_dl_pop_clip(NxDisplayList* dl) {
     if (dl->clip_depth > 0) dl->clip_depth--;
+}
+
+/* ---- group-opacity layers ---- */
+static void ensure_layer_stack(NxDisplayList* dl) {
+    if (dl->layer_depth < dl->layer_stack_cap) return;
+    int cap = dl->layer_stack_cap ? dl->layer_stack_cap * 2 : 16;
+    dl->layer_stack = realloc(dl->layer_stack, (size_t)cap * sizeof(int));
+    dl->layer_first_group = realloc(dl->layer_first_group, (size_t)cap * sizeof(uint32_t));
+    dl->layer_stack_cap = cap;
+}
+
+void nx_dl_begin_layer(NxDisplayList* dl, float opacity) {
+    if (opacity < 0) opacity = 0;
+    if (opacity > 1) opacity = 1;
+    int parent = dl->layer_depth > 0 ? dl->layer_stack[dl->layer_depth - 1] : -1;
+    ensure_layers(dl);
+    ensure_layer_stack(dl);
+    int idx = (int)dl->layer_count;
+    dl->layers[idx] = (NxDrawLayer){
+        .first_group = dl->group_count,
+        .group_count = 0,
+        .opacity = opacity,
+        .parent = parent,
+    };
+    dl->layer_count++;
+    dl->layer_stack[dl->layer_depth] = idx;
+    dl->layer_first_group[dl->layer_depth] = dl->group_count;
+    dl->layer_depth++;
+    /* the layer range must start on a fresh group */
+    dl->force_new_group = true;
+}
+
+void nx_dl_end_layer(NxDisplayList* dl) {
+    if (dl->layer_depth <= 0) return;
+    dl->layer_depth--;
+    int idx = dl->layer_stack[dl->layer_depth];
+    uint32_t first = dl->layer_first_group[dl->layer_depth];
+    dl->layers[idx].first_group = first;
+    dl->layers[idx].group_count = dl->group_count - first;
+    /* and the next primitive (in the parent) must not merge into it */
+    dl->force_new_group = true;
 }
 
 /* ---- geometry ---- */
@@ -410,6 +486,11 @@ void nx_dl_describe(const NxDisplayList* dl, char* out, int out_size) {
             APP(" clip=[%d %d %d %d]", g->scissor[0], g->scissor[1], g->scissor[2], g->scissor[3]);
         }
         APP("\n");
+    }
+    for (uint32_t li = 0; li < dl->layer_count; li++) {
+        const NxDrawLayer* L = &dl->layers[li];
+        APP("layer%u groups=%u..%u opacity=%.2f parent=%d\n", li, L->first_group,
+            L->first_group + L->group_count, L->opacity, L->parent);
     }
 #undef APP
     if (off > out_size) off = out_size;

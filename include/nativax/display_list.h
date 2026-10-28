@@ -37,6 +37,18 @@ typedef struct NxDrawGroup {
     int scissor[4];         /* x, y, w, h in device pixels */
 } NxDrawGroup;
 
+/* Group-opacity layer: a contiguous range of draw groups that must be
+   composited as a unit with `opacity` (NOT per primitive). `parent` is the
+   index of the enclosing layer, or -1 for a top-level layer. Layers are
+   recorded in begin order; a child therefore always has a higher index than
+   its parent, and the parent's group range contains the child's range. */
+typedef struct NxDrawLayer {
+    uint32_t first_group;
+    uint32_t group_count;
+    float opacity;
+    int parent;
+} NxDrawLayer;
+
 typedef struct NxMat2x3 {
     float a, b, c, d, e, f; /* x' = a*x + c*y + e; y' = b*x + d*y + f */
 } NxMat2x3;
@@ -67,11 +79,23 @@ typedef struct NxDisplayList {
     NxDrawGroup* groups;
     uint32_t group_count, group_cap;
 
+    NxDrawLayer* layers;
+    uint32_t layer_count, layer_cap;
+
     NxMat2x3 transform;
+    NxMat2x3 transform_stack[32];
+    int transform_depth;
     int clip_depth;
     struct {
         int x, y, w, h;
     } scissor_stack[32];
+
+    /* internal layer state (public here because NxDisplayList is a plain
+       struct shared by every consumer); stacks grow on demand */
+    int layer_depth, layer_stack_cap;
+    int* layer_stack;
+    uint32_t* layer_first_group;
+    bool force_new_group;
 } NxDisplayList;
 
 void nx_dl_init(NxDisplayList* dl);
@@ -82,6 +106,12 @@ void nx_dl_push_transform(NxDisplayList* dl, const NxMat2x3* m);
 void nx_dl_pop_transform(NxDisplayList* dl);
 void nx_dl_push_clip(NxDisplayList* dl, float x, float y, float w, float h);
 void nx_dl_pop_clip(NxDisplayList* dl);
+
+/* Group opacity. begin_layers/pop are strictly nested; the wrapped groups are
+   forced onto layer boundaries so consecutive layers never merge. An empty
+   layer is recorded with group_count == 0 and composites as a no-op. */
+void nx_dl_begin_layer(NxDisplayList* dl, float opacity);
+void nx_dl_end_layer(NxDisplayList* dl);
 
 /* All coordinates in CSS pixels; builder converts via current transform. */
 void nx_dl_fill_rect(NxDisplayList* dl, float x, float y, float w, float h, NxColor color,
@@ -100,6 +130,9 @@ NxMat2x3 nx_mat_identity(void);
 NxMat2x3 nx_mat_translate(float tx, float ty);
 NxMat2x3 nx_mat_scale(float sx, float sy);
 NxMat2x3 nx_mat_mul(const NxMat2x3* m, const NxMat2x3* n);
+/* Invert an affine matrix. Returns false for a singular (non-invertible)
+   matrix, leaving *out untouched. */
+bool nx_mat_invert(const NxMat2x3* m, NxMat2x3* out);
 
 uint32_t nx_rgba_pack(NxColor c);
 

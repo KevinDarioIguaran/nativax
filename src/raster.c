@@ -243,92 +243,164 @@ static void raster_triangle(NxRaster* r, const NxVertex* v0, const NxVertex* v1,
     raster_prim(r, &t, 1, tex, alpha_only);
 }
 
-void nx_raster_run(NxRaster* r, const NxDisplayList* dl) {
-    for (uint32_t gi = 0; gi < dl->group_count; gi++) {
-        const NxDrawGroup* g = &dl->groups[gi];
-        const NxTextureInfo* tex = nx_tex_info(g->texture);
-        if (g->has_scissor) {
-            int clip_x0 = g->scissor[0], clip_y0 = g->scissor[1];
-            int clip_x1 = g->scissor[0] + g->scissor[2], clip_y1 = g->scissor[1] + g->scissor[3];
-            if (clip_x0 < 0) clip_x0 = 0;
-            if (clip_y0 < 0) clip_y0 = 0;
-            if (clip_x1 > r->width) clip_x1 = r->width;
-            if (clip_y1 > r->height) clip_y1 = r->height;
-            for (uint32_t k = 0; k + 2 < g->index_count; k += 3) {
-                const NxVertex* v0 = &dl->verts[dl->indices[g->first_index + k]];
-                const NxVertex* v1 = &dl->verts[dl->indices[g->first_index + k + 1]];
-                const NxVertex* v2 = &dl->verts[dl->indices[g->first_index + k + 2]];
-                float tminx = fminf(v0->x, fminf(v1->x, v2->x));
-                float tmaxx = fmaxf(v0->x, fmaxf(v1->x, v2->x));
-                float tminy = fminf(v0->y, fminf(v1->y, v2->y));
-                float tmaxy = fmaxf(v0->y, fmaxf(v1->y, v2->y));
-                if (tmaxx < clip_x0 || tminx >= clip_x1 || tmaxy < clip_y0 || tminy >= clip_y1) {
-                    continue;
-                }
-                /* Sutherland-Hodgman clip to scissor, then rasterize the
-                   clipped polygon as ONE primitive (fan partition) */
-                NxVertex buf[2][10];
-                int src_n = 3, which = 0;
-                buf[0][0] = *v0; buf[0][1] = *v1; buf[0][2] = *v2;
-                const float planes[4][4] = {
-                    {(float)clip_x0, 0, 1, 0}, {(float)clip_x1, 0, -1, 0},
-                    {0, (float)clip_y0, 0, 1}, {0, (float)clip_y1, 0, -1},
-                };
-                for (int p = 0; p < 4 && src_n > 0; p++) {
-                    int dst_n = 0;
-                    for (int i = 0; i < src_n; i++) {
-                        NxVertex a = buf[which][i];
-                        NxVertex b = buf[which][(i + 1) % src_n];
-                        float da = planes[p][2] * a.x + planes[p][3] * a.y - planes[p][0] * planes[p][2] - planes[p][1] * planes[p][3];
-                        float db = planes[p][2] * b.x + planes[p][3] * b.y - planes[p][0] * planes[p][2] - planes[p][1] * planes[p][3];
-                        if (da >= 0) buf[1 - which][dst_n++] = a;
-                        if ((da >= 0) != (db >= 0)) {
-                            float t = da / (da - db);
-                            NxVertex m = a;
-                            m.x = a.x + (b.x - a.x) * t;
-                            m.y = a.y + (b.y - a.y) * t;
-                            m.u = a.u + (b.u - a.u) * t;
-                            m.v = a.v + (b.v - a.v) * t;
-                            buf[1 - which][dst_n++] = m;
-                        }
-                        if (dst_n >= 9) break;
+static void raster_group(NxRaster* r, const NxDisplayList* dl, uint32_t gi) {
+    const NxDrawGroup* g = &dl->groups[gi];
+    const NxTextureInfo* tex = nx_tex_info(g->texture);
+    if (g->has_scissor) {
+        int clip_x0 = g->scissor[0], clip_y0 = g->scissor[1];
+        int clip_x1 = g->scissor[0] + g->scissor[2], clip_y1 = g->scissor[1] + g->scissor[3];
+        if (clip_x0 < 0) clip_x0 = 0;
+        if (clip_y0 < 0) clip_y0 = 0;
+        if (clip_x1 > r->width) clip_x1 = r->width;
+        if (clip_y1 > r->height) clip_y1 = r->height;
+        for (uint32_t k = 0; k + 2 < g->index_count; k += 3) {
+            const NxVertex* v0 = &dl->verts[dl->indices[g->first_index + k]];
+            const NxVertex* v1 = &dl->verts[dl->indices[g->first_index + k + 1]];
+            const NxVertex* v2 = &dl->verts[dl->indices[g->first_index + k + 2]];
+            float tminx = fminf(v0->x, fminf(v1->x, v2->x));
+            float tmaxx = fmaxf(v0->x, fmaxf(v1->x, v2->x));
+            float tminy = fminf(v0->y, fminf(v1->y, v2->y));
+            float tmaxy = fmaxf(v0->y, fmaxf(v1->y, v2->y));
+            if (tmaxx < clip_x0 || tminx >= clip_x1 || tmaxy < clip_y0 || tminy >= clip_y1) {
+                continue;
+            }
+            /* Sutherland-Hodgman clip to scissor, then rasterize the
+               clipped polygon as ONE primitive (fan partition) */
+            NxVertex buf[2][10];
+            int src_n = 3, which = 0;
+            buf[0][0] = *v0; buf[0][1] = *v1; buf[0][2] = *v2;
+            const float planes[4][4] = {
+                {(float)clip_x0, 0, 1, 0}, {(float)clip_x1, 0, -1, 0},
+                {0, (float)clip_y0, 0, 1}, {0, (float)clip_y1, 0, -1},
+            };
+            for (int p = 0; p < 4 && src_n > 0; p++) {
+                int dst_n = 0;
+                for (int i = 0; i < src_n; i++) {
+                    NxVertex a = buf[which][i];
+                    NxVertex b = buf[which][(i + 1) % src_n];
+                    float da = planes[p][2] * a.x + planes[p][3] * a.y - planes[p][0] * planes[p][2] - planes[p][1] * planes[p][3];
+                    float db = planes[p][2] * b.x + planes[p][3] * b.y - planes[p][0] * planes[p][2] - planes[p][1] * planes[p][3];
+                    if (da >= 0) buf[1 - which][dst_n++] = a;
+                    if ((da >= 0) != (db >= 0)) {
+                        float t = da / (da - db);
+                        NxVertex m = a;
+                        m.x = a.x + (b.x - a.x) * t;
+                        m.y = a.y + (b.y - a.y) * t;
+                        m.u = a.u + (b.u - a.u) * t;
+                        m.v = a.v + (b.v - a.v) * t;
+                        buf[1 - which][dst_n++] = m;
                     }
-                    which = 1 - which;
-                    src_n = dst_n;
+                    if (dst_n >= 9) break;
                 }
-                if (src_n < 3) continue;
-                TriPrep tris[8];
-                int nt = 0;
-                for (int i = 2; i < src_n && nt < 8; i++) {
-                    if (tri_prep(&tris[nt], &buf[which][0], &buf[which][i - 1], &buf[which][i]))
-                        nt++;
-                }
-                if (nt > 0) raster_prim(r, tris, nt, tex, g->alpha_only);
+                which = 1 - which;
+                src_n = dst_n;
             }
-        } else {
-            /* 6 consecutive indices = one quad primitive (nx_dl_emit_quad);
-               accumulate both triangles per pixel and compose once so the
-               shared quad diagonal cannot leave a seam line */
-            uint32_t k = 0;
-            for (; k + 5 < g->index_count; k += 6) {
-                TriPrep tris[2];
-                int nt = 0;
-                if (tri_prep(&tris[nt], &dl->verts[dl->indices[g->first_index + k + 0]],
-                             &dl->verts[dl->indices[g->first_index + k + 1]],
-                             &dl->verts[dl->indices[g->first_index + k + 2]]))
+            if (src_n < 3) continue;
+            TriPrep tris[8];
+            int nt = 0;
+            for (int i = 2; i < src_n && nt < 8; i++) {
+                if (tri_prep(&tris[nt], &buf[which][0], &buf[which][i - 1], &buf[which][i]))
                     nt++;
-                if (tri_prep(&tris[nt], &dl->verts[dl->indices[g->first_index + k + 3]],
-                             &dl->verts[dl->indices[g->first_index + k + 4]],
-                             &dl->verts[dl->indices[g->first_index + k + 5]]))
-                    nt++;
-                if (nt > 0) raster_prim(r, tris, nt, tex, g->alpha_only);
             }
-            /* leftover triangles of an odd fan (emit_poly) */
-            for (; k + 2 < g->index_count; k += 3)
-                raster_triangle(r, &dl->verts[dl->indices[g->first_index + k]],
-                                &dl->verts[dl->indices[g->first_index + k + 1]],
-                                &dl->verts[dl->indices[g->first_index + k + 2]], tex,
-                                g->alpha_only);
+            if (nt > 0) raster_prim(r, tris, nt, tex, g->alpha_only);
         }
+    } else {
+        /* 6 consecutive indices = one quad primitive (nx_dl_emit_quad);
+           accumulate both triangles per pixel and compose once so the
+           shared quad diagonal cannot leave a seam line */
+        uint32_t k = 0;
+        for (; k + 5 < g->index_count; k += 6) {
+            TriPrep tris[2];
+            int nt = 0;
+            if (tri_prep(&tris[nt], &dl->verts[dl->indices[g->first_index + k + 0]],
+                         &dl->verts[dl->indices[g->first_index + k + 1]],
+                         &dl->verts[dl->indices[g->first_index + k + 2]]))
+                nt++;
+            if (tri_prep(&tris[nt], &dl->verts[dl->indices[g->first_index + k + 3]],
+                         &dl->verts[dl->indices[g->first_index + k + 4]],
+                         &dl->verts[dl->indices[g->first_index + k + 5]]))
+                nt++;
+            if (nt > 0) raster_prim(r, tris, nt, tex, g->alpha_only);
+        }
+        /* leftover triangles of an odd fan (emit_poly) */
+        for (; k + 2 < g->index_count; k += 3)
+            raster_triangle(r, &dl->verts[dl->indices[g->first_index + k]],
+                            &dl->verts[dl->indices[g->first_index + k + 1]],
+                            &dl->verts[dl->indices[g->first_index + k + 2]], tex,
+                            g->alpha_only);
     }
+}
+
+static void composite_layer(NxRaster* dst, const NxRaster* src, float opacity) {
+    float o = opacity < 0 ? 0 : opacity > 1 ? 1 : opacity;
+    long total = (long)dst->width * dst->height;
+    for (long i = 0; i < total; i++) {
+        uint8_t* d = dst->pixels + i * 4;
+        const uint8_t* s = src->pixels + i * 4;
+        float sa = (s[3] / 255.0f) * o;
+        if (sa <= 0) continue;
+        float dst_a = d[3] / 255.0f;
+        float ia = 1.0f - sa;
+        float res_a = sa + dst_a * ia;
+        float sr = (s[0] / 255.0f) * sa;
+        float sg = (s[1] / 255.0f) * sa;
+        float sb = (s[2] / 255.0f) * sa;
+        float dr = (d[0] / 255.0f) * dst_a;
+        float dg = (d[1] / 255.0f) * dst_a;
+        float db = (d[2] / 255.0f) * dst_a;
+        float rr = (sr + dr * ia) / (res_a > 0 ? res_a : 1);
+        float rg = (sg + dg * ia) / (res_a > 0 ? res_a : 1);
+        float rb = (sb + db * ia) / (res_a > 0 ? res_a : 1);
+        d[0] = (uint8_t)fminf(255.0f, rr * 255.0f + 0.5f);
+        d[1] = (uint8_t)fminf(255.0f, rg * 255.0f + 0.5f);
+        d[2] = (uint8_t)fminf(255.0f, rb * 255.0f + 0.5f);
+        d[3] = (uint8_t)fminf(255.0f, res_a * 255.0f + 0.5f);
+    }
+}
+
+/* Recursive range renderer: groups in [g0,g1) belong to the parent layer
+   (or the root when parent == -1); child layers are rendered into their own
+   offscreen buffers and composited where they appear in the group stream. */
+static void raster_range(NxRaster* r, const NxDisplayList* dl, uint32_t g0, uint32_t g1,
+                         int parent) {
+    uint32_t cursor = g0;
+    /* direct children of this parent, in begin order */
+    uint32_t children[64];
+    int nc = 0;
+    for (uint32_t i = 0; i < dl->layer_count && nc < 64; i++) {
+        if (dl->layers[i].parent == parent) children[nc++] = i;
+    }
+    /* sort by first_group */
+    for (int i = 1; i < nc; i++) {
+        uint32_t key = children[i];
+        int j = i - 1;
+        while (j >= 0 && dl->layers[children[j]].first_group > dl->layers[key].first_group) {
+            children[j + 1] = children[j];
+            j--;
+        }
+        children[j + 1] = key;
+    }
+    for (int ci = 0; ci < nc; ci++) {
+        uint32_t li = children[ci];
+        uint32_t lf = dl->layers[li].first_group;
+        if (lf < g0 || lf > g1) continue;
+        if (lf > cursor) {
+            for (uint32_t g = cursor; g < lf; g++) raster_group(r, dl, g);
+        }
+        if (dl->layers[li].group_count > 0) {
+            NxRaster tmp;
+            nx_raster_init(&tmp, r->width, r->height);
+            nx_raster_clear(&tmp, (NxColor){0, 0, 0, 0});
+            raster_range(&tmp, dl, lf, lf + dl->layers[li].group_count, (int)li);
+            composite_layer(r, &tmp, dl->layers[li].opacity);
+            nx_raster_free(&tmp);
+        }
+        cursor = lf + dl->layers[li].group_count;
+        if (cursor > g1) cursor = g1;
+    }
+    for (uint32_t g = cursor; g < g1; g++) raster_group(r, dl, g);
+}
+
+void nx_raster_run(NxRaster* r, const NxDisplayList* dl) {
+    raster_range(r, dl, 0, dl->group_count, -1);
 }

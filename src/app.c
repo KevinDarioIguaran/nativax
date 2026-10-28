@@ -482,14 +482,28 @@ bool nx_app_needs_paint(NxApp* app) { return app && (app->paint_dirty || app->st
 
 static NxNodeRef hit_box(const NxBox* box, float x, float y) {
     if (!box) return 0;
+    float lx = x, ly = y;
+    if (box->style && box->style->transform_set) {
+        NxMat2x3 inv;
+        NxMat2x3 m = nx_box_transform(box);
+        if (nx_mat_invert(&m, &inv)) {
+            lx = inv.a * x + inv.c * y + inv.e;
+            ly = inv.b * x + inv.d * y + inv.f;
+        }
+    }
+    if (box->style && box->style->overflow_hidden) {
+        if (lx < box->x || lx >= box->x + box->w || ly < box->y || ly >= box->y + box->h)
+            return 0;
+    }
+
     NxNodeRef hit = 0;
     for (int i = box->child_count - 1; i >= 0; i--) {
-        hit = hit_box(box->children[i], x, y);
+        hit = hit_box(box->children[i], lx, ly);
         if (hit) break;
     }
     if (hit) return hit;
-    if (box->node && x >= box->x && x < box->x + box->w && y >= box->y &&
-        y < box->y + box->h)
+    if (box->node && lx >= box->x && lx < box->x + box->w && ly >= box->y &&
+        ly < box->y + box->h)
         return box->node;
     return 0;
 }

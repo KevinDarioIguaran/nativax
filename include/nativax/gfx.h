@@ -23,6 +23,7 @@ typedef struct NxGfxStats {
     long draw_calls;
     long long texture_bytes; /* live GPU texture bytes (glyph pages, images) */
     long long buffer_bytes;  /* live vertex+index buffer bytes */
+    long long layer_bytes;   /* live offscreen layer textures */
 } NxGfxStats;
 
 const NxGfxStats* nx_gfx_stats(void);

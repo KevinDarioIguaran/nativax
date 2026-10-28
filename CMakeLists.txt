@@ -256,4 +256,10 @@ if(DEFINED ENV{DISPLAY})
       -DNATIVAX_BIN_DIR=${CMAKE_BINARY_DIR}
       -DNATIVAX_SOURCE_DIR=${CMAKE_CURRENT_SOURCE_DIR}
       -P ${CMAKE_CURRENT_SOURCE_DIR}/tests/gpu_smoke.cmake)
+  add_test(NAME gpu_effects_screenshot
+    COMMAND ${CMAKE_COMMAND}
+      -DNATIVAX_RUNTIME=$<TARGET_FILE:nativax-runtime>
+      -DNATIVAX_BIN_DIR=${CMAKE_BINARY_DIR}
+      -DNATIVAX_SOURCE_DIR=${CMAKE_CURRENT_SOURCE_DIR}
+      -P ${CMAKE_CURRENT_SOURCE_DIR}/tests/gpu_effects_smoke.cmake)
 endif()

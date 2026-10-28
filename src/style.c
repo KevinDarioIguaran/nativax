@@ -1,6 +1,7 @@
 #include "nativax/style.h"
 
 #include <ctype.h>
+#include <math.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -408,6 +409,10 @@ static void style_init(NxComputedStyle* s, float font_size) {
     s->font_weight = 400;
     s->align = NX_ALIGN_LEFT;
     s->line_height = 0;
+    s->opacity = 1.0f;
+    s->transform = nx_mat_identity();
+    s->transform_origin[0] = len_pct(0.5f);
+    s->transform_origin[1] = len_pct(0.5f);
 }
 
 /* Collect the space-separated components of a box shorthand. Returns count. */
@@ -439,6 +444,178 @@ static void expand_box(const NxLength* c, int n, NxLength out[4]) {
     else if (n == 2) { out[0] = out[2] = c[0]; out[1] = out[3] = c[1]; }
     else if (n == 3) { out[0] = c[0]; out[1] = out[3] = c[1]; out[2] = c[2]; }
     else { for (int i = 0; i < 4; i++) out[i] = c[i]; }
+}
+
+/* ---- Phase 3 effect values ---------------------------------------------- */
+
+/* Absolute px value for radius/translate: px, em, rem, or the number 0.
+   Percentages are deliberately unsupported (documented). */
+static bool effect_px(const CsTok* t, float font_size, float* out) {
+    if (t->kind == CS_NUMBER) {
+        if (t->num != 0) return false; /* unitless non-zero is not a length */
+        *out = 0;
+        return true;
+    }
+    if (t->kind != CS_DIMENSION) return false;
+    if (str_ieq(t->s, t->len, "px", 2)) {
+        *out = (float)t->num;
+        return true;
+    }
+    if (str_ieq(t->s, t->len, "em", 2) || str_ieq(t->s, t->len, "rem", 3)) {
+        *out = (float)t->num * font_size;
+        return true;
+    }
+    return false;
+}
+
+/* Angle for rotate(): deg, rad, turn, grad or the number 0. */
+static bool effect_angle(const CsTok* t, float* out) {
+    if (t->kind == CS_NUMBER) {
+        if (t->num != 0) return false;
+        *out = 0;
+        return true;
+    }
+    if (t->kind != CS_DIMENSION) return false;
+    if (str_ieq(t->s, t->len, "deg", 3)) { *out = (float)(t->num * M_PI / 180.0); return true; }
+    if (str_ieq(t->s, t->len, "rad", 3)) { *out = (float)t->num; return true; }
+    if (str_ieq(t->s, t->len, "turn", 4)) { *out = (float)(t->num * 2.0 * M_PI); return true; }
+    if (str_ieq(t->s, t->len, "grad", 4)) { *out = (float)(t->num * M_PI / 200.0); return true; }
+    return false;
+}
+
+/* Collect the argument tokens of one transform function up to its closing
+   parenthesis. Commas and whitespace are separators; nested functions make the
+   declaration invalid for this subset. */
+static bool function_args(const CsTok* v, int nt, int start, const CsTok* args[8], int* nargs,
+                          int* next) {
+    int n = 0;
+    int i = start;
+    while (i < nt) {
+        CsTokKind k = v[i].kind;
+        if (k == CS_RPAREN) {
+            *nargs = n;
+            *next = i + 1;
+            return true;
+        }
+        if (k == CS_FUNCTION || k == CS_LPAREN) return false;
+        if (k != CS_WS && k != CS_COMMA) {
+            if (n >= 8) return false;
+            args[n++] = &v[i];
+        }
+        i++;
+    }
+    return false;
+}
+
+static bool parse_transform(const CsTok* v, int nt, float font_size, NxMat2x3* out) {
+    NxMat2x3 acc = nx_mat_identity();
+    int i = 0;
+    bool any = false;
+    while (i < nt) {
+        if (v[i].kind == CS_WS || v[i].kind == CS_COMMA) { i++; continue; }
+        if (v[i].kind != CS_FUNCTION) return false;
+        const char* name = v[i].str ? v[i].str : "";
+        int nl = v[i].len;
+        const CsTok* a[8];
+        int na = 0, next = 0;
+        if (!function_args(v, nt, i + 1, a, &na, &next)) return false;
+
+        NxMat2x3 step = nx_mat_identity();
+        if (str_ieq(name, nl, "translate", 9) && (na == 1 || na == 2)) {
+            float tx, ty = 0;
+            if (!effect_px(a[0], font_size, &tx)) return false;
+            if (na == 2 && !effect_px(a[1], font_size, &ty)) return false;
+            step = nx_mat_translate(tx, ty);
+        } else if (str_ieq(name, nl, "translatex", 10) && na == 1) {
+            float tx;
+            if (!effect_px(a[0], font_size, &tx)) return false;
+            step = nx_mat_translate(tx, 0);
+        } else if (str_ieq(name, nl, "translatey", 10) && na == 1) {
+            float ty;
+            if (!effect_px(a[0], font_size, &ty)) return false;
+            step = nx_mat_translate(0, ty);
+        } else if (str_ieq(name, nl, "scale", 5) && (na == 1 || na == 2)) {
+            float sx, sy;
+            if (a[0]->kind != CS_NUMBER) return false;
+            sx = sy = (float)a[0]->num;
+            if (na == 2) {
+                if (a[1]->kind != CS_NUMBER) return false;
+                sy = (float)a[1]->num;
+            }
+            step = nx_mat_scale(sx, sy);
+        } else if (str_ieq(name, nl, "scalex", 6) && na == 1) {
+            if (a[0]->kind != CS_NUMBER) return false;
+            step = nx_mat_scale((float)a[0]->num, 1);
+        } else if (str_ieq(name, nl, "scaley", 6) && na == 1) {
+            if (a[0]->kind != CS_NUMBER) return false;
+            step = nx_mat_scale(1, (float)a[0]->num);
+        } else if (str_ieq(name, nl, "rotate", 6) && na == 1) {
+            float ang;
+            if (!effect_angle(a[0], &ang)) return false;
+            float c = cosf(ang), s = sinf(ang);
+            /* CSS/SVG convention with y down: [c -s; s c] */
+            step = (NxMat2x3){c, s, -s, c, 0, 0};
+        } else if (str_ieq(name, nl, "matrix", 6) && na == 6) {
+            float m[6];
+            for (int k = 0; k < 6; k++) {
+                if (a[k]->kind != CS_NUMBER) return false;
+                m[k] = (float)a[k]->num;
+            }
+            /* matrix(a,b,c,d,e,f): x' = a*x + c*y + e (same field order) */
+            step = (NxMat2x3){m[0], m[1], m[2], m[3], m[4], m[5]};
+        } else {
+            return false; /* unsupported function: reject the declaration */
+        }
+        acc = nx_mat_mul(&acc, &step);
+        any = true;
+        i = next;
+    }
+    if (!any) return false;
+    *out = acc;
+    return true;
+}
+
+/* transform-origin component: px/em/rem length or a keyword. */
+static bool origin_component(const CsTok* t, float font_size, NxLength* out, bool horizontal) {
+    if (t->kind == CS_IDENT) {
+        if (cs_is_ident(t, "center")) { *out = len_pct(0.5f); return true; }
+        if (cs_is_ident(t, "left") || cs_is_ident(t, "top")) { *out = len_px(0); return true; }
+        if (cs_is_ident(t, "right") || cs_is_ident(t, "bottom")) {
+            *out = len_pct(1.0f);
+            return true;
+        }
+        return false;
+    }
+    if (t->kind == CS_PERCENTAGE) {
+        *out = len_pct((float)(t->num / 100.0));
+        return true;
+    }
+    float px;
+    if (!effect_px(t, font_size, &px)) return false;
+    (void)horizontal;
+    *out = len_px(px);
+    return true;
+}
+
+/* 1-4 radii with the CSS expansion rule; elliptical ("/" syntax) is
+   unsupported and rejects the declaration. Returns false on invalid input. */
+static bool parse_radii(const CsTok* v, int nt, float font_size, float out[4]) {
+    float c[4] = {0, 0, 0, 0};
+    int n = 0;
+    for (int i = 0; i < nt; i++) {
+        if (v[i].kind == CS_WS) continue;
+        if (v[i].kind == CS_DELIM && v[i].s && v[i].s[0] == '/') return false;
+        if (n >= 4) return false;
+        if (!effect_px(&v[i], font_size, &c[n])) return false;
+        if (c[n] < 0) return false;
+        n++;
+    }
+    if (n == 0) return false;
+    if (n == 1) { out[0] = out[1] = out[2] = out[3] = c[0]; }
+    else if (n == 2) { out[0] = out[2] = c[0]; out[1] = out[3] = c[1]; }
+    else if (n == 3) { out[0] = c[0]; out[1] = out[3] = c[1]; out[2] = c[2]; }
+    else { for (int i = 0; i < 4; i++) out[i] = c[i]; }
+    return true;
 }
 
 static void apply_decl(NxComputedStyle* st, const CsDecl* d, float font_size) {
@@ -551,6 +728,79 @@ static void apply_decl(NxComputedStyle* st, const CsDecl* d, float font_size) {
             NxLength L = parse_length(v, nt, font_size);
             if (!L.auto_ && !L.pct_) st->line_height = L.px;
             else if (L.pct_) st->line_height = L.pct * st->font_size;
+        }
+    } else if (IS("border-radius")) {
+        float r[4];
+        if (parse_radii(v, nt, font_size, r))
+            for (int i = 0; i < 4; i++) st->radius[i] = r[i];
+    } else if (IS("border-top-left-radius")) {
+        float px;
+        if (effect_px(&v[0], font_size, &px)) st->radius[0] = px;
+    } else if (IS("border-top-right-radius")) {
+        float px;
+        if (effect_px(&v[0], font_size, &px)) st->radius[1] = px;
+    } else if (IS("border-bottom-right-radius")) {
+        float px;
+        if (effect_px(&v[0], font_size, &px)) st->radius[2] = px;
+    } else if (IS("border-bottom-left-radius")) {
+        float px;
+        if (effect_px(&v[0], font_size, &px)) st->radius[3] = px;
+    } else if (IS("overflow")) {
+        for (int i = 0; i < nt; i++) {
+            if (v[i].kind != CS_IDENT) continue;
+            if (cs_is_ident(&v[i], "hidden") || cs_is_ident(&v[i], "clip")) {
+                st->overflow_hidden = true;
+                break;
+            }
+            if (cs_is_ident(&v[i], "visible")) {
+                st->overflow_hidden = false;
+                break;
+            }
+        }
+    } else if (IS("opacity")) {
+        if (v[0].kind == CS_NUMBER) {
+            float o = (float)v[0].num;
+            st->opacity = o < 0 ? 0 : o > 1 ? 1 : o;
+        } else if (v[0].kind == CS_PERCENTAGE) {
+            float o = (float)(v[0].num / 100.0);
+            st->opacity = o < 0 ? 0 : o > 1 ? 1 : o;
+        }
+    } else if (IS("transform")) {
+        if (v[0].kind == CS_IDENT && cs_is_ident(&v[0], "none")) {
+            st->transform_set = false;
+            st->transform = nx_mat_identity();
+        } else {
+            NxMat2x3 m;
+            if (parse_transform(v, nt, font_size, &m)) {
+                st->transform = m;
+                st->transform_set = true;
+            }
+        }
+    } else if (IS("transform-origin")) {
+        const CsTok* a[4];
+        int na = 0;
+        for (int i = 0; i < nt && na < 4; i++)
+            if (v[i].kind != CS_WS) a[na++] = &v[i];
+        NxLength x, y;
+        bool ok = false;
+        if (na == 1) {
+            if (a[0]->kind == CS_IDENT &&
+                (cs_is_ident(a[0], "top") || cs_is_ident(a[0], "bottom"))) {
+                ok = origin_component(a[0], font_size, &y, false) &&
+                     origin_component(&(CsTok){CS_IDENT, "center", 6, 0, NULL, 0},
+                                      font_size, &x, true);
+            } else {
+                ok = origin_component(a[0], font_size, &x, true) &&
+                     origin_component(&(CsTok){CS_IDENT, "center", 6, 0, NULL, 0},
+                                      font_size, &y, false);
+            }
+        } else if (na == 2) {
+            ok = origin_component(a[0], font_size, &x, true) &&
+                 origin_component(a[1], font_size, &y, false);
+        }
+        if (ok) {
+            st->transform_origin[0] = x;
+            st->transform_origin[1] = y;
         }
     }
 #undef IS

@@ -28,11 +28,18 @@ dispatch) and `gpu_window_screenshot`.
 
 ## Phase 3 — Renderer
 
-**partial → done for v1 primitives.** Display list (vertices, indices, groups,
-scissor stack, transform stack), Sokol GFX batching, glyph atlas + text runs,
-images/textures, rounded rects, borders, clipping, DPI scaling, deterministic
-screenshots, GPU stats. Gaps: no opacity layers/compositing groups, no
-per-element font selection, no retained render tree reuse across frames.
+**done.** Display list (vertices, indices, groups, scissor stack, transform
+stack, group-opacity layers), Sokol GFX batching, glyph atlas + text runs,
+images/textures, rounded rects, borders, clipping, DPI scaling, opacity layers
+(real offscreen compositing on CPU and GPU, including nesting), transforms
+(translate/scale/rotate/matrix with transform-origin), border-radius, and
+overflow clipping. Tests: `unit_render` (effects scene: transform stack, layer
+records, group-opacity compositing, rounded corners), `unit_layout`
+(style/paint integration), `unit_app` (transformed hit testing and overflow
+clipping), `gpu_effects_screenshot` (GPU layer path, rounded corners, transform).
+Gaps: percentage translate, elliptical border radii, and clipping that follows
+rounded corners remain unsupported (documented). Per-element font selection and
+retained render tree reuse are still open.
 
 ## Phase 4 — JavaScript engine + bindings
 

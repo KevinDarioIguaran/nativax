@@ -215,6 +215,67 @@ int main(void) {
           text ? text : "(null)");
     free(text);
 
+    /* ---- Phase 3: transform + overflow hit testing ----------------- */
+    char tmp2[256];
+    snprintf(tmp2, sizeof(tmp2), "/tmp/nativax-app-test2-%d", (int)getpid());
+    char cmd2[1600];
+    snprintf(cmd2, sizeof(cmd2), "rm -rf %s && mkdir -p %s", tmp2, tmp2);
+    if (system(cmd2) != 0) { printf("FAIL stage2\n"); return 1; }
+    char p2[512];
+    snprintf(p2, sizeof(p2), "%s/index.html", tmp2);
+    write_file(p2, "<!doctype html><html><head><meta charset=\"utf-8\"><link rel=\"stylesheet\" href=\"style.css\"></head><body><div id=\"moved\" class=\"moved\">moved</div><div id=\"clip\" class=\"clip\"><div id=\"wideh\" class=\"wide\">wide</div></div><div id=\"visible\" class=\"visible\"><div id=\"widev\" class=\"wide\">wide</div></div><script src=\"app.js\"></script></body></html>");
+    snprintf(p2, sizeof(p2), "%s/style.css", tmp2);
+    write_file(p2, "body { margin: 0; background: #ffffff; }\n.moved { width: 80px; height: 40px; background: #ff0000; transform: translate(200px, 60px); }\n.clip { width: 100px; height: 60px; overflow: hidden; background: #00ff00; margin-top: 20px; }\n.visible { width: 100px; height: 60px; background: #0000ff; margin-top: 20px; }\n.wide { width: 300px; height: 20px; background: #000000; }\n");
+    snprintf(p2, sizeof(p2), "%s/app.js", tmp2);
+    write_file(p2, "window.__moved=0; window.__hidden=0; window.__visible=0;\ndocument.getElementById('moved').addEventListener('click',function(){window.__moved++;});\ndocument.getElementById('wideh').addEventListener('click',function(){window.__hidden++;});\ndocument.getElementById('widev').addEventListener('click',function(){window.__visible++;});\n");
+
+    NxAppConfig cfg2; memset(&cfg2,0,sizeof(cfg2));
+    cfg2.root = tmp2; cfg2.entry = "index.html";
+    cfg2.font_path = NATIVAX_SOURCE_DIR "/assets/fonts/DejaVuSans.ttf";
+    cfg2.width = 1024; cfg2.height = 768;
+    NxApp* app2 = nx_app_new(&cfg2);
+    CHECK(app2 != NULL, "app2 alloc");
+    char* err2 = NULL;
+    bool loaded2 = nx_app_load(app2, &err2);
+    CHECK(loaded2, "app2 load: %s", err2 ? err2 : "ok");
+    free(err2);
+    if (loaded2) nx_app_update(app2, 16.0);
+
+    /* transformed hit */
+    CHECK(nx_app_pointer(app2, 240.0f, 80.0f, true), "moved click returns hit");
+    nx_app_update(app2, 32.0);
+    char* v = nx_js_eval_json(nx_app_js(app2), "window.__moved", NULL);
+    CHECK(v && strcmp(v, "1") == 0, "transformed element hit (got %s)", v ? v : "(null)");
+    free(v);
+    CHECK(nx_app_pointer(app2, 40.0f, 20.0f, true), "miss click returns (some) hit");
+    nx_app_update(app2, 48.0);
+    char* v2 = nx_js_eval_json(nx_app_js(app2), "window.__moved", NULL);
+    CHECK(v2 && strcmp(v2, "1") == 0, "untransformed location did not hit moved (got %s)", v2 ? v2 : "(null)");
+    free(v2);
+
+    /* overflow hidden blocks hits outside the clip box */
+    CHECK(nx_app_pointer(app2, 50.0f, 50.0f, true), "hidden inside clip");
+    nx_app_update(app2, 64.0);
+    char* h = nx_js_eval_json(nx_app_js(app2), "window.__hidden", NULL);
+    CHECK(h && strcmp(h, "1") == 0, "overflow-hidden child hit inside (got %s)", h ? h : "(null)");
+    free(h);
+    CHECK(nx_app_pointer(app2, 200.0f, 50.0f, true), "hidden outside returns some node");
+    nx_app_update(app2, 80.0);
+    h = nx_js_eval_json(nx_app_js(app2), "window.__hidden", NULL);
+    CHECK(h && strcmp(h, "1") == 0, "overflow-hidden child not hit outside (got %s)", h ? h : "(null)");
+    free(h);
+
+    /* visible (no overflow) allows hits outside parent box */
+    CHECK(nx_app_pointer(app2, 200.0f, 110.0f, true), "visible outside returns hit");
+    nx_app_update(app2, 96.0);
+    char* vis = nx_js_eval_json(nx_app_js(app2), "window.__visible", NULL);
+    CHECK(vis && strcmp(vis, "1") == 0, "non-hidden child hit outside parent (got %s)", vis ? vis : "(null)");
+    free(vis);
+
+    nx_app_free(app2);
+    snprintf(cmd2, sizeof(cmd2), "rm -rf %s", tmp2);
+    if (system(cmd2) != 0) printf("note: could not remove %s\n", tmp2);
+
     nx_app_free(app);
     snprintf(cmd, sizeof(cmd), "rm -rf %s", tmp);
     if (system(cmd) != 0) printf("note: could not remove %s\n", tmp);

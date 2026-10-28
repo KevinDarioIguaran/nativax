@@ -8,8 +8,15 @@
     layout/paint pipeline actually consumes are resolved (documented subset):
 
       display (block|inline|none), width/height (auto|px|%), margin, padding,
-      border-width/border-color, color, background-color, font-size,
-      font-weight, text-align, line-height.
+      border-width/border-color, border-radius, color, background-color,
+      font-size, font-weight, text-align, line-height, overflow,
+      opacity, transform, transform-origin.
+
+    Renderer effects are a deliberate subset: border-radius takes 1-4 px
+    lengths (elliptical radii are not supported), overflow clips to the
+    axis-aligned border box, transform supports translate/scale/rotate/matrix
+    with px/unitless lengths (percentage translation is not supported), and
+    opacity < 1 creates a real offscreen compositing layer.
 
     Values are resolved to CSS px at cascade time using the supplied viewport
     width for percentages. Unsupported or unknown properties keep the initial
@@ -24,6 +31,7 @@
 #include <stdint.h>
 
 #include "nativax/css.h"
+#include "nativax/display_list.h"
 #include "nativax/dom.h"
 
 typedef enum NxDisplayKind {
@@ -64,6 +72,14 @@ typedef struct NxComputedStyle {
     int font_weight;
     NxAlignKind align;
     float line_height;   /* px; <=0 means "normal" (use font metrics) */
+
+    /* Phase 3 renderer effects (documented subset) */
+    float opacity;             /* 0..1, initial 1 */
+    float radius[4];           /* border-radius px: tl, tr, br, bl; 0 = square */
+    bool overflow_hidden;      /* overflow: hidden/clip (axis-aligned clip) */
+    bool transform_set;        /* transform != none */
+    NxMat2x3 transform;        /* CSS transform list, no origin applied */
+    NxLength transform_origin[2]; /* x, y; initial 50% 50% */
 } NxComputedStyle;
 
 /* Match a parsed selector group against an element in the document.
