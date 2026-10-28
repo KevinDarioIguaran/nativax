@@ -1,731 +1,731 @@
 {
-  "run_id": "20261028T230943Z-fafdd3a",
-  "timestamp": "2026-10-28T23:09:43.414665+00:00",
-  "label": "section-2",
-  "command": "debug/lab/run_lab.py --section 2 --no-report",
+  "run_id": "20261028T232237Z-088455e",
+  "timestamp": "2026-10-28T23:22:37.563592+00:00",
+  "label": "section-1",
+  "command": "debug/lab/run_lab.py --section 1 --no-report",
   "git": {
     "branch": "native-c-sokol",
-    "commit": "fafdd3aad2b10fdac33e7bc1142ed7663b47d5ea",
-    "short": "fafdd3a",
+    "commit": "088455eb10abb423f9fecfff0d339c0a202b46ef",
+    "short": "088455e",
     "dirty": true
   },
-  "elapsed_seconds": 49.7,
+  "elapsed_seconds": 43.64,
   "sections": {
-    "2": {
-      "pass": 99,
+    "1": {
+      "pass": 100,
       "fail": 0,
-      "blocked": 1,
+      "blocked": 0,
       "error": 0,
       "total": 100
     }
   },
   "totals": {
-    "pass": 99,
+    "pass": 100,
     "fail": 0,
-    "blocked": 1,
+    "blocked": 0,
     "error": 0,
     "total": 100
   },
   "cases": {
-    "css.001": {
-      "section": 2,
-      "name": "tag selector colours the element",
+    "html.001": {
+      "section": 1,
+      "name": "basic div becomes an element",
       "status": "pass",
       "message": "",
-      "duration_ms": 405.75
+      "duration_ms": 383.41
     },
-    "css.002": {
-      "section": 2,
-      "name": "class selector colours the element",
+    "html.002": {
+      "section": 1,
+      "name": "inline span stays inside a paragraph",
       "status": "pass",
       "message": "",
-      "duration_ms": 397.72
+      "duration_ms": 350.0
     },
-    "css.003": {
-      "section": 2,
-      "name": "id selector colours the element",
+    "html.003": {
+      "section": 1,
+      "name": "paragraph text is attached to the p element",
       "status": "pass",
       "message": "",
-      "duration_ms": 477.34
+      "duration_ms": 360.35
     },
-    "css.004": {
-      "section": 2,
-      "name": "universal selector colours every element",
+    "html.004": {
+      "section": 1,
+      "name": "heading elements h1..h6 are recognised",
       "status": "pass",
       "message": "",
-      "duration_ms": 566.4
+      "duration_ms": 380.57
     },
-    "css.005": {
-      "section": 2,
+    "html.005": {
+      "section": 1,
+      "name": "an unordered list keeps its li children in order",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 515.52
+    },
+    "html.006": {
+      "section": 1,
+      "name": "html, head and body are synthesised when absent",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 343.74
+    },
+    "html.007": {
+      "section": 1,
+      "name": "uppercase tags are normalised to lowercase",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 428.86
+    },
+    "html.008": {
+      "section": 1,
+      "name": "a div can nest inside another div",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 346.09
+    },
+    "html.009": {
+      "section": 1,
+      "name": "unknown elements are preserved, not discarded",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 328.86
+    },
+    "html.010": {
+      "section": 1,
+      "name": "custom elements with a dash are parsed",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 411.36
+    },
+    "html.011": {
+      "section": 1,
+      "name": "double-quoted attribute values are decoded",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 334.76
+    },
+    "html.012": {
+      "section": 1,
+      "name": "single-quoted attribute values are decoded",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 479.71
+    },
+    "html.013": {
+      "section": 1,
+      "name": "unquoted attribute values are accepted",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 366.74
+    },
+    "html.014": {
+      "section": 1,
+      "name": "boolean attributes have an empty value",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 396.86
+    },
+    "html.015": {
+      "section": 1,
+      "name": "id and class are ordinary attributes",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 364.6
+    },
+    "html.016": {
+      "section": 1,
+      "name": "data-* attributes survive parsing",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 335.97
+    },
+    "html.017": {
+      "section": 1,
+      "name": "aria-* attributes survive parsing",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 334.2
+    },
+    "html.018": {
+      "section": 1,
+      "name": "attribute values may contain spaces and punctuation",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 335.18
+    },
+    "html.019": {
+      "section": 1,
+      "name": "duplicate attributes keep the first value",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 385.46
+    },
+    "html.020": {
+      "section": 1,
+      "name": "attribute names are lowercased",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 371.83
+    },
+    "html.021": {
+      "section": 1,
+      "name": "parent-child chains follow the markup",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 434.76
+    },
+    "html.022": {
+      "section": 1,
+      "name": "sibling elements keep document order",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 345.93
+    },
+    "html.023": {
+      "section": 1,
+      "name": "head content stays out of body",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 267.92
+    },
+    "html.024": {
+      "section": 1,
+      "name": "body-only markup is wrapped in html/head/body",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 492.15
+    },
+    "html.025": {
+      "section": 1,
+      "name": "nested lists preserve hierarchy",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 400.88
+    },
+    "html.026": {
+      "section": 1,
+      "name": "table rows and cells keep the table hierarchy",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 430.57
+    },
+    "html.027": {
+      "section": 1,
+      "name": "deep nesting is preserved to 20 levels",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 516.51
+    },
+    "html.028": {
+      "section": 1,
+      "name": "multiple top-level elements share one body",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 363.89
+    },
+    "html.029": {
+      "section": 1,
+      "name": "inline elements may sit inside blocks",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 331.61
+    },
+    "html.030": {
+      "section": 1,
+      "name": "whitespace text nodes between elements are kept",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 323.02
+    },
+    "html.031": {
+      "section": 1,
+      "name": "br is a void element",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 332.77
+    },
+    "html.032": {
+      "section": 1,
+      "name": "img keeps its src attribute and has no children",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 511.62
+    },
+    "html.033": {
+      "section": 1,
+      "name": "input is void and keeps value/type",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 375.94
+    },
+    "html.034": {
+      "section": 1,
+      "name": "hr is void and does not absorb following content",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 389.45
+    },
+    "html.035": {
+      "section": 1,
+      "name": "meta and link are void elements in head",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 330.22
+    },
+    "html.036": {
+      "section": 1,
+      "name": "script text is raw: markup inside is not parsed",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 355.49
+    },
+    "html.037": {
+      "section": 1,
+      "name": "style text is raw: braces and markup stay as text",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 367.39
+    },
+    "html.038": {
+      "section": 1,
+      "name": "textarea content is raw text, not elements",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 585.48
+    },
+    "html.039": {
+      "section": 1,
+      "name": "the self-closing slash on a non-void element is ignored",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 909.71
+    },
+    "html.040": {
+      "section": 1,
+      "name": "a new p autocloses the previous p",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 505.8
+    },
+    "html.041": {
+      "section": 1,
+      "name": "plain text is preserved verbatim",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 345.76
+    },
+    "html.042": {
+      "section": 1,
+      "name": "&amp; decodes to &",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 368.05
+    },
+    "html.043": {
+      "section": 1,
+      "name": "&lt; and &gt; decode to angle brackets",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 347.09
+    },
+    "html.044": {
+      "section": 1,
+      "name": "&quot; decodes to a double quote",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 361.86
+    },
+    "html.045": {
+      "section": 1,
+      "name": "decimal numeric references decode",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 435.37
+    },
+    "html.046": {
+      "section": 1,
+      "name": "hexadecimal numeric references decode",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 556.8
+    },
+    "html.047": {
+      "section": 1,
+      "name": "&nbsp; decodes to a non-breaking space",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 434.71
+    },
+    "html.048": {
+      "section": 1,
+      "name": "internal whitespace in a text node is kept",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 465.81
+    },
+    "html.049": {
+      "section": 1,
+      "name": "UTF-8 text survives the parse",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 924.31
+    },
+    "html.050": {
+      "section": 1,
+      "name": "text split by an inline element concatenates",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 992.05
+    },
+    "html.051": {
+      "section": 1,
+      "name": "comments are not elements",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 355.12
+    },
+    "html.052": {
+      "section": 1,
+      "name": "comment text is retained in the tree",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 359.84
+    },
+    "html.053": {
+      "section": 1,
+      "name": "doctype does not become an element",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 564.26
+    },
+    "html.054": {
+      "section": 1,
+      "name": "uppercase closing tags match lowercase opens",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 418.64
+    },
+    "html.055": {
+      "section": 1,
+      "name": "mixed-case attribute names are lowercased",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 359.51
+    },
+    "html.056": {
+      "section": 1,
+      "name": "implicit html/head/body have the expected order",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 256.96
+    },
+    "html.057": {
+      "section": 1,
+      "name": "title text is preserved in the head",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 450.98
+    },
+    "html.058": {
+      "section": 1,
+      "name": "several comments are all retained",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 578.3
+    },
+    "html.059": {
+      "section": 1,
+      "name": "a comment inside an element does not close it",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 1118.99
+    },
+    "html.060": {
+      "section": 1,
+      "name": "doctype plus uppercase markup parses as one document",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 257.18
+    },
+    "html.061": {
+      "section": 1,
+      "name": "an unclosed div is recovered at end of input",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 331.77
+    },
+    "html.062": {
+      "section": 1,
+      "name": "a stray closing tag is ignored",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 329.66
+    },
+    "html.063": {
+      "section": 1,
+      "name": "misnested inline tags keep the inner element",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 406.13
+    },
+    "html.064": {
+      "section": 1,
+      "name": "an unclosed paragraph still renders its text",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 344.35
+    },
+    "html.065": {
+      "section": 1,
+      "name": "an unterminated attribute quote does not crash the parser",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 467.5
+    },
+    "html.066": {
+      "section": 1,
+      "name": "a bare < in text is treated as text",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 353.71
+    },
+    "html.067": {
+      "section": 1,
+      "name": "an empty document still produces html/head/body",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 245.43
+    },
+    "html.068": {
+      "section": 1,
+      "name": "whitespace-only markup produces an empty body",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 257.82
+    },
+    "html.069": {
+      "section": 1,
+      "name": "duplicate ids produce two distinct element nodes",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 459.57
+    },
+    "html.070": {
+      "section": 1,
+      "name": "mismatched nested lists do not lose their items",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 591.0
+    },
+    "html.071": {
+      "section": 1,
+      "name": "tag selector finds the first element",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 688.71
+    },
+    "html.072": {
+      "section": 1,
+      "name": "id selector matches exactly one node",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 378.06
+    },
+    "html.073": {
+      "section": 1,
+      "name": "class selector matches all nodes with the class",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 357.61
+    },
+    "html.074": {
+      "section": 1,
+      "name": "descendant combinator matches nested elements",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 335.13
+    },
+    "html.075": {
+      "section": 1,
+      "name": "child combinator requires a direct parent",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 324.0
+    },
+    "html.076": {
+      "section": 1,
       "name": "attribute presence selector",
       "status": "pass",
       "message": "",
-      "duration_ms": 416.57
+      "duration_ms": 373.47
     },
-    "css.006": {
-      "section": 2,
+    "html.077": {
+      "section": 1,
       "name": "attribute equals selector",
       "status": "pass",
       "message": "",
-      "duration_ms": 393.9
+      "duration_ms": 482.84
     },
-    "css.007": {
-      "section": 2,
-      "name": "attribute contains selector",
+    "html.078": {
+      "section": 1,
+      "name": "first-child selector",
       "status": "pass",
       "message": "",
-      "duration_ms": 447.54
+      "duration_ms": 502.13
     },
-    "css.008": {
-      "section": 2,
-      "name": "attribute starts-with selector",
+    "html.079": {
+      "section": 1,
+      "name": "nth-child selector matches position 2",
       "status": "pass",
       "message": "",
-      "duration_ms": 408.53
+      "duration_ms": 327.54
     },
-    "css.009": {
-      "section": 2,
-      "name": "attribute ends-with selector",
+    "html.080": {
+      "section": 1,
+      "name": "not() excludes matching elements",
       "status": "pass",
       "message": "",
-      "duration_ms": 474.64
+      "duration_ms": 508.87
     },
-    "css.010": {
-      "section": 2,
-      "name": "attribute word selector",
+    "html.081": {
+      "section": 1,
+      "name": "summary counts the elements of the case",
       "status": "pass",
       "message": "",
-      "duration_ms": 538.23
+      "duration_ms": 371.2
     },
-    "css.011": {
-      "section": 2,
-      "name": "descendant combinator",
+    "html.082": {
+      "section": 1,
+      "name": "summary counts text nodes",
       "status": "pass",
       "message": "",
-      "duration_ms": 824.79
+      "duration_ms": 383.43
     },
-    "css.012": {
-      "section": 2,
-      "name": "child combinator",
+    "html.083": {
+      "section": 1,
+      "name": "summary counts comments",
       "status": "pass",
       "message": "",
-      "duration_ms": 443.05
+      "duration_ms": 371.75
     },
-    "css.013": {
-      "section": 2,
-      "name": "adjacent sibling combinator",
+    "html.084": {
+      "section": 1,
+      "name": "summary reports max depth for nested markup",
       "status": "pass",
       "message": "",
-      "duration_ms": 513.28
+      "duration_ms": 410.25
     },
-    "css.014": {
-      "section": 2,
-      "name": "general sibling combinator",
+    "html.085": {
+      "section": 1,
+      "name": "the JSON DOM dump lists every element tag",
       "status": "pass",
       "message": "",
-      "duration_ms": 563.7
+      "duration_ms": 336.55
     },
-    "css.015": {
-      "section": 2,
-      "name": "grouped selectors",
+    "html.086": {
+      "section": 1,
+      "name": "text_content() is a deep concatenation",
       "status": "pass",
       "message": "",
-      "duration_ms": 416.11
+      "duration_ms": 380.99
     },
-    "css.016": {
-      "section": 2,
-      "name": "deep descendant",
+    "html.087": {
+      "section": 1,
+      "name": "element order in the dump is pre-order",
       "status": "pass",
       "message": "",
-      "duration_ms": 427.7
+      "duration_ms": 332.84
     },
-    "css.017": {
-      "section": 2,
-      "name": "child of id",
+    "html.088": {
+      "section": 1,
+      "name": "node slots are unique for element nodes",
       "status": "pass",
       "message": "",
-      "duration_ms": 413.51
+      "duration_ms": 332.92
     },
-    "css.018": {
-      "section": 2,
-      "name": "sibling with class filter",
+    "html.089": {
+      "section": 1,
+      "name": "empty elements have no child nodes",
       "status": "pass",
       "message": "",
-      "duration_ms": 441.04
+      "duration_ms": 338.79
     },
-    "css.019": {
-      "section": 2,
-      "name": "descendant with attribute",
+    "html.090": {
+      "section": 1,
+      "name": "comments and text are distinguishable node kinds",
       "status": "pass",
       "message": "",
-      "duration_ms": 418.87
+      "duration_ms": 396.49
     },
-    "css.020": {
-      "section": 2,
-      "name": "universal child",
+    "html.091": {
+      "section": 1,
+      "name": "an inline style sheet contributes rules",
       "status": "pass",
       "message": "",
-      "duration_ms": 439.52
+      "duration_ms": 738.21
     },
-    "css.021": {
-      "section": 2,
-      "name": "first-child pseudo-class",
+    "html.092": {
+      "section": 1,
+      "name": "an inline style rule changes the computed color",
       "status": "pass",
       "message": "",
-      "duration_ms": 688.0
+      "duration_ms": 1155.36
     },
-    "css.022": {
-      "section": 2,
-      "name": "last-child pseudo-class",
+    "html.093": {
+      "section": 1,
+      "name": "a class rule applies to a matching element",
       "status": "pass",
       "message": "",
-      "duration_ms": 703.19
+      "duration_ms": 640.86
     },
-    "css.023": {
-      "section": 2,
-      "name": "nth-child(2)",
+    "html.094": {
+      "section": 1,
+      "name": "the id rule wins over the class rule",
       "status": "pass",
       "message": "",
-      "duration_ms": 523.6
+      "duration_ms": 415.91
     },
-    "css.024": {
-      "section": 2,
-      "name": "nth-child(odd)",
+    "html.095": {
+      "section": 1,
+      "name": "the style attribute wins over author rules",
       "status": "pass",
       "message": "",
-      "duration_ms": 432.07
+      "duration_ms": 799.97
     },
-    "css.025": {
-      "section": 2,
-      "name": "nth-child(3n)",
+    "html.096": {
+      "section": 1,
+      "name": "script source is preserved byte-for-byte",
       "status": "pass",
       "message": "",
-      "duration_ms": 385.6
+      "duration_ms": 323.09
     },
-    "css.026": {
-      "section": 2,
-      "name": "not() pseudo-class",
+    "html.097": {
+      "section": 1,
+      "name": "the script element is not laid out",
       "status": "pass",
       "message": "",
-      "duration_ms": 447.16
+      "duration_ms": 344.48
     },
-    "css.027": {
-      "section": 2,
-      "name": "empty pseudo-class",
+    "html.098": {
+      "section": 1,
+      "name": "the style element is not laid out",
       "status": "pass",
       "message": "",
-      "duration_ms": 395.98
+      "duration_ms": 348.45
     },
-    "css.028": {
-      "section": 2,
-      "name": "first-of-type",
+    "html.099": {
+      "section": 1,
+      "name": "an external sheet supplied by the case applies",
       "status": "pass",
       "message": "",
-      "duration_ms": 432.01
+      "duration_ms": 453.82
     },
-    "css.029": {
-      "section": 2,
-      "name": "nth-of-type(2) (engine counts siblings)",
+    "html.100": {
+      "section": 1,
+      "name": "inline sheet order follows document order",
       "status": "pass",
       "message": "",
-      "duration_ms": 412.52
-    },
-    "css.030": {
-      "section": 2,
-      "name": "last-of-type",
-      "status": "pass",
-      "message": "",
-      "duration_ms": 449.4
-    },
-    "css.031": {
-      "section": 2,
-      "name": "id beats class",
-      "status": "pass",
-      "message": "",
-      "duration_ms": 672.22
-    },
-    "css.032": {
-      "section": 2,
-      "name": "class beats element",
-      "status": "pass",
-      "message": "",
-      "duration_ms": 670.86
-    },
-    "css.033": {
-      "section": 2,
-      "name": "later rule wins tie",
-      "status": "pass",
-      "message": "",
-      "duration_ms": 447.73
-    },
-    "css.034": {
-      "section": 2,
-      "name": "inline style wins",
-      "status": "pass",
-      "message": "",
-      "duration_ms": 434.95
-    },
-    "css.035": {
-      "section": 2,
-      "name": "important wins",
-      "status": "pass",
-      "message": "",
-      "duration_ms": 624.62
-    },
-    "css.036": {
-      "section": 2,
-      "name": "important class beats id",
-      "status": "pass",
-      "message": "",
-      "duration_ms": 416.25
-    },
-    "css.037": {
-      "section": 2,
-      "name": "two inline sheets order",
-      "status": "pass",
-      "message": "",
-      "duration_ms": 407.59
-    },
-    "css.038": {
-      "section": 2,
-      "name": "media applies at wide viewport",
-      "status": "pass",
-      "message": "",
-      "duration_ms": 491.11
-    },
-    "css.039": {
-      "section": 2,
-      "name": "media does not apply at wide viewport",
-      "status": "pass",
-      "message": "",
-      "duration_ms": 412.84
-    },
-    "css.040": {
-      "section": 2,
-      "name": "color inherits from parent",
-      "status": "pass",
-      "message": "",
-      "duration_ms": 473.06
-    },
-    "css.041": {
-      "section": 2,
-      "name": "color inherits",
-      "status": "pass",
-      "message": "",
-      "duration_ms": 621.47
-    },
-    "css.042": {
-      "section": 2,
-      "name": "font-size inherits via em",
-      "status": "pass",
-      "message": "",
-      "duration_ms": 581.66
-    },
-    "css.043": {
-      "section": 2,
-      "name": "initial resets color",
-      "status": "pass",
-      "message": "",
-      "duration_ms": 557.36
-    },
-    "css.044": {
-      "section": 2,
-      "name": "unset on color inherits",
-      "status": "pass",
-      "message": "",
-      "duration_ms": 479.48
-    },
-    "css.045": {
-      "section": 2,
-      "name": "unset on margin resets",
-      "status": "pass",
-      "message": "",
-      "duration_ms": 630.17
-    },
-    "css.046": {
-      "section": 2,
-      "name": "inherit keyword on margin",
-      "status": "pass",
-      "message": "",
-      "duration_ms": 427.28
-    },
-    "css.047": {
-      "section": 2,
-      "name": "currentColor border",
-      "status": "pass",
-      "message": "",
-      "duration_ms": 659.73
-    },
-    "css.048": {
-      "section": 2,
-      "name": "transparent color",
-      "status": "pass",
-      "message": "",
-      "duration_ms": 469.43
-    },
-    "css.049": {
-      "section": 2,
-      "name": "inherit from ancestor",
-      "status": "pass",
-      "message": "",
-      "duration_ms": 425.05
-    },
-    "css.050": {
-      "section": 2,
-      "name": "default colour inherits the theme ink",
-      "status": "pass",
-      "message": "",
-      "duration_ms": 466.79
-    },
-    "css.051": {
-      "section": 2,
-      "name": "margin shorthand all",
-      "status": "pass",
-      "message": "",
-      "duration_ms": 650.3
-    },
-    "css.052": {
-      "section": 2,
-      "name": "margin two values",
-      "status": "pass",
-      "message": "",
-      "duration_ms": 545.21
-    },
-    "css.053": {
-      "section": 2,
-      "name": "margin three values",
-      "status": "pass",
-      "message": "",
-      "duration_ms": 404.51
-    },
-    "css.054": {
-      "section": 2,
-      "name": "margin four values",
-      "status": "pass",
-      "message": "",
-      "duration_ms": 570.36
-    },
-    "css.055": {
-      "section": 2,
-      "name": "padding shorthand",
-      "status": "pass",
-      "message": "",
-      "duration_ms": 550.52
-    },
-    "css.056": {
-      "section": 2,
-      "name": "border shorthand",
-      "status": "pass",
-      "message": "",
-      "duration_ms": 478.79
-    },
-    "css.057": {
-      "section": 2,
-      "name": "border-top shorthand",
-      "status": "pass",
-      "message": "",
-      "duration_ms": 377.98
-    },
-    "css.058": {
-      "section": 2,
-      "name": "background shorthand color",
-      "status": "pass",
-      "message": "",
-      "duration_ms": 444.79
-    },
-    "css.059": {
-      "section": 2,
-      "name": "border-radius shorthand",
-      "status": "pass",
-      "message": "",
-      "duration_ms": 403.64
-    },
-    "css.060": {
-      "section": 2,
-      "name": "font shorthand",
-      "status": "pass",
-      "message": "",
-      "duration_ms": 474.7
-    },
-    "css.061": {
-      "section": 2,
-      "name": "length in px",
-      "status": "pass",
-      "message": "",
-      "duration_ms": 846.2
-    },
-    "css.062": {
-      "section": 2,
-      "name": "length in em",
-      "status": "pass",
-      "message": "",
-      "duration_ms": 427.94
-    },
-    "css.063": {
-      "section": 2,
-      "name": "length in rem",
-      "status": "pass",
-      "message": "",
-      "duration_ms": 406.14
-    },
-    "css.064": {
-      "section": 2,
-      "name": "length in percent",
-      "status": "pass",
-      "message": "",
-      "duration_ms": 479.61
-    },
-    "css.065": {
-      "section": 2,
-      "name": "font-size px",
-      "status": "pass",
-      "message": "",
-      "duration_ms": 662.53
-    },
-    "css.066": {
-      "section": 2,
-      "name": "font-size em",
-      "status": "pass",
-      "message": "",
-      "duration_ms": 479.57
-    },
-    "css.067": {
-      "section": 2,
-      "name": "line-height unitless",
-      "status": "pass",
-      "message": "",
-      "duration_ms": 388.71
-    },
-    "css.068": {
-      "section": 2,
-      "name": "border-width px",
-      "status": "pass",
-      "message": "",
-      "duration_ms": 453.28
-    },
-    "css.069": {
-      "section": 2,
-      "name": "min-width px",
-      "status": "pass",
-      "message": "",
-      "duration_ms": 478.6
-    },
-    "css.070": {
-      "section": 2,
-      "name": "max-width px",
-      "status": "pass",
-      "message": "",
-      "duration_ms": 474.15
-    },
-    "css.071": {
-      "section": 2,
-      "name": "hex 3-digit color",
-      "status": "pass",
-      "message": "",
-      "duration_ms": 558.1
-    },
-    "css.072": {
-      "section": 2,
-      "name": "hex 6-digit color",
-      "status": "pass",
-      "message": "",
-      "duration_ms": 473.86
-    },
-    "css.073": {
-      "section": 2,
-      "name": "rgb() color",
-      "status": "pass",
-      "message": "",
-      "duration_ms": 414.87
-    },
-    "css.074": {
-      "section": 2,
-      "name": "rgba() color",
-      "status": "pass",
-      "message": "",
-      "duration_ms": 437.9
-    },
-    "css.075": {
-      "section": 2,
-      "name": "named color",
-      "status": "pass",
-      "message": "",
-      "duration_ms": 614.08
-    },
-    "css.076": {
-      "section": 2,
-      "name": "hsl() color",
-      "status": "pass",
-      "message": "",
-      "duration_ms": 671.16
-    },
-    "css.077": {
-      "section": 2,
-      "name": "transparent keyword",
-      "status": "pass",
-      "message": "",
-      "duration_ms": 456.55
-    },
-    "css.078": {
-      "section": 2,
-      "name": "currentColor keyword",
-      "status": "pass",
-      "message": "",
-      "duration_ms": 466.54
-    },
-    "css.079": {
-      "section": 2,
-      "name": "var() custom property (unsupported)",
-      "status": "blocked",
-      "message": "var() custom properties are not supported by the engine",
-      "duration_ms": 0.01
-    },
-    "css.080": {
-      "section": 2,
-      "name": "rgb percentages",
-      "status": "pass",
-      "message": "",
-      "duration_ms": 426.22
-    },
-    "css.081": {
-      "section": 2,
-      "name": "min-width media applies",
-      "status": "pass",
-      "message": "",
-      "duration_ms": 460.58
-    },
-    "css.082": {
-      "section": 2,
-      "name": "max-width media applies",
-      "status": "pass",
-      "message": "",
-      "duration_ms": 936.88
-    },
-    "css.083": {
-      "section": 2,
-      "name": "min-width media not applies",
-      "status": "pass",
-      "message": "",
-      "duration_ms": 407.79
-    },
-    "css.084": {
-      "section": 2,
-      "name": "orientation landscape applies",
-      "status": "pass",
-      "message": "",
-      "duration_ms": 419.45
-    },
-    "css.085": {
-      "section": 2,
-      "name": "orientation portrait not applies",
-      "status": "pass",
-      "message": "",
-      "duration_ms": 489.53
-    },
-    "css.086": {
-      "section": 2,
-      "name": "combined media range",
-      "status": "pass",
-      "message": "",
-      "duration_ms": 466.03
-    },
-    "css.087": {
-      "section": 2,
-      "name": "min-height media",
-      "status": "pass",
-      "message": "",
-      "duration_ms": 416.26
-    },
-    "css.088": {
-      "section": 2,
-      "name": "max-height media",
-      "status": "pass",
-      "message": "",
-      "duration_ms": 428.26
-    },
-    "css.089": {
-      "section": 2,
-      "name": "screen media applies",
-      "status": "pass",
-      "message": "",
-      "duration_ms": 620.57
-    },
-    "css.090": {
-      "section": 2,
-      "name": "print media not applies",
-      "status": "pass",
-      "message": "",
-      "duration_ms": 444.64
-    },
-    "css.091": {
-      "section": 2,
-      "name": "keyframes rule is recorded",
-      "status": "pass",
-      "message": "",
-      "duration_ms": 1176.25
-    },
-    "css.092": {
-      "section": 2,
-      "name": "font-face at-rule is skipped safely",
-      "status": "pass",
-      "message": "",
-      "duration_ms": 436.62
-    },
-    "css.093": {
-      "section": 2,
-      "name": "supports at-rule is skipped",
-      "status": "pass",
-      "message": "",
-      "duration_ms": 438.61
-    },
-    "css.094": {
-      "section": 2,
-      "name": "layer at-rule is skipped",
-      "status": "pass",
-      "message": "",
-      "duration_ms": 476.66
-    },
-    "css.095": {
-      "section": 2,
-      "name": "nested media flattens",
-      "status": "pass",
-      "message": "",
-      "duration_ms": 453.49
-    },
-    "css.096": {
-      "section": 2,
-      "name": "unknown at-rule is skipped",
-      "status": "pass",
-      "message": "",
-      "duration_ms": 375.77
-    },
-    "css.097": {
-      "section": 2,
-      "name": "charset at-rule is skipped",
-      "status": "pass",
-      "message": "",
-      "duration_ms": 564.12
-    },
-    "css.098": {
-      "section": 2,
-      "name": "empty stylesheet",
-      "status": "pass",
-      "message": "",
-      "duration_ms": 404.82
-    },
-    "css.099": {
-      "section": 2,
-      "name": "multiple inline sheets order",
-      "status": "pass",
-      "message": "",
-      "duration_ms": 544.33
-    },
-    "css.100": {
-      "section": 2,
-      "name": "important across sheets",
-      "status": "pass",
-      "message": "",
-      "duration_ms": 550.62
+      "duration_ms": 622.93
     }
   }
 }

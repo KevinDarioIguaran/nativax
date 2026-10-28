@@ -102,6 +102,48 @@ def save_run(results, *, sections, elapsed, command=None, label=None) -> Path:
         "path": str(path.relative_to(ROOT)),
     })
     INDEX.write_text(json.dumps(index, indent=2) + "\n")
+    # Compact, AI-oriented digest (not meant for humans): only non-pass cases
+    # and deltas vs the previous run, single-line JSON to save tokens.
+    prev = None
+    if len(index) >= 2:
+        try:
+            prev = load_run(index[-2]["run_id"])
+        except Exception:
+            prev = None
+    nonpass = []
+    for cid, info in cases.items():
+        if info["status"] != "pass":
+            nonpass.append({"id": cid, "section": info["section"],
+                           "status": info["status"], "message": info["message"]})
+    delta = {"improved": [], "regressed": [], "unblocked": [], "newly_blocked": []}
+    if prev:
+        prev_cases = prev.get("cases", {})
+        for cid in set(prev_cases) | set(cases):
+            os_ = prev_cases.get(cid, {}).get("status")
+            ns_ = cases.get(cid, {}).get("status")
+            if not os_ or not ns_ or os_ == ns_:
+                continue
+            if os_ in ("fail", "error", "blocked") and ns_ == "pass":
+                delta["improved"].append(cid)
+            elif os_ == "pass" and ns_ in ("fail", "error", "blocked"):
+                delta["regressed"].append(cid)
+            if os_ == "blocked" and ns_ != "blocked":
+                delta["unblocked"].append(cid)
+            if os_ != "blocked" and ns_ == "blocked":
+                delta["newly_blocked"].append(cid)
+    digest = {
+        "run_id": run_id,
+        "timestamp": snapshot["timestamp"],
+        "git": info.get("short"),
+        "totals": totals,
+        "sections": sections_summary,
+        "nonpass": nonpass,
+        "delta_vs_prev": delta,
+    }
+    digest_path = HERE / "ai_digest.json"
+    digest_path.write_text(json.dumps(digest, separators=(",", ":")) + "\n")
+    snapshot["ai_digest"] = str(digest_path.relative_to(ROOT))
+
     return path
 
 

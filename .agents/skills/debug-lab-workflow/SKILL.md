@@ -17,7 +17,8 @@ description: Step-by-step visual debugging workflow for the NativaX debug labora
 4. Re-run the same section until 100%.
 5. Move to the next section.
 6. After 100%, run `python3 debug/lab/run_lab.py --all` and `python3 debug/judges/quality_gate/gate.py`.
-7. Update `debug/progress/current-task.md` and commit evidence.
+7. Read `debug/history/ai_digest.json` (compact, AI-only) instead of raw reports when possible.
+8. Update `debug/progress/current-task.md` and commit evidence.
 
 ## Guardrails
 - Do not weaken assertions or fake results.

@@ -154,6 +154,7 @@ def main() -> int:
                 all_results, sections=sections, elapsed=elapsed,
                 command=cmd, label=f"section-{','.join(str(s) for s in sections)}")
             print(f"[lab] history snapshot: {path.relative_to(ROOT)}", flush=True)
+            print(f"[lab] ai digest: {ROOT / 'debug' / 'history' / 'ai_digest.json'}", flush=True)
         except Exception as exc:  # noqa: BLE001
             print(f"[lab] history snapshot failed: {exc}", file=sys.stderr)
 
