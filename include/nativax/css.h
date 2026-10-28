@@ -217,6 +217,20 @@ typedef struct CsMediaState {
    false (documented). */
 bool cs_media_matches(const char* cond, const CsMediaState* st);
 
+/* ---- standalone declaration lists (style="" attributes, script writes) ----
+   Parses the contents of a declaration block without the surrounding braces.
+   Declarations reference token storage owned by the list; free the whole list
+   with cs_decls_free(). NULL when the input cannot be tokenized. */
+typedef struct CsDeclList {
+    CsDecl* decls;
+    int count, cap;
+    CsTokens toks;
+    char* src; /* owned copy the token slices point into */
+} CsDeclList;
+
+CsDeclList* cs_decls_parse(const char* text, int len);
+void cs_decls_free(CsDeclList* list);
+
 /* ---- value helpers (shared with style.c) ---- */
 bool cs_parse_number(const CsTok* t, double* out);
 bool cs_is_ident(const CsTok* t, const char* lit); /* case-insensitive ident match */

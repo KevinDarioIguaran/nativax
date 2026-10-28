@@ -61,6 +61,13 @@ add_library(nativax_gfx STATIC
 target_include_directories(nativax_gfx PUBLIC include)
 target_link_libraries(nativax_gfx PUBLIC nativax_core nativax_sokol)
 
+# Application host: DOM bindings over the JavaScriptCore engine layer.
+add_library(nativax_app STATIC
+  src/js_dom.c
+)
+target_include_directories(nativax_app PUBLIC include)
+target_link_libraries(nativax_app PUBLIC nativax_js)
+
 # ---- runtime binary ----------------------------------------------------------
 add_executable(nativax-runtime
   src/main_sokol.c
@@ -127,6 +134,12 @@ target_link_libraries(nativax_bench PRIVATE nativax_core)
 # keep the bench honest: it must run in CI too (tiny scene, exit-code checked)
 add_test(NAME bench_smoke
   COMMAND nativax_bench --w 320 --h 200 --cards 2 --text 12 --iters 2)
+
+add_executable(nativax_bindings_tests
+  tests/test_bindings.c
+)
+target_link_libraries(nativax_bindings_tests PRIVATE nativax_app)
+add_test(NAME unit_bindings COMMAND nativax_bindings_tests)
 
 # Windowed GPU smoke: only when a display is available at configure time.
 if(DEFINED ENV{DISPLAY})

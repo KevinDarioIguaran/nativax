@@ -1347,3 +1347,94 @@ bool cs_media_matches(const char* cond, const CsMediaState* st) {
 
 
 
+
+/* ---- standalone declaration lists ---------------------------------------- */
+
+CsDeclList* cs_decls_parse(const char* text, int len) {
+    if (!text || len <= 0) return NULL;
+    CsDeclList* list = (CsDeclList*)calloc(1, sizeof(*list));
+    if (!list) return NULL;
+    list->src = (char*)malloc((size_t)len + 1);
+    if (!list->src) {
+        free(list);
+        return NULL;
+    }
+    memcpy(list->src, text, (size_t)len);
+    list->src[len] = '\0';
+    if (!cs_tokenize(list->src, len, &list->toks)) {
+        free(list->src);
+        free(list);
+        return NULL;
+    }
+
+    int i = 0;
+    int n = list->toks.count;
+    while (i < n) {
+        CsTokKind k = list->toks.toks[i].kind;
+        if (k == CS_WS || k == CS_SEMI) {
+            i++;
+            continue;
+        }
+        if (k != CS_IDENT) {
+            i++; /* unrecoverable token: skip it (error recovery) */
+            continue;
+        }
+        int name_tok = i++;
+        while (i < n && list->toks.toks[i].kind == CS_WS) i++;
+        if (i >= n || list->toks.toks[i].kind != CS_COLON) continue;
+        i++; /* ':' */
+        int val_start = i;
+        int val_end = i;
+        int depth = 0;
+        while (i < n) {
+            CsTokKind vk = list->toks.toks[i].kind;
+            if (vk == CS_SEMI && depth == 0) break;
+            if (vk == CS_LPAREN || vk == CS_FUNCTION) depth++;
+            else if (vk == CS_RPAREN && depth > 0) depth--;
+            i++;
+            val_end = i;
+        }
+        if (i < n && list->toks.toks[i].kind == CS_SEMI) i++; /* consume ';' */
+
+        while (val_start < val_end && list->toks.toks[val_start].kind == CS_WS) val_start++;
+        while (val_end > val_start && list->toks.toks[val_end - 1].kind == CS_WS) val_end--;
+
+        /* trailing "!important" belongs to the declaration, not the value */
+        bool important = false;
+        if (val_end - val_start >= 2) {
+            const CsTok* last = &list->toks.toks[val_end - 1];
+            const CsTok* bang = &list->toks.toks[val_end - 2];
+            if (last->kind == CS_IDENT && cs_is_ident(last, "important") &&
+                bang->kind == CS_DELIM && bang->len == 1 && bang->s && bang->s[0] == '!') {
+                important = true;
+                val_end -= 2;
+                while (val_end > val_start && list->toks.toks[val_end - 1].kind == CS_WS) val_end--;
+            }
+        }
+        if (val_end == val_start) continue;
+
+        if (list->count == list->cap) {
+            int nc = list->cap ? list->cap * 2 : 8;
+            CsDecl* nd = (CsDecl*)realloc(list->decls, (size_t)nc * sizeof(CsDecl));
+            if (!nd) break;
+            list->decls = nd;
+            list->cap = nc;
+        }
+        CsTok* nt = &list->toks.toks[name_tok];
+        CsDecl* nd = &list->decls[list->count++];
+        nd->name = nt->str;
+        nd->name_len = (int)strlen(nt->str);
+        nd->toks = &list->toks.toks[val_start];
+        nd->ntoks = val_end - val_start;
+        nd->important = important;
+    }
+    return list;
+}
+
+void cs_decls_free(CsDeclList* list) {
+    if (!list) return;
+    cs_tokens_free(&list->toks);
+    free(list->src);
+    free(list->decls);
+    free(list);
+}

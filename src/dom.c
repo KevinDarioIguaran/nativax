@@ -537,12 +537,27 @@ bool nx_node_destroy(NxDocument* doc, NxNodeRef node) {
 }
 
 /* ---- ids & queries ---- */
+/* Detached subtrees keep their slots (and ids) until destroyed, but they are
+   no longer part of the document: queries must not return them. */
+static bool slot_attached(NxDocument* doc, int32_t idx) {
+    int guard = 0;
+    while (idx >= 0 && guard++ <= NX_MAX_DEPTH) {
+        NxNode* n = &doc->nodes[idx];
+        if (n->type == 0) return false;
+        if (n->type == NX_NODE_DOCUMENT) return true;
+        idx = n->parent;
+    }
+    return false;
+}
+
 NxNodeRef nx_doc_get_element_by_id(NxDocument* doc, const char* id) {
     if (!doc || !id) return 0;
     int32_t idx = idmap_get(doc, id);
     if (idx < 0) return 0;
     NxNode* n = slot(doc, handle_of(doc, idx));
-    return n && n->type == NX_NODE_ELEMENT ? handle_of(doc, idx) : 0;
+    if (!n || n->type != NX_NODE_ELEMENT) return 0;
+    if (!slot_attached(doc, idx)) return 0;
+    return handle_of(doc, idx);
 }
 
 /* Selector parts store raw (ptr,len) slices of the caller's selector string,

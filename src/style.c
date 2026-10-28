@@ -617,8 +617,10 @@ static void cand_sort(Cand* c, int n) {
 /* Recursive resolver: carries the parent style down the tree. */
 static void resolve_node(NxDocument* doc, NxNodeRef node, const NxComputedStyle* parent,
                          NxComputedStyle* styles, const CsSheet* const* sheets,
-                         int sheet_count, float viewport_w, float font_size, int depth) {
+                         int sheet_count, float viewport_w, float font_size, int depth,
+                         int cap) {
     if (depth > NX_MAX_DEPTH) return;
+    if (nx_node_index(node) >= cap) return;
     NxNodeType t = nx_node_type(doc, node);
     if (t == NX_NODE_ELEMENT) {
         NxComputedStyle* st = &styles[nx_node_index(node)];
@@ -662,12 +664,18 @@ static void resolve_node(NxDocument* doc, NxNodeRef node, const NxComputedStyle*
                 const CsDecl* d = &cands[i].rule->decls[di];
                 if (d->important) apply_decl(st, d, st->font_size);
             }
+
+        /* inline style attribute: author origin, most specific (applied last,
+           so script-driven style writes win over stylesheet rules) */
+        const char* inline_style = nx_node_get_attr(doc, node, "style");
+        if (inline_style && *inline_style)
+            nx_style_apply_declarations(st, inline_style, (int)strlen(inline_style));
         parent = st;
     }
     for (NxNodeRef c = nx_node_first_child(doc, node); c;
          c = nx_node_next_sibling(doc, c))
         resolve_node(doc, c, parent, styles, sheets, sheet_count, viewport_w, font_size,
-                     depth + 1);
+                     depth + 1, cap);
 }
 
 NxComputedStyle* nx_style_resolve(NxDocument* doc, const CsSheet* const* sheets, int sheet_count,
@@ -680,8 +688,38 @@ NxComputedStyle* nx_style_resolve(NxDocument* doc, const CsSheet* const* sheets,
     style_init(&styles[nx_node_index(root)], default_font_size);
     styles[nx_node_index(root)].display = NX_DISPLAY_BLOCK;
     resolve_node(doc, root, &styles[nx_node_index(root)], styles, sheets, sheet_count,
-                 viewport_w, default_font_size, 0);
+                 viewport_w, default_font_size, 0, NX_MAX_NODES);
     return styles;
+}
+
+bool nx_style_resolve_into(NxDocument* doc, const CsSheet* const* sheets, int sheet_count,
+                           float viewport_w, float default_font_size, NxComputedStyle* out,
+                           int cap) {
+    if (!doc || !out || cap <= 0) return false;
+    memset(out, 0, sizeof(NxComputedStyle) * (size_t)cap);
+    NxNodeRef root = nx_doc_root(doc);
+    if (nx_node_index(root) >= cap) return false;
+    style_init(&out[nx_node_index(root)], default_font_size);
+    out[nx_node_index(root)].display = NX_DISPLAY_BLOCK;
+    resolve_node(doc, root, &out[nx_node_index(root)], out, sheets, sheet_count, viewport_w,
+                 default_font_size, 0, cap);
+    return true;
+}
+
+bool nx_style_apply_declarations(NxComputedStyle* st, const char* text, int len) {
+    if (!st || !text || len <= 0) return false;
+    CsDeclList* list = cs_decls_parse(text, len);
+    if (!list) return false;
+    for (int i = 0; i < list->count; i++) {
+        const CsDecl* d = &list->decls[i];
+        if (!d->important) apply_decl(st, d, st->font_size);
+    }
+    for (int i = 0; i < list->count; i++) {
+        const CsDecl* d = &list->decls[i];
+        if (d->important) apply_decl(st, d, st->font_size);
+    }
+    cs_decls_free(list);
+    return true;
 }
 
 /* ---- inline <style> sheets --------------------------------------------- */

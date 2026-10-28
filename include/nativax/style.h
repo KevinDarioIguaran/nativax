@@ -76,10 +76,25 @@ bool nx_selector_matches(NxDocument* doc, NxNodeRef el, const CsGroup* grp);
    (cs_sheet_free). <link rel=stylesheet> is not fetched in v1 (documented). */
 int nx_style_collect_inline(NxDocument* doc, CsSheet** out, int cap);
 
+/* Apply a declaration list (a style="" attribute's contents) on top of an
+   already-computed style, as the last and most specific author declarations.
+   !important declarations are applied after the normal ones. Returns false
+   when the text could not be tokenized. */
+bool nx_style_apply_declarations(NxComputedStyle* st, const char* text, int len);
+
 /* Resolve styles for every element under root (inclusive when root is an
    element). Returns a heap array of NX_MAX_NODES entries; free with free().
-   Index entries with nx_node_index(handle); non-element slots are zeroed. */
+   Index entries with nx_node_index(handle); non-element slots are zeroed.
+   Inline style attributes participate in the cascade (after author rules). */
 NxComputedStyle* nx_style_resolve(NxDocument* doc, const CsSheet* const* sheets, int sheet_count,
                                   float viewport_w, float default_font_size);
+
+/* Resolve into a caller-provided array of `cap` entries (zeroed first).
+   Nodes whose slot is >= cap are skipped. cap should be at least
+   nx_node_slot_bound(doc)+1; the hot-reload path reuses the layout's array so
+   restyling does not allocate a second full copy. */
+bool nx_style_resolve_into(NxDocument* doc, const CsSheet* const* sheets, int sheet_count,
+                           float viewport_w, float default_font_size, NxComputedStyle* out,
+                           int cap);
 
 #endif /* NATIVAX_STYLE_H */
