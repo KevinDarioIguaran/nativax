@@ -44,7 +44,7 @@ def main():
     res = json.loads(buf.getvalue())
     res["rendered"] = str(out)
     res["gate"] = "PASS" if (res["changed_percent"] <= args.max_changed_percent) else "FAIL"
-    print(json.dumps(res, indent=2))
+    print(json.dumps(res, separators=(",", ":")))
     raise SystemExit(0 if res["gate"] == "PASS" else 1)
 
 

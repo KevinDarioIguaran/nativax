@@ -45,7 +45,7 @@ def compare(ref_path: Path, actual_path: Path, diff_path: Path | None, tolerance
     if diff_path:
         diff.save(diff_path)
         result["diff_image"] = str(diff_path)
-    print(json.dumps(result, indent=2))
+    print(json.dumps(result, separators=(",", ":")))
     return 0 if changed == 0 else 1
 
 
