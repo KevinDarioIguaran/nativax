@@ -76,7 +76,7 @@
     "note": "CPU reference rasterizer (headless/goldens), not the GPU path; it bounds worst-case software rendering, not Sokol presentation cost"
   },
   "tests": {
-    "ctest_suites": 12,
+    "ctest_suites": 13,
     "passed": 12,
     "failed": 0,
     "includes": [
@@ -84,6 +84,7 @@
       "headless_render",
       "unit_render",
       "unit_js",
+      "unit_bindings",
       "unit_dom",
       "unit_css",
       "unit_debug",

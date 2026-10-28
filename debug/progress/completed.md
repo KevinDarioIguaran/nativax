@@ -13,3 +13,9 @@
 - Screenshot determinism: PASS (0% diff).
 - Pulled native-c-sokol e269f95; fixed gpu_smoke test defect (X11 resize tolerance).
 - Render baseline recorded: 14.57 ms/frame, 4.4 Mpix/s CPU raster.
+- Phase 8 complete (2026-10-28): HTTP/WebSocket dev server with inotify watcher, RFC 6455 handshake + broadcast verified, hot-reload client, `nativax` CLI (init/dev/build/run/test/bench/clean).
+- JS↔DOM bindings (document, mutation, attributes, textContent/innerHTML, style, classList, events) with native primitives + JS prelude; inline style="" joins the cascade.
+- Application host: HTML→CSS→style→layout→paint with script mutation invalidation, click hit-testing, and css/js/document reload paths.
+- Live-verified dev loop: css reload, js reload and native incremental rebuild+relaunch (debug/reports/phase8-hot-reload.md).
+- Memory optimization: style arrays sized to the document + in-place restyle; windowed example peak RSS 120.8 MB → 100.2-100.5 MB (benchmarks/baseline.json).
+- ctest: 13/13 PASS (adds headless_render, unit_app, unit_bindings, unit_devserver).
