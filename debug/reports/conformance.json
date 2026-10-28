@@ -1,0 +1,52 @@
+{
+  "results": [
+    {
+      "domain": "html_dom",
+      "id": "basic-elements",
+      "ok": true,
+      "stderr": ""
+    },
+    {
+      "domain": "html_dom",
+      "id": "attributes",
+      "ok": true,
+      "stderr": ""
+    },
+    {
+      "domain": "html_dom",
+      "id": "text-nodes",
+      "ok": true,
+      "stderr": ""
+    },
+    {
+      "domain": "css",
+      "id": "selectors",
+      "ok": true,
+      "stderr": ""
+    },
+    {
+      "domain": "css",
+      "id": "flexbox",
+      "ok": true,
+      "stderr": ""
+    },
+    {
+      "domain": "css",
+      "id": "transform",
+      "ok": true,
+      "stderr": ""
+    },
+    {
+      "domain": "javascript",
+      "id": "dom-mutation",
+      "ok": true,
+      "stderr": ""
+    },
+    {
+      "domain": "javascript",
+      "id": "events",
+      "ok": true,
+      "stderr": ""
+    }
+  ]
+}
