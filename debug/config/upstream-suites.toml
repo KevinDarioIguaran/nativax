@@ -1,0 +1,21 @@
+[[suite]]
+id = "html5lib-tests"
+repository = "https://github.com/html5lib/html5lib-tests"
+revision = "c777c408b61078ea2eb4acefc2535f54dbc8b28a"
+license = "MIT"
+status = "imported-tokenizer-only"
+notes = "Tokenizer tests imported under debug/upstream/imported/html5lib-tests. Native tokenizer adapter pending."
+
+[[suite]]
+id = "wpt"
+repository = "https://github.com/web-platform-tests/wpt"
+revision = "07ce6e987a1606aec4dc84ef80062d9797330e0b"
+license = "BSD-3-Clause"
+status = "planned"
+
+[[suite]]
+id = "test262"
+repository = "https://github.com/tc39/test262"
+revision = "0b4e0812022b18236b5276d2804948fdd9f71603"
+license = "BSD"
+status = "planned"

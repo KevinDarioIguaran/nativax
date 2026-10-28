@@ -1,0 +1,18 @@
+<#document>
+  <html>
+    <head>
+      <meta charset="utf-8">
+      text "\n"
+      <script src="/resources/testharness.js">
+      text "\n"
+      <script src="/resources/testharnessreport.js">
+      text "\n"
+      <title>
+        text "pass-append-child"
+      text "\n"
+    <body>
+      <div id="host">
+      text "\n"
+      <script>
+        text "\ntest(() => {\n  const host = document.getElementById("host");\n  const child = document.createEle..."
+      text "\n"

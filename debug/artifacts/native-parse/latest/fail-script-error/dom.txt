@@ -1,0 +1,16 @@
+<#document>
+  <html>
+    <head>
+      <meta charset="utf-8">
+      text "\n"
+      <script src="/resources/testharness.js">
+      text "\n"
+      <script src="/resources/testharnessreport.js">
+      text "\n"
+      <title>
+        text "fail-script-error"
+      text "\n"
+      <script>
+        text "\nthrow new Error("top-level script error before any test");\n"
+      text "\n"
+    <body>

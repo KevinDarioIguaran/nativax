@@ -1,0 +1,16 @@
+<#document>
+  <html>
+    <head>
+      <meta charset="utf-8">
+      text "\n"
+      <script src="/resources/testharness.js">
+      text "\n"
+      <script src="/resources/testharnessreport.js">
+      text "\n"
+      <title>
+        text "pass-async-done"
+      text "\n"
+      <script>
+        text "\nasync_test(t => {\n  setTimeout(t.step_func_done(() => { assert_true(true); }), 0);\n}, "async su..."
+      text "\n"
+    <body>

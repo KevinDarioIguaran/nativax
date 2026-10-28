@@ -1,0 +1,16 @@
+<#document>
+  <html>
+    <head>
+      <meta charset="utf-8">
+      text "\n"
+      <script src="/resources/testharness.js">
+      text "\n"
+      <script src="/resources/testharnessreport.js">
+      text "\n"
+      <title>
+        text "skip-precondition"
+      text "\n"
+      <script>
+        text "\ntest(() => {\n  assert_implements_optional(false, "optional feature missing");\n  assert_true(tru..."
+      text "\n"
+    <body>

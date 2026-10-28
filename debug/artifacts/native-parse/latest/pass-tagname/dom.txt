@@ -1,0 +1,16 @@
+<#document>
+  <html>
+    <head>
+      <meta charset="utf-8">
+      text "\n"
+      <script src="/resources/testharness.js">
+      text "\n"
+      <script src="/resources/testharnessreport.js">
+      text "\n"
+      <title>
+        text "pass-tagname"
+      text "\n"
+      <script>
+        text "\ntest(() => {\n  assert_equals(document.createElement("div").tagName, "DIV");\n}, "createElement i..."
+      text "\n"
+    <body>

@@ -1,0 +1,9 @@
+[
+  {"id": "native.smoke.headless", "suite": "smoke", "command": "ctest -R smoke_headless", "status": "PASS"},
+  {"id": "native.render.unit", "suite": "render", "command": "ctest -R unit_render", "status": "PASS"},
+  {"id": "native.js.unit", "suite": "javascript", "command": "ctest -R unit_js", "status": "PASS"},
+  {"id": "native.dom.unit", "suite": "dom", "command": "ctest -R unit_dom", "status": "PASS"},
+  {"id": "native.css.unit", "suite": "css", "command": "ctest -R unit_css", "status": "PASS"},
+  {"id": "native.debug.unit", "suite": "debug", "command": "ctest -R unit_debug", "status": "PASS"},
+  {"id": "native.gpu.smoke", "suite": "render", "command": "ctest -R gpu_window_screenshot", "status": "PASS"}
+]

@@ -1,0 +1,11 @@
+[lab]
+name = "nativax-native"
+root = "."
+implementation = "c11-sokol"
+reference = "chromium"
+
+[paths]
+build = "build"
+build_asan = "build-asan"
+artifacts = "debug/artifacts"
+reports = "debug/reports"

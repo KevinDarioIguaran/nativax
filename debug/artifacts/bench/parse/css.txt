@@ -1,0 +1,23 @@
+# file: /home/k3vin/Desktop/native/debug/cases/smoke.css
+# rules=6 dropped_rules=1 dropped_decls=1
+[0] h1 (0,0,1), .title (0,1,0) {
+      color: #112233
+      margin: 0 auto
+    }
+[1] #t (1,0,0) {
+      font-weight: bold
+    }
+[2] p (0,0,1) {
+      width: 600px !important
+    }
+[3] @media (min-width: 600px) {
+      selector: li (0,0,1)
+      list-style-type: square
+    }
+[4] li::after (0,0,1) {
+      (pseudo-element rule)
+      content: "!"
+    }
+[5] p (0,0,1) {
+      padding: 4px
+    }
