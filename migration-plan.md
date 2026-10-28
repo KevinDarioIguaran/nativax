@@ -120,6 +120,7 @@ documented in `docs/platforms.md`, not yet validated.
 | 10 — validation and documentation | `bc4e51a` docs: architecture, dependencies, plan, risks and baseline |
 | 1 — audit closure (re-measured baseline) | `b07fe97` docs(audit): close phase 1 with re-verified measurements |
 | 2 — native platform layer + normalized input | `74af76a` feat(platform): native platform layer and normalized input (phase 2) |
+| 3 — renderer effects (opacity layers, transforms, border-radius, overflow) | `c041a29` feat(renderer): opacity layers, transforms, border-radius, overflow (phase 3) |
 
 Phases 5 and 6 (HTML/DOM/CSS/layout subsystems) were already present on the
 branch and are extended by the phase 4 commit (inline style cascade) and the
