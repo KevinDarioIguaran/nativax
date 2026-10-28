@@ -1,21 +1,54 @@
-# NativaX Native Debug Laboratory
+# Debug laboratory
 
-This directory contains the quality laboratory for the native C11 + Sokol
-implementation of NativaX located at `/home/k3vin/Desktop/native`.
+This directory contains the NativaX debug laboratory. It is the single,
+honest entry point for exercising the engine: nothing is simulated and every
+case either passes against artifacts produced by the real binaries or is
+reported as `blocked` because the capability does not exist.
 
-Scope:
-- Native C11 runtime only.
-- No Dart, Flutter, WebView, or embedded browser runtime.
-- JavaScript runs through JavaScriptCore.
+## Layout
 
-Primary entry point:
-
-```bash
-python3 debug/run.py doctor
-python3 debug/run.py build
-python3 debug/run.py test --suite smoke
-python3 debug/run.py report
+```
+debug/
+  bootstrap.py          # installs deps, builds, smoke-tests, writes lab/env.json
+  lab/
+    harness.py          # case registry, DOM/selector engine, Page/Lab, assertions
+    run_lab.py          # CLI runner
+    sections/           # s01_html_dom.py ... s16_*.py (100 cases each)
+    cases/              # s01/001 .. s16/100, each with index.html, style.css, app.js
+  artifacts/lab/        # git-ignored run cache
+  reports/lab/          # generated JSON + Markdown reports (git-ignored)
 ```
 
-Generated artifacts are written under `debug/artifacts/` and are not source code.
-`debug/artifacts/` is ignored by version control.
+## Quick start
+
+```bash
+python3 debug/bootstrap.py          # install deps + build + smoke test
+python3 debug/lab/run_lab.py --list # show sections and case counts
+python3 debug/lab/run_lab.py --section 1
+python3 debug/lab/run_lab.py --all   # 1600 cases, ~minutes
+```
+
+## Case convention
+
+- Every case lives in its own numbered folder `debug/lab/cases/sNN/NNN/`.
+- Each folder contains exactly three real files: `index.html`, `style.css`, `app.js`.
+- Nothing is generated at run time: the laboratory runs `build/nativax-debug` and
+  `build/nativax-runtime` over those files.
+- All test names, descriptions, messages and fixture copy are in English.
+- Responsive checks sweep widths 320..1280 px in 50 px steps for every folder and
+  fail on horizontal overflow.
+
+## Useful flags
+
+- `--filter SUBSTR` filter case ids/names
+- `--strict` treat `blocked` as failure
+- `--no-responsive` skip the width sweep (debugging only)
+- `--min-per-section N` enforce a minimum case count
+- `--json` print the summary JSON
+
+## Environment
+
+`debug/bootstrap.py --check` verifies the toolchain without installing anything.
+`debug/lab/env.json` records the detected environment (git-ignored).
+EOF
+echo written
