@@ -310,7 +310,112 @@ static void test_text_pages(void) {
     reset_all_state();
 }
 
-/* ---- phase 3 renderer effects ---- */
+static void check_golden_png(const char* name, NxRaster* r) {
+    char golden_path[512], cur_path[512];
+    snprintf(golden_path, sizeof(golden_path), "%s/tests/goldens/%s.png", NATIVAX_SOURCE_DIR, name);
+    snprintf(cur_path, sizeof(cur_path), "/tmp/nativax_%s.png", name);
+    nx_raster_write_png(r, cur_path);
+    int gw, gh, gc;
+    unsigned char* golden = stbi_load(golden_path, &gw, &gh, &gc, 4);
+    if (!golden) {
+        char cmd[1200];
+        snprintf(cmd, sizeof(cmd), "mkdir -p '%s/tests/goldens' && cp '%s' '%s'", NATIVAX_SOURCE_DIR, cur_path, golden_path);
+        CHECK(system(cmd) == 0, "golden created: %s (COMMIT)", golden_path);
+        fprintf(stderr, "NOTICE: golden %s created\n", golden_path);
+    } else {
+        CHECK(gw == r->width && gh == r->height, "golden size %s", name);
+        if (gw == r->width && gh == r->height) {
+            long off = 0, total = (long)gw * gh;
+            for (long i = 0; i < total; i++) {
+                int bad = 0;
+                for (int c = 0; c < 4; c++) {
+                    if (abs((int)golden[i*4+c] - (int)r->pixels[i*4+c]) > 3) { bad = 1; break; }
+                }
+                if (bad) off++;
+            }
+            double pct = 100.0 * off / total;
+            CHECK(pct <= 0.5, "golden %s diff %.3f%%", name, pct);
+        }
+        stbi_image_free(golden);
+    }
+}
+
+/* ---- extra visual regression scenes ---- */
+static void test_vr_flex(void) {
+    reset_all_state();
+    int32_t font = nx_font_load(font_path());
+    if (font < 0) return;
+    NxDisplayList dl; nx_dl_init(&dl); nx_dl_reset(&dl);
+    /* page bg */
+    nx_dl_fill_rect(&dl, 0, 0, 320, 200, (NxColor){0.94f,0.95f,0.97f,1}, NULL);
+    /* flex container simulated via display list: three rects with gap */
+    nx_dl_fill_rect(&dl, 20, 20, 90, 40, (NxColor){0.23f,0.36f,1.0f,1}, NULL);
+    nx_dl_fill_rect(&dl, 120, 20, 90, 40, (NxColor){0.23f,0.36f,1.0f,1}, NULL);
+    nx_dl_fill_rect(&dl, 220, 20, 80, 40, (NxColor){0.23f,0.36f,1.0f,1}, NULL);
+    NxRaster r; nx_raster_init(&r, 320, 200); nx_raster_clear(&r, (NxColor){1,1,1,1});
+    nx_raster_run(&r, &dl);
+    check_golden_png("vr_flex", &r);
+    nx_raster_free(&r); nx_dl_free(&dl); reset_all_state();
+}
+
+static void test_vr_opacity_transform(void) {
+    reset_all_state();
+    NxDisplayList dl; nx_dl_init(&dl); nx_dl_reset(&dl);
+    nx_dl_fill_rect(&dl, 0, 0, 320, 200, (NxColor){0.1f,0.1f,0.15f,1}, NULL);
+    nx_dl_begin_layer(&dl, 0.6f);
+    float rad[4]={16,16,16,16};
+    nx_dl_fill_rect(&dl, 40, 40, 200, 80, (NxColor){0.9f,0.3f,0.3f,1}, rad);
+    nx_dl_end_layer(&dl);
+    NxMat2x3 m = nx_mat_translate(20, 0);
+    nx_dl_push_transform(&dl, &m);
+    nx_dl_fill_rect(&dl, 40, 140, 120, 40, (NxColor){0.3f,0.8f,0.4f,1}, NULL);
+    nx_dl_pop_transform(&dl);
+    NxRaster r; nx_raster_init(&r, 320, 200); nx_raster_clear(&r, (NxColor){0,0,0,1});
+    nx_raster_run(&r, &dl);
+    check_golden_png("vr_opacity_transform", &r);
+    nx_raster_free(&r); nx_dl_free(&dl); reset_all_state();
+}
+
+static void test_vr_overflow(void) {
+    reset_all_state();
+    NxDisplayList dl; nx_dl_init(&dl); nx_dl_reset(&dl);
+    nx_dl_fill_rect(&dl, 0, 0, 320, 200, (NxColor){0.95f,0.95f,0.95f,1}, NULL);
+    nx_dl_push_clip(&dl, 50, 50, 120, 60);
+    nx_dl_fill_rect(&dl, 40, 40, 200, 100, (NxColor){0.2f,0.5f,0.9f,1}, NULL);
+    nx_dl_pop_clip(&dl);
+    NxRaster r; nx_raster_init(&r, 320, 200); nx_raster_clear(&r, (NxColor){1,1,1,1});
+    nx_raster_run(&r, &dl);
+    check_golden_png("vr_overflow", &r);
+    nx_raster_free(&r); nx_dl_free(&dl); reset_all_state();
+}
+
+static void test_vr_text_align(void) {
+    reset_all_state();
+    int32_t font = nx_font_load(font_path());
+    if (font < 0) return;
+    NxDisplayList dl; nx_dl_init(&dl); nx_dl_reset(&dl);
+    nx_dl_fill_rect(&dl, 0, 0, 320, 200, (NxColor){1,1,1,1}, NULL);
+    NxColor c = (NxColor){0,0,0,1};
+    nx_dl_text(&dl, 0, 30, font, 16, c, "left aligned", 12);
+    NxRaster r; nx_raster_init(&r, 320, 200); nx_raster_clear(&r, (NxColor){1,1,1,1});
+    nx_raster_run(&r, &dl);
+    check_golden_png("vr_text_align", &r);
+    nx_raster_free(&r); nx_dl_free(&dl); reset_all_state();
+}
+
+static void test_vr_borders(void) {
+    reset_all_state();
+    NxDisplayList dl; nx_dl_init(&dl); nx_dl_reset(&dl);
+    nx_dl_fill_rect(&dl, 0, 0, 320, 200, (NxColor){0.9f,0.9f,0.9f,1}, NULL);
+    float rad[4]={10,10,10,10};
+    nx_dl_stroke_rect(&dl, 20, 20, 120, 60, (NxColor){0.8f,0.2f,0.2f,1}, rad, 3);
+    nx_dl_stroke_rect(&dl, 160, 20, 120, 60, (NxColor){0.2f,0.2f,0.8f,1}, NULL, 2);
+    NxRaster r; nx_raster_init(&r, 320, 200); nx_raster_clear(&r, (NxColor){1,1,1,1});
+    nx_raster_run(&r, &dl);
+    check_golden_png("vr_borders", &r);
+    nx_raster_free(&r); nx_dl_free(&dl); reset_all_state();
+}
+
 static void test_effects(void) {
     reset_all_state();
     int32_t font = nx_font_load(font_path());
@@ -449,6 +554,11 @@ int main(int argc, char** argv) {
     test_raster_golden();
     test_text_pages();
     test_effects();
+    test_vr_flex();
+    test_vr_opacity_transform();
+    test_vr_overflow();
+    test_vr_text_align();
+    test_vr_borders();
 
     fprintf(stderr, "%d checks, %d failures\n", g_checks, g_failures);
     return g_failures == 0 ? 0 : 1;
