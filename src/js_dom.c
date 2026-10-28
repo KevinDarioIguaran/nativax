@@ -781,11 +781,15 @@ static const char* PRELUDE =
     "    var t = wrap(N.__nx_query(N.__nx_doc_id(), 'title'));\n"
     "    if (t) t.textContent = String(v);\n"
     "  });\n"
-    "  globalThis.__nxMakeEvent = function(type, targetId, currentId){\n"
+    "  globalThis.__nxMakeEvent = function(type, targetId, currentId, key, x, y){\n"
     "    return {\n"
     "      type: type,\n"
     "      target: wrap(targetId),\n"
     "      currentTarget: wrap(currentId),\n"
+    "      key: (typeof key === 'number') ? key : undefined,\n"
+    "      keyCode: (typeof key === 'number') ? key : 0,\n"
+    "      clientX: (typeof x === 'number') ? x : 0,\n"
+    "      clientY: (typeof y === 'number') ? y : 0,\n"
     "      defaultPrevented: false,\n"
     "      stopPropagation: function(){ N.__nx_stop(); },\n"
     "      preventDefault: function(){ N.__nx_prevent(); this.defaultPrevented = true; }\n"
@@ -815,18 +819,21 @@ static const char* PRELUDE =
 /* ---- public API ---------------------------------------------------------- */
 
 static JSValueRef make_event(NxDomBindings* b, NxNodeRef target, NxNodeRef current,
-                             const char* type) {
+                             const char* type, const NxEventPayload* payload) {
     JSContextRef ctx = ctx_of(b);
     JSStringRef key = JSStringCreateWithUTF8CString("__nxMakeEvent");
     JSValueRef fnv =
         JSObjectGetProperty(ctx, JSContextGetGlobalObject(ctx), key, NULL);
     JSStringRelease(key);
     if (!fnv || !JSValueIsObject(ctx, fnv)) return NULL;
-    JSValueRef args[3];
+    JSValueRef args[6];
     args[0] = nx_js_string(ctx, type);
     args[1] = JSValueMakeNumber(ctx, (double)target);
     args[2] = JSValueMakeNumber(ctx, (double)current);
-    return JSObjectCallAsFunction(ctx, (JSObjectRef)fnv, NULL, 3, args, NULL);
+    args[3] = payload ? JSValueMakeNumber(ctx, (double)payload->key) : JSValueMakeUndefined(ctx);
+    args[4] = payload ? JSValueMakeNumber(ctx, (double)payload->x) : JSValueMakeUndefined(ctx);
+    args[5] = payload ? JSValueMakeNumber(ctx, (double)payload->y) : JSValueMakeUndefined(ctx);
+    return JSObjectCallAsFunction(ctx, (JSObjectRef)fnv, NULL, 6, args, NULL);
 }
 
 NxDomBindings* nx_dom_bind_new(NxJs* js, NxDocument* doc) {
@@ -871,6 +878,11 @@ void nx_dom_bind_free(NxDomBindings* b) {
 int nx_dom_listener_count(const NxDomBindings* b) { return b ? b->listener_count : 0; }
 
 bool nx_dom_dispatch_js(NxDomBindings* b, NxNodeRef target, const char* type) {
+    return nx_dom_dispatch_js_event(b, target, type, NULL);
+}
+
+bool nx_dom_dispatch_js_event(NxDomBindings* b, NxNodeRef target, const char* type,
+                              const NxEventPayload* payload) {
     if (!b || !target || !type) return false;
     NxDocument* doc = b->doc;
     NxNodeRef path[NX_MAX_DEPTH];
@@ -885,7 +897,7 @@ bool nx_dom_dispatch_js(NxDomBindings* b, NxNodeRef target, const char* type) {
         for (int j = 0; j < b->listener_count && !b->stop; j++) {
             if (b->listeners[j].node != path[i] || strcmp(b->listeners[j].type, type) != 0)
                 continue;
-            JSValueRef ev = make_event(b, target, path[i], type);
+            JSValueRef ev = make_event(b, target, path[i], type, payload);
             if (!ev) continue;
             JSValueRef exc = NULL;
             JSObjectCallAsFunction(ctx, b->listeners[j].fn, NULL, 1, &ev, &exc);

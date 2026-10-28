@@ -512,7 +512,11 @@ bool nx_app_pointer(NxApp* app, float x, float y, bool down) {
     if (!app || !app->lay || !app->bind) return false;
     NxNodeRef target = hit_box(app->lay->root, x, y);
     if (!target) return false;
-    if (down) nx_dom_dispatch_js(app->bind, target, "click");
+    if (down) {
+        NxEventPayload pl = {0};
+        pl.x = x; pl.y = y; pl.button = 0;
+        nx_dom_dispatch_js_event(app->bind, target, "click", &pl);
+    }
     return true;
 }
 
@@ -520,7 +524,9 @@ bool nx_app_pointer_move(NxApp* app, float x, float y) {
     if (!app || !app->lay || !app->bind) return false;
     NxNodeRef target = hit_box(app->lay->root, x, y);
     if (!target) return false;
-    nx_dom_dispatch_js(app->bind, target, "pointermove");
+    NxEventPayload pl = {0};
+    pl.x = x; pl.y = y; pl.button = 0;
+    nx_dom_dispatch_js_event(app->bind, target, "pointermove", &pl);
     return true;
 }
 
@@ -530,7 +536,9 @@ bool nx_app_key(NxApp* app, int key, bool down) {
     NxNodeRef target = nx_doc_query_selector(app->doc, "body");
     if (!target) target = nx_doc_root(app->doc);
     if (!target) return false;
-    return nx_dom_dispatch_js(app->bind, target, down ? "keydown" : "keyup");
+    NxEventPayload pl = {0};
+    pl.key = key;
+    return nx_dom_dispatch_js_event(app->bind, target, down ? "keydown" : "keyup", &pl);
 }
 
 /* ---- hot reload ---------------------------------------------------------- */

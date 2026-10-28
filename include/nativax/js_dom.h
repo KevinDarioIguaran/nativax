@@ -37,9 +37,19 @@ void nx_dom_bind_free(NxDomBindings* b);
 /* Mutation hook: fired after every script write that can affect rendering. */
 void nx_dom_bind_set_mutation_cb(NxDomBindings* b, void (*cb)(void* user), void* user);
 
+/* Payload carried into the JS event object. NULL-safe: missing fields become
+   0 / empty. key is a platform key code (NxKey), x/y are CSS px. */
+typedef struct NxEventPayload {
+    int key;
+    float x, y;
+    int button;
+} NxEventPayload;
+
 /* Route an event through script listeners: target first, then ancestors.
-   Returns true when default was not prevented. */
+   Returns true when default was not prevented. `payload` may be NULL. */
 bool nx_dom_dispatch_js(NxDomBindings* b, NxNodeRef target, const char* type);
+bool nx_dom_dispatch_js_event(NxDomBindings* b, NxNodeRef target, const char* type,
+                              const NxEventPayload* payload);
 
 /* Number of listeners currently registered (diagnostics/tests). */
 int nx_dom_listener_count(const NxDomBindings* b);
