@@ -5,8 +5,9 @@
     JavaScript engine layer — JavaScriptCore only (AGENTS.md non-negotiable).
 
     Links the system JavaScriptCoreGTK via its C API (pkg-config
-    javascriptcoregtk-4.1 on Linux; the same contract the Dart JscEngine
-    drives through dart:ffi). This module is the only place allowed to hold
+    javascriptcoregtk-4.1 on Linux). This is a native C implementation of the
+    contract the V1 runtime exposed through an FFI bridge; no FFI, Dart or
+    Flutter code participates. This module is the only place allowed to hold
     JSValueRef; everything above it (DOM bindings, host APIs) exchanges only
     ids, scalars and JSON strings — never engine values across the boundary.
 */

@@ -1,0 +1,26 @@
+{
+  "date": "2026-10-28",
+  "phase": 1,
+  "kind": "audit-remeasurement",
+  "environment": "Xvfb :99, llvmpipe Mesa 25.2.8 / LLVM 20.1, gcc 13.3, JSC 2.52.6",
+  "commands": {
+    "headless": "nativax-runtime --headless --root examples/counter --frames 60 --mem --stats",
+    "windowed": "DISPLAY=:99 nativax-runtime --root examples/counter --frames 120 --mem --stats",
+    "minimal": "DISPLAY=:99 nativax-runtime --root /tmp/nxmin --frames 60 --mem",
+    "gpu_smoke": "DISPLAY=:99 ctest -R gpu_window_screenshot",
+    "asan": "ctest (build-asan, NATIVAX_SANITIZE=ON)"
+  },
+  "results": {
+    "ctest_release": {"passed": 17, "failed": 0, "headless": 16, "windowed": 1},
+    "ctest_asan_ubsan": {"passed": 16, "failed": 0, "gpu_registered": false},
+    "headless_peak_rss_kb": [30512, 30992],
+    "windowed_counter_peak_rss_kb": [136696, 137136],
+    "windowed_minimal_peak_rss_kb": [132936, 135188],
+    "gpu_texture_bytes": 1048580,
+    "gpu_buffer_bytes": 2097152,
+    "cold_start_ms": 11.753,
+    "navigation_avg_ms": 2.695,
+    "raster_frame_ms": 126.589
+  },
+  "conclusion": "The runtime is functionally complete for the audited surface and passes all suites, including ASan/UBSan. The 100 MB windowed RSS target is not met in this software-GL environment; the fixed llvmpipe/JSC cost dominates and is documented as an open risk rather than claimed as a win."
+}

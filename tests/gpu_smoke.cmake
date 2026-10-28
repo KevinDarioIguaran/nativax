@@ -31,7 +31,30 @@ endif()
 
 # Structural validation via Python: size + real application palette (page,
 # header, accent, card) + non-empty glyph coverage in the header band.
-find_program(NATIVAX_PYTHON3 python3)
+# Several python3 installations may be on PATH; prefer one that can import
+# Pillow, and fall back to the size-only check when none can. A Pillow-less
+# interpreter is a missing lab dependency, not a runtime failure.
+find_program(NATIVAX_PYTHON3 NAMES python3)
+if(NATIVAX_PYTHON3)
+  execute_process(COMMAND ${NATIVAX_PYTHON3} -c "import PIL"
+                  RESULT_VARIABLE pil_rv OUTPUT_QUIET ERROR_QUIET)
+  if(NOT pil_rv EQUAL 0)
+    set(NATIVAX_PYTHON3 "")
+    foreach(candidate /usr/bin/python3 /usr/local/bin/python3)
+      if(EXISTS ${candidate})
+        execute_process(COMMAND ${candidate} -c "import PIL"
+                        RESULT_VARIABLE pil_rv2 OUTPUT_QUIET ERROR_QUIET)
+        if(pil_rv2 EQUAL 0)
+          set(NATIVAX_PYTHON3 ${candidate})
+          break()
+        endif()
+      endif()
+    endforeach()
+    if(NOT NATIVAX_PYTHON3)
+      message(STATUS "GPU smoke: no python3 with Pillow; size-only check")
+    endif()
+  endif()
+endif()
 if(NATIVAX_PYTHON3)
   execute_process(
     COMMAND ${NATIVAX_PYTHON3} ${NATIVAX_SOURCE_DIR}/tests/gpu_smoke_check.py

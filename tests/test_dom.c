@@ -637,7 +637,7 @@ static void test_event_flags(void) {
     nx_doc_free(doc);
 }
 
-/* ---- ported from packages/nativa_html/test/parser_test.dart ---- */
+/* ---- ported from the V1 HTML parser test suite ---- */
 static char* body_inner(NxDocument* doc) {
     NxNodeRef html = child_by_tag(doc, nx_doc_root(doc), "html");
     NxNodeRef body = child_by_tag(doc, html, "body");
@@ -654,7 +654,7 @@ static char* body_inner(NxDocument* doc) {
     return out;
 }
 
-static void test_ported_dart_cases(void) {
+static void test_ported_v1_cases(void) {
     /* empty document gets html/head/body */
     NxDocument* doc = parse("");
     if (!doc) return;
@@ -1096,7 +1096,7 @@ int main(void) {
     test_ids_and_queries();
     test_event_dispatch();
     test_event_flags();
-    test_ported_dart_cases();
+    test_ported_v1_cases();
     fprintf(stderr, "%d checks, %d failures\n", g_checks, g_failures);
     return g_failures == 0 ? 0 : 1;
 }

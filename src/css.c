@@ -455,7 +455,7 @@ static bool sp_ident(SelP* p, const char** out, int* out_len) {
 static bool sp_compound(SelP* p, CsCompound* c);
 static bool sp_simple(SelP* p, CsSimple* c);
 
-/* reference pseudoElements set (nativa_dom/lib/src/selectors.dart) */
+/* reference pseudoElements set from the V1 selector implementation */
 static bool pe_name_known(const char* nm, int len) {
     static const char* const names[] = {
         "before", "after", "marker", "placeholder", "backdrop", "selection",
@@ -480,7 +480,7 @@ static bool sp_pseudo(SelP* p, CsCompound* c) {
         const char* nm;
         int nlen;
         if (!sp_ident(p, &nm, &nlen)) return false;
-        /* reference set (selectors.dart pseudoElements) + -webkit-/-moz-
+        /* reference set (V1 pseudoElements) + -webkit-/-moz-
            prefixed names; anything else fails the selector */
         if (!pe_name_known(nm, nlen)) return false;
         c->pseudo_elem = nm;

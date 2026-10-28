@@ -1,5 +1,10 @@
 # NativaX Native — Certification Report
 
+> **Superseded (2026-10-28).** This report predates the HTML/CSS/JS pipeline,
+> the platform layer and the current 17-suite run. It is kept as history.
+> Current status: `docs/phase1-audit.md`, `migration-plan.md` and
+> `benchmarks/baseline.json`.
+
 ## Evaluated tree
 - Path: /home/k3vin/Desktop/native
 - Git metadata: none present in this working tree

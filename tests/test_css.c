@@ -1,7 +1,7 @@
 /*
     CSS tokenizer / selector / stylesheet / media tests.
 
-    Ports the structural cases from packages/nativa_css/test/css_test.dart
+    Ports the structural cases from the V1 CSS test suite
     (tokenizer, parser, invalid-selector recovery, @media/@font-face,
     !important, unbalanced braces) plus selector-parser unit checks and the
     media evaluator. Value conversion and the cascade live in style.c and
@@ -33,7 +33,7 @@ static int g_checks;
 /* ------------------------------------------------------------------ */
 
 static void test_tokenizer_tokens(void) {
-    /* Dart case: a.b #c{w:1.5em 50% -2px url(x.png) "s"q"} then a comment */
+    /* V1 case: a.b #c{w:1.5em 50% -2px url(x.png) "s"q"} then a comment */
     const char* css = "a.b #c{w:1.5em 50% -2px url(x.png) \"s\\\"q\"}/*c*/";
     CsTokens t;
     CHECK(cs_tokenize(css, -1, &t), "tokenize ok");
@@ -88,7 +88,7 @@ static void test_tokenizer_tokens(void) {
 }
 
 static void test_tokenizer_escapes_numbers(void) {
-    /* Dart: r'\31 a 1e3 .5' -> ident '1a', 1000, 0.5 */
+    /* V1: r'\31 a 1e3 .5' -> ident '1a', 1000, 0.5 */
     CsTokens t;
     CHECK(cs_tokenize("\\31 a 1e3 .5", -1, &t), "tokenize ok");
     int n = 0;
@@ -244,7 +244,7 @@ static void test_selectors(void) {
               strncmp(g.items[0].parts[0].pseudo_elem, "after", 5) == 0,
           "pseudo-element-only compound parses");
 
-    /* reference parity: supported pseudo classes (selectors.dart) */
+    /* reference parity: supported pseudo classes (V1 selector implementation) */
     CHECK(cs_parse_selector(":focus-visible", -1, &g) &&
               g.items[0].parts[0].pseudo == CS_P_FOCUS_VISIBLE,
           ":focus-visible parses");
@@ -320,7 +320,7 @@ static void test_selectors(void) {
 /* ------------------------------------------------------------------ */
 
 static void test_sheet_rules(void) {
-    /* Dart: 'h1, .t { color: red; margin: 0 auto }' */
+    /* V1: 'h1, .t { color: red; margin: 0 auto }' */
     CsSheet* sh = cs_sheet_parse("h1, .t { color: red; margin: 0 auto }", -1);
     CHECK(sh->rule_count == 1, "1 rule, got %d", sh->rule_count);
     CHECK(sh->rules[0].sel.count == 2, "grouped selector count %d",
@@ -344,7 +344,7 @@ static void test_sheet_rules(void) {
           "no-space !important, value keeps only 2px");
     cs_sheet_free(sh);
 
-    /* invalid selectors drop the whole rule (Dart: 1 rule left, 2 dropped) */
+    /* invalid selectors drop the whole rule (V1: 1 rule left, 2 dropped) */
     sh = cs_sheet_parse(
         "p::bogus { color: red } a:bogus { color: blue } b { color: green }", -1);
     CHECK(sh->rule_count == 1, "invalid selector rules dropped, %d left",
@@ -360,7 +360,7 @@ static void test_sheet_rules(void) {
     CHECK(sh->dropped_decls == 2, "2 dropped decls, got %d", sh->dropped_decls);
     cs_sheet_free(sh);
 
-    /* unbalanced braces recover (Dart: keeps parsing after stray '}') */
+    /* unbalanced braces recover (V1: keeps parsing after stray '}') */
     sh = cs_sheet_parse("} p { color: red } q { color: ", -1);
     CHECK(sh->rule_count >= 1, "recovered: p rule parsed");
     CHECK(sh->rules[0].sel.items[0].parts[0].s.tag_len == 1 &&
@@ -378,7 +378,7 @@ static void test_sheet_rules(void) {
 }
 
 static void test_sheet_at_rules(void) {
-    /* Dart: @import skipped, @media nested, plain rule after */
+    /* V1: @import skipped, @media nested, plain rule after */
     CsSheet* sh = cs_sheet_parse(
         "@import \"x.css\"; @font-face { font-family: x; src: url(f.ttf) }"
         "@media (min-width: 600px) { p { color: red } } div { color: blue }",

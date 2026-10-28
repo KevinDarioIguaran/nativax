@@ -3,7 +3,7 @@
 
 /*
     Event loop: timers (setTimeout/setInterval), requestAnimationFrame and
-    the microtask drain policy, mirroring the Dart runtime contract:
+    the microtask drain policy, mirroring the V1 runtime contract:
 
     - synchronous entry -> drain microtasks (JSC drains at API boundaries)
       -> run due timers -> rAF once per frame;

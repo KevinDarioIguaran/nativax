@@ -17,5 +17,6 @@
 - JS↔DOM bindings (document, mutation, attributes, textContent/innerHTML, style, classList, events) with native primitives + JS prelude; inline style="" joins the cascade.
 - Application host: HTML→CSS→style→layout→paint with script mutation invalidation, click hit-testing, and css/js/document reload paths.
 - Live-verified dev loop: css reload, js reload and native incremental rebuild+relaunch (debug/reports/phase8-hot-reload.md).
-- Memory optimization: style arrays sized to the document + in-place restyle; windowed example peak RSS 120.8 MB → 100.2-100.5 MB (benchmarks/baseline.json).
-- ctest: 13/13 PASS (adds headless_render, unit_app, unit_bindings, unit_devserver).
+- Memory optimization: style arrays sized to the document + in-place restyle; on the original 2026-10-27 environment this measured 120.8 MB → 100.2-100.5 MB. **Superseded by the 2026-10-28 re-measurement** (Mesa 25.2.8/LLVM 20): 136.7-137.1 MB windowed, 30.5-31.0 MB headless; the 100 MB target is open (see `docs/phase1-audit.md` §5-6).
+- ctest: **17/17 PASS** (16 headless + GPU window), and 16/16 under ASan+UBSan (2026-10-28).
+- Phase 1 closed (2026-10-28): audit re-verified, stale docs/baseline corrected, V1 references reworded, forbidden-dependency scan clean.

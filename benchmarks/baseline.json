@@ -2,14 +2,15 @@
   "generated": "2026-10-28",
   "branch": "native-c-sokol",
   "kind": "measured-baseline",
-  "probe": "nativax-runtime --mem (VmRSS/VmHWM from /proc/self/status)",
+  "probe": "nativax-runtime --mem (VmRSS/VmHWM from /proc/self/status) and --stats",
   "environment": {
-    "os": "Linux (X11), Xvfb :1",
-    "gl": "llvmpipe (software rasterizer)",
+    "os": "Linux 6.x (X11), Xvfb :99 1280x1024x24",
+    "gl": "llvmpipe (Mesa 25.2.8, LLVM 20.1, software rasterizer)",
     "compiler": "gcc 13.3.0",
-    "cmake": "3.31.6 (Ninja)",
-    "js_engine": "JavaScriptCoreGTK 4.1 (libjavascriptcoregtk-4.1.so)",
-    "cpu_cores": 8
+    "cmake": "3.28.3 (Ninja)",
+    "js_engine": "JavaScriptCoreGTK 4.1 (libjavascriptcoregtk-4.1.so.0.10.14, 2.52.6)",
+    "cpu_cores": 4,
+    "note": "software GL: the library/JIT resident cost dominates the windowed process and is not representative of a hardware driver"
   },
   "workloads": {
     "counter_app": {
@@ -18,7 +19,7 @@
       "sheets": 1,
       "scripts": 1,
       "display_list": "976 vertices, 10 groups",
-      "viewport": "1024x768 CSS px (dpi 1.04)"
+      "viewport": "1024x768 CSS px (dpi 1.0 under Xvfb)"
     },
     "minimal_page": {
       "path": "/tmp/nxmin (single <p>hello</p>)",
@@ -28,82 +29,103 @@
   "measurements": {
     "windowed_counter_app": {
       "runs": 3,
-      "rss_start_kb": [11188, 11260],
-      "rss_after_load_kb": [98760, 98972],
-      "rss_kb": [100248, 100460],
-      "peak_rss_kb": [100248, 100460],
-      "frames": 120
+      "frames": 120,
+      "rss_start_kb": [11656, 11776],
+      "rss_after_load_kb": [119672, 120816],
+      "peak_rss_kb": [136696, 137136],
+      "gpu_texture_bytes": 1048580,
+      "gpu_buffer_bytes": 2097152,
+      "js_heap_bytes": null
     },
     "windowed_minimal_page": {
-      "runs": 4,
-      "peak_rss_kb": [98020, 100144],
-      "conclusion": "the windowed fixed cost (sokol_app + GL + X11, llvmpipe) is ~96-98 MB; application content adds ~2 MB"
+      "runs": 3,
+      "frames": 60,
+      "rss_after_load_kb": [116020, 118512],
+      "peak_rss_kb": [132936, 135188],
+      "conclusion": "fixed window/GL/driver cost dominates; the counter app adds ~2-4 MB over the minimal page"
     },
     "headless_counter_app": {
-      "runs": 5,
-      "rss_start_kb": [11168, 11236],
-      "peak_rss_kb": [44660, 46320],
-      "frames": 60
+      "runs": 3,
+      "frames": 60,
+      "rss_start_kb": [11708, 11824],
+      "rss_after_load_kb": [30508, 30988],
+      "peak_rss_kb": [30512, 30992],
+      "native_heap_bytes": 296176
     },
-    "headless_minimal_page": {
-      "runs": 2,
-      "peak_rss_kb": [40424, 42536]
+    "windowed_attribution": {
+      "probe": "/proc/<pid>/smaps (minimal page, 3 s after start)",
+      "total_rss_kb": 131872,
+      "libLLVM_resident_kb": 58632,
+      "libjavascriptcoregtk_kb": 10940,
+      "anonymous_heap_kb": 19740,
+      "conclusion": "llvmpipe JIT + JSC dominate; app code/data is a small fraction"
+    },
+    "headless_pipeline_perf": {
+      "command": "nativax_perf --root examples/counter --frames 30 --iters 5 --nav 3",
+      "cold_start_ms": 11.753,
+      "first_frame_ms": 11.754,
+      "load_phases_ms": {"read": 0.028, "parse": 0.054, "collect": 1.639, "style_layout": 0.553, "script": 7.503, "total": 9.777},
+      "isolated_ms_per_iter": {"html_parse": 0.0421, "css_parse": 0.7333, "style_layout": 0.0345, "paint": 0.0255, "js_exec": 0.3282},
+      "navigation": {"reloads": 3, "avg_ms": 2.695},
+      "peak_rss_kb": 35748
     }
-  },
-  "optimization": {
-    "change": "per-node style arrays sized to nx_node_slot_bound(doc) instead of NX_MAX_NODES (100k), and restyle resolves into the layout's own array instead of allocating a second full copy",
-    "before": {
-      "windowed_counter_app_peak_rss_kb": 120828,
-      "headless_counter_app_peak_rss_kb": 43580
-    },
-    "after": {
-      "windowed_counter_app_peak_rss_kb": 100460,
-      "headless_counter_app_peak_rss_kb": 46320
-    },
-    "delta_windowed_kb": -20368,
-    "note": "headless numbers moved within run-to-run noise (JSC lazy compilation); the style-array saving there is ~40 MB of untouched address space, so it shows up as lower peak only when many nodes are styled"
   },
   "render_bench": {
     "command": "nativax_bench --w 1024 --h 768 --iters 20 --cards 6 --text 40",
-    "build_ms": 0.131,
-    "clear_ms": 0.468,
-    "raster_ms": 115.808,
-    "frame_ms": 116.276,
-    "raster_mpix_s": 6.8,
+    "build_ms": 0.105,
+    "clear_ms": 0.619,
+    "raster_ms": 125.970,
+    "frame_ms": 126.589,
+    "raster_mpix_s": 6.2,
     "avg_verts": 9493,
     "avg_indices": 15104,
     "checksum": "6010026b",
-    "note": "CPU reference rasterizer (headless/goldens), not the GPU path; it bounds worst-case software rendering, not Sokol presentation cost"
+    "note": "CPU reference rasterizer (headless/goldens), not the GPU path"
+  },
+  "platform_layer": {
+    "module": "nativax_platform (src/platform.c, src/platform_sokol.c)",
+    "entry_point": "nx_platform_run / callbacks init->frame->cleanup",
+    "normalized": ["resize", "focus/blur", "pointer down/up/move", "touch begin/move/end", "key down/up", "char", "clipboard paste", "suspend/resume", "quit"],
+    "coordinates": "CSS px = framebuffer px / dpi (unit tested at 1x, 1.5x, 2x)",
+    "verified_by": ["unit_platform", "unit_app", "gpu_window_screenshot"]
   },
   "tests": {
-    "ctest_suites": 13,
-    "passed": 12,
+    "ctest_suites": 17,
+    "headless_suites": 16,
+    "windowed_suites": 1,
+    "passed": 17,
     "failed": 0,
+    "asan_ubsan_headless": {"suites": 16, "passed": 16, "failed": 0},
     "includes": [
       "smoke_headless",
       "headless_render",
       "unit_render",
       "unit_js",
-      "unit_bindings",
       "unit_dom",
       "unit_css",
       "unit_debug",
       "unit_layout",
-      "unit_app",
-      "unit_devserver",
       "bench_smoke",
+      "unit_bindings",
+      "unit_app",
+      "unit_platform",
+      "unit_devserver",
+      "soak_stability",
+      "regression_reload",
+      "perf_smoke",
       "gpu_window_screenshot"
     ]
   },
   "targets": {
     "rss_target_kb": 102400,
-    "status": "met-without-margin",
-    "detail": "windowed peak 100.2-100.5 MB on llvmpipe under Xvfb. Fixed graphics-stack cost dominates (~98 MB of the peak); GPU memory is not included in RSS and is not measured yet (risk R4)."
+    "status": "not-met-in-this-environment",
+    "detail": "windowed peak 136.7-137.1 MB on llvmpipe; ~58.6 MB is the LLVM JIT used by llvmpipe and ~10.9 MB is JSC. GPU bytes (3.1 MB tracked) are separate. The target needs hardware-GL measurement; see risk R3."
   },
   "caveats": [
     "llvmpipe is a software GL implementation: its RSS is not representative of a hardware driver.",
-    "RSS includes shared library pages and the JSC VM; GPU memory is separate and unreported.",
+    "RSS includes shared library pages and the JSC VM; GPU memory is separate and reported from renderer counters (not driver accounting).",
     "Measurements are single-process probes, not a statistically controlled benchmark; ranges over runs are reported above.",
-    "No claim is made about Windows/Android/iOS memory until those builds exist."
+    "No claim is made about Windows/Android/iOS memory until those builds exist.",
+    "JavaScriptCore's C API exposes no JS heap statistic; js_heap_bytes stays null."
   ]
 }

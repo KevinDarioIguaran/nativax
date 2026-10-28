@@ -8,7 +8,7 @@
     id index and event dispatch (capture + bubble, once, preventDefault,
     stopPropagation).
 
-    Limits (documented, mirrors the Dart runtime): 100 000 nodes, depth 200.
+    Limits (documented, mirrors the V1 runtime): 100 000 nodes, depth 200.
 */
 
 #include <stdbool.h>

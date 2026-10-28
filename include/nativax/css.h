@@ -115,7 +115,7 @@ typedef enum CsPseudo {
     CS_P_DISABLED,
     CS_P_ENABLED,
     CS_P_NOT,
-    /* reference parity (PseudoClassSelector.supported, selectors.dart) */
+    /* reference parity with the V1 selector implementation */
     CS_P_FOCUS_VISIBLE, CS_P_FOCUS_WITHIN, CS_P_TARGET, CS_P_DEFINED,
     CS_P_SCOPE, CS_P_ANY_LINK, CS_P_OPEN, CS_P_MODAL, CS_P_REQUIRED,
     CS_P_OPTIONAL, CS_P_READ_ONLY, CS_P_READ_WRITE, CS_P_PLACEHOLDER_SHOWN,

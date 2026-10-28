@@ -1,7 +1,7 @@
 /*
     Debug dump tests: DOM tree formatting, stats, canonical selector
     formatting and CSS rule dumps. The dumps are the native equivalent of
-    the Dart debug artifacts — tests pin their format so refactors that
+    the V1 debug artifacts — tests pin their format so refactors that
     break reviewability fail CI.
 */
 #include "nativax/debug_dump.h"

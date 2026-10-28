@@ -17,7 +17,7 @@
 /* indented DOM tree: tag#id.class, attributes, escaped/truncated text */
 void nxd_dump_dom(FILE* out, NxDocument* doc, NxNodeRef node, int depth);
 
-/* JSON element tree (analogous to the Dart elements.json):
+/* JSON element tree (analogous to the V1 elements.json):
    {"children":[{"tag":"div","id":"x","class":["a"],"attrs":{...},
      "children":[...]} | {"text":"..."} | {"comment":"..."}]} */
 void nxd_dump_dom_json(FILE* out, NxDocument* doc, NxNodeRef node);
