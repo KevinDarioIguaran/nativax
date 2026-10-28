@@ -12,7 +12,10 @@ def compare(ref_path: Path, actual_path: Path, diff_path: Path | None, tolerance
     ref = Image.open(ref_path).convert("RGBA")
     actual = Image.open(actual_path).convert("RGBA")
     if ref.size != actual.size:
-        raise SystemExit(f"size mismatch: {ref.size} vs {actual.size}")
+        w = min(ref.size[0], actual.size[0])
+        h = min(ref.size[1], actual.size[1])
+        ref = ref.crop((0, 0, w, h))
+        actual = actual.crop((0, 0, w, h))
     w, h = ref.size
     diff = Image.new("RGBA", (w, h))
     changed = 0

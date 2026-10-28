@@ -32,7 +32,7 @@ endif()
 find_program(NATIVAX_PYTHON3 python3)
 if(NATIVAX_PYTHON3)
   execute_process(
-    COMMAND ${NATIVAX_PYTHON3} ${CMAKE_CURRENT_SOURCE_DIR}/gpu_smoke_check.py
+    COMMAND ${NATIVAX_PYTHON3} ${NATIVAX_SOURCE_DIR}/tests/gpu_smoke_check.py
             ${NATIVAX_BIN_DIR}/gpu_smoke.png 1024 768
     RESULT_VARIABLE cv
     OUTPUT_VARIABLE cout

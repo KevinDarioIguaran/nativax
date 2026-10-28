@@ -11,3 +11,5 @@
 - Upstream WPT validation parse: 13/13 PASS.
 - html5lib tokenizer tests imported (adapter pending).
 - Screenshot determinism: PASS (0% diff).
+- Pulled native-c-sokol e269f95; fixed gpu_smoke test defect (X11 resize tolerance).
+- Render baseline recorded: 14.57 ms/frame, 4.4 Mpix/s CPU raster.

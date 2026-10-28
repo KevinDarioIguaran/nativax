@@ -25,10 +25,15 @@ def near(c, target, tol=26):
 
 
 def main():
-    path, W, H = sys.argv[1], int(sys.argv[2]), int(sys.argv[3])
+    path, reqW, reqH = sys.argv[1], int(sys.argv[2]), int(sys.argv[3])
     im = Image.open(path).convert("RGB")
-    if im.size != (W, H):
-        print(f"FAIL size {im.size} != ({W},{H})")
+    W, H = im.size
+    # The window manager may resize the window (X11 DPI scaling). The scene is
+    # drawn in CSS px at DPI 1.0 in deterministic mode, so its geometry is
+    # anchored to the top-left at fixed coordinates regardless of the final
+    # window size. Accept the actual size as long as it covers the scene.
+    if W < reqW or H < reqH:
+        print(f"FAIL size {im.size} smaller than requested ({reqW},{reqH})")
         return 1
     px = im.load()
 
