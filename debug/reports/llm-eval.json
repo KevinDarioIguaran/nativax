@@ -1,0 +1,19 @@
+{
+  "cases": [
+    {
+      "id": "form",
+      "ok": true,
+      "stderr": ""
+    },
+    {
+      "id": "dashboard",
+      "ok": true,
+      "stderr": ""
+    },
+    {
+      "id": "modal",
+      "ok": true,
+      "stderr": ""
+    }
+  ]
+}

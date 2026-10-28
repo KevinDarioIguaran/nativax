@@ -1,0 +1,5 @@
+[
+  {"id": "form", "html": "<form><input id='x' value='hi'><button>ok</button></form>", "css": "input{width:100px;} button{padding:4px;}"},
+  {"id": "dashboard", "html": "<div class='d'><h1>Title</h1><p>Value: 42</p></div>", "css": ".d{padding:16px;} h1{margin:0;}"},
+  {"id": "modal", "html": "<div class='m'>modal</div>", "css": ".m{position:relative;background:#fff;padding:8px;border:1px solid #ccc;}"}
+]
