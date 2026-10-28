@@ -381,6 +381,12 @@ static void run_input_spec(NxApp* app, const char* spec) {
             char dir[16] = "down";
             if (sscanf(tok + 4, "%d,%15s", &code, dir) >= 1)
                 nx_app_key(app, code, strcmp(dir, "up") != 0);
+        } else if (strncmp(tok, "scroll:", 7) == 0) {
+            float dy = (float)atof(tok + 7);
+            nx_app_scroll(app, 0.0f, dy);
+        } else if (strncmp(tok, "scrollx:", 8) == 0) {
+            float dx = (float)atof(tok + 8);
+            nx_app_scroll(app, dx, 0.0f);
         } else if (strncmp(tok, "wait:", 5) == 0) {
             int frames = atoi(tok + 5);
             for (int i = 0; i < frames; i++) nx_app_update(app, 0.0);

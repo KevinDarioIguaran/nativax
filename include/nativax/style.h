@@ -79,6 +79,7 @@ typedef struct NxComputedStyle {
     float opacity;             /* 0..1, initial 1 */
     float radius[4];           /* border-radius px: tl, tr, br, bl; 0 = square */
     bool overflow_hidden;      /* overflow: hidden/clip (axis-aligned clip) */
+    bool overflow_scroll;     /* overflow: scroll/auto (scrollable + clipped) */
     bool transform_set;        /* transform != none */
     NxMat2x3 transform;        /* CSS transform list, no origin applied */
     NxLength transform_origin[2]; /* x, y; initial 50% 50% */

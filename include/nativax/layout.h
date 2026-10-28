@@ -47,6 +47,9 @@ typedef struct NxLayout {
     NxComputedStyle* styles;/* owned, indexed by node slot; sized to the document */
     int styles_cap;         /* entries in styles (>= node slot bound at build) */
     float viewport_w, viewport_h;
+    float* scroll_x;        /* per-node horizontal scroll offset, CSS px */
+    float* scroll_y;        /* per-node vertical scroll offset, CSS px */
+    int scroll_cap;
 } NxLayout;
 
 /* Build + run layout for a document with the given sheets. `font` is the loaded
@@ -59,6 +62,10 @@ void nx_layout_free(NxLayout* lay);
 /* Recompute layout in place after a DOM/style mutation. */
 void nx_layout_run(NxLayout* lay, NxDocument* doc, float viewport_w, float viewport_h,
                    int32_t font);
+
+/* Set/get scroll offsets for a node (only meaningful for overflow:scroll/auto). */
+void nx_layout_set_scroll(NxLayout* lay, NxNodeRef node, float x, float y);
+void nx_layout_get_scroll(const NxLayout* lay, NxNodeRef node, float* x, float* y);
 
 /* Re-resolve styles into the layout's own array (no second allocation) and
    re-run layout. Returns false when the document outgrew the array, in which

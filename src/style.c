@@ -811,10 +811,17 @@ static void apply_decl(NxComputedStyle* st, const CsDecl* d, float font_size) {
             if (v[i].kind != CS_IDENT) continue;
             if (cs_is_ident(&v[i], "hidden") || cs_is_ident(&v[i], "clip")) {
                 st->overflow_hidden = true;
+                st->overflow_scroll = false;
+                break;
+            }
+            if (cs_is_ident(&v[i], "scroll") || cs_is_ident(&v[i], "auto")) {
+                st->overflow_hidden = true;
+                st->overflow_scroll = true;
                 break;
             }
             if (cs_is_ident(&v[i], "visible")) {
                 st->overflow_hidden = false;
+                st->overflow_scroll = false;
                 break;
             }
         }

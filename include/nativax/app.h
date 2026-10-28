@@ -58,6 +58,9 @@ const NxDisplayList* nx_app_list(NxApp* app);
 
 NxDocument* nx_app_doc(NxApp* app);
 NxLayout* nx_app_layout(NxApp* app);
+
+/* Scroll the first overflow:scroll/auto container by (dx,dy) CSS px and relayout. */
+bool nx_app_scroll(NxApp* app, float dx, float dy);
 NxJs* nx_app_js(NxApp* app);
 
 /* Mark the document as needing restyle + relayout + repaint. */

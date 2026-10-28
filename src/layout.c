@@ -4,6 +4,9 @@
 #include <string.h>
 
 #include "nativax/text.h"
+#include <stdio.h>
+
+static NxLayout* g_current_layout = NULL;
 
 /* v1 scope (documented): normal-flow block boxes, inline text with word
    wrapping, text-align, auto margins (centering). No floats, no flex/grid
@@ -249,12 +252,20 @@ static void layout_block(NxBox* box, NxDocument* doc, const NxComputedStyle* sty
     box->content_y = box->y + bt + pt_r;
 
     float cy = box->content_y;
+    float cx = box->content_x;
+    if (st->overflow_scroll && g_current_layout) {
+        int idx = nx_node_index(box->node);
+        if (idx >= 0 && idx < g_current_layout->scroll_cap) {
+            cx -= g_current_layout->scroll_x[idx];
+            cy -= g_current_layout->scroll_y[idx];
+        }
+    }
     if (st->display == NX_DISPLAY_FLEX) {
         layout_flex(box, doc, styles, x, y, avail_w, font, depth);
         return;
     }
     LineState ls;
-    line_init(&ls, box, box->content_x, content_w, st, &cy, font);
+    line_init(&ls, box, cx, content_w, st, &cy, font);
 
     NxNodeRef node = box->node;
     for (NxNodeRef ch = nx_node_first_child(doc, node); ch;
@@ -298,6 +309,7 @@ static void layout_block(NxBox* box, NxDocument* doc, const NxComputedStyle* sty
 void nx_layout_run(NxLayout* lay, NxDocument* doc, float viewport_w, float viewport_h,
                    int32_t font) {
     if (!lay || !lay->root) return;
+    g_current_layout = lay;
     lay->viewport_w = viewport_w;
     lay->viewport_h = viewport_h;
     NxBox* root = lay->root;
@@ -320,6 +332,8 @@ void nx_layout_free(NxLayout* lay) {
     if (!lay) return;
     box_free_tree(lay->root);
     free(lay->styles);
+    free(lay->scroll_x);
+    free(lay->scroll_y);
     free(lay);
 }
 
@@ -343,6 +357,10 @@ NxLayout* nx_layout_build(NxDocument* doc, const CsSheet* const* sheets, int she
     lay->styles_cap = cap;
     lay->viewport_w = viewport_w;
     lay->viewport_h = viewport_h;
+    lay->scroll_cap = cap;
+    lay->scroll_x = (float*)calloc((size_t)cap, sizeof(float));
+    lay->scroll_y = (float*)calloc((size_t)cap, sizeof(float));
+    if (!lay->scroll_x || !lay->scroll_y) { free(lay->scroll_x); free(lay->scroll_y); free(styles); free(lay); return NULL; }
 
     NxBox* root = box_new(0, NULL);
     if (!root) { free(styles); free(lay); return NULL; }
@@ -561,4 +579,24 @@ static void layout_flex(NxBox* box, NxDocument* doc, const NxComputedStyle* styl
         }
     }
     free(items);
+}
+
+void nx_layout_set_scroll(NxLayout* lay, NxNodeRef node, float x, float y) {
+    if (!lay || !lay->scroll_x || !lay->scroll_y) return;
+    int idx = nx_node_index(node);
+    if (idx < 0 || idx >= lay->scroll_cap) return;
+    if (x < 0) x = 0;
+    if (y < 0) y = 0;
+    lay->scroll_x[idx] = x;
+    lay->scroll_y[idx] = y;
+}
+
+void nx_layout_get_scroll(const NxLayout* lay, NxNodeRef node, float* x, float* y) {
+    if (x) *x = 0;
+    if (y) *y = 0;
+    if (!lay || !lay->scroll_x || !lay->scroll_y) return;
+    int idx = nx_node_index(node);
+    if (idx < 0 || idx >= lay->scroll_cap) return;
+    if (x) *x = lay->scroll_x[idx];
+    if (y) *y = lay->scroll_y[idx];
 }

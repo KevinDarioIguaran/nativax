@@ -472,6 +472,47 @@ bool nx_app_update(NxApp* app, double now_ms) {
 
 const NxAppTimings* nx_app_timings(NxApp* app) { return app ? &app->timings : NULL; }
 
+static NxNodeRef find_first_scrollable(NxDocument* doc, const NxLayout* lay) {
+    if (!doc || !lay) return 0;
+    /* DFS over elements */
+    /* iterative stack */
+    NxNodeRef stack[256];
+    int sp = 0;
+    for (NxNodeRef c = nx_node_first_child(doc, nx_doc_root(doc)); c && sp < 255; c = nx_node_next_sibling(doc, c)) {
+        if (nx_node_type(doc, c) == NX_NODE_ELEMENT) stack[sp++] = c;
+    }
+    while (sp > 0) {
+        NxNodeRef n = stack[--sp];
+        int idx = nx_node_index(n);
+        if (idx >= 0 && idx < lay->styles_cap && lay->styles[idx].overflow_scroll) {
+            return n;
+        }
+        for (NxNodeRef c = nx_node_first_child(doc, n); c && sp < 255; c = nx_node_next_sibling(doc, c)) {
+            if (nx_node_type(doc, c) == NX_NODE_ELEMENT) stack[sp++] = c;
+        }
+    }
+    return 0;
+}
+
+bool nx_app_scroll(NxApp* app, float dx, float dy) {
+    if (!app || !app->lay || !app->doc) return false;
+    NxNodeRef n = find_first_scrollable(app->doc, app->lay);
+    if (!n) return false;
+    float cx, cy;
+    nx_layout_get_scroll(app->lay, n, &cx, &cy);
+    nx_layout_set_scroll(app->lay, n, cx + dx, cy + dy);
+    bool rr = nx_layout_restyle(app->lay, app->doc, (const CsSheet* const*)app->sheets,
+                           app->sheet_count, (float)app->width, (float)app->height, app->font);
+    if (!rr) {
+        /* document outgrew style array: rebuild */
+    }
+    /* debug: print first child y */
+
+    app->paint_dirty = true;
+    nx_app_update(app, 0.0);
+    return true;
+}
+
 const NxDisplayList* nx_app_list(NxApp* app) { return app ? &app->dl : NULL; }
 NxDocument* nx_app_doc(NxApp* app) { return app ? app->doc : NULL; }
 NxLayout* nx_app_layout(NxApp* app) { return app ? app->lay : NULL; }
