@@ -102,4 +102,4 @@ body.light .topbar { background: linear-gradient(180deg, rgba(238, 243, 255, .9)
 }
 
 /* case-specific */
-#case > div:nth-of-type(2) { color: #0088ff; }
+div:nth-of-type(2) { color: #0088ff; }
