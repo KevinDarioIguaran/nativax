@@ -532,3 +532,20 @@ void nxd_layout_stats(const NxLayout* lay, int* boxes, int* runs) {
     for (int i = 0; i < lay->root->child_count; i++)
         count_box(lay->root->children[i], boxes, runs);
 }
+
+/* ---- display list ------------------------------------------------------- */
+void nxd_dump_display_list(FILE* out, const NxDisplayList* dl) {
+    if (!out || !dl) return;
+    char buf[65536];
+    nx_dl_describe(dl, buf, (int)sizeof(buf));
+    fputs(buf, out);
+    fprintf(out, "\nlayers=%u\n", dl->layer_count);
+    for (uint32_t i = 0; i < dl->layer_count; i++) {
+        fprintf(out, "  layer %u: groups %u..%u opacity=%.3f parent=%d\n", i,
+                dl->layers[i].first_group,
+                dl->layers[i].first_group + dl->layers[i].group_count,
+                dl->layers[i].opacity, dl->layers[i].parent);
+    }
+    fprintf(out, "transform_depth=%d clip_depth=%d\n", dl->transform_depth,
+            dl->clip_depth);
+}

@@ -11,6 +11,7 @@
 #include <stdio.h>
 
 #include "nativax/css.h"
+#include "nativax/display_list.h"
 #include "nativax/dom.h"
 #include "nativax/layout.h"
 
@@ -40,7 +41,7 @@ void nxd_dom_stats(NxDocument* doc, NxNodeRef node, int depth, NxdDomStats* st);
 /* indented box tree: tag#id.class, border-box/content-box geometry, runs */
 void nxd_dump_layout(FILE* out, NxDocument* doc, const NxLayout* lay);
 
-/* box and text-run counts for summary.json */
-void nxd_layout_stats(const NxLayout* lay, int* boxes, int* runs);
+/* display list: groups, vertices, indices, scissor and layer records */
+void nxd_dump_display_list(FILE* out, const NxDisplayList* dl);
 
 #endif /* NATIVAX_DEBUG_DUMP_H */

@@ -18,6 +18,7 @@
 #include <sys/types.h>
 
 #include "nativax/debug_dump.h"
+#include "nativax/display_list.h"
 #include "nativax/dom.h"
 #include "nativax/html.h"
 #include "nativax/layout.h"
@@ -214,6 +215,22 @@ int main(int argc, char** argv) {
     }
     if (lay) nxd_layout_stats(lay, &lay_boxes, &lay_runs);
 
+    /* ---- displaylist.txt ----------------------------------------------- */
+    if (lay) {
+        NxDisplayList dl;
+        nx_dl_init(&dl);
+        if (nx_paint(&dl, lay, font)) {
+            snprintf(path, sizeof(path), "%s/displaylist.txt", out_dir);
+            FILE* dlf = fopen(path, "w");
+            if (dlf) {
+                nxd_dump_display_list(dlf, &dl);
+                fclose(dlf);
+            }
+        }
+        nx_dl_free(&dl);
+    }
+
+
     /* ---- optional PNG render ------------------------------------------- */
     if (render_path && lay) {
         NxDisplayList dl;
@@ -259,7 +276,7 @@ int main(int argc, char** argv) {
     nx_layout_free(lay);
     nx_doc_free(doc);
     if (!ok) return 3;
-    printf("nativax-debug: wrote %s/{dom.txt,dom.json,css.txt,layout.txt,summary.json}%s%s\n",
+    printf("nativax-debug: wrote %s/{dom.txt,dom.json,css.txt,layout.txt,displaylist.txt,summary.json}%s%s\n",
            out_dir, render_path ? ", " : "", render_path ? render_path : "");
     return 0;
 }
