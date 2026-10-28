@@ -309,7 +309,7 @@ bool nx_layout_restyle(NxLayout* lay, NxDocument* doc, const CsSheet* const* she
                        int sheet_count, float viewport_w, float viewport_h, int32_t font) {
     if (!lay || !doc || !lay->styles) return false;
     if (nx_node_slot_bound(doc) > lay->styles_cap) return false;
-    if (!nx_style_resolve_into(doc, sheets, sheet_count, viewport_w, 16.0f, lay->styles,
+    if (!nx_style_resolve_into(doc, sheets, sheet_count, viewport_w, viewport_h, 16.0f, lay->styles,
                                lay->styles_cap))
         return false;
     nx_layout_run(lay, doc, viewport_w, viewport_h, font);
@@ -332,7 +332,7 @@ NxLayout* nx_layout_build(NxDocument* doc, const CsSheet* const* sheets, int she
     if (cap < 1) cap = 1;
     NxComputedStyle* styles = (NxComputedStyle*)calloc((size_t)cap, sizeof(NxComputedStyle));
     if (!styles) return NULL;
-    if (!nx_style_resolve_into(doc, sheets, sheet_count, viewport_w, 16.0f, styles, cap)) {
+    if (!nx_style_resolve_into(doc, sheets, sheet_count, viewport_w, viewport_h, 16.0f, styles, cap)) {
         free(styles);
         return NULL;
     }

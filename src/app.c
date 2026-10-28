@@ -299,7 +299,7 @@ static bool restyle(NxApp* app) {
         return build_layout(app); /* document outgrew the style array */
     double t0 = now_ms_time();
     bool resolved = nx_style_resolve_into(app->doc, (const CsSheet* const*)app->sheets,
-                                          app->sheet_count, (float)app->width, 16.0f,
+                                          app->sheet_count, (float)app->width, (float)app->height, 16.0f,
                                           app->lay->styles, app->lay->styles_cap);
     double t1 = now_ms_time();
     if (!resolved) return build_layout(app);
