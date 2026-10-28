@@ -82,6 +82,7 @@ int nx_doc_query_selector_all(NxDocument* doc, const char* selector, NxNodeRef* 
 /* ---- text & serialization ---- */
 char* nx_node_text_content(NxDocument* doc, NxNodeRef node); /* deep, caller frees */
 char* nx_node_serialize(NxDocument* doc, NxNodeRef node);    /* HTML, caller frees */
+char* nx_node_serialize_inner(NxDocument* doc, NxNodeRef node); /* inner HTML, caller frees */
 char* nx_html_escape(const char* s, int len);                /* attr/text escaping */
 char* nx_html_unescape(const char* s, int len, int* out_len); /* entity decoding */
 

@@ -1,5 +1,5 @@
 """Section 17 — capability gaps (reported as blocked, never faked)."""
-from harness import case, Blocked
+from harness import case, Blocked, close
 
 @case(17, "gap.001", 'var() custom properties')
 def _(ctx):
@@ -7,7 +7,11 @@ def _(ctx):
 
 @case(17, "gap.002", 'hsl() colour values')
 def _(ctx):
-    raise Blocked('hsl() colour values are not supported.')
+    page = ctx.page("<div id=t>x</div>", "#t { color: hsl(120, 100%, 50%); }")
+    st = page.style("#t")
+    close(st["color"][0], 0, 0.01)
+    close(st["color"][1], 1, 0.01)
+    close(st["color"][2], 0, 0.01)
 
 @case(17, "gap.003", 'calc() in lengths')
 def _(ctx):

@@ -1030,6 +1030,24 @@ char* nx_node_serialize(NxDocument* doc, NxNodeRef node) {
     return sb.data;
 }
 
+char* nx_node_serialize_inner(NxDocument* doc, NxNodeRef node) {
+    if (!doc || !slot(doc, node)) return NULL;
+    NxNode* n = slot(doc, node);
+    StrBuf sb;
+    sb_init(&sb);
+    if (n->type == NX_NODE_TEXT) {
+        char* esc = nx_html_escape(n->text ? n->text : "", n->text_len);
+        sb_puts(&sb, esc);
+        free(esc);
+    } else if (n->type == NX_NODE_DOCUMENT || n->type == NX_NODE_ELEMENT) {
+        for (NxNodeRef c = nx_node_first_child(doc, node); c; c = nx_node_next_sibling(doc, c)) {
+            serialize_rec(doc, c, &sb);
+        }
+    }
+    sb.data[sb.len] = '\0';
+    return sb.data;
+}
+
 /* ---- events ---- */
 bool nx_event_make(NxEvent* ev, const char* type, bool bubbles, bool cancelable) {
     if (!ev || !type) return false;

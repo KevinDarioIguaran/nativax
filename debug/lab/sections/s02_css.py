@@ -543,9 +543,12 @@ def _(ctx):
     close(st["color"][2], 0, 0.01)
 
 
-@case(2, "css.076", 'hsl() color (unsupported)')
+@case(2, "css.076", 'hsl() color')
 def _(ctx):
-    raise Blocked("hsl() colour values are not supported by the engine")
+    st = ctx.fixture("css.076").style("#case #t")
+    close(st["color"][0], 0, 0.01)
+    close(st["color"][1], 1, 0.01)
+    close(st["color"][2], 0, 0.01)
 
 
 @case(2, "css.077", 'transparent keyword')

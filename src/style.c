@@ -392,6 +392,52 @@ static bool parse_color(const CsTok* t, int ntoks, float* r, float* g, float* b,
                 return true;
             }
         }
+        if (fname && (str_ieq(fname, flen, "hsl", 3) ||
+                      str_ieq(fname, flen, "hsla", 4))) {
+            /* collect h, s, l, a; track percentage-ness for s/l/a */
+            double hv = 0, sv = 0, lv = 0, av = 1;
+            (void)0;
+            int n = 0;
+            /* We need know which values are percentages; store flags parallel. */
+            bool is_pct[4] = {false, false, false, false};
+            double vals[4] = {0, 0, 0, 1};
+            for (int i = 1; i < ntoks && n < 4; i++) {
+                if (t[i].kind == CS_NUMBER || t[i].kind == CS_PERCENTAGE) {
+                    vals[n] = t[i].num;
+                    is_pct[n] = (t[i].kind == CS_PERCENTAGE);
+                    n++;
+                }
+            }
+            if (n >= 3) {
+                hv = vals[0];
+                sv = vals[1];
+                lv = vals[2];
+                if (is_pct[1]) sv /= 100.0; else if (sv > 1.0) sv /= 100.0;
+                if (is_pct[2]) lv /= 100.0; else if (lv > 1.0) lv /= 100.0;
+                if (n == 4) {
+                    av = vals[3];
+                    if (is_pct[3]) av /= 100.0;
+                }
+                /* HSL -> RGB */
+                double h = fmod(hv, 360.0);
+                if (h < 0) h += 360.0;
+                double c = (1.0 - fabs(2.0 * lv - 1.0)) * sv;
+                double x = c * (1.0 - fabs(fmod(h / 60.0, 2.0) - 1.0));
+                double m = lv - c / 2.0;
+                double r1, g1, b1;
+                if (h < 60) { r1 = c; g1 = x; b1 = 0; }
+                else if (h < 120) { r1 = x; g1 = c; b1 = 0; }
+                else if (h < 180) { r1 = 0; g1 = c; b1 = x; }
+                else if (h < 240) { r1 = 0; g1 = x; b1 = c; }
+                else if (h < 300) { r1 = x; g1 = 0; b1 = c; }
+                else { r1 = c; g1 = 0; b1 = x; }
+                *r = (float)(r1 + m);
+                *g = (float)(g1 + m);
+                *b = (float)(b1 + m);
+                *a = (float)av;
+                return true;
+            }
+        }
     }
     return false;
 }

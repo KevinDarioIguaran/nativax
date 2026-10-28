@@ -350,6 +350,18 @@ static JSValueRef p_text_get(JSContextRef ctx, JSObjectRef fn, JSObjectRef self,
     return v;
 }
 
+static JSValueRef p_html_get(JSContextRef ctx, JSObjectRef fn, JSObjectRef self, size_t argc,
+                             const JSValueRef argv[], void* user) {
+    (void)fn; (void)self;
+    NxDomBindings* b = (NxDomBindings*)user;
+    NxNodeRef n = (NxNodeRef)num_arg(ctx, argv, argc, 0);
+    char* html = nx_node_serialize_inner(b->doc, n);
+    if (!html) return nx_js_string(ctx, "");
+    JSValueRef v = nx_js_string(ctx, html);
+    free(html);
+    return v;
+}
+
 static JSValueRef p_text_set(JSContextRef ctx, JSObjectRef fn, JSObjectRef self, size_t argc,
                              const JSValueRef argv[], void* user) {
     (void)fn; (void)self;
@@ -563,6 +575,7 @@ static const Prim PRIMS[] = {
     {"__nx_attr_set", p_attr_set},
     {"__nx_attr_remove", p_attr_remove},
     {"__nx_text_get", p_text_get},
+    {"__nx_html_get", p_html_get},
     {"__nx_text_set", p_text_set},
     {"__nx_html_set", p_html_set},
     {"__nx_listen", p_listen},
@@ -609,7 +622,7 @@ static const char* PRELUDE =
     "       function(v){ N.__nx_text_set(this.__nxid, String(v)); });\n"
     "  prop('innerText', function(){ return N.__nx_text_get(this.__nxid); },\n"
     "       function(v){ N.__nx_text_set(this.__nxid, String(v)); });\n"
-    "  prop('innerHTML', function(){ return ''; },\n"
+    "  prop('innerHTML', function(){ return N.__nx_html_get(this.__nxid); },\n"
     "       function(v){ N.__nx_html_set(this.__nxid, String(v)); });\n"
     "  prop('parentNode', function(){ return wrap(N.__nx_parent(this.__nxid)); });\n"
     "  prop('parentElement', function(){ return wrap(N.__nx_parent(this.__nxid)); });\n"
