@@ -259,29 +259,10 @@ def main(argv: list[str]) -> int:
         return _cmd_validate()
     if head == "report":
         return _cmd_report()
-    if head == "docker-test":
-        return subprocess.run([sys.executable, str(NATIVE / "debug" / "common" / "runner" / "run_container.py")]).returncode
-    if head == "benchmark":
-        return subprocess.run([sys.executable, str(NATIVE / "debug" / "benchmarks" / "workloads" / "parse_benchmark.py")]).returncode
-    if head == "validate-manifest":
-        return subprocess.run([sys.executable, str(NATIVE / "debug" / "common" / "validation" / "validate_manifest.py")]).returncode
     if head == "discover":
         import json
         m = json.loads((NATIVE / "debug" / "tests" / "manifest.json").read_text())
         print(json.dumps(m, indent=2))
-        return 0
-    if head == "upstream" and rest and rest[0] == "list":
-        try:
-            import tomllib
-        except Exception:
-            print("tomllib unavailable", file=sys.stderr)
-            return 1
-        data = tomllib.loads((NATIVE / "debug" / "config" / "upstream-suites.toml").read_text())
-        for s in data.get("suite", []):
-            print(f"{s['id']}: {s['repository']} @ {s.get('revision','latest')} ({s.get('status','unknown')})")
-        return 0
-    if head == "compare" and "--reference" in rest and "chromium" in rest:
-        print("Use debug/common/chromium/capture.py and debug/judges/visual/compare.py")
         return 0
     if head == "compare-history":
         rest = rest or []
@@ -301,8 +282,6 @@ def main(argv: list[str]) -> int:
             cmd.append(old)
         cmd.append(new)
         return subprocess.run(cmd).returncode
-    if head == "benchmark":
-        return subprocess.run([sys.executable, str(NATIVE / "debug" / "benchmarks" / "workloads" / "parse_benchmark.py")]).returncode
     if head == "certify":
         return subprocess.run([sys.executable, str(NATIVE / "debug" / "judges" / "quality_gate" / "gate.py")]).returncode
     if head == "parse":

@@ -1,7 +1,0 @@
-h1, .title { color: #112233; margin: 0 auto }
-#t { font-weight: bold }
-p { width: 600px !important }
-@media (min-width: 600px) { li { list-style-type: square } }
-li::after { content: "!" }
-broken selector >>> { color: red }
-p { color nope; padding: 4px }

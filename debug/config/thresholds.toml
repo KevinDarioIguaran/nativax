@@ -1,7 +1,0 @@
-[visual]
-pixel_tolerance = 3
-max_pixel_diff_percent = 0.5
-
-[performance]
-frame_budget_ms = 16.67
-missed_frame_percent_max = 5.0
