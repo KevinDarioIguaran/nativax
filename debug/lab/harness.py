@@ -843,8 +843,8 @@ def write_reports(results: list[CaseResult], *, label: str = "latest",
     if extra:
         payload.update(extra)
     out = REPORTS / f"{label}.json"
-    out.write_text(json.dumps(payload, indent=2) + "\n")
-    write_markdown(results, summary, REPORTS / f"{label}.md", label)
+    # Compact, AI-oriented output (no pretty printing, no human markdown).
+    out.write_text(json.dumps(payload, separators=(",", ":")) + "\n")
     return out
 
 
