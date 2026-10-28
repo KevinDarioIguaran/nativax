@@ -38,8 +38,10 @@ src/layout.c     block/inline layout   src/paint.c     boxes → display list
 src/debug_dump.c headless artifacts     src/gfx_sokol.c Sokol GFX renderer
 src/js_engine.c  JavaScriptCore layer   src/js_loop.c   timers + rAF
 src/js_dom.c     DOM ↔ JS bindings      src/app.c       application host
+src/platform.c  platform contract helpers (CSS/physical coordinates)
+src/platform_sokol.c sokol_app backend (window, lifecycle, input, clipboard)
 src/devserver.c  HTTP/WS/watcher        src/hotreload.c runtime WS client
-src/cli_main.c   `nativax` CLI          src/main_sokol.c window + lifecycle
+src/cli_main.c   `nativax` CLI          src/main_sokol.c runtime entry point
 ```
 
 Libraries (CMake targets):
@@ -51,8 +53,9 @@ Libraries (CMake targets):
 | `nativax_app` | js_dom, app | `nativax_js` |
 | `nativax_dev` | devserver, hotreload | `nativax_core` |
 | `nativax_gfx` | gfx_sokol | `nativax_core`, `nativax_sokol` (sokol) |
+| `nativax_platform` | platform, platform_sokol | `nativax_sokol` (sokol_app) |
 | `nativax` | CLI | `nativax_dev`, `nativax_core` |
-| `nativax-runtime` | main_sokol | core, app, dev, gfx |
+| `nativax-runtime` | main_sokol | core, app, dev, gfx, platform |
 
 ## 3. Data flow
 
@@ -137,22 +140,38 @@ tearing the app down in `cleanup_cb` before `sg_shutdown()`.
   scissor clipping. Inline elements do not paint their own box (documented).
 - JS: JavaScriptCore VM, timers/rAF via `js_loop`, DOM API from `js_dom`
   prelude. No modules, no fetch/XHR, no layout-box APIs (offsetWidth).
+- Input: pointer down/up/move, touch and keyboard events are normalized by the
+  platform layer. Click dispatch happens on pointer down. `keydown`/`keyup`
+  reach `<body>` listeners but the v1 event object carries no key/code or
+  pointer-coordinate payload.
 
 ## 8. Platform layer
 
-- Windowing/presentation: sokol_app + Sokol GFX (GL core on Linux).
-- Platform services are consumed through sokol (`sapp_*`) and small C
-  interfaces; the dev server/CLI use POSIX sockets and inotify on Linux.
+- `include/nativax/platform.h` is the contract: window creation, lifecycle
+  callbacks (`init → frame… → cleanup`), normalized input events, DPI and
+  framebuffer queries, clipboard and framebuffer readback.
+- Coordinates crossing the interface are CSS px; pointer/touch positions are
+  divided by the backend DPI scale (`nx_platform_css_coord`), so hit testing is
+  correct at 1x, 1.5x and 2x. Printables keys keep their ASCII value; special
+  keys use `NxKey` values ≥ 256.
+- `platform_sokol.c` is the only runtime translation unit that includes
+  `sokol_app.h`. Windowing/presentation: sokol_app + Sokol GFX (GL core on
+  Linux). `main_sokol.c` is an entry point over the contract and contains no
+  platform SDK calls.
+- Platform services are consumed through sokol (`sapp_*`); the dev server/CLI
+  use POSIX sockets and inotify on Linux.
 - Supported/validated today: Linux/X11 (tests run under Xvfb + llvmpipe).
   See `docs/platforms.md` for the status and requirements of Windows, Android
   and iOS.
 
 ## 9. Verification surfaces
 
-- `ctest`: 13 suites — parser/DOM/CSS/layout/paint units, JS unit, binding
-  unit, debug artifacts, app pipeline (script mutation + all three reload paths), dev
+- `ctest`: 16 headless suites + 1 windowed GPU suite — parser/DOM/CSS/layout/
+  paint units, JS unit, binding unit, platform coordinate contract, debug
+  artifacts, app pipeline (script mutation + all three reload paths), dev
   server (HTTP 200/304/404, RFC 6455 handshake, broadcast, inotify), render
-  bench smoke, GPU window screenshot.
+  bench smoke, soak/stability, reload regression, pipeline perf and GPU window
+  screenshot.
 - `nativax-runtime --headless --stats --mem` prints pipeline counts and
   RSS/peak JSON for measurement runs.
 - `debug/` holds the audit lab: cases, artifacts, visual judge and progress

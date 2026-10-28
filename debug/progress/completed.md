@@ -20,3 +20,4 @@
 - Memory optimization: style arrays sized to the document + in-place restyle; on the original 2026-10-27 environment this measured 120.8 MB → 100.2-100.5 MB. **Superseded by the 2026-10-28 re-measurement** (Mesa 25.2.8/LLVM 20): 136.7-137.1 MB windowed, 30.5-31.0 MB headless; the 100 MB target is open (see `docs/phase1-audit.md` §5-6).
 - ctest: **17/17 PASS** (16 headless + GPU window), and 16/16 under ASan+UBSan (2026-10-28).
 - Phase 1 closed (2026-10-28): audit re-verified, stale docs/baseline corrected, V1 references reworded, forbidden-dependency scan clean.
+- Phase 2 started (2026-10-28): `nativax_platform` (normalized window/lifecycle/input/DPI/clipboard/readback), sokol_app backend isolated, `main_sokol.c` platform-free entry point, `unit_platform` + input-to-script test green.

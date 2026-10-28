@@ -1,9 +1,10 @@
 /*
-    NativaX runtime — sokol_app entry point.
+    NativaX runtime — native entry point.
 
-    Owns the native window, input events, the frame clock and the development
-    client. The HTML/CSS/JS pipeline lives in app.c; this file maps window
-    events onto it and presents the painted display list through Sokol GFX.
+    Owns the frame clock and the development client. The HTML/CSS/JS pipeline
+    lives in app.c; window creation, input and platform services come from
+    nativax/platform.h (backend: platform_sokol.c). The painted display list is
+    presented through Sokol GFX.
 
     Modes:
       windowed   native window + GPU presentation (default)
@@ -16,14 +17,13 @@
 #include "nativax/hotreload.h"
 #include "nativax/log.h"
 #include "nativax/meminfo.h"
+#include "nativax/platform.h"
 #include "nativax/raster.h"
 #include "nativax/text.h"
-#include "sokol_app.h"
 #include "sokol_gfx.h"
 #include "sokol_glue.h"
 #include "sokol_log.h"
 
-#include <GL/gl.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -88,30 +88,25 @@ static void on_reload(const char* json, void* user) {
 
 static void take_screenshot(void) {
     if (!g_state.screenshot) return;
-    int fb_w = (int)(g_state.width * g_state.dpi + 0.5f);
-    int fb_h = (int)(g_state.height * g_state.dpi + 0.5f);
+    int fb_w = nx_platform_framebuffer_width();
+    int fb_h = nx_platform_framebuffer_height();
     uint8_t* px = malloc((size_t)fb_w * (size_t)fb_h * 4);
-    uint8_t* flipped = malloc((size_t)fb_w * (size_t)fb_h * 4);
-    if (!px || !flipped) {
-        free(px);
-        free(flipped);
-        return;
+    if (!px) return;
+    if (nx_platform_read_pixels(px, fb_w, fb_h)) {
+        if (stbi_write_png(g_state.screenshot, fb_w, fb_h, 4, px, fb_w * 4))
+            NX_INFO("screenshot written: %s (%dx%d)", g_state.screenshot, fb_w, fb_h);
+        else
+            NX_ERROR("screenshot write failed: %s", g_state.screenshot);
+    } else {
+        NX_ERROR("framebuffer readback failed");
     }
-    glReadPixels(0, 0, fb_w, fb_h, GL_RGBA, GL_UNSIGNED_BYTE, px); /* y-up */
-    for (int y = 0; y < fb_h; y++)
-        memcpy(flipped + (size_t)y * fb_w * 4, px + (size_t)(fb_h - 1 - y) * fb_w * 4,
-               (size_t)fb_w * 4);
-    if (stbi_write_png(g_state.screenshot, fb_w, fb_h, 4, flipped, fb_w * 4))
-        NX_INFO("screenshot written: %s (%dx%d)", g_state.screenshot, fb_w, fb_h);
-    else
-        NX_ERROR("screenshot write failed: %s", g_state.screenshot);
     free(px);
-    free(flipped);
 }
 
-/* ---- sokol callbacks ----------------------------------------------------- */
+/* ---- platform callbacks -------------------------------------------------- */
 
-static void init_cb(void) {
+static void init_cb(void* user) {
+    (void)user;
     sg_setup(&(sg_desc){
         .environment = sglue_environment(),
         .logger.func = slog_func,
@@ -119,7 +114,9 @@ static void init_cb(void) {
     nx_gfx_init();
     g_state.gfx_up = true;
 
-    g_state.dpi = g_state.deterministic ? 1.0f : sapp_dpi_scale();
+    g_state.dpi = g_state.deterministic ? 1.0f : nx_platform_dpi();
+    g_state.width = nx_platform_width();
+    g_state.height = nx_platform_height();
 
     NxAppConfig cfg;
     memset(&cfg, 0, sizeof(cfg));
@@ -133,7 +130,7 @@ static void init_cb(void) {
     if (!g_state.app || !nx_app_load(g_state.app, &err)) {
         NX_ERROR("failed to load application: %s", err ? err : "unknown");
         free(err);
-        sapp_quit();
+        nx_platform_quit();
         return;
     }
     free(err);
@@ -146,7 +143,8 @@ static void init_cb(void) {
             g_state.width, g_state.height, g_state.dpi);
 }
 
-static void frame_cb(void) {
+static void frame_cb(void* user) {
+    (void)user;
     if (!g_state.app) return;
     if (g_state.hr) nx_hot_reload_poll(g_state.hr);
 
@@ -171,8 +169,8 @@ static void frame_cb(void) {
 
     nx_app_update(g_state.app, now_ms() - g_state.start_ms);
 
-    int fb_w = (int)(g_state.width * g_state.dpi + 0.5f);
-    int fb_h = (int)(g_state.height * g_state.dpi + 0.5f);
+    int fb_w = nx_platform_framebuffer_width();
+    int fb_h = nx_platform_framebuffer_height();
     nx_gfx_sync_textures();
     const float clear[4] = {1.0f, 1.0f, 1.0f, 1.0f};
     nx_gfx_render(nx_app_list(g_state.app), fb_w, fb_h, clear);
@@ -182,7 +180,7 @@ static void frame_cb(void) {
     if (g_state.screenshot && g_state.frame_count == 3) take_screenshot();
     if (g_state.max_frames > 0 && g_state.frame_count >= g_state.max_frames) {
         NX_INFO("frame budget reached (%d), quitting", g_state.max_frames);
-        sapp_quit();
+        nx_platform_quit();
     }
 }
 
@@ -244,7 +242,8 @@ static void print_perf_report(void) {
     free(sorted);
 }
 
-static void cleanup_cb(void) {
+static void cleanup_cb(void* user) {
+    (void)user;
     if (g_state.hr) nx_hot_reload_free(g_state.hr);
     if (g_state.mem) print_mem_report();
     if (g_state.perf) print_perf_report();
@@ -266,24 +265,39 @@ static void cleanup_cb(void) {
     NX_INFO("runtime shut down cleanly after %d frames", g_state.frame_count);
 }
 
-static void event_cb(const sapp_event* ev) {
+static void event_cb(const NxPlatformEvent* ev, void* user) {
+    (void)user;
     switch (ev->type) {
-        case SAPP_EVENTTYPE_RESIZED: {
-            int css_w = (int)ev->window_width;
-            int css_h = (int)ev->window_height;
-            g_state.width = css_w;
-            g_state.height = css_h;
-            if (g_state.app) nx_app_set_viewport(g_state.app, css_w, css_h);
+        case NX_PLATFORM_EVENT_RESIZE:
+            g_state.width = ev->window_width;
+            g_state.height = ev->window_height;
+            if (!g_state.deterministic) g_state.dpi = ev->dpi;
+            if (g_state.app) nx_app_set_viewport(g_state.app, g_state.width, g_state.height);
             if (g_state.app) nx_app_set_dpi(g_state.app, g_state.dpi);
-            NX_DEBUG("resize: %dx%d css px (fb %dx%d)", css_w, css_h, ev->framebuffer_width,
-                     ev->framebuffer_height);
+            NX_DEBUG("resize: %dx%d css px (fb %dx%d, dpi %.2f)", ev->window_width,
+                     ev->window_height, ev->framebuffer_width, ev->framebuffer_height, ev->dpi);
             break;
-        }
-        case SAPP_EVENTTYPE_KEY_DOWN:
-            if (ev->key_code == SAPP_KEYCODE_ESCAPE) sapp_quit();
+        case NX_PLATFORM_EVENT_KEY_DOWN:
+            if (ev->key == NX_KEY_ESCAPE) nx_platform_quit();
+            if (g_state.app) nx_app_key(g_state.app, ev->key, true);
             break;
-        case SAPP_EVENTTYPE_MOUSE_DOWN:
-            if (g_state.app) nx_app_pointer(g_state.app, ev->mouse_x, ev->mouse_y, true);
+        case NX_PLATFORM_EVENT_KEY_UP:
+            if (g_state.app) nx_app_key(g_state.app, ev->key, false);
+            break;
+        case NX_PLATFORM_EVENT_POINTER_DOWN:
+        case NX_PLATFORM_EVENT_TOUCH_BEGIN:
+            if (g_state.app) nx_app_pointer(g_state.app, ev->x, ev->y, true);
+            break;
+        case NX_PLATFORM_EVENT_POINTER_MOVE:
+        case NX_PLATFORM_EVENT_TOUCH_MOVE:
+            if (g_state.app) nx_app_pointer_move(g_state.app, ev->x, ev->y);
+            break;
+        case NX_PLATFORM_EVENT_POINTER_UP:
+        case NX_PLATFORM_EVENT_TOUCH_END:
+            if (g_state.app) nx_app_pointer(g_state.app, ev->x, ev->y, false);
+            break;
+        case NX_PLATFORM_EVENT_QUIT_REQUESTED:
+            nx_platform_quit();
             break;
         default:
             break;
@@ -338,6 +352,7 @@ static int run_headless(void) {
             free(json);
         }
     }
+    g_state.frame_count = frames;
     if (g_state.mem) print_mem_report();
     if (!g_state.stats && !g_state.mem) printf("nativax-runtime headless OK\n");
     nx_app_free(app);
@@ -411,17 +426,20 @@ int main(int argc, char** argv) {
 
     if (headless) return run_headless();
 
-    sapp_run(&(sapp_desc){
-        .init_cb = init_cb,
-        .frame_cb = frame_cb,
-        .cleanup_cb = cleanup_cb,
-        .event_cb = event_cb,
-        .width = g_state.width,
-        .height = g_state.height,
-        .depth_format = SAPP_PIXELFORMAT_NONE,
-        .window_title = "NativaX",
-        .swap_interval = g_state.deterministic ? 0 : 1,
-        .logger.func = slog_func,
-    });
+    NxPlatformDesc desc;
+    memset(&desc, 0, sizeof(desc));
+    desc.title = "NativaX";
+    desc.width = g_state.width;
+    desc.height = g_state.height;
+    desc.vsync = !g_state.deterministic;
+    desc.callbacks.init = init_cb;
+    desc.callbacks.frame = frame_cb;
+    desc.callbacks.cleanup = cleanup_cb;
+    desc.callbacks.event = event_cb;
+    desc.user = &g_state;
+    if (!nx_platform_run(&desc)) {
+        fprintf(stderr, "nativax-runtime: could not start the native window\n");
+        return 1;
+    }
     return 0;
 }

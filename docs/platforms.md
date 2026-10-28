@@ -5,6 +5,10 @@ Status legend: **validated** = built and tested in this environment;
 
 ## Linux (X11) — validated
 
+The window/input layer is `include/nativax/platform.h` with the sokol_app
+backend in `src/platform_sokol.c`. Ports implement the header; the entry point
+(`src/main_sokol.c`) and the rest of the runtime contain no platform SDK calls.
+
 Requirements:
 
 - C11 compiler, CMake ≥ 3.22, Ninja.

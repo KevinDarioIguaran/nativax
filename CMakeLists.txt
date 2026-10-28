@@ -76,6 +76,16 @@ add_library(nativax_gfx STATIC
 target_include_directories(nativax_gfx PUBLIC include)
 target_link_libraries(nativax_gfx PUBLIC nativax_core nativax_sokol)
 
+# Platform layer: window, lifecycle, normalized input, DPI and clipboard.
+# `platform.c` holds backend-independent helpers; `platform_sokol.c` is the
+# sokol_app backend and the only runtime TU that includes sokol_app.h.
+add_library(nativax_platform STATIC
+  src/platform.c
+  src/platform_sokol.c
+)
+target_include_directories(nativax_platform PUBLIC include)
+target_link_libraries(nativax_platform PUBLIC nativax_sokol m)
+
 # Application host: DOM bindings, script execution and the style→layout→paint
 # pipeline with the hot-reload entry points.
 add_library(nativax_app STATIC
@@ -105,7 +115,7 @@ add_executable(nativax-runtime
   src/main_sokol.c
 )
 target_compile_definitions(nativax-runtime PRIVATE NATIVAX_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}")
-target_link_libraries(nativax-runtime PRIVATE nativax_core nativax_app nativax_dev nativax_gfx)
+target_link_libraries(nativax-runtime PRIVATE nativax_core nativax_app nativax_dev nativax_gfx nativax_platform)
 
 # Diagnostic CLI: DOM/CSS artifact dumps (native/debug/run.py drives it).
 add_executable(nativax-debug
@@ -155,6 +165,13 @@ add_executable(nativax_debug_tests
 )
 target_link_libraries(nativax_debug_tests PRIVATE nativax_core)
 add_test(NAME unit_debug COMMAND nativax_debug_tests)
+
+# Platform contract: CSS/physical coordinate conversion used by every backend.
+add_executable(nativax_platform_tests
+  tests/test_platform.c
+)
+target_link_libraries(nativax_platform_tests PRIVATE nativax_platform)
+add_test(NAME unit_platform COMMAND nativax_platform_tests)
 
 # Style → layout → paint pipeline: asserts real geometry from parsed HTML+CSS.
 add_executable(nativax_layout_tests

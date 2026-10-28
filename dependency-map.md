@@ -8,10 +8,10 @@ replaced. Generated from the actual build (`CMakeLists.txt`, `pkg-config`,
 
 | dependency | version/source | license | used by | purpose |
 |---|---|---|---|---|
-| sokol_app | `third_party/sokol/sokol_app.h` (single header) | zlib | `nativax_sokol` | native window, input events, lifecycle |
+| sokol_app | `third_party/sokol/sokol_app.h` (single header) | zlib | `nativax_platform` | native window, input events, lifecycle (behind `include/nativax/platform.h`) |
 | sokol_gfx | `third_party/sokol/sokol_gfx.h` | zlib | `nativax_sokol`, `nativax_gfx` | GPU abstraction (GL core backend on Linux) |
 | sokol_glue | `third_party/sokol/sokol_glue.h` | zlib | `nativax_sokol` | sg environment from sapp |
-| sokol_log | `third_party/sokol/sokol_log.h` | zlib | runtime | sokol log routing |
+| sokol_log | `third_party/sokol/sokol_log.h` | zlib | `nativax_platform`, runtime | sokol log routing |
 | stb_truetype | `third_party/stb/` | MIT / public domain | `nativax_stb` | glyph rasterization for the atlas |
 | stb_image | `third_party/stb/` | MIT / public domain | `nativax_stb` | image decode |
 | stb_image_write | `third_party/stb/` | MIT / public domain | runtime, raster | PNG output (screenshots, goldens) |
@@ -24,7 +24,7 @@ runtime.
 
 | dependency | pkg-config / soname | license | why | replaceable by |
 |---|---|---|---|---|
-| JavaScriptCoreGTK 4.1 | `javascriptcoregtk-4.1` → `libjavascriptcoregtk-4.1.so` | LGPL-2.1 (WebKit) | the only JS engine in this branch (AGENTS.md non-negotiable) | another embeddable JS engine behind `js_engine.h` (the interface exposes no JSValueRef outside the engine layer) |
+| JavaScriptCoreGTK 4.1 | `javascriptcoregtk-4.1` → `libjavascriptcoregtk-4.1.so` | LGPL-2.1 (WebKit) | the only JS engine in this branch (AGENTS.md non-negotiable) | another embeddable JS engine behind `js_engine.h` (the interface exposes no JSValueRef outside the engine layer). QuickJS is the documented fallback if footprint/portability requires it. |
 | OpenGL | `OpenGL::GL` → `libGL.so` | MIT/X11-style | sokol_gfx GL backend | sokol Metal (macOS/iOS) or sokol D3D11 (Windows) — sokol chooses per platform |
 | X11, Xcursor, Xi | `x11 xcursor xi` | MIT | sokol_app Linux backend | Wayland backend (not wired yet) |
 | pthread, dl, libm | libc | glibc LGPL | threads, `dlopen`, math | platform libc |

@@ -502,6 +502,23 @@ bool nx_app_pointer(NxApp* app, float x, float y, bool down) {
     return true;
 }
 
+bool nx_app_pointer_move(NxApp* app, float x, float y) {
+    if (!app || !app->lay || !app->bind) return false;
+    NxNodeRef target = hit_box(app->lay->root, x, y);
+    if (!target) return false;
+    nx_dom_dispatch_js(app->bind, target, "pointermove");
+    return true;
+}
+
+bool nx_app_key(NxApp* app, int key, bool down) {
+    (void)key; /* v1 event object has no keyboard payload (documented) */
+    if (!app || !app->bind) return false;
+    NxNodeRef target = nx_doc_query_selector(app->doc, "body");
+    if (!target) target = nx_doc_root(app->doc);
+    if (!target) return false;
+    return nx_dom_dispatch_js(app->bind, target, down ? "keydown" : "keyup");
+}
+
 /* ---- hot reload ---------------------------------------------------------- */
 
 bool nx_app_reload_css(NxApp* app) {

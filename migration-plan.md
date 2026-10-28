@@ -17,9 +17,14 @@ golden size, stale manifest claims. Evidence: `debug/progress/completed.md`,
 
 ## Phase 2 — Native structure, toolchain, window
 
-**done.** Single CMake build (`nativax_*` targets), sokol_app window with
-lifecycle (`init_cb`/`frame_cb`/`cleanup_cb`/`event_cb`), input plumbing,
-resize handling, logging, configuration via CLI flags, headless mode for CI.
+**done.** Single CMake build (`nativax_*` targets), platform layer
+(`include/nativax/platform.h`: window, lifecycle, normalized input, DPI,
+clipboard, readback) with the sokol_app backend in `src/platform_sokol.c`;
+`src/main_sokol.c` is now an entry point over that contract. Resize/DPI changes
+update the CSS viewport, pointer/touch coordinates are converted from
+framebuffer pixels, keyboard events reach the DOM, and headless mode runs the
+same pipeline for CI. Verified by `unit_platform`, `unit_app` (native key/pointer
+dispatch) and `gpu_window_screenshot`.
 
 ## Phase 3 — Renderer
 
@@ -79,18 +84,22 @@ rebuild/relaunch (`debug/reports/phase8-hot-reload.md`).
 
 **partial, measured.** Optimization applied: per-node style arrays sized to
 `nx_node_slot_bound(doc)` and restyled in place (no second allocation).
-Measured effect on the windowed example app: **120.8 MB → 100.4 MB peak RSS**
-(see `benchmarks/baseline.json`). Remaining: GPU memory accounting, start-up
-trim (lazy atlases), large-document workloads (10k+ nodes), frame-time budget
-on GPU hardware rather than llvmpipe.
+Measured effect on the windowed example app in the original (2026-10-27)
+environment: **120.8 MB → 100.4 MB peak RSS**. Re-measured on 2026-10-28 with
+Mesa 25.2.8/LLVM 20 under Xvfb: **136.7-137.1 MB windowed**, 30.5-31.0 MB
+headless; `smaps` shows ~58.6 MB of LLVM JIT (llvmpipe) and ~10.9 MB of JSC, so
+the 100 MB target is **not met in this environment** (R3). The renderer now
+reports tracked GPU bytes (1.0 MB textures + 2.0 MB buffers) separately from
+RSS. Remaining: hardware-GL measurement, driver GPU accounting, large-document
+workloads (10k+ nodes), frame-time budget on real GPU hardware.
 
 ## Phase 10 — Conformance, stability, platforms
 
-**partial.** Test suite: 12 ctest suites green, including dev server and app
-reload paths. Remaining: html5lib/WPT adapters against the C parser, long-run
-soak/stability harness, ASan full-suite run for the new modules, and platform
-builds (Windows/Android/iOS) — requirements documented in
-`docs/platforms.md`, not yet validated.
+**partial.** Test suite: 16 headless ctest suites + 1 windowed GPU suite green,
+including dev server, platform input and app reload paths. Remaining:
+html5lib/WPT adapters against the C parser, long-run soak/stability harness,
+per-platform ASan runs, and platform builds (Windows/Android/iOS) — requirements
+documented in `docs/platforms.md`, not yet validated.
 
 ## Commit map (this branch, one commit per phase)
 
@@ -109,9 +118,11 @@ phase 7 commit (pipeline integration).
 
 ## Immediate next steps (ordered)
 
-1. Run the new suites under AddressSanitizer/UBSan and fix findings.
-2. Report GPU memory separately (texture bytes from the glyph/image registry).
-3. Add flexbox subset needed by the existing NativaX sample apps.
+1. Measure GPU/driver memory on hardware GL (the llvmpipe/LLVM fixed cost
+   dominates windowed RSS; see `docs/phase1-audit.md` §5).
+2. Add flexbox subset needed by the existing NativaX sample apps.
+3. Give the DOM event object key/pointer payloads (platform input already
+   delivers the data; `js_dom` only dispatches the type today).
 4. Wire the html5lib/WPT tokenizer adapters to the C parser for real
    conformance numbers.
 5. Validate one more platform (Windows via sokol D3D11 + JSC) before claiming

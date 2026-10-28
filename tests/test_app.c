@@ -14,6 +14,7 @@
 #include "nativax/app.h"
 #include "nativax/dom.h"
 #include "nativax/layout.h"
+#include "nativax/platform.h"
 
 static int g_checks = 0;
 static int g_failures = 0;
@@ -105,6 +106,22 @@ int main(void) {
     const NxDisplayList* dl = nx_app_list(app);
     CHECK(dl->vert_count > 0 && dl->group_count > 0, "display list has geometry");
     unsigned before_verts = dl->vert_count;
+
+    /* --- native platform input reaches script listeners ---------------- */
+    char* input_err = NULL;
+    CHECK(nx_js_eval(nx_app_js(app),
+                     "window.__keys = 0; window.__moves = 0;\n"
+                     "document.body.addEventListener('keydown', function(){ window.__keys++; });\n"
+                     "document.body.addEventListener('pointermove', function(){ window.__moves++; });",
+                     "platform-input-test.js", &input_err),
+          "install input listeners: %s", input_err ? input_err : "ok");
+    free(input_err);
+    CHECK(nx_app_key(app, NX_KEY_ENTER, true), "keydown is dispatched on <body>");
+    CHECK(nx_app_pointer_move(app, 10.0f, 10.0f), "pointermove hits a node");
+    char* counter = nx_js_eval_json(nx_app_js(app), "window.__keys * 10 + window.__moves", NULL);
+    CHECK(counter && strcmp(counter, "11") == 0, "listeners observed native input: %s",
+          counter ? counter : "(null)");
+    free(counter);
 
     char* text = text_of(app, "count");
     CHECK(text && strcmp(text, "Clicked 0 times") == 0, "initial text: %s", text ? text : "(null)");

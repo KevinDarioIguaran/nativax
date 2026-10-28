@@ -66,6 +66,15 @@ void nx_app_mark_dirty(NxApp* app);
 /* Pointer input in CSS px: hit-tests the layout and dispatches a click. */
 bool nx_app_pointer(NxApp* app, float x, float y, bool down);
 
+/* Pointer movement in CSS px: dispatches `pointermove` on the hit node.
+   No layout invalidation (hover styling is not implemented yet). */
+bool nx_app_pointer_move(NxApp* app, float x, float y);
+
+/* Keyboard input (NxKey value from platform.h). `keydown`/`keyup` are
+   dispatched on <body> and bubble; the v1 event object carries no key data
+   yet, so listeners can react but not inspect the key. */
+bool nx_app_key(NxApp* app, int key, bool down);
+
 /* Hot reload (see contract above). Return false when the new state could not
    be loaded; the previous state is kept where possible. */
 bool nx_app_reload_css(NxApp* app);
