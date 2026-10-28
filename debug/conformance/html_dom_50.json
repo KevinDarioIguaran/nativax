@@ -1,0 +1,254 @@
+{
+  "html_dom": [
+    {
+      "id": "html-basic-0",
+      "html": "<div id='d0'><p>para 0</p><span>span</span></div>",
+      "css": "#d0{padding:4px;}"
+    },
+    {
+      "id": "html-basic-1",
+      "html": "<div id='d1'><p>para 1</p><span>span</span></div>",
+      "css": "#d1{padding:4px;}"
+    },
+    {
+      "id": "html-basic-2",
+      "html": "<div id='d2'><p>para 2</p><span>span</span></div>",
+      "css": "#d2{padding:4px;}"
+    },
+    {
+      "id": "html-basic-3",
+      "html": "<div id='d3'><p>para 3</p><span>span</span></div>",
+      "css": "#d3{padding:4px;}"
+    },
+    {
+      "id": "html-basic-4",
+      "html": "<div id='d4'><p>para 4</p><span>span</span></div>",
+      "css": "#d4{padding:4px;}"
+    },
+    {
+      "id": "html-basic-5",
+      "html": "<div id='d5'><p>para 5</p><span>span</span></div>",
+      "css": "#d5{padding:4px;}"
+    },
+    {
+      "id": "html-basic-6",
+      "html": "<div id='d6'><p>para 6</p><span>span</span></div>",
+      "css": "#d6{padding:4px;}"
+    },
+    {
+      "id": "html-basic-7",
+      "html": "<div id='d7'><p>para 7</p><span>span</span></div>",
+      "css": "#d7{padding:4px;}"
+    },
+    {
+      "id": "html-basic-8",
+      "html": "<div id='d8'><p>para 8</p><span>span</span></div>",
+      "css": "#d8{padding:4px;}"
+    },
+    {
+      "id": "html-basic-9",
+      "html": "<div id='d9'><p>para 9</p><span>span</span></div>",
+      "css": "#d9{padding:4px;}"
+    },
+    {
+      "id": "html-invalid-0",
+      "html": "<div><p>unclosed 0<span>text</div>",
+      "css": ""
+    },
+    {
+      "id": "html-invalid-1",
+      "html": "<div><p>unclosed 1<span>text</div>",
+      "css": ""
+    },
+    {
+      "id": "html-invalid-2",
+      "html": "<div><p>unclosed 2<span>text</div>",
+      "css": ""
+    },
+    {
+      "id": "html-invalid-3",
+      "html": "<div><p>unclosed 3<span>text</div>",
+      "css": ""
+    },
+    {
+      "id": "html-invalid-4",
+      "html": "<div><p>unclosed 4<span>text</div>",
+      "css": ""
+    },
+    {
+      "id": "html-invalid-5",
+      "html": "<div><p>unclosed 5<span>text</div>",
+      "css": ""
+    },
+    {
+      "id": "html-invalid-6",
+      "html": "<div><p>unclosed 6<span>text</div>",
+      "css": ""
+    },
+    {
+      "id": "html-invalid-7",
+      "html": "<div><p>unclosed 7<span>text</div>",
+      "css": ""
+    },
+    {
+      "id": "html-invalid-8",
+      "html": "<div><p>unclosed 8<span>text</div>",
+      "css": ""
+    },
+    {
+      "id": "html-invalid-9",
+      "html": "<div><p>unclosed 9<span>text</div>",
+      "css": ""
+    },
+    {
+      "id": "html-limit-0",
+      "html": "<div>x</div>",
+      "css": ""
+    },
+    {
+      "id": "html-limit-1",
+      "html": "<div>xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx</div>",
+      "css": ""
+    },
+    {
+      "id": "html-limit-2",
+      "html": "<div>xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx</div>",
+      "css": ""
+    },
+    {
+      "id": "html-limit-3",
+      "html": "<div>xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx</div>",
+      "css": ""
+    },
+    {
+      "id": "html-limit-4",
+      "html": "<div>xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx</div>",
+      "css": ""
+    },
+    {
+      "id": "html-limit-5",
+      "html": "<div>xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx</div>",
+      "css": ""
+    },
+    {
+      "id": "html-limit-6",
+      "html": "<div>xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx</div>",
+      "css": ""
+    },
+    {
+      "id": "html-limit-7",
+      "html": "<div>xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx</div>",
+      "css": ""
+    },
+    {
+      "id": "html-limit-8",
+      "html": "<div>xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx</div>",
+      "css": ""
+    },
+    {
+      "id": "html-limit-9",
+      "html": "<div>xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx</div>",
+      "css": ""
+    },
+    {
+      "id": "html-nested-0",
+      "html": "<div><span>deep</span></div>",
+      "css": ""
+    },
+    {
+      "id": "html-nested-1",
+      "html": "<div><span><span>deep</span></span></div>",
+      "css": ""
+    },
+    {
+      "id": "html-nested-2",
+      "html": "<div><span><span><span>deep</span></span></span></div>",
+      "css": ""
+    },
+    {
+      "id": "html-nested-3",
+      "html": "<div><span><span><span><span>deep</span></span></span></span></div>",
+      "css": ""
+    },
+    {
+      "id": "html-nested-4",
+      "html": "<div><span><span><span><span><span>deep</span></span></span></span></span></div>",
+      "css": ""
+    },
+    {
+      "id": "html-nested-5",
+      "html": "<div><span><span><span><span><span><span>deep</span></span></span></span></span></span></div>",
+      "css": ""
+    },
+    {
+      "id": "html-nested-6",
+      "html": "<div><span><span><span><span><span><span><span>deep</span></span></span></span></span></span></span></div>",
+      "css": ""
+    },
+    {
+      "id": "html-nested-7",
+      "html": "<div><span><span><span><span><span><span><span><span>deep</span></span></span></span></span></span></span></span></div>",
+      "css": ""
+    },
+    {
+      "id": "html-nested-8",
+      "html": "<div><span><span><span><span><span><span><span><span><span>deep</span></span></span></span></span></span></span></span></span></div>",
+      "css": ""
+    },
+    {
+      "id": "html-nested-9",
+      "html": "<div><span><span><span><span><span><span><span><span><span><span>deep</span></span></span></span></span></span></span></span></span></span></div>",
+      "css": ""
+    },
+    {
+      "id": "html-mixed-0",
+      "html": "<section><h1>title</h1><ul><li>a</li><li>b</li></ul></section>",
+      "css": "section{margin:8px;}"
+    },
+    {
+      "id": "html-mixed-1",
+      "html": "<section><h2>title</h2><ul><li>a</li><li>b</li></ul></section>",
+      "css": "section{margin:8px;}"
+    },
+    {
+      "id": "html-mixed-2",
+      "html": "<section><h3>title</h3><ul><li>a</li><li>b</li></ul></section>",
+      "css": "section{margin:8px;}"
+    },
+    {
+      "id": "html-mixed-3",
+      "html": "<section><h4>title</h4><ul><li>a</li><li>b</li></ul></section>",
+      "css": "section{margin:8px;}"
+    },
+    {
+      "id": "html-mixed-4",
+      "html": "<section><h5>title</h5><ul><li>a</li><li>b</li></ul></section>",
+      "css": "section{margin:8px;}"
+    },
+    {
+      "id": "html-mixed-5",
+      "html": "<section><h6>title</h6><ul><li>a</li><li>b</li></ul></section>",
+      "css": "section{margin:8px;}"
+    },
+    {
+      "id": "html-mixed-6",
+      "html": "<section><h1>title</h1><ul><li>a</li><li>b</li></ul></section>",
+      "css": "section{margin:8px;}"
+    },
+    {
+      "id": "html-mixed-7",
+      "html": "<section><h2>title</h2><ul><li>a</li><li>b</li></ul></section>",
+      "css": "section{margin:8px;}"
+    },
+    {
+      "id": "html-mixed-8",
+      "html": "<section><h3>title</h3><ul><li>a</li><li>b</li></ul></section>",
+      "css": "section{margin:8px;}"
+    },
+    {
+      "id": "html-mixed-9",
+      "html": "<section><h4>title</h4><ul><li>a</li><li>b</li></ul></section>",
+      "css": "section{margin:8px;}"
+    }
+  ]
+}

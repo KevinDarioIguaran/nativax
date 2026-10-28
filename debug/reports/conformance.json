@@ -47,6 +47,306 @@
       "id": "events",
       "ok": true,
       "stderr": ""
+    },
+    {
+      "domain": "html_dom",
+      "id": "html-basic-0",
+      "ok": true,
+      "stderr": ""
+    },
+    {
+      "domain": "html_dom",
+      "id": "html-basic-1",
+      "ok": true,
+      "stderr": ""
+    },
+    {
+      "domain": "html_dom",
+      "id": "html-basic-2",
+      "ok": true,
+      "stderr": ""
+    },
+    {
+      "domain": "html_dom",
+      "id": "html-basic-3",
+      "ok": true,
+      "stderr": ""
+    },
+    {
+      "domain": "html_dom",
+      "id": "html-basic-4",
+      "ok": true,
+      "stderr": ""
+    },
+    {
+      "domain": "html_dom",
+      "id": "html-basic-5",
+      "ok": true,
+      "stderr": ""
+    },
+    {
+      "domain": "html_dom",
+      "id": "html-basic-6",
+      "ok": true,
+      "stderr": ""
+    },
+    {
+      "domain": "html_dom",
+      "id": "html-basic-7",
+      "ok": true,
+      "stderr": ""
+    },
+    {
+      "domain": "html_dom",
+      "id": "html-basic-8",
+      "ok": true,
+      "stderr": ""
+    },
+    {
+      "domain": "html_dom",
+      "id": "html-basic-9",
+      "ok": true,
+      "stderr": ""
+    },
+    {
+      "domain": "html_dom",
+      "id": "html-invalid-0",
+      "ok": true,
+      "stderr": ""
+    },
+    {
+      "domain": "html_dom",
+      "id": "html-invalid-1",
+      "ok": true,
+      "stderr": ""
+    },
+    {
+      "domain": "html_dom",
+      "id": "html-invalid-2",
+      "ok": true,
+      "stderr": ""
+    },
+    {
+      "domain": "html_dom",
+      "id": "html-invalid-3",
+      "ok": true,
+      "stderr": ""
+    },
+    {
+      "domain": "html_dom",
+      "id": "html-invalid-4",
+      "ok": true,
+      "stderr": ""
+    },
+    {
+      "domain": "html_dom",
+      "id": "html-invalid-5",
+      "ok": true,
+      "stderr": ""
+    },
+    {
+      "domain": "html_dom",
+      "id": "html-invalid-6",
+      "ok": true,
+      "stderr": ""
+    },
+    {
+      "domain": "html_dom",
+      "id": "html-invalid-7",
+      "ok": true,
+      "stderr": ""
+    },
+    {
+      "domain": "html_dom",
+      "id": "html-invalid-8",
+      "ok": true,
+      "stderr": ""
+    },
+    {
+      "domain": "html_dom",
+      "id": "html-invalid-9",
+      "ok": true,
+      "stderr": ""
+    },
+    {
+      "domain": "html_dom",
+      "id": "html-limit-0",
+      "ok": true,
+      "stderr": ""
+    },
+    {
+      "domain": "html_dom",
+      "id": "html-limit-1",
+      "ok": true,
+      "stderr": ""
+    },
+    {
+      "domain": "html_dom",
+      "id": "html-limit-2",
+      "ok": true,
+      "stderr": ""
+    },
+    {
+      "domain": "html_dom",
+      "id": "html-limit-3",
+      "ok": true,
+      "stderr": ""
+    },
+    {
+      "domain": "html_dom",
+      "id": "html-limit-4",
+      "ok": true,
+      "stderr": ""
+    },
+    {
+      "domain": "html_dom",
+      "id": "html-limit-5",
+      "ok": true,
+      "stderr": ""
+    },
+    {
+      "domain": "html_dom",
+      "id": "html-limit-6",
+      "ok": true,
+      "stderr": ""
+    },
+    {
+      "domain": "html_dom",
+      "id": "html-limit-7",
+      "ok": true,
+      "stderr": ""
+    },
+    {
+      "domain": "html_dom",
+      "id": "html-limit-8",
+      "ok": true,
+      "stderr": ""
+    },
+    {
+      "domain": "html_dom",
+      "id": "html-limit-9",
+      "ok": true,
+      "stderr": ""
+    },
+    {
+      "domain": "html_dom",
+      "id": "html-nested-0",
+      "ok": true,
+      "stderr": ""
+    },
+    {
+      "domain": "html_dom",
+      "id": "html-nested-1",
+      "ok": true,
+      "stderr": ""
+    },
+    {
+      "domain": "html_dom",
+      "id": "html-nested-2",
+      "ok": true,
+      "stderr": ""
+    },
+    {
+      "domain": "html_dom",
+      "id": "html-nested-3",
+      "ok": true,
+      "stderr": ""
+    },
+    {
+      "domain": "html_dom",
+      "id": "html-nested-4",
+      "ok": true,
+      "stderr": ""
+    },
+    {
+      "domain": "html_dom",
+      "id": "html-nested-5",
+      "ok": true,
+      "stderr": ""
+    },
+    {
+      "domain": "html_dom",
+      "id": "html-nested-6",
+      "ok": true,
+      "stderr": ""
+    },
+    {
+      "domain": "html_dom",
+      "id": "html-nested-7",
+      "ok": true,
+      "stderr": ""
+    },
+    {
+      "domain": "html_dom",
+      "id": "html-nested-8",
+      "ok": true,
+      "stderr": ""
+    },
+    {
+      "domain": "html_dom",
+      "id": "html-nested-9",
+      "ok": true,
+      "stderr": ""
+    },
+    {
+      "domain": "html_dom",
+      "id": "html-mixed-0",
+      "ok": true,
+      "stderr": ""
+    },
+    {
+      "domain": "html_dom",
+      "id": "html-mixed-1",
+      "ok": true,
+      "stderr": ""
+    },
+    {
+      "domain": "html_dom",
+      "id": "html-mixed-2",
+      "ok": true,
+      "stderr": ""
+    },
+    {
+      "domain": "html_dom",
+      "id": "html-mixed-3",
+      "ok": true,
+      "stderr": ""
+    },
+    {
+      "domain": "html_dom",
+      "id": "html-mixed-4",
+      "ok": true,
+      "stderr": ""
+    },
+    {
+      "domain": "html_dom",
+      "id": "html-mixed-5",
+      "ok": true,
+      "stderr": ""
+    },
+    {
+      "domain": "html_dom",
+      "id": "html-mixed-6",
+      "ok": true,
+      "stderr": ""
+    },
+    {
+      "domain": "html_dom",
+      "id": "html-mixed-7",
+      "ok": true,
+      "stderr": ""
+    },
+    {
+      "domain": "html_dom",
+      "id": "html-mixed-8",
+      "ok": true,
+      "stderr": ""
+    },
+    {
+      "domain": "html_dom",
+      "id": "html-mixed-9",
+      "ok": true,
+      "stderr": ""
     }
   ]
 }
