@@ -416,6 +416,80 @@ static void test_vr_borders(void) {
     nx_raster_free(&r); nx_dl_free(&dl); reset_all_state();
 }
 
+
+/* ---- 10 HTML/CSS 2D debug scenes ---- */
+static void vr_scene(int idx) {
+    reset_all_state();
+    NxDisplayList dl; nx_dl_init(&dl); nx_dl_reset(&dl);
+    int32_t font = nx_font_load(font_path());
+    char name[64]; snprintf(name, sizeof(name), "vr_scene_%02d", idx);
+    switch (idx) {
+    case 0:
+        nx_dl_fill_rect(&dl, 0,0,320,200,(NxColor){1,1,1,1},NULL);
+        { float r[4]={8,8,8,8}; nx_dl_fill_rect(&dl,20,20,120,60,(NxColor){0.2f,0.4f,0.8f,1},r); }
+        nx_dl_stroke_rect(&dl,20,100,120,60,(NxColor){0.8f,0.2f,0.2f,1},NULL,2);
+        break;
+    case 1:
+        nx_dl_fill_rect(&dl,0,0,320,200,(NxColor){0.9f,0.9f,0.95f,1},NULL);
+        nx_dl_push_clip(&dl,40,40,120,80);
+        nx_dl_fill_rect(&dl,30,30,200,120,(NxColor){0.3f,0.7f,0.4f,1},NULL);
+        nx_dl_pop_clip(&dl);
+        break;
+    case 2: {
+        nx_dl_fill_rect(&dl,0,0,320,200,(NxColor){0.1f,0.1f,0.15f,1},NULL);
+        nx_dl_begin_layer(&dl,0.5f);
+        nx_dl_fill_rect(&dl,50,50,150,80,(NxColor){0.9f,0.5f,0.2f,1},NULL);
+        nx_dl_end_layer(&dl);
+        break;
+    }
+    case 3: {
+        NxMat2x3 m=nx_mat_translate(30,20);
+        nx_dl_push_transform(&dl,&m);
+        nx_dl_fill_rect(&dl,0,0,100,50,(NxColor){0.6f,0.2f,0.7f,1},NULL);
+        nx_dl_pop_transform(&dl);
+        break;
+    }
+    case 4:
+        if (font>=0) nx_dl_text(&dl,20,40,font,20,(NxColor){0,0,0,1},"Hello Debug",11);
+        break;
+    case 5:
+        nx_dl_fill_rect(&dl,0,0,320,200,(NxColor){1,1,1,1},NULL);
+        { float r[4]={20,5,20,5}; nx_dl_fill_rect(&dl,30,30,100,60,(NxColor){0.4f,0.6f,0.9f,1},r); }
+        break;
+    case 6: {
+        NxMat2x3 s=nx_mat_scale(1.5f,1.5f);
+        nx_dl_push_transform(&dl,&s);
+        nx_dl_fill_rect(&dl,10,10,60,40,(NxColor){0.9f,0.7f,0.1f,1},NULL);
+        nx_dl_pop_transform(&dl);
+        break;
+    }
+    case 7:
+        nx_dl_fill_rect(&dl,0,0,320,200,(NxColor){0.8f,0.8f,0.8f,1},NULL);
+        nx_dl_begin_layer(&dl,0.3f);
+        nx_dl_fill_rect(&dl,80,60,160,80,(NxColor){0,0,0,1},NULL);
+        nx_dl_end_layer(&dl);
+        break;
+    case 8:
+        nx_dl_fill_rect(&dl,0,0,320,200,(NxColor){0.95f,0.95f,0.95f,1},NULL);
+        nx_dl_push_clip(&dl,100,80,120,60);
+        nx_dl_fill_rect(&dl,0,0,320,200,(NxColor){0.1f,0.8f,0.8f,1},NULL);
+        nx_dl_pop_clip(&dl);
+        break;
+    case 9:
+        nx_dl_fill_rect(&dl,0,0,320,200,(NxColor){0.2f,0.2f,0.25f,1},NULL);
+        { float r[4]={0,30,0,30}; nx_dl_fill_rect(&dl,40,40,100,100,(NxColor){0.8f,0.4f,0.4f,1},r); }
+        break;
+    }
+    NxRaster r; nx_raster_init(&r,320,200); nx_raster_clear(&r,(NxColor){0,0,0,1});
+    nx_raster_run(&r,&dl);
+    check_golden_png(name,&r);
+    nx_raster_free(&r); nx_dl_free(&dl);
+    reset_all_state();
+}
+
+static void test_vr_10_scenes(void) {
+    for (int i=0;i<10;i++) vr_scene(i);
+}
 static void test_effects(void) {
     reset_all_state();
     int32_t font = nx_font_load(font_path());
@@ -554,6 +628,7 @@ int main(int argc, char** argv) {
     test_raster_golden();
     test_text_pages();
     test_effects();
+    test_vr_10_scenes();
     test_vr_flex();
     test_vr_opacity_transform();
     test_vr_overflow();
