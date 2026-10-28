@@ -59,6 +59,11 @@ Platform/internals:
 
 ## Known limitations
 
+- Windowed verification ran under Xvfb + llvmpipe, the only GL stack available
+  in this environment (no hardware GPU). The platform contract, event
+  translation and presentation path are exercised, but driver-specific DPI
+  behaviour (1.5x/2x window scale) and hardware-driver memory are still
+  unverified; that is tracked as R3/R1 in `risk-register.md`.
 - The event object exposed to scripts carries only the event type; key codes,
   pointer coordinates and modifier state cross the platform layer but are not
   yet in the JS payload (R12).
