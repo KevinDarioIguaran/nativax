@@ -13,4 +13,9 @@
 long nx_mem_rss_kb(void);
 long nx_mem_peak_kb(void);
 
+/* glibc heap currently in use (bytes), from mallinfo2(). This is the native
+   heap only: it excludes mmap'd regions, shared libraries and the JS engine's
+   own allocator. Returns -1 when mallinfo2 is unavailable. */
+long long nx_native_heap_bytes(void);
+
 #endif /* NATIVAX_MEMINFO_H */

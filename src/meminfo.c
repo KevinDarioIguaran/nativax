@@ -1,5 +1,6 @@
 #include "nativax/meminfo.h"
 
+#include <malloc.h>
 #include <stdio.h>
 #include <string.h>
 #include <sys/resource.h>
@@ -36,4 +37,13 @@ long nx_mem_peak_kb(void) {
     struct rusage ru;
     if (getrusage(RUSAGE_SELF, &ru) == 0) return (long)ru.ru_maxrss;
     return -1;
+}
+
+long long nx_native_heap_bytes(void) {
+#if defined(__GLIBC__)
+    struct mallinfo2 mi = mallinfo2();
+    return (long long)mi.uordblks;
+#else
+    return -1; /* mallinfo2 is glibc-specific */
+#endif
 }

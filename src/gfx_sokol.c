@@ -10,9 +10,10 @@
 typedef struct TexEntry {
     sg_image img;
     sg_view view;
-    bool ready;   /* image created */
-    bool white;   /* detached/missing: draw with white texture */
-    uint32_t gen; /* registry generation when created */
+    bool ready;       /* image created */
+    bool white;       /* detached/missing: draw with white texture */
+    uint32_t gen;     /* registry generation when created */
+    long long bytes;  /* GPU bytes charged for this image */
 } TexEntry;
 
 static struct {
@@ -22,6 +23,7 @@ static struct {
     sg_pipeline pipe_glyph;
     sg_sampler sampler;
     sg_view white_view;
+    sg_image white_img;
     sg_buffer vbuf, ibuf;
     size_t vbuf_size, ibuf_size;
     TexEntry* tex;
@@ -149,6 +151,7 @@ static void make_buffers(size_t vsize, size_t isize) {
     g.vbuf_size = vsize;
     g.ibuf_size = isize;
     g.stats.buffer_recreates++;
+    g.stats.buffer_bytes = (long long)vsize + (long long)isize;
 }
 
 void nx_gfx_init(void) {
@@ -172,6 +175,8 @@ void nx_gfx_init(void) {
         .data = {.ptr = white, .size = 4},
         .label = "nativax-white",
     });
+    g.white_img = img; /* tracked: views do not own their image */
+    g.stats.texture_bytes += 4;
     g.white_view = sg_make_view(&(sg_view_desc){
         .texture = {.image = img},
     });
@@ -188,6 +193,8 @@ void nx_gfx_shutdown(void) {
         if (g.tex[i].ready) {
             sg_destroy_view(g.tex[i].view);
             sg_destroy_image(g.tex[i].img);
+            g.stats.texture_bytes -= g.tex[i].bytes;
+            g.tex[i].bytes = 0;
         }
     }
     free(g.tex);
@@ -195,6 +202,7 @@ void nx_gfx_shutdown(void) {
     if (g.ibuf.id) sg_destroy_buffer(g.ibuf);
     sg_destroy_sampler(g.sampler);
     sg_destroy_view(g.white_view);
+    if (g.white_img.id) sg_destroy_image(g.white_img); /* orphan if not destroyed */
     sg_destroy_pipeline(g.pipe_ui);
     sg_destroy_pipeline(g.pipe_glyph);
     sg_destroy_shader(g.shd);
@@ -209,6 +217,8 @@ void nx_gfx_sync_textures(void) {
             if (g.tex[i].ready) {
                 sg_destroy_view(g.tex[i].view);
                 sg_destroy_image(g.tex[i].img);
+                g.stats.texture_bytes -= g.tex[i].bytes;
+                g.tex[i].bytes = 0;
             }
         }
         memset(g.tex, 0, (size_t)g.tex_cap * sizeof(TexEntry));
@@ -229,6 +239,8 @@ void nx_gfx_sync_textures(void) {
             if (e->ready) {
                 sg_destroy_view(e->view);
                 sg_destroy_image(e->img);
+                g.stats.texture_bytes -= e->bytes;
+                e->bytes = 0;
                 e->ready = false;
                 e->white = true;
             }
@@ -248,6 +260,9 @@ void nx_gfx_sync_textures(void) {
         e->view = sg_make_view(&(sg_view_desc){.texture = {.image = e->img}});
         e->ready = true;
         e->white = false;
+        e->bytes = (long long)info->width * (long long)info->height *
+                   (fmt == SG_PIXELFORMAT_RGBA8 ? 4 : 1);
+        g.stats.texture_bytes += e->bytes;
         g.stats.texture_uploads++;
     }
     if (g.tex_count < n + 1) g.tex_count = n + 1; /* id0=white + n entries */

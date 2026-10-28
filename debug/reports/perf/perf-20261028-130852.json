@@ -1,0 +1,1 @@
+{"id":"perf-20261028-130852","root":"examples/counter","cold_start_ms":5.882,"first_frame_ms":5.882,"frame_avg_ms":0.0002,"frame_p95_ms":0.0002,"rss_peak_kb":51372,"native_heap_bytes":4642512}

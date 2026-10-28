@@ -75,6 +75,24 @@ bool nx_app_reload_document(NxApp* app);
 /* Diagnostics: compact JSON with the current pipeline sizes. */
 char* nx_app_stats_json(NxApp* app);
 
+/* Phase timings, measured with CLOCK_MONOTONIC on the real pipeline.
+   Load fields come from the last nx_app_load()/reload_document; the rest
+   reflect the most recent nx_app_update()/reload. All values in ms. */
+typedef struct NxAppTimings {
+    double load_read_ms;     /* entry file read */
+    double load_parse_ms;    /* HTML parse */
+    double load_collect_ms;  /* stylesheet + script collection */
+    double load_layout_ms;   /* first style resolution + layout */
+    double load_script_ms;   /* JS context creation + script execution */
+    double load_total_ms;    /* read+parse+collect+layout+script */
+    double restyle_ms;       /* last cascade resolution */
+    double relayout_ms;      /* last layout run */
+    double paint_ms;         /* last display-list build */
+    double frame_ms;         /* last nx_app_update() including timers */
+} NxAppTimings;
+
+const NxAppTimings* nx_app_timings(NxApp* app);
+
 /* Redraw needed (dev server can skip work when false). */
 bool nx_app_needs_paint(NxApp* app);
 

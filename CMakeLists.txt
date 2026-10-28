@@ -11,6 +11,20 @@ endif()
 
 add_compile_options(-Wall -Wextra -Wno-unused-parameter)
 
+# ---- sanitizers (reproducible: cmake -DNATIVAX_SANITIZE=ON ...) -----------
+# AddressSanitizer + UndefinedBehaviorSanitizer over EVERY target (runtime,
+# CLI, all test binaries). -fno-sanitize-recover makes UB fail the test instead
+# of being reported and ignored, so a green run means nothing was silenced.
+option(NATIVAX_SANITIZE "Build with AddressSanitizer + UndefinedBehaviorSanitizer" OFF)
+if(NATIVAX_SANITIZE)
+  # keep this a CMake LIST (not a quoted string): each flag must reach the
+  # compiler as its own argument
+  set(SAN_FLAGS -fsanitize=address,undefined -fno-omit-frame-pointer -fno-sanitize-recover=all -g)
+  add_compile_options(${SAN_FLAGS})
+  add_link_options(${SAN_FLAGS})
+  message(STATUS "NativaX sanitizers: ASan+UBSan (all targets)")
+endif()
+
 find_package(PkgConfig REQUIRED)
 # JavaScriptCore (WebKitGTK) — the only JS engine (AGENTS.md non-negotiable).
 pkg_check_modules(JSC REQUIRED IMPORTED_TARGET javascriptcoregtk-4.1)
@@ -181,6 +195,41 @@ add_executable(nativax_devserver_tests
 target_compile_definitions(nativax_devserver_tests PRIVATE NATIVAX_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}")
 target_link_libraries(nativax_devserver_tests PRIVATE nativax_dev)
 add_test(NAME unit_devserver COMMAND nativax_devserver_tests)
+
+# Soak / stability harness: repeated parse, load failures, reload churn, DOM
+# churn and full teardown, with RSS + native-heap accounting. Short cycles in
+# ctest; long runs use NATIVAX_SOAK_CYCLES=<n> (see debug/run.py sanitize).
+add_executable(nativax_soak_tests
+  tests/test_soak.c
+)
+target_compile_definitions(nativax_soak_tests PRIVATE NATIVAX_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}")
+target_link_libraries(nativax_soak_tests PRIVATE nativax_app)
+add_test(NAME soak_stability COMMAND nativax_soak_tests)
+set_tests_properties(soak_stability PROPERTIES ENVIRONMENT "NATIVAX_SOAK_CYCLES=6")
+
+# Regression: stale-layout paint (ASan heap-use-after-free) after script
+# mutations during load/reload.
+add_executable(nativax_regression_tests
+  tests/test_regression_reload.c
+)
+target_compile_definitions(nativax_regression_tests PRIVATE NATIVAX_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}")
+target_link_libraries(nativax_regression_tests PRIVATE nativax_app)
+add_test(NAME regression_reload COMMAND nativax_regression_tests)
+
+# Pipeline performance diagnostics (debug laboratory): cold start, time to
+# first frame, per-phase costs, frame-loop stats, reload churn and memory.
+# `nativax_perf` runs the REAL pipeline; `nativax-runtime --perf` reports
+# presented-frame pacing under vsync in windowed mode.
+add_executable(nativax_perf
+  tests/bench_pipeline.c
+)
+target_compile_definitions(nativax_perf PRIVATE NATIVAX_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}")
+target_link_libraries(nativax_perf PRIVATE nativax_app)
+# keep the tool honest: it must run in CI too (tiny workload, exit-code checked)
+add_test(NAME perf_smoke
+  COMMAND nativax_perf --root ${CMAKE_CURRENT_SOURCE_DIR}/examples/counter
+          --frames 3 --iters 1 --nav 1
+)
 
 # Windowed GPU smoke: only when a display is available at configure time.
 if(DEFINED ENV{DISPLAY})

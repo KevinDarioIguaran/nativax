@@ -8,10 +8,11 @@
 # is not asserted here (GL blending/rasterization differs subtly across
 # drivers); pixel-exact rendering is gated by the CPU goldens.
 #
-# The golden is re-derived from the CPU rasterizer for cross-checking color
-# presence, not byte equality.
+# The check validates the rendered application's structure; pixel-exact
+# rendering is gated by the CPU goldens.
 execute_process(
   COMMAND ${NATIVAX_RUNTIME} --deterministic --size 1024 768 --frames 5
+          --root ${NATIVAX_SOURCE_DIR}/examples/counter
           --screenshot ${NATIVAX_BIN_DIR}/gpu_smoke.png
   WORKING_DIRECTORY ${NATIVAX_BIN_DIR}
   RESULT_VARIABLE rv
@@ -28,7 +29,8 @@ if(sz LESS 5000)
   message(FATAL_ERROR "screenshot suspiciously small (${sz} bytes)")
 endif()
 
-# Structural validation via Python: size + expected palette + non-empty text band.
+# Structural validation via Python: size + real application palette (page,
+# header, accent, card) + non-empty glyph coverage in the header band.
 find_program(NATIVAX_PYTHON3 python3)
 if(NATIVAX_PYTHON3)
   execute_process(

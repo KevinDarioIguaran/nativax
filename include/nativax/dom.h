@@ -64,6 +64,14 @@ bool nx_node_is_ancestor(NxDocument* doc, NxNodeRef ancestor, NxNodeRef node);
    its descendants become invalid. Document node cannot be destroyed. */
 bool nx_node_destroy(NxDocument* doc, NxNodeRef node);
 
+/* Destroy every subtree that is detached from the document root (nodes
+   removed with remove()/removeChild but never destroyed). There is no GC for
+   native nodes, so detached subtrees otherwise occupy their slots forever:
+   repeated create+remove churn grew the pool until NX_MAX_NODES. Call only
+   when no live reference to detached nodes can exist — e.g. right after the
+   JS context was reset (all wrappers died with it). Returns nodes destroyed. */
+int nx_doc_reap_detached(NxDocument* doc);
+
 /* ---- ids & queries ---- */
 NxNodeRef nx_doc_get_element_by_id(NxDocument* doc, const char* id);
 /* very small querySelector subset: "tag", "#id", ".class", "tag.class",

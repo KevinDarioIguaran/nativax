@@ -538,6 +538,26 @@ bool nx_node_destroy(NxDocument* doc, NxNodeRef node) {
     return true;
 }
 
+static bool slot_attached(NxDocument* doc, int32_t idx); /* def below */
+
+int nx_doc_reap_detached(NxDocument* doc) {
+    if (!doc) return 0;
+    int reaped = 0;
+    /* Only called when no live reference to detached nodes can exist (the JS
+       context and its wrappers were just destroyed). Walk every slot: nodes
+       still reachable from the document root are kept; detached subtrees are
+       destroyed so their slots return to the freelist and are reused by the
+       next parse. Destroying a subtree may already have freed descendants
+       later in this walk — those slots read type == 0 and are skipped. */
+    for (int32_t i = 1; i < doc->count; i++) {
+        NxNode* n = &doc->nodes[i];
+        if (n->type == 0 || n->type == NX_NODE_DOCUMENT) continue;
+        if (slot_attached(doc, i)) continue;
+        if (nx_node_destroy(doc, handle_of(doc, i))) reaped++;
+    }
+    return reaped;
+}
+
 /* ---- ids & queries ---- */
 /* Detached subtrees keep their slots (and ids) until destroyed, but they are
    no longer part of the document: queries must not return them. */

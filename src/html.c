@@ -809,11 +809,14 @@ bool nx_html_parse(NxDocument* doc, const char* html, int len, char** error_out)
         return false;
     }
 
-    /* clear existing children (fresh document per page load; hot reload
-       creates a new document) */
+    /* clear existing children: DESTROY the previous subtrees so their slots
+       return to the freelist. Detaching alone (nx_node_remove_child) leaks the
+       whole old tree on every reparse: slot count and native heap grew linearly
+       per document reload until NX_MAX_NODES was reached (soak finding,
+       400 reloads -> 97645/100000 slots). */
     for (NxNodeRef c = nx_node_first_child(doc, nx_doc_root(doc)); c;) {
         NxNodeRef next = nx_node_next_sibling(doc, c);
-        nx_node_remove_child(doc, nx_doc_root(doc), c);
+        nx_node_destroy(doc, c);
         c = next;
     }
 

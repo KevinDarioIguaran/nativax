@@ -1,0 +1,1 @@
+{"tool":"soak","cycles":400,"checks":2848,"failures":0,"rss_start_kb":25816,"rss_end_kb":401140,"peak_rss_kb":401140,"heap_start_bytes":0,"heap_end_bytes":0,"js_heap":"unavailable: JavaScriptCoreGTK C API exposes no heap statistic"}

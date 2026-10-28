@@ -30,18 +30,27 @@ ROOT = Path(__file__).resolve().parents[1]   # repo root (this branch: repo root
 DEBUG = ROOT / "debug"
 NATIVE = ROOT                                # repo root contains src/, include/, assets/
 SHARED = DEBUG / "run.py"
+HERE = Path(__file__).resolve()
 ARTIFACTS = DEBUG / "artifacts"
 CASES_DEFAULT = DEBUG / "cases"              # WPT validation dataset absent on this branch
 
 
 def _shared_exists() -> bool:
-    return SHARED.exists()
+    """A distinct shared entry point (the pre-split layout) exists.
+
+    On this branch the wrapper IS debug/run.py, so SHARED resolves to this
+    very file: delegating used to re-run ourselves with the same arguments
+    and `run.py test` recursed forever (one child process per level) instead
+    of finishing. Skip delegation when the target is us.
+    """
+    return SHARED.exists() and SHARED.resolve() != HERE
 
 
 def _delegate(argv: list[str]) -> int:
     """Run the shared debug entry point with the same arguments."""
     if not _shared_exists():
-        print(f"shared debug entry point not present: {SHARED}", file=sys.stderr)
+        print(f"shared debug entry point not present (or is this same file): {SHARED}",
+              file=sys.stderr)
         return 127
     return subprocess.run([sys.executable, str(SHARED), *argv]).returncode
 
@@ -198,14 +207,42 @@ def _cmd_certify_all() -> int:
 
 
 def _cmd_report() -> int:
-    # REAL numbers measured in this session (see debug/progress/current-task.md)
-    print("NativaX Native baseline (native-c-sokol @ 7637bc3)")
-    print("C test binaries: 5/5 run green (46+44+185+157+41 checks, 0 failures)")
-    print("C test suites via ctest: 6/6 PASS (incl. gpu_window_screenshot under Xvfb)")
-    print("GPU golden: tests/goldens/smoke_render.png re-baselined at 1024x768 @ DPI 1.0")
-    print("GPU screenshot determinism: IDENTICAL across runs")
-    print("Warnings: 0 (gcc -Wall -Wextra, RelWithDebInfo clean build)")
-    return 0
+    """Measured report: every number printed here is produced by running the
+    tool right now (nothing is hardcoded — the previous version quoted
+    results from commit 7637bc3 as if they were current)."""
+    import time
+
+    head = subprocess.run(["git", "rev-parse", "--short", "HEAD"], cwd=NATIVE,
+                          capture_output=True, text=True)
+    print(f"NativaX native baseline ({(head.stdout.strip() or 'unknown')})")
+
+    build = NATIVE / "build"
+    if not (build / "CTestTestfile.cmake").exists():
+        print("ctest: build not configured (python3 debug/run.py build)")
+        return 1
+    t0 = time.time()
+    proc = subprocess.run(["ctest", "--test-dir", str(build)],
+                          capture_output=True, text=True)
+    summary = [l.strip() for l in proc.stdout.splitlines() if "tests passed" in l]
+    print(f"ctest RelWithDebInfo ({time.time() - t0:.1f}s): "
+          f"{summary[-1] if summary else 'no summary'} (exit {proc.returncode})")
+
+    files = sorted(p for p in (DEBUG).rglob("test_*.py")
+                   if "__pycache__" not in p.parts)
+    ok = 0
+    for f in files:
+        r = subprocess.run([sys.executable, str(f)], cwd=ROOT,
+                           capture_output=True, text=True)
+        if r.returncode == 0:
+            ok += 1
+    print(f"lab tests: {ok}/{len(files)} OK ({', '.join(f.name for f in files)})")
+
+    reports = DEBUG / "reports"
+    if reports.exists():
+        for p in sorted(reports.rglob("*.json")):
+            print(f"  report: {p.relative_to(DEBUG)} ({p.stat().st_size} bytes)")
+    print("see debug/reports/phase1-report.md for the full diagnostics summary")
+    return 0 if proc.returncode == 0 and ok == len(files) else 1
 
 
 def main(argv: list[str]) -> int:

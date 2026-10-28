@@ -43,6 +43,15 @@ typedef struct AppState {
     bool deterministic;
     bool stats;
     bool mem;
+    bool perf;
+    /* presented-frame pacing (--perf): delta between consecutive frame_cb
+       invocations under vsync (swap_interval 1) — this is real presentation
+       cadence, not renderer throughput. */
+    double* frame_delta_ms;
+    int frame_delta_count, frame_delta_cap;
+    double last_frame_ts;
+    bool perf_have_prev;
+    bool gfx_up;
     float dpi;
     long rss_start_kb;
     long rss_loaded_kb;
@@ -108,6 +117,7 @@ static void init_cb(void) {
         .logger.func = slog_func,
     });
     nx_gfx_init();
+    g_state.gfx_up = true;
 
     g_state.dpi = g_state.deterministic ? 1.0f : sapp_dpi_scale();
 
@@ -139,6 +149,26 @@ static void init_cb(void) {
 static void frame_cb(void) {
     if (!g_state.app) return;
     if (g_state.hr) nx_hot_reload_poll(g_state.hr);
+
+    if (g_state.perf) {
+        double ts = now_ms();
+        if (g_state.perf_have_prev) {
+            if (g_state.frame_delta_count == g_state.frame_delta_cap) {
+                int cap = g_state.frame_delta_cap ? g_state.frame_delta_cap * 2 : 4096;
+                double* p = (double*)realloc(g_state.frame_delta_ms, sizeof(double) * (size_t)cap);
+                if (p) {
+                    g_state.frame_delta_ms = p;
+                    g_state.frame_delta_cap = cap;
+                }
+            }
+            if (g_state.frame_delta_count < g_state.frame_delta_cap) {
+                g_state.frame_delta_ms[g_state.frame_delta_count++] = ts - g_state.last_frame_ts;
+            }
+        }
+        g_state.last_frame_ts = ts;
+        g_state.perf_have_prev = true;
+    }
+
     nx_app_update(g_state.app, now_ms() - g_state.start_ms);
 
     int fb_w = (int)(g_state.width * g_state.dpi + 0.5f);
@@ -157,15 +187,67 @@ static void frame_cb(void) {
 }
 
 static void print_mem_report(void) {
+    /* RSS and native heap are process memory; gpu_* are renderer-side
+       allocations reported by sokol gfx and are NOT part of RSS. The
+       JavaScript heap cannot be read: JavaScriptCoreGTK's C API exposes no
+       heap statistic (documented limitation). */
+    const NxGfxStats* gfx = nx_gfx_stats();
     printf("{\"rss_start_kb\":%ld,\"rss_after_load_kb\":%ld,\"rss_kb\":%ld,"
-           "\"peak_rss_kb\":%ld,\"frames\":%d}\n",
+           "\"peak_rss_kb\":%ld,\"native_heap_bytes\":%lld,"
+           "\"gpu_texture_bytes\":%lld,\"gpu_buffer_bytes\":%lld,"
+           "\"js_heap_bytes\":null,\"js_heap_note\":\"unavailable: JSC C API\","
+           "\"frames\":%d}\n",
            g_state.rss_start_kb, g_state.rss_loaded_kb, nx_mem_rss_kb(), nx_mem_peak_kb(),
-           g_state.frame_count);
+           nx_native_heap_bytes(), g_state.gfx_up ? gfx->texture_bytes : 0,
+           g_state.gfx_up ? gfx->buffer_bytes : 0, g_state.frame_count);
+}
+
+/* Presented-frame pacing report: distribution of real frame-to-frame deltas
+   observed while vsync was active. This is NOT renderer throughput: with
+   swap_interval 1 the cadence is bounded by the display refresh, so a slow
+   frame shows up as a long delta (jank) instead of a higher FPS. Driver-side
+   present latency (submit -> scanout) cannot be read from this API level and
+   is a documented limitation. */
+static int cmp_dbl(const void* a, const void* b) {
+    double x = *(const double*)a, y = *(const double*)b;
+    return x < y ? -1 : (x > y ? 1 : 0);
+}
+
+static void print_perf_report(void) {
+    int n = g_state.frame_delta_count;
+    if (n <= 0) {
+        printf("{\"perf\":true,\"frames\":0,\"note\":\"no inter-frame deltas"
+               " (need --frames N >= 2)\"}\n");
+        return;
+    }
+    double sum = 0, worst = 0;
+    int missed = 0;
+    for (int i = 0; i < n; i++) {
+        double d = g_state.frame_delta_ms[i];
+        sum += d;
+        if (d > worst) worst = d;
+        if (d > 16.67 * 1.5) missed++; /* > 1.5x budget = dropped refresh */
+    }
+    double* sorted = (double*)malloc(sizeof(double) * (size_t)n);
+    if (!sorted) return;
+    memcpy(sorted, g_state.frame_delta_ms, sizeof(double) * (size_t)n);
+    qsort(sorted, (size_t)n, sizeof(double), cmp_dbl);
+    double p50 = sorted[(int)(0.50 * (n - 1))];
+    double p95 = sorted[(int)(0.95 * (n - 1))];
+    double avg = sum / n;
+    printf("{\"perf\":true,\"vsync\":true,\"deltas\":%d,\"avg_ms\":%.3f,"
+           "\"p50_ms\":%.3f,\"p95_ms\":%.3f,\"max_ms\":%.3f,"
+           "\"presented_fps\":%.2f,\"missed_frame_percent\":%.2f,"
+           "\"budget_ms\":16.67}\n",
+           n, avg, p50, p95, worst, avg > 0 ? 1000.0 / avg : 0.0,
+           100.0 * (double)missed / (double)n);
+    free(sorted);
 }
 
 static void cleanup_cb(void) {
     if (g_state.hr) nx_hot_reload_free(g_state.hr);
     if (g_state.mem) print_mem_report();
+    if (g_state.perf) print_perf_report();
     if (g_state.stats && g_state.app) {
         char* json = nx_app_stats_json(g_state.app);
         if (json) {
@@ -176,6 +258,8 @@ static void cleanup_cb(void) {
     nx_gfx_shutdown();
     nx_app_free(g_state.app);
     g_state.app = NULL;
+    free(g_state.frame_delta_ms);
+    g_state.frame_delta_ms = NULL;
     nx_font_reset();
     nx_tex_reset_all();
     sg_shutdown();
@@ -273,6 +357,8 @@ static void usage(const char* argv0) {
             "  --dev URL            connect to the dev server (ws://127.0.0.1:PORT/__nativax_ws)\n"
             "  --stats              print pipeline stats JSON on exit\n"
             "  --mem                print RSS/peak memory JSON on exit\n"
+            "  --perf               print presented-frame pacing JSON on exit"
+            " (vsync deltas, real FPS)\n"
             "  --verbose            debug logging\n",
             argv0);
 }
@@ -308,6 +394,8 @@ int main(int argc, char** argv) {
             g_state.stats = true;
         } else if (strcmp(argv[i], "--mem") == 0) {
             g_state.mem = true;
+        } else if (strcmp(argv[i], "--perf") == 0) {
+            g_state.perf = true;
         } else if (strcmp(argv[i], "--verbose") == 0) {
             nx_log_set_level(NX_LOG_DEBUG);
         } else if (strcmp(argv[i], "--help") == 0) {

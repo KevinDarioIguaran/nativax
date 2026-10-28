@@ -7,6 +7,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 
 #include "nativax/css.h"
 #include "nativax/html.h"
@@ -38,10 +39,19 @@ struct NxApp {
 
     NxDisplayList dl;
     float dpi;
+    NxAppTimings timings;
     bool style_dirty;
     bool paint_dirty;
     bool loaded;
 };
+
+/* ---- timing -------------------------------------------------------------- */
+
+static double now_ms_time(void) {
+    struct timespec ts;
+    clock_gettime(CLOCK_MONOTONIC, &ts);
+    return (double)ts.tv_sec * 1000.0 + (double)ts.tv_nsec / 1e6;
+}
 
 /* ---- file helpers -------------------------------------------------------- */
 
@@ -268,8 +278,13 @@ static bool build_layout(NxApp* app) {
         nx_layout_free(app->lay);
         app->lay = NULL;
     }
+    double t0 = now_ms_time();
     app->lay = nx_layout_build(app->doc, (const CsSheet* const*)app->sheets, app->sheet_count,
                                (float)app->width, (float)app->height, app->font);
+    double t1 = now_ms_time();
+    /* nx_layout_build does cascade + layout in one call: report it as the
+       layout phase and leave restyle_ms at 0 when it was not split. */
+    app->timings.relayout_ms = t1 - t0;
     app->style_dirty = false;
     app->paint_dirty = true;
     return app->lay != NULL;
@@ -279,21 +294,45 @@ static bool build_layout(NxApp* app) {
    re-run layout in place. */
 static bool restyle(NxApp* app) {
     if (!app->lay) return build_layout(app);
-    if (!nx_layout_restyle(app->lay, app->doc, (const CsSheet* const*)app->sheets,
-                           app->sheet_count, (float)app->width, (float)app->height, app->font))
+    /* cascade and layout timed separately so the report can attribute cost */
+    if (nx_node_slot_bound(app->doc) > app->lay->styles_cap)
         return build_layout(app); /* document outgrew the style array */
+    double t0 = now_ms_time();
+    bool resolved = nx_style_resolve_into(app->doc, (const CsSheet* const*)app->sheets,
+                                          app->sheet_count, (float)app->width, 16.0f,
+                                          app->lay->styles, app->lay->styles_cap);
+    double t1 = now_ms_time();
+    if (!resolved) return build_layout(app);
+    nx_layout_run(app->lay, app->doc, (float)app->width, (float)app->height, app->font);
+    double t2 = now_ms_time();
+    app->timings.restyle_ms = t1 - t0;
+    app->timings.relayout_ms = t2 - t1;
     app->style_dirty = false;
     app->paint_dirty = true;
     return true;
 }
 
+/* Painting borrows text pointers and style pointers from the layout, while any
+   DOM mutation (textContent, remove, innerHTML, document reload) can free the
+   underlying nodes. A valid layout is therefore a *precondition* for
+   painting, not a side effect of the call order: repaint() always re-runs
+   style+layout first when the document is dirty.
+   (Found by ASan as heap-use-after-free in nx_utf8_decode during
+   nx_app_reload_document — see debug/reports/phase1-report.md.) */
 static void repaint(NxApp* app) {
+    if (app->style_dirty) restyle(app);
+    if (!app->lay) {
+        app->paint_dirty = false;
+        return;
+    }
     nx_dl_reset(&app->dl);
     if (app->lay) {
         bool scaled = app->dpi > 0.0f && app->dpi != 1.0f;
+        double t0 = now_ms_time();
         if (scaled) nx_dl_push_transform(&app->dl, &(NxMat2x3){app->dpi, 0, 0, app->dpi, 0, 0});
         nx_paint(&app->dl, app->lay, app->font);
         if (scaled) nx_dl_pop_transform(&app->dl);
+        app->timings.paint_ms = now_ms_time() - t0;
     }
     app->paint_dirty = false;
 }
@@ -339,10 +378,12 @@ void nx_app_free(NxApp* app) {
 
 bool nx_app_load(NxApp* app, char** error) {
     if (!app) return false;
+    double t_start = now_ms_time();
     char path[1400];
     join_path(path, sizeof(path), app->root, app->entry);
     int len = 0;
     char* html = read_file(path, &len);
+    double t_read = now_ms_time();
     if (!html) {
         if (error) {
             char msg[1600];
@@ -356,20 +397,31 @@ bool nx_app_load(NxApp* app, char** error) {
         return false;
     }
     free(html);
+    double t_parse = now_ms_time();
 
     collect_sheets(app);
     collect_scripts(app);
+    double t_collect = now_ms_time();
     if (app->font < 0) app->font = nx_font_load("assets/fonts/DejaVuSans.ttf");
     if (!build_layout(app)) {
         if (error) *error = strdup("layout failed");
         return false;
     }
+    double t_layout = now_ms_time();
     if (!reset_runtime(app)) {
         if (error) *error = strdup("javascript runtime failed to start");
         return false;
     }
     run_scripts(app);
-    app->style_dirty = false;
+    double t_script = now_ms_time();
+    app->timings.load_read_ms = t_read - t_start;
+    app->timings.load_parse_ms = t_parse - t_read;
+    app->timings.load_collect_ms = t_collect - t_parse;
+    app->timings.load_layout_ms = t_layout - t_collect;
+    app->timings.load_script_ms = t_script - t_layout;
+    app->timings.load_total_ms = t_script - t_start;
+    /* scripts may have mutated the DOM: the layout built above is already
+       stale, so keep the dirty flag instead of discarding it */
     app->paint_dirty = true;
     app->loaded = true;
     repaint(app);
@@ -400,6 +452,7 @@ void nx_app_mark_dirty(NxApp* app) {
 
 bool nx_app_update(NxApp* app, double now_ms) {
     if (!app || !app->loaded) return false;
+    double t0 = now_ms_time();
     if (app->loop) {
         nx_loop_run(app->loop, now_ms);
         nx_loop_frame(app->loop, now_ms);
@@ -413,8 +466,11 @@ bool nx_app_update(NxApp* app, double now_ms) {
         repaint(app);
         changed = true;
     }
+    app->timings.frame_ms = now_ms_time() - t0;
     return changed;
 }
+
+const NxAppTimings* nx_app_timings(NxApp* app) { return app ? &app->timings : NULL; }
 
 const NxDisplayList* nx_app_list(NxApp* app) { return app ? &app->dl : NULL; }
 NxDocument* nx_app_doc(NxApp* app) { return app ? app->doc : NULL; }
@@ -460,6 +516,10 @@ bool nx_app_reload_js(NxApp* app) {
     if (!app || !app->loaded) return false;
     collect_scripts(app); /* script files were re-read from disk */
     if (!reset_runtime(app)) return false;
+    /* The old JS context (and every wrapper it held) is gone: detached
+       subtrees created by remove() can no longer be referenced, so reclaim
+       their slots instead of leaking them for the lifetime of the document. */
+    nx_doc_reap_detached(app->doc);
     run_scripts(app);
     app->style_dirty = true; /* scripts may have mutated the DOM on re-run */
     app->paint_dirty = true;
@@ -479,6 +539,14 @@ bool nx_app_reload_document(NxApp* app) {
     if (!parsed) {
         NX_ERROR("document reload failed: %s", err ? err : "parse error");
         free(err);
+        /* nx_html_parse clears the previous tree first: the old layout now
+           points at freed nodes, so rebuild it from the partial tree before
+           anything can paint or hit-test again. */
+        free_scripts(app);
+        collect_sheets(app);
+        collect_scripts(app);
+        build_layout(app);
+        app->loaded = true;
         return false;
     }
     free(err);
@@ -487,6 +555,9 @@ bool nx_app_reload_document(NxApp* app) {
     collect_scripts(app);
     if (!build_layout(app)) return false;
     if (!reset_runtime(app)) return false;
+    /* same contract as reload_js: fresh context = nothing can reference the
+       detached subtrees the previous session removed, so reclaim them */
+    nx_doc_reap_detached(app->doc);
     run_scripts(app);
     app->loaded = true;
     repaint(app);
