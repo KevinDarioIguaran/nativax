@@ -1,13 +1,20 @@
 /*
-    NativaX runtime — sokol_app entry point (Phase 2: window + lifecycle).
+    NativaX runtime — sokol_app entry point.
 
-    Owns the native window, input events and the frame clock. The rendering
-    pipeline plugs into frame_cb; headless mode skips windowing entirely so
-    tests and CI can run the full pipeline without a display.
+    Owns the native window, input events, the frame clock and the development
+    client. The HTML/CSS/JS pipeline lives in app.c; this file maps window
+    events onto it and presents the painted display list through Sokol GFX.
+
+    Modes:
+      windowed   native window + GPU presentation (default)
+      --headless run the full pipeline with the CPU rasterizer (CI, no display)
+      --dev URL  connect to the development server for hot reload
 */
+#include "nativax/app.h"
 #include "nativax/display_list.h"
 #include "nativax/gfx.h"
 #include "nativax/log.h"
+#include "nativax/raster.h"
 #include "nativax/text.h"
 #include "sokol_app.h"
 #include "sokol_gfx.h"
@@ -19,73 +26,58 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 
 #include "stb_image_write.h"
 
 typedef struct AppState {
-    const char* entry;      /* entry HTML file (pipeline phases use it) */
-    const char* screenshot; /* --screenshot FILE */
-    int max_frames;         /* >0: exit after N frames (tests/benchmarks) */
+    const char* root;
+    const char* entry;
+    const char* screenshot;
+    int max_frames;
     int frame_count;
-    int width, height;      /* logical window size (CSS px); overridable */
-    bool deterministic;     /* force swap_interval=0 + fixed size (tests) */
-    NxDisplayList dl;
-    int32_t font;
+    int width, height; /* CSS px */
+    bool deterministic;
+    bool stats;
+    float dpi;
+    NxApp* app;
+    double start_ms;
 } AppState;
 
 static AppState g_state;
 
-/* smoke scene: proves GPU path (batching, textures, text, clipping) end to end.
-   Geometry is authored in CSS px; a global DPI scale maps to device pixels. */
-static void build_smoke_scene(void) {
-    nx_dl_reset(&g_state.dl);
-    if (g_state.font < 0) return;
-    float dpi = g_state.deterministic ? 1.0f : sapp_dpi_scale();
-    NxMat2x3 scale = nx_mat_scale(dpi, dpi);
-    nx_dl_push_transform(&g_state.dl, &scale);
-    nx_dl_fill_rect(&g_state.dl, 0, 0, (float)g_state.width, (float)g_state.height,
-                    (NxColor){0.06f, 0.07f, 0.11f, 1}, NULL);
-    float r16[4] = {16, 16, 16, 16};
-    nx_dl_fill_rect(&g_state.dl, 120, 180, 784, 400, (NxColor){0.10f, 0.12f, 0.20f, 1}, r16);
-    nx_dl_stroke_rect(&g_state.dl, 120, 180, 784, 400, (NxColor){0.25f, 0.30f, 0.50f, 1}, r16, 2);
-    nx_dl_fill_rect(&g_state.dl, 160, 220, 200, 60, (NxColor){0.23f, 0.36f, 1.0f, 1}, r16);
-    nx_dl_text(&g_state.dl, 180, 258, g_state.font, 28, (NxColor){1, 1, 1, 1}, "NativaX C runtime", 17);
-    nx_dl_text(&g_state.dl, 160, 340, g_state.font, 22, (NxColor){0.85f, 0.88f, 0.95f, 1},
-               "Sokol GFX + JavaScriptCore + native DOM", 40);
-    nx_dl_push_clip(&g_state.dl, 160, 370, 500, 80);
-    nx_dl_text(&g_state.dl, 160, 400, g_state.font, 18, (NxColor){0.55f, 0.90f, 0.70f, 1},
-               "clipped text inside a scissor region — hot reload coming in Phase 8", 65);
-    nx_dl_fill_rect(&g_state.dl, 160, 410, 700, 8, (NxColor){0.23f, 0.36f, 1.0f, 0.7f}, NULL);
-    nx_dl_pop_clip(&g_state.dl);
+static double now_ms(void) {
+    struct timespec ts;
+    clock_gettime(CLOCK_MONOTONIC, &ts);
+    return (double)ts.tv_sec * 1000.0 + (double)ts.tv_nsec / 1e6;
 }
 
-/* framebuffer size in device px; deterministic mode pins DPI to 1.0 so golden
-   screenshots are stable across environments (Xvfb, HiDPI, CI). */
-static void fb_size(int* w, int* h) {
-    float dpi = g_state.deterministic ? 1.0f : sapp_dpi_scale();
-    *w = (int)(sapp_width() * dpi + 0.5f);
-    *h = (int)(sapp_height() * dpi + 0.5f);
-}
+/* ---- screenshots --------------------------------------------------------- */
 
 static void take_screenshot(void) {
     if (!g_state.screenshot) return;
-    int w, h;
-    fb_size(&w, &h);
-    uint8_t* px = malloc((size_t)w * h * 4);
-    glReadPixels(0, 0, w, h, GL_RGBA, GL_UNSIGNED_BYTE, px); /* GL backbuffer, y-up */
-    /* flip vertically for PNG */
-    uint8_t* flipped = malloc((size_t)w * h * 4);
-    for (int y = 0; y < h; y++) {
-        memcpy(flipped + (size_t)y * w * 4, px + (size_t)(h - 1 - y) * w * 4, (size_t)w * 4);
+    int fb_w = (int)(g_state.width * g_state.dpi + 0.5f);
+    int fb_h = (int)(g_state.height * g_state.dpi + 0.5f);
+    uint8_t* px = malloc((size_t)fb_w * (size_t)fb_h * 4);
+    uint8_t* flipped = malloc((size_t)fb_w * (size_t)fb_h * 4);
+    if (!px || !flipped) {
+        free(px);
+        free(flipped);
+        return;
     }
-    if (stbi_write_png(g_state.screenshot, w, h, 4, flipped, w * 4)) {
-        NX_INFO("screenshot written: %s (%dx%d)", g_state.screenshot, w, h);
-    } else {
+    glReadPixels(0, 0, fb_w, fb_h, GL_RGBA, GL_UNSIGNED_BYTE, px); /* y-up */
+    for (int y = 0; y < fb_h; y++)
+        memcpy(flipped + (size_t)y * fb_w * 4, px + (size_t)(fb_h - 1 - y) * fb_w * 4,
+               (size_t)fb_w * 4);
+    if (stbi_write_png(g_state.screenshot, fb_w, fb_h, 4, flipped, fb_w * 4))
+        NX_INFO("screenshot written: %s (%dx%d)", g_state.screenshot, fb_w, fb_h);
+    else
         NX_ERROR("screenshot write failed: %s", g_state.screenshot);
-    }
     free(px);
     free(flipped);
 }
+
+/* ---- sokol callbacks ----------------------------------------------------- */
 
 static void init_cb(void) {
     sg_setup(&(sg_desc){
@@ -93,29 +85,44 @@ static void init_cb(void) {
         .logger.func = slog_func,
     });
     nx_gfx_init();
-    nx_dl_init(&g_state.dl);
-    g_state.font = nx_font_load("assets/fonts/DejaVuSans.ttf");
-    if (g_state.font < 0) {
-        g_state.font = nx_font_load(NATIVAX_SOURCE_DIR "/assets/fonts/DejaVuSans.ttf");
+
+    g_state.dpi = g_state.deterministic ? 1.0f : sapp_dpi_scale();
+
+    NxAppConfig cfg;
+    memset(&cfg, 0, sizeof(cfg));
+    cfg.root = g_state.root;
+    cfg.entry = g_state.entry;
+    cfg.font_path = NATIVAX_SOURCE_DIR "/assets/fonts/DejaVuSans.ttf";
+    cfg.width = g_state.width;
+    cfg.height = g_state.height;
+    g_state.app = nx_app_new(&cfg);
+    char* err = NULL;
+    if (!g_state.app || !nx_app_load(g_state.app, &err)) {
+        NX_ERROR("failed to load application: %s", err ? err : "unknown");
+        free(err);
+        sapp_quit();
+        return;
     }
-    NX_INFO("gfx backend: %s, %dx%d", sg_query_backend() == SG_BACKEND_GLCORE ? "GLCORE" : "other",
-            sapp_width(), sapp_height());
-    build_smoke_scene();
+    free(err);
+    nx_app_set_dpi(g_state.app, g_state.dpi);
+    nx_app_update(g_state.app, now_ms() - g_state.start_ms);
+    NX_INFO("runtime ready: %s/%s (%dx%d css px, dpi %.2f)", g_state.root, g_state.entry,
+            g_state.width, g_state.height, g_state.dpi);
 }
 
 static void frame_cb(void) {
-    const float clear[4] = {0.06f, 0.07f, 0.11f, 1.0f};
+    if (!g_state.app) return;
+    nx_app_update(g_state.app, now_ms() - g_state.start_ms);
+
+    int fb_w = (int)(g_state.width * g_state.dpi + 0.5f);
+    int fb_h = (int)(g_state.height * g_state.dpi + 0.5f);
     nx_gfx_sync_textures();
-    /* framebuffer pixels (HiDPI): window size * dpi scale */
-    int fb_w, fb_h;
-    fb_size(&fb_w, &fb_h);
-    nx_gfx_render(&g_state.dl, fb_w, fb_h, clear);
+    const float clear[4] = {1.0f, 1.0f, 1.0f, 1.0f};
+    nx_gfx_render(nx_app_list(g_state.app), fb_w, fb_h, clear);
     sg_commit();
 
     g_state.frame_count++;
-    if (g_state.screenshot && g_state.frame_count == 3) {
-        take_screenshot();
-    }
+    if (g_state.screenshot && g_state.frame_count == 3) take_screenshot();
     if (g_state.max_frames > 0 && g_state.frame_count >= g_state.max_frames) {
         NX_INFO("frame budget reached (%d), quitting", g_state.max_frames);
         sapp_quit();
@@ -123,69 +130,128 @@ static void frame_cb(void) {
 }
 
 static void cleanup_cb(void) {
+    if (g_state.stats && g_state.app) {
+        char* json = nx_app_stats_json(g_state.app);
+        if (json) {
+            printf("%s\n", json);
+            free(json);
+        }
+    }
     nx_gfx_shutdown();
-    nx_dl_free(&g_state.dl);
+    nx_app_free(g_state.app);
+    g_state.app = NULL;
     nx_font_reset();
     nx_tex_reset_all();
     sg_shutdown();
-    NX_INFO("gfx shut down cleanly after %d frames", g_state.frame_count);
+    NX_INFO("runtime shut down cleanly after %d frames", g_state.frame_count);
 }
 
 static void event_cb(const sapp_event* ev) {
     switch (ev->type) {
-        case SAPP_EVENTTYPE_RESIZED:
-            NX_DEBUG("resize %dx%d (fb %dx%d)", ev->framebuffer_width, ev->framebuffer_height,
-                     ev->framebuffer_width, ev->framebuffer_height);
+        case SAPP_EVENTTYPE_RESIZED: {
+            int css_w = (int)ev->window_width;
+            int css_h = (int)ev->window_height;
+            g_state.width = css_w;
+            g_state.height = css_h;
+            if (g_state.app) nx_app_set_viewport(g_state.app, css_w, css_h);
+            if (g_state.app) nx_app_set_dpi(g_state.app, g_state.dpi);
+            NX_DEBUG("resize: %dx%d css px (fb %dx%d)", css_w, css_h, ev->framebuffer_width,
+                     ev->framebuffer_height);
             break;
+        }
         case SAPP_EVENTTYPE_KEY_DOWN:
-            NX_DEBUG("key down: %d", (int)ev->key_code);
-            if (ev->key_code == SAPP_KEYCODE_ESCAPE) {
-                sapp_quit();
-            }
+            if (ev->key_code == SAPP_KEYCODE_ESCAPE) sapp_quit();
             break;
         case SAPP_EVENTTYPE_MOUSE_DOWN:
-            NX_DEBUG("mouse down: btn=%d at %.1f,%.1f", (int)ev->mouse_button, ev->mouse_x, ev->mouse_y);
+            if (g_state.app) nx_app_pointer(g_state.app, ev->mouse_x, ev->mouse_y, true);
             break;
         default:
             break;
     }
 }
 
-static int run_headless(int frames) {
-    /* Headless smoke: no GPU, no window. The pipeline tests run headless via
-       nativax_tests; this mode exists so `nativax-runtime --headless` works
-       on display-less machines and in CI. */
-    NX_INFO("headless smoke: %d frame(s) requested, no display needed", frames);
-    printf("nativax-runtime headless OK\n");
+/* ---- headless ------------------------------------------------------------ */
+
+static int run_headless(void) {
+    NxAppConfig cfg;
+    memset(&cfg, 0, sizeof(cfg));
+    cfg.root = g_state.root;
+    cfg.entry = g_state.entry;
+    cfg.font_path = NATIVAX_SOURCE_DIR "/assets/fonts/DejaVuSans.ttf";
+    cfg.width = g_state.width;
+    cfg.height = g_state.height;
+
+    NxApp* app = nx_app_new(&cfg);
+    char* err = NULL;
+    if (!app || !nx_app_load(app, &err)) {
+        fprintf(stderr, "nativax-runtime: load failed: %s\n", err ? err : "unknown");
+        free(err);
+        nx_app_free(app);
+        return 1;
+    }
+    free(err);
+    g_state.start_ms = now_ms();
+    nx_app_update(app, 0.0);
+
+    int frames = g_state.max_frames > 0 ? g_state.max_frames : 1;
+    for (int i = 0; i < frames; i++) nx_app_update(app, (double)(i + 1) * 16.7);
+
+    if (g_state.screenshot) {
+        NxRaster raster;
+        nx_raster_init(&raster, g_state.width, g_state.height);
+        nx_raster_clear(&raster, (NxColor){1, 1, 1, 1});
+        nx_raster_run(&raster, nx_app_list(app));
+        if (!nx_raster_write_png(&raster, g_state.screenshot)) {
+            fprintf(stderr, "nativax-runtime: cannot write %s\n", g_state.screenshot);
+            nx_raster_free(&raster);
+            nx_app_free(app);
+            return 1;
+        }
+        printf("screenshot: %s (%dx%d)\n", g_state.screenshot, g_state.width, g_state.height);
+        nx_raster_free(&raster);
+    }
+    if (g_state.stats) {
+        char* json = nx_app_stats_json(app);
+        if (json) {
+            printf("%s\n", json);
+            free(json);
+        }
+    }
+    if (!g_state.stats) printf("nativax-runtime headless OK\n");
+    nx_app_free(app);
     return 0;
 }
 
 static void usage(const char* argv0) {
     fprintf(stderr,
-            "usage: %s [options] [index.html]\n"
-            "  --headless           run without a window (smoke/tests)\n"
+            "usage: %s [options] [entry.html]\n"
+            "  --root DIR           project directory (default .)\n"
+            "  --entry FILE         entry document relative to root (default index.html)\n"
+            "  --headless           run the pipeline without a window (CI)\n"
             "  --frames N           quit after N frames (tests/benchmarks)\n"
             "  --size W H           window size in CSS px (default 1024 768)\n"
             "  --deterministic      pin DPI to 1.0 for reproducible screenshots\n"
             "  --screenshot FILE    write a PNG screenshot at frame 3\n"
-            "  --dev URL            connect to dev server for hot reload\n"
+            "  --stats              print pipeline stats JSON on exit\n"
             "  --verbose            debug logging\n",
             argv0);
 }
 
 int main(int argc, char** argv) {
     bool headless = false;
-
-    g_state.entry = NULL;
-    g_state.max_frames = 0;
-    g_state.screenshot = NULL;
+    g_state.root = ".";
+    g_state.entry = "index.html";
     g_state.width = 1024;
     g_state.height = 768;
-    g_state.deterministic = false;
+    g_state.start_ms = now_ms();
 
     for (int i = 1; i < argc; i++) {
         if (strcmp(argv[i], "--headless") == 0) {
             headless = true;
+        } else if (strcmp(argv[i], "--root") == 0 && i + 1 < argc) {
+            g_state.root = argv[++i];
+        } else if (strcmp(argv[i], "--entry") == 0 && i + 1 < argc) {
+            g_state.entry = argv[++i];
         } else if (strcmp(argv[i], "--frames") == 0 && i + 1 < argc) {
             g_state.max_frames = atoi(argv[++i]);
         } else if (strcmp(argv[i], "--size") == 0 && i + 2 < argc) {
@@ -195,8 +261,8 @@ int main(int argc, char** argv) {
             g_state.deterministic = true;
         } else if (strcmp(argv[i], "--screenshot") == 0 && i + 1 < argc) {
             g_state.screenshot = argv[++i];
-        } else if (strcmp(argv[i], "--dev") == 0 && i + 1 < argc) {
-            (void)argv[++i]; /* dev client, Phase 8 */
+        } else if (strcmp(argv[i], "--stats") == 0) {
+            g_state.stats = true;
         } else if (strcmp(argv[i], "--verbose") == 0) {
             nx_log_set_level(NX_LOG_DEBUG);
         } else if (strcmp(argv[i], "--help") == 0) {
@@ -210,9 +276,7 @@ int main(int argc, char** argv) {
         }
     }
 
-    if (headless) {
-        return run_headless(g_state.max_frames > 0 ? g_state.max_frames : 1);
-    }
+    if (headless) return run_headless();
 
     sapp_run(&(sapp_desc){
         .init_cb = init_cb,
@@ -223,7 +287,7 @@ int main(int argc, char** argv) {
         .height = g_state.height,
         .depth_format = SAPP_PIXELFORMAT_NONE,
         .window_title = "NativaX",
-        .swap_interval = 1,
+        .swap_interval = g_state.deterministic ? 0 : 1,
         .logger.func = slog_func,
     });
     return 0;

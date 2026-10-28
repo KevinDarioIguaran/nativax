@@ -1,0 +1,14 @@
+body { margin: 0; background: #f5f5fa; color: #1a1a2e; }
+header { background: #0f3460; color: #ffffff; padding: 24px; text-align: center; }
+h1 { font-size: 32px; margin: 0; }
+main { padding: 24px; }
+.card { background: #ffffff; padding: 20px; border-width: 1px; border-color: #dddddd;
+        width: 60%; margin-bottom: 16px; }
+h2 { color: #e94560; font-size: 22px; margin-top: 0; }
+p { font-size: 16px; line-height: 1.5; }
+.btn { background: #0f3460; color: #ffffff; font-size: 16px; padding: 10px;
+       width: 240px; margin-bottom: 8px; }
+.btn.alt { background: #e94560; }
+.note { background: #fff3cd; color: #664d03; padding: 12px; width: 60%; font-size: 15px; }
+footer { color: #888888; font-size: 13px; padding: 16px; text-align: center; }
+.theme-dark { background: #101820; color: #e8e8ee; }

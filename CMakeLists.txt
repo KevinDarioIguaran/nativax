@@ -61,9 +61,11 @@ add_library(nativax_gfx STATIC
 target_include_directories(nativax_gfx PUBLIC include)
 target_link_libraries(nativax_gfx PUBLIC nativax_core nativax_sokol)
 
-# Application host: DOM bindings over the JavaScriptCore engine layer.
+# Application host: DOM bindings, script execution and the style→layout→paint
+# pipeline with the hot-reload entry points.
 add_library(nativax_app STATIC
   src/js_dom.c
+  src/app.c
 )
 target_include_directories(nativax_app PUBLIC include)
 target_link_libraries(nativax_app PUBLIC nativax_js)
@@ -73,7 +75,7 @@ add_executable(nativax-runtime
   src/main_sokol.c
 )
 target_compile_definitions(nativax-runtime PRIVATE NATIVAX_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}")
-target_link_libraries(nativax-runtime PRIVATE nativax_core nativax_gfx)
+target_link_libraries(nativax-runtime PRIVATE nativax_core nativax_app nativax_gfx)
 
 # Diagnostic CLI: DOM/CSS artifact dumps (native/debug/run.py drives it).
 add_executable(nativax-debug
@@ -84,7 +86,14 @@ target_link_libraries(nativax-debug PRIVATE nativax_core)
 
 # ---- tests -------------------------------------------------------------------
 enable_testing()
-add_test(NAME smoke_headless COMMAND nativax-runtime --headless --frames 1)
+add_test(NAME smoke_headless
+  COMMAND nativax-runtime --headless --root ${CMAKE_CURRENT_SOURCE_DIR}/examples/counter
+          --frames 1)
+# Headless render of the real example app through the CPU rasterizer: proves
+# the HTML→CSS→layout→paint pipeline outside a window/GPU environment.
+add_test(NAME headless_render
+  COMMAND nativax-runtime --headless --root ${CMAKE_CURRENT_SOURCE_DIR}/examples/counter
+          --frames 2 --screenshot ${CMAKE_CURRENT_BINARY_DIR}/headless_render.png --stats)
 
 add_executable(nativax_tests
   tests/test_main.c
@@ -140,6 +149,14 @@ add_executable(nativax_bindings_tests
 )
 target_link_libraries(nativax_bindings_tests PRIVATE nativax_app)
 add_test(NAME unit_bindings COMMAND nativax_bindings_tests)
+
+# Application host: pipeline, script-driven DOM updates, hot reload paths.
+add_executable(nativax_app_tests
+  tests/test_app.c
+)
+target_compile_definitions(nativax_app_tests PRIVATE NATIVAX_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}")
+target_link_libraries(nativax_app_tests PRIVATE nativax_app)
+add_test(NAME unit_app COMMAND nativax_app_tests)
 
 # Windowed GPU smoke: only when a display is available at configure time.
 if(DEFINED ENV{DISPLAY})
