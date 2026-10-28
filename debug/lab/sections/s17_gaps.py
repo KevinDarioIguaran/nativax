@@ -124,3 +124,8 @@ def _(ctx):
 @case(17, "gap.030", 'IndexedDB')
 def _(ctx):
     raise Blocked('IndexedDB is not implemented.')
+
+
+@case(17, "gap.031", 'video playback')
+def _(ctx):
+    raise Blocked('Video playback/decoding is not implemented (no decoder available).')
