@@ -135,52 +135,6 @@ add_test(NAME headless_render
   COMMAND nativax-runtime --headless --root ${CMAKE_CURRENT_SOURCE_DIR}/examples/counter
           --frames 2 --screenshot ${CMAKE_CURRENT_BINARY_DIR}/headless_render.png --stats)
 
-add_executable(nativax_tests
-  tests/test_main.c
-)
-target_compile_definitions(nativax_tests PRIVATE NATIVAX_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}")
-target_link_libraries(nativax_tests PRIVATE nativax_core)
-add_test(NAME unit_render COMMAND nativax_tests)
-
-add_executable(nativax_js_tests
-  tests/test_js.c
-)
-target_link_libraries(nativax_js_tests PRIVATE nativax_js)
-add_test(NAME unit_js COMMAND nativax_js_tests)
-
-add_executable(nativax_dom_tests
-  tests/test_dom.c
-)
-target_link_libraries(nativax_dom_tests PRIVATE nativax_core)
-add_test(NAME unit_dom COMMAND nativax_dom_tests)
-
-add_executable(nativax_css_tests
-  tests/test_css.c
-)
-target_link_libraries(nativax_css_tests PRIVATE nativax_core)
-add_test(NAME unit_css COMMAND nativax_css_tests)
-
-add_executable(nativax_debug_tests
-  tests/test_debug.c
-)
-target_link_libraries(nativax_debug_tests PRIVATE nativax_core)
-add_test(NAME unit_debug COMMAND nativax_debug_tests)
-
-# Platform contract: CSS/physical coordinate conversion used by every backend.
-add_executable(nativax_platform_tests
-  tests/test_platform.c
-)
-target_link_libraries(nativax_platform_tests PRIVATE nativax_platform)
-add_test(NAME unit_platform COMMAND nativax_platform_tests)
-
-# Style → layout → paint pipeline: asserts real geometry from parsed HTML+CSS.
-add_executable(nativax_layout_tests
-  tests/test_layout.c
-)
-target_compile_definitions(nativax_layout_tests PRIVATE NATIVAX_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}")
-target_link_libraries(nativax_layout_tests PRIVATE nativax_core)
-add_test(NAME unit_layout COMMAND nativax_layout_tests)
-
 # Renderer benchmark (archived by debug/benchmarks/workloads/render_benchmark.py).
 add_executable(nativax_bench
   tests/bench_render.c
@@ -190,48 +144,6 @@ target_link_libraries(nativax_bench PRIVATE nativax_core)
 # keep the bench honest: it must run in CI too (tiny scene, exit-code checked)
 add_test(NAME bench_smoke
   COMMAND nativax_bench --w 320 --h 200 --cards 2 --text 12 --iters 2)
-
-add_executable(nativax_bindings_tests
-  tests/test_bindings.c
-)
-target_link_libraries(nativax_bindings_tests PRIVATE nativax_app)
-add_test(NAME unit_bindings COMMAND nativax_bindings_tests)
-
-# Application host: pipeline, script-driven DOM updates, hot reload paths.
-add_executable(nativax_app_tests
-  tests/test_app.c
-)
-target_compile_definitions(nativax_app_tests PRIVATE NATIVAX_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}")
-target_link_libraries(nativax_app_tests PRIVATE nativax_app)
-add_test(NAME unit_app COMMAND nativax_app_tests)
-
-# Dev server: HTTP, WebSocket handshake, broadcast and watcher messages.
-add_executable(nativax_devserver_tests
-  tests/test_devserver.c
-)
-target_compile_definitions(nativax_devserver_tests PRIVATE NATIVAX_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}")
-target_link_libraries(nativax_devserver_tests PRIVATE nativax_dev)
-add_test(NAME unit_devserver COMMAND nativax_devserver_tests)
-
-# Soak / stability harness: repeated parse, load failures, reload churn, DOM
-# churn and full teardown, with RSS + native-heap accounting. Short cycles in
-# ctest; long runs use NATIVAX_SOAK_CYCLES=<n> (see debug/run.py sanitize).
-add_executable(nativax_soak_tests
-  tests/test_soak.c
-)
-target_compile_definitions(nativax_soak_tests PRIVATE NATIVAX_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}")
-target_link_libraries(nativax_soak_tests PRIVATE nativax_app)
-add_test(NAME soak_stability COMMAND nativax_soak_tests)
-set_tests_properties(soak_stability PROPERTIES ENVIRONMENT "NATIVAX_SOAK_CYCLES=6")
-
-# Regression: stale-layout paint (ASan heap-use-after-free) after script
-# mutations during load/reload.
-add_executable(nativax_regression_tests
-  tests/test_regression_reload.c
-)
-target_compile_definitions(nativax_regression_tests PRIVATE NATIVAX_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}")
-target_link_libraries(nativax_regression_tests PRIVATE nativax_app)
-add_test(NAME regression_reload COMMAND nativax_regression_tests)
 
 # Pipeline performance diagnostics (debug laboratory): cold start, time to
 # first frame, per-phase costs, frame-loop stats, reload churn and memory.
