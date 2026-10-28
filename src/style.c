@@ -1,4 +1,5 @@
 #include "nativax/style.h"
+#include <stdio.h>
 
 #include <ctype.h>
 #include <math.h>
@@ -308,12 +309,129 @@ static NxLength len_auto(void) {
 
 NxLength nx_len_resolve(const NxLength* L, float auto_val, float ctx) {
     if (L->auto_) return len_px(auto_val);
-    if (L->pct_) return len_px(L->pct * ctx);
-    return *L;
+    return len_px(L->px + L->pct * ctx);
+}
+
+typedef struct { float px; float pct; } CalcVal;
+
+static void calc_skipws(const CsTok* t, int n, int* p) {
+    while (*p < n && t[*p].kind == CS_WS) (*p)++;
+}
+
+static CalcVal calc_parse_expr(const CsTok* t, int n, int* p, float font_size);
+
+static CalcVal calc_parse_factor(const CsTok* t, int n, int* p, float font_size) {
+    calc_skipws(t, n, p);
+    if (*p >= n) return (CalcVal){0, 0};
+    if (t[*p].kind == CS_LPAREN) {
+        (*p)++;
+        CalcVal v = calc_parse_expr(t, n, p, font_size);
+        calc_skipws(t, n, p);
+        if (*p < n && t[*p].kind == CS_RPAREN) (*p)++;
+        return v;
+    }
+    if (t[*p].kind == CS_FUNCTION) {
+        const char* fn = t[*p].str ? t[*p].str : t[*p].s;
+        int flen = t[*p].str ? (int)strlen(t[*p].str) : t[*p].len;
+        if (fn && str_ieq(fn, flen, "calc", 4)) {
+            (*p)++;
+            calc_skipws(t, n, p);
+            if (*p < n && t[*p].kind == CS_LPAREN) (*p)++;
+            CalcVal v = calc_parse_expr(t, n, p, font_size);
+            calc_skipws(t, n, p);
+            if (*p < n && t[*p].kind == CS_RPAREN) (*p)++;
+            return v;
+        }
+        (*p)++;
+        return (CalcVal){0, 0};
+    }
+    if (t[*p].kind == CS_PERCENTAGE) {
+        CalcVal v = {0, (float)(t[*p].num / 100.0)};
+        (*p)++;
+        return v;
+    }
+    if (t[*p].kind == CS_DIMENSION) {
+        float px = 0;
+        if (str_ieq(t[*p].s, t[*p].len, "px", 2)) px = (float)t[*p].num;
+        else if (str_ieq(t[*p].s, t[*p].len, "em", 2) || str_ieq(t[*p].s, t[*p].len, "rem", 3))
+            px = (float)t[*p].num * font_size;
+        CalcVal v = {px, 0};
+        (*p)++;
+        return v;
+    }
+    if (t[*p].kind == CS_NUMBER) {
+        CalcVal v = {(float)t[*p].num, 0};
+        (*p)++;
+        return v;
+    }
+    (*p)++;
+    return (CalcVal){0, 0};
+}
+
+static CalcVal calc_parse_term(const CsTok* t, int n, int* p, float font_size) {
+    CalcVal acc = calc_parse_factor(t, n, p, font_size);
+    calc_skipws(t, n, p);
+    while (*p < n && t[*p].kind == CS_DELIM &&
+           (t[*p].s[0] == '*' || t[*p].s[0] == '/')) {
+        char op = t[*p].s[0];
+        (*p)++;
+        calc_skipws(t, n, p);
+        float scalar = 1.0f;
+        if (*p < n && t[*p].kind == CS_NUMBER) {
+            scalar = (float)t[*p].num;
+            (*p)++;
+        } else if (*p < n && t[*p].kind == CS_DIMENSION) {
+            if (str_ieq(t[*p].s, t[*p].len, "px", 2)) scalar = (float)t[*p].num;
+            (*p)++;
+        }
+        calc_skipws(t, n, p);
+        if (op == '*') {
+            acc.px *= scalar;
+            acc.pct *= scalar;
+        } else {
+            if (scalar != 0) { acc.px /= scalar; acc.pct /= scalar; }
+        }
+    }
+    return acc;
+}
+
+static CalcVal calc_parse_expr(const CsTok* t, int n, int* p, float font_size) {
+    CalcVal acc = calc_parse_term(t, n, p, font_size);
+    calc_skipws(t, n, p);
+    while (*p < n && t[*p].kind == CS_DELIM &&
+           (t[*p].s[0] == '+' || t[*p].s[0] == '-')) {
+        char op = t[*p].s[0];
+        (*p)++;
+        CalcVal rhs = calc_parse_term(t, n, p, font_size);
+        if (op == '+') {
+            acc.px += rhs.px;
+            acc.pct += rhs.pct;
+        } else {
+            acc.px -= rhs.px;
+            acc.pct -= rhs.pct;
+        }
+        calc_skipws(t, n, p);
+    }
+    return acc;
 }
 
 static NxLength parse_length(const CsTok* t, int ntoks, float font_size) {
     if (ntoks <= 0) return len_auto();
+    if (t->kind == CS_FUNCTION) {
+        const char* fn = t->str ? t->str : t->s;
+        int flen = t->str ? (int)strlen(t->str) : t->len;
+        if (fn && str_ieq(fn, flen, "calc", 4)) {
+            int pos = 0;
+            CalcVal v = calc_parse_expr(t, ntoks, &pos, font_size);
+            NxLength L;
+            L.px = v.px;
+            L.pct = v.pct;
+            L.auto_ = false;
+            L.pct_ = true;
+            return L;
+        }
+        return len_auto();
+    }
     if (t->kind == CS_NUMBER) {
         if (t->num == 0) return len_px(0);
         return len_auto(); /* unitless non-zero is invalid for a length */
@@ -486,6 +604,11 @@ static int split_components(const CsTok* v, int nt, float font_size, NxLength* o
         if (v[i].kind == CS_IDENT && cs_is_ident(&v[i], "auto")) {
             out[n++] = len_auto();
             i++;
+            continue;
+        }
+        if (v[i].kind == CS_FUNCTION) {
+            out[n++] = parse_length(&v[i], nt - i, font_size);
+            i = nt;
             continue;
         }
         if (v[i].kind == CS_NUMBER || v[i].kind == CS_PERCENTAGE ||

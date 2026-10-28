@@ -1,5 +1,5 @@
 """Section 17 — capability gaps (reported as blocked, never faked)."""
-from harness import case, Blocked, close
+from harness import case, Blocked, close, truthy
 
 @case(17, "gap.001", 'var() custom properties')
 def _(ctx):
@@ -15,7 +15,10 @@ def _(ctx):
 
 @case(17, "gap.003", 'calc() in lengths')
 def _(ctx):
-    raise Blocked('calc() is not evaluated in lengths.')
+    page = ctx.page("<div id=t>x</div>", "#t { width: calc(100% - 20px); }")
+    b = page.box("#t")
+    truthy(b is not None, "box missing")
+    close(b.get("w", 0), 1004, 1.0)
 
 @case(17, "gap.004", 'position: absolute/fixed layout')
 def _(ctx):

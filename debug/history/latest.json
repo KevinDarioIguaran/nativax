@@ -1,28 +1,28 @@
 {
-  "run_id": "20261028T233437Z-48bde3c",
-  "timestamp": "2026-10-28T23:34:37.735476+00:00",
+  "run_id": "20261028T234019Z-706ffc7",
+  "timestamp": "2026-10-28T23:40:19.326978+00:00",
   "label": "section-17",
   "command": "debug/lab/run_lab.py --section 17 --no-report",
   "git": {
     "branch": "native-c-sokol",
-    "commit": "48bde3cded65b240d76b56c7856818126dbc1f9e",
-    "short": "48bde3c",
+    "commit": "706ffc79e605abe650662a4e94b565c8842c5298",
+    "short": "706ffc7",
     "dirty": true
   },
-  "elapsed_seconds": 0.37,
+  "elapsed_seconds": 0.71,
   "sections": {
     "17": {
-      "pass": 1,
+      "pass": 2,
       "fail": 0,
-      "blocked": 31,
+      "blocked": 30,
       "error": 0,
       "total": 32
     }
   },
   "totals": {
-    "pass": 1,
+    "pass": 2,
     "fail": 0,
-    "blocked": 31,
+    "blocked": 30,
     "error": 0,
     "total": 32
   },
@@ -32,28 +32,28 @@
       "name": "var() custom properties",
       "status": "blocked",
       "message": "CSS var() is not evaluated by the engine.",
-      "duration_ms": 0.0
+      "duration_ms": 0.01
     },
     "gap.002": {
       "section": 17,
       "name": "hsl() colour values",
       "status": "pass",
       "message": "",
-      "duration_ms": 372.98
+      "duration_ms": 368.08
     },
     "gap.003": {
       "section": 17,
       "name": "calc() in lengths",
-      "status": "blocked",
-      "message": "calc() is not evaluated in lengths.",
-      "duration_ms": 0.0
+      "status": "pass",
+      "message": "",
+      "duration_ms": 341.96
     },
     "gap.004": {
       "section": 17,
       "name": "position: absolute/fixed layout",
       "status": "blocked",
       "message": "Absolute/fixed positioning is not applied in layout.",
-      "duration_ms": 0.0
+      "duration_ms": 0.01
     },
     "gap.005": {
       "section": 17,
