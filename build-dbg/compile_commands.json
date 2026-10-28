@@ -1,0 +1,164 @@
+[
+{
+  "directory": "/workspaces/nativax/build-dbg",
+  "command": "/usr/bin/cc -isystem /workspaces/nativax/third_party/sokol -g -std=gnu11 -Wall -Wextra -Wno-unused-parameter -o CMakeFiles/nativax_sokol.dir/third_party/sokol/sokol_impl.c.o -c /workspaces/nativax/third_party/sokol/sokol_impl.c",
+  "file": "/workspaces/nativax/third_party/sokol/sokol_impl.c",
+  "output": "CMakeFiles/nativax_sokol.dir/third_party/sokol/sokol_impl.c.o"
+},
+{
+  "directory": "/workspaces/nativax/build-dbg",
+  "command": "/usr/bin/cc -isystem /workspaces/nativax/third_party/stb -g -std=gnu11 -Wall -Wextra -Wno-unused-parameter -o CMakeFiles/nativax_stb.dir/third_party/stb/stb_impl.c.o -c /workspaces/nativax/third_party/stb/stb_impl.c",
+  "file": "/workspaces/nativax/third_party/stb/stb_impl.c",
+  "output": "CMakeFiles/nativax_stb.dir/third_party/stb/stb_impl.c.o"
+},
+{
+  "directory": "/workspaces/nativax/build-dbg",
+  "command": "/usr/bin/cc -I/workspaces/nativax/include -isystem /workspaces/nativax/third_party/stb -g -std=gnu11 -Wall -Wextra -Wno-unused-parameter -o CMakeFiles/nativax_core.dir/src/log.c.o -c /workspaces/nativax/src/log.c",
+  "file": "/workspaces/nativax/src/log.c",
+  "output": "CMakeFiles/nativax_core.dir/src/log.c.o"
+},
+{
+  "directory": "/workspaces/nativax/build-dbg",
+  "command": "/usr/bin/cc -I/workspaces/nativax/include -isystem /workspaces/nativax/third_party/stb -g -std=gnu11 -Wall -Wextra -Wno-unused-parameter -o CMakeFiles/nativax_core.dir/src/meminfo.c.o -c /workspaces/nativax/src/meminfo.c",
+  "file": "/workspaces/nativax/src/meminfo.c",
+  "output": "CMakeFiles/nativax_core.dir/src/meminfo.c.o"
+},
+{
+  "directory": "/workspaces/nativax/build-dbg",
+  "command": "/usr/bin/cc -I/workspaces/nativax/include -isystem /workspaces/nativax/third_party/stb -g -std=gnu11 -Wall -Wextra -Wno-unused-parameter -o CMakeFiles/nativax_core.dir/src/dl.c.o -c /workspaces/nativax/src/dl.c",
+  "file": "/workspaces/nativax/src/dl.c",
+  "output": "CMakeFiles/nativax_core.dir/src/dl.c.o"
+},
+{
+  "directory": "/workspaces/nativax/build-dbg",
+  "command": "/usr/bin/cc -I/workspaces/nativax/include -isystem /workspaces/nativax/third_party/stb -g -std=gnu11 -Wall -Wextra -Wno-unused-parameter -o CMakeFiles/nativax_core.dir/src/text.c.o -c /workspaces/nativax/src/text.c",
+  "file": "/workspaces/nativax/src/text.c",
+  "output": "CMakeFiles/nativax_core.dir/src/text.c.o"
+},
+{
+  "directory": "/workspaces/nativax/build-dbg",
+  "command": "/usr/bin/cc -I/workspaces/nativax/include -isystem /workspaces/nativax/third_party/stb -g -std=gnu11 -Wall -Wextra -Wno-unused-parameter -o CMakeFiles/nativax_core.dir/src/image.c.o -c /workspaces/nativax/src/image.c",
+  "file": "/workspaces/nativax/src/image.c",
+  "output": "CMakeFiles/nativax_core.dir/src/image.c.o"
+},
+{
+  "directory": "/workspaces/nativax/build-dbg",
+  "command": "/usr/bin/cc -I/workspaces/nativax/include -isystem /workspaces/nativax/third_party/stb -g -std=gnu11 -Wall -Wextra -Wno-unused-parameter -o CMakeFiles/nativax_core.dir/src/raster.c.o -c /workspaces/nativax/src/raster.c",
+  "file": "/workspaces/nativax/src/raster.c",
+  "output": "CMakeFiles/nativax_core.dir/src/raster.c.o"
+},
+{
+  "directory": "/workspaces/nativax/build-dbg",
+  "command": "/usr/bin/cc -I/workspaces/nativax/include -isystem /workspaces/nativax/third_party/stb -g -std=gnu11 -Wall -Wextra -Wno-unused-parameter -o CMakeFiles/nativax_core.dir/src/dom.c.o -c /workspaces/nativax/src/dom.c",
+  "file": "/workspaces/nativax/src/dom.c",
+  "output": "CMakeFiles/nativax_core.dir/src/dom.c.o"
+},
+{
+  "directory": "/workspaces/nativax/build-dbg",
+  "command": "/usr/bin/cc -I/workspaces/nativax/include -isystem /workspaces/nativax/third_party/stb -g -std=gnu11 -Wall -Wextra -Wno-unused-parameter -o CMakeFiles/nativax_core.dir/src/html.c.o -c /workspaces/nativax/src/html.c",
+  "file": "/workspaces/nativax/src/html.c",
+  "output": "CMakeFiles/nativax_core.dir/src/html.c.o"
+},
+{
+  "directory": "/workspaces/nativax/build-dbg",
+  "command": "/usr/bin/cc -I/workspaces/nativax/include -isystem /workspaces/nativax/third_party/stb -g -std=gnu11 -Wall -Wextra -Wno-unused-parameter -o CMakeFiles/nativax_core.dir/src/css.c.o -c /workspaces/nativax/src/css.c",
+  "file": "/workspaces/nativax/src/css.c",
+  "output": "CMakeFiles/nativax_core.dir/src/css.c.o"
+},
+{
+  "directory": "/workspaces/nativax/build-dbg",
+  "command": "/usr/bin/cc -I/workspaces/nativax/include -isystem /workspaces/nativax/third_party/stb -g -std=gnu11 -Wall -Wextra -Wno-unused-parameter -o CMakeFiles/nativax_core.dir/src/style.c.o -c /workspaces/nativax/src/style.c",
+  "file": "/workspaces/nativax/src/style.c",
+  "output": "CMakeFiles/nativax_core.dir/src/style.c.o"
+},
+{
+  "directory": "/workspaces/nativax/build-dbg",
+  "command": "/usr/bin/cc -I/workspaces/nativax/include -isystem /workspaces/nativax/third_party/stb -g -std=gnu11 -Wall -Wextra -Wno-unused-parameter -o CMakeFiles/nativax_core.dir/src/layout.c.o -c /workspaces/nativax/src/layout.c",
+  "file": "/workspaces/nativax/src/layout.c",
+  "output": "CMakeFiles/nativax_core.dir/src/layout.c.o"
+},
+{
+  "directory": "/workspaces/nativax/build-dbg",
+  "command": "/usr/bin/cc -I/workspaces/nativax/include -isystem /workspaces/nativax/third_party/stb -g -std=gnu11 -Wall -Wextra -Wno-unused-parameter -o CMakeFiles/nativax_core.dir/src/paint.c.o -c /workspaces/nativax/src/paint.c",
+  "file": "/workspaces/nativax/src/paint.c",
+  "output": "CMakeFiles/nativax_core.dir/src/paint.c.o"
+},
+{
+  "directory": "/workspaces/nativax/build-dbg",
+  "command": "/usr/bin/cc -I/workspaces/nativax/include -isystem /workspaces/nativax/third_party/stb -g -std=gnu11 -Wall -Wextra -Wno-unused-parameter -o CMakeFiles/nativax_core.dir/src/debug_dump.c.o -c /workspaces/nativax/src/debug_dump.c",
+  "file": "/workspaces/nativax/src/debug_dump.c",
+  "output": "CMakeFiles/nativax_core.dir/src/debug_dump.c.o"
+},
+{
+  "directory": "/workspaces/nativax/build-dbg",
+  "command": "/usr/bin/cc -I/workspaces/nativax/include -isystem /workspaces/nativax/third_party/stb -isystem /usr/include/webkitgtk-4.1 -isystem /usr/include/glib-2.0 -isystem /usr/lib/x86_64-linux-gnu/glib-2.0/include -g -std=gnu11 -Wall -Wextra -Wno-unused-parameter -o CMakeFiles/nativax_js.dir/src/js_engine.c.o -c /workspaces/nativax/src/js_engine.c",
+  "file": "/workspaces/nativax/src/js_engine.c",
+  "output": "CMakeFiles/nativax_js.dir/src/js_engine.c.o"
+},
+{
+  "directory": "/workspaces/nativax/build-dbg",
+  "command": "/usr/bin/cc -I/workspaces/nativax/include -isystem /workspaces/nativax/third_party/stb -isystem /usr/include/webkitgtk-4.1 -isystem /usr/include/glib-2.0 -isystem /usr/lib/x86_64-linux-gnu/glib-2.0/include -g -std=gnu11 -Wall -Wextra -Wno-unused-parameter -o CMakeFiles/nativax_js.dir/src/js_loop.c.o -c /workspaces/nativax/src/js_loop.c",
+  "file": "/workspaces/nativax/src/js_loop.c",
+  "output": "CMakeFiles/nativax_js.dir/src/js_loop.c.o"
+},
+{
+  "directory": "/workspaces/nativax/build-dbg",
+  "command": "/usr/bin/cc -I/workspaces/nativax/include -isystem /workspaces/nativax/third_party/stb -isystem /workspaces/nativax/third_party/sokol -g -std=gnu11 -Wall -Wextra -Wno-unused-parameter -o CMakeFiles/nativax_gfx.dir/src/gfx_sokol.c.o -c /workspaces/nativax/src/gfx_sokol.c",
+  "file": "/workspaces/nativax/src/gfx_sokol.c",
+  "output": "CMakeFiles/nativax_gfx.dir/src/gfx_sokol.c.o"
+},
+{
+  "directory": "/workspaces/nativax/build-dbg",
+  "command": "/usr/bin/cc -I/workspaces/nativax/include -isystem /workspaces/nativax/third_party/sokol -g -std=gnu11 -Wall -Wextra -Wno-unused-parameter -o CMakeFiles/nativax_platform.dir/src/platform.c.o -c /workspaces/nativax/src/platform.c",
+  "file": "/workspaces/nativax/src/platform.c",
+  "output": "CMakeFiles/nativax_platform.dir/src/platform.c.o"
+},
+{
+  "directory": "/workspaces/nativax/build-dbg",
+  "command": "/usr/bin/cc -I/workspaces/nativax/include -isystem /workspaces/nativax/third_party/sokol -g -std=gnu11 -Wall -Wextra -Wno-unused-parameter -o CMakeFiles/nativax_platform.dir/src/platform_sokol.c.o -c /workspaces/nativax/src/platform_sokol.c",
+  "file": "/workspaces/nativax/src/platform_sokol.c",
+  "output": "CMakeFiles/nativax_platform.dir/src/platform_sokol.c.o"
+},
+{
+  "directory": "/workspaces/nativax/build-dbg",
+  "command": "/usr/bin/cc -I/workspaces/nativax/include -isystem /workspaces/nativax/third_party/stb -isystem /usr/include/webkitgtk-4.1 -isystem /usr/include/glib-2.0 -isystem /usr/lib/x86_64-linux-gnu/glib-2.0/include -g -std=gnu11 -Wall -Wextra -Wno-unused-parameter -o CMakeFiles/nativax_app.dir/src/js_dom.c.o -c /workspaces/nativax/src/js_dom.c",
+  "file": "/workspaces/nativax/src/js_dom.c",
+  "output": "CMakeFiles/nativax_app.dir/src/js_dom.c.o"
+},
+{
+  "directory": "/workspaces/nativax/build-dbg",
+  "command": "/usr/bin/cc -I/workspaces/nativax/include -isystem /workspaces/nativax/third_party/stb -isystem /usr/include/webkitgtk-4.1 -isystem /usr/include/glib-2.0 -isystem /usr/lib/x86_64-linux-gnu/glib-2.0/include -g -std=gnu11 -Wall -Wextra -Wno-unused-parameter -o CMakeFiles/nativax_app.dir/src/app.c.o -c /workspaces/nativax/src/app.c",
+  "file": "/workspaces/nativax/src/app.c",
+  "output": "CMakeFiles/nativax_app.dir/src/app.c.o"
+},
+{
+  "directory": "/workspaces/nativax/build-dbg",
+  "command": "/usr/bin/cc -I/workspaces/nativax/include -isystem /workspaces/nativax/third_party/stb -g -std=gnu11 -Wall -Wextra -Wno-unused-parameter -o CMakeFiles/nativax_dev.dir/src/devserver.c.o -c /workspaces/nativax/src/devserver.c",
+  "file": "/workspaces/nativax/src/devserver.c",
+  "output": "CMakeFiles/nativax_dev.dir/src/devserver.c.o"
+},
+{
+  "directory": "/workspaces/nativax/build-dbg",
+  "command": "/usr/bin/cc -I/workspaces/nativax/include -isystem /workspaces/nativax/third_party/stb -g -std=gnu11 -Wall -Wextra -Wno-unused-parameter -o CMakeFiles/nativax_dev.dir/src/hotreload.c.o -c /workspaces/nativax/src/hotreload.c",
+  "file": "/workspaces/nativax/src/hotreload.c",
+  "output": "CMakeFiles/nativax_dev.dir/src/hotreload.c.o"
+},
+{
+  "directory": "/workspaces/nativax/build-dbg",
+  "command": "/usr/bin/cc -DNATIVAX_SOURCE_DIR=\\\"/workspaces/nativax\\\" -I/workspaces/nativax/include -isystem /workspaces/nativax/third_party/stb -g -std=gnu11 -Wall -Wextra -Wno-unused-parameter -o CMakeFiles/nativax.dir/src/cli_main.c.o -c /workspaces/nativax/src/cli_main.c",
+  "file": "/workspaces/nativax/src/cli_main.c",
+  "output": "CMakeFiles/nativax.dir/src/cli_main.c.o"
+},
+{
+  "directory": "/workspaces/nativax/build-dbg",
+  "command": "/usr/bin/cc -DNATIVAX_SOURCE_DIR=\\\"/workspaces/nativax\\\" -I/workspaces/nativax/include -isystem /workspaces/nativax/third_party/stb -isystem /usr/include/webkitgtk-4.1 -isystem /usr/include/glib-2.0 -isystem /usr/lib/x86_64-linux-gnu/glib-2.0/include -isystem /workspaces/nativax/third_party/sokol -g -std=gnu11 -Wall -Wextra -Wno-unused-parameter -o CMakeFiles/nativax-runtime.dir/src/main_sokol.c.o -c /workspaces/nativax/src/main_sokol.c",
+  "file": "/workspaces/nativax/src/main_sokol.c",
+  "output": "CMakeFiles/nativax-runtime.dir/src/main_sokol.c.o"
+},
+{
+  "directory": "/workspaces/nativax/build-dbg",
+  "command": "/usr/bin/cc -DNATIVAX_SOURCE_DIR=\\\"/workspaces/nativax\\\" -I/workspaces/nativax/include -isystem /workspaces/nativax/third_party/stb -g -std=gnu11 -Wall -Wextra -Wno-unused-parameter -o CMakeFiles/nativax-debug.dir/src/main_debug.c.o -c /workspaces/nativax/src/main_debug.c",
+  "file": "/workspaces/nativax/src/main_debug.c",
+  "output": "CMakeFiles/nativax-debug.dir/src/main_debug.c.o"
+}
+]

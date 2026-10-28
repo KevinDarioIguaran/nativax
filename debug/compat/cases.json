@@ -1,0 +1,7 @@
+[
+  {"id": "html-basic", "html": "<!DOCTYPE html><html><head><title>t</title></head><body><h1>Hello</h1><p>World</p></body></html>", "css": "h1{color:red;} p{margin:8px;}"},
+  {"id": "css-flex", "html": "<div class='c'><span>a</span><span>b</span></div>", "css": ".c{display:flex;gap:4px;} span{color:blue;}"},
+  {"id": "css-transform", "html": "<div class='b'>x</div>", "css": ".b{transform:translate(10px,5px) rotate(10deg);opacity:0.5;border-radius:8px;}"},
+  {"id": "css-overflow", "html": "<div class='o'><p>long text here</p></div>", "css": ".o{width:50px;height:30px;overflow:hidden;}"},
+  {"id": "js-events", "html": "<button id='b'>click</button><script>document.getElementById('b').addEventListener('click',function(){document.body.setAttribute('data-x','1');});</script>", "css": "button{padding:4px;}"}
+]

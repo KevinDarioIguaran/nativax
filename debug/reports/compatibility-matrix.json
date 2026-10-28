@@ -1,0 +1,29 @@
+{
+  "cases": [
+    {
+      "id": "html-basic",
+      "ok": true,
+      "stderr": ""
+    },
+    {
+      "id": "css-flex",
+      "ok": true,
+      "stderr": ""
+    },
+    {
+      "id": "css-transform",
+      "ok": true,
+      "stderr": ""
+    },
+    {
+      "id": "css-overflow",
+      "ok": true,
+      "stderr": ""
+    },
+    {
+      "id": "js-events",
+      "ok": true,
+      "stderr": ""
+    }
+  ]
+}

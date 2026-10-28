@@ -1,0 +1,13 @@
+/workspaces/nativax/build-dbg/CMakeFiles/nativax_sokol.dir
+/workspaces/nativax/build-dbg/CMakeFiles/nativax_stb.dir
+/workspaces/nativax/build-dbg/CMakeFiles/nativax_core.dir
+/workspaces/nativax/build-dbg/CMakeFiles/nativax_js.dir
+/workspaces/nativax/build-dbg/CMakeFiles/nativax_gfx.dir
+/workspaces/nativax/build-dbg/CMakeFiles/nativax_platform.dir
+/workspaces/nativax/build-dbg/CMakeFiles/nativax_app.dir
+/workspaces/nativax/build-dbg/CMakeFiles/nativax_dev.dir
+/workspaces/nativax/build-dbg/CMakeFiles/nativax.dir
+/workspaces/nativax/build-dbg/CMakeFiles/nativax-runtime.dir
+/workspaces/nativax/build-dbg/CMakeFiles/nativax-debug.dir
+/workspaces/nativax/build-dbg/CMakeFiles/edit_cache.dir
+/workspaces/nativax/build-dbg/CMakeFiles/rebuild_cache.dir

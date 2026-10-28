@@ -362,9 +362,10 @@ static bool parse_color(const CsTok* t, int ntoks, float* r, float* g, float* b,
         };
         for (size_t i = 0; i < sizeof(named) / sizeof(named[0]); i++) {
             int nl = (int)strlen(named[i].n);
-            if (str_ieq(t->s, t->len, named[i].n, nl)) {
+            const char* ts = t->str ? t->str : t->s;
+            if (str_ieq(ts, t->len, named[i].n, nl)) {
                 *r = named[i].r; *g = named[i].g; *b = named[i].b;
-                *a = str_ieq(t->s, t->len, "transparent", 11) ? 0.0f : 1.0f;
+                *a = str_ieq(ts, t->len, "transparent", 11) ? 0.0f : 1.0f;
                 return true;
             }
         }
