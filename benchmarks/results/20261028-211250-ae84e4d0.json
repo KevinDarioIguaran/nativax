@@ -1,0 +1,86 @@
+{
+  "tool": "nativax_perf",
+  "root": "/workspaces/nativax/examples/counter",
+  "entry": "index.html",
+  "viewport": [
+    1024,
+    768
+  ],
+  "cold_start_ms": 7.687,
+  "first_frame_ms": 7.688,
+  "load_phases_ms": {
+    "read": 0.021,
+    "parse": 0.035,
+    "collect": 1.184,
+    "style_layout": 0.388,
+    "script": 4.83,
+    "total": 6.459
+  },
+  "isolated_ms_per_iter": {
+    "html_parse": 0.0337,
+    "css_parse": 0.6671,
+    "style_layout": 0.0241,
+    "paint": 0.0175,
+    "js_exec": 0.3023
+  },
+  "isolated_iters": {
+    "pipeline": 3,
+    "js": 3
+  },
+  "frames": {
+    "n": 10,
+    "wall_ms": 0.003,
+    "avg_ms": 0.0003,
+    "p50_ms": 0.0002,
+    "p95_ms": 0.0007,
+    "max_ms": 0.0007
+  },
+  "last_phases_ms": {
+    "restyle": 0.0,
+    "relayout": 0.0327,
+    "paint": 0.0194
+  },
+  "navigation": {
+    "reloads": 2,
+    "avg_ms": 3.057
+  },
+  "memory": {
+    "rss_start_kb": 10380,
+    "rss_loaded_kb": 29464,
+    "rss_end_kb": 35296,
+    "peak_rss_kb": 35828,
+    "native_heap_bytes": 4327280,
+    "gpu_texture_bytes": 0,
+    "gpu_buffer_bytes": 0,
+    "js_heap_bytes": null,
+    "js_heap_note": "unavailable: JSC C API"
+  },
+  "app": {
+    "nodes": 45,
+    "top_level_boxes": 1,
+    "sheets": 1,
+    "scripts": 1,
+    "listeners": 2,
+    "vertices": 976,
+    "groups": 10,
+    "viewport": [
+      1024,
+      768
+    ],
+    "loaded": true
+  },
+  "notes": "headless pipeline cost; no vsync/compositor, not display FPS; GPU bytes are 0 because no GPU context exists in this mode",
+  "env": {
+    "os": "Linux-6.8.0-1064-azure-x86_64-with-glibc2.39",
+    "machine": "x86_64",
+    "processor": "x86_64",
+    "python": "3.12.3",
+    "cpu_count": 4,
+    "memory_kb": 16377436,
+    "gpu": null,
+    "compiler": "gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0",
+    "git_commit": "ae84e4d063064f123c6604c3921d1757043d7246",
+    "git_branch": "native-c-sokol"
+  },
+  "run_id": "20261028-211250-ae84e4d0"
+}
