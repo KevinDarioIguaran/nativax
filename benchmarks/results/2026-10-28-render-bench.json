@@ -1,0 +1,5 @@
+{
+  "date": "2026-10-28",
+  "command": "nativax_bench --w 1024 --h 768 --iters 20 --cards 6 --text 40",
+  "result": {"bench":"render","w":1024,"h":768,"iters":20,"cards":6,"build_ms":0.131,"clear_ms":0.468,"raster_ms":115.808,"frame_ms":116.276,"raster_mpix_s":6.8,"avg_verts":9493,"avg_indices":15104,"checksum":"6010026b"}
+}

@@ -1,0 +1,9 @@
+{
+  "date": "2026-10-28",
+  "change": "styles array sized to nx_node_slot_bound(doc) + in-place restyle (nx_layout_restyle)",
+  "workload": "examples/counter windowed, 120 frames",
+  "before_peak_rss_kb": 120828,
+  "after_peak_rss_kb": 100460,
+  "saved_kb": 20368,
+  "regression_check": "12/12 ctest suites still pass; unit_layout/unit_app geometry assertions unchanged"
+}

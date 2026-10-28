@@ -31,6 +31,7 @@ target_include_directories(nativax_stb SYSTEM PUBLIC third_party/stb)
 # ---- core --------------------------------------------------------------------
 add_library(nativax_core STATIC
   src/log.c
+  src/meminfo.c
   src/dl.c
   src/text.c
   src/image.c

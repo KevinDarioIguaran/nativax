@@ -116,4 +116,9 @@ const char* nx_intern(NxDocument* doc, const char* s, int len);
    dense per-node arrays sized NX_MAX_NODES with a handle. */
 int32_t nx_node_index(NxNodeRef ref);
 
+/* Highest allocated slot + 1: the smallest dense array that can be indexed by
+   any live handle. Bounds per-node arrays to the document's real size instead
+   of the 100k hard limit. */
+int nx_node_slot_bound(NxDocument* doc);
+
 #endif /* NATIVAX_DOM_H */

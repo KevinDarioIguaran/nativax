@@ -1,0 +1,12 @@
+{
+  "date": "2026-10-28",
+  "workload": "examples/counter",
+  "mode": "windowed (X11 + llvmpipe), 1024x768 CSS px, dpi 1.04, 120 frames",
+  "command": "nativax-runtime --root examples/counter --frames 120 --mem",
+  "runs": [
+    {"rss_start_kb": 11260, "rss_after_load_kb": 98972, "rss_kb": 100460, "peak_rss_kb": 100460},
+    {"rss_start_kb": 11188, "rss_after_load_kb": 98840, "rss_kb": 100332, "peak_rss_kb": 100332},
+    {"rss_start_kb": 11188, "rss_after_load_kb": 98760, "rss_kb": 100248, "peak_rss_kb": 100248}
+  ],
+  "peak_rss_kb_range": [100248, 100460]
+}

@@ -279,13 +279,9 @@ static bool build_layout(NxApp* app) {
    re-run layout in place. */
 static bool restyle(NxApp* app) {
     if (!app->lay) return build_layout(app);
-    NxComputedStyle* fresh = nx_style_resolve(
-        app->doc, (const CsSheet* const*)app->sheets, app->sheet_count,
-        (float)app->width, 16.0f);
-    if (!fresh) return false;
-    memcpy(app->lay->styles, fresh, sizeof(NxComputedStyle) * (size_t)NX_MAX_NODES);
-    free(fresh);
-    nx_layout_run(app->lay, app->doc, (float)app->width, (float)app->height, app->font);
+    if (!nx_layout_restyle(app->lay, app->doc, (const CsSheet* const*)app->sheets,
+                           app->sheet_count, (float)app->width, (float)app->height, app->font))
+        return build_layout(app); /* document outgrew the style array */
     app->style_dirty = false;
     app->paint_dirty = true;
     return true;

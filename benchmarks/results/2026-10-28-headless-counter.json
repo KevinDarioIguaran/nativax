@@ -1,0 +1,14 @@
+{
+  "date": "2026-10-28",
+  "workload": "examples/counter",
+  "mode": "headless (CPU rasterizer), 1024x768, 60 frames",
+  "command": "nativax-runtime --headless --root examples/counter --frames 60 --mem",
+  "runs": [
+    {"peak_rss_kb": 46320},
+    {"peak_rss_kb": 44688},
+    {"peak_rss_kb": 44660},
+    {"peak_rss_kb": 46016},
+    {"peak_rss_kb": 44704}
+  ],
+  "peak_rss_kb_range": [44660, 46320]
+}

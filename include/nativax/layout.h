@@ -43,8 +43,9 @@ typedef struct NxBox {
 } NxBox;
 
 typedef struct NxLayout {
-    NxBox* root;           /* viewport box; owned */
-    NxComputedStyle* styles;/* owned, indexed by node handle */
+    NxBox* root;            /* viewport box; owned */
+    NxComputedStyle* styles;/* owned, indexed by node slot; sized to the document */
+    int styles_cap;         /* entries in styles (>= node slot bound at build) */
     float viewport_w, viewport_h;
 } NxLayout;
 
@@ -58,5 +59,11 @@ void nx_layout_free(NxLayout* lay);
 /* Recompute layout in place after a DOM/style mutation. */
 void nx_layout_run(NxLayout* lay, NxDocument* doc, float viewport_w, float viewport_h,
                    int32_t font);
+
+/* Re-resolve styles into the layout's own array (no second allocation) and
+   re-run layout. Returns false when the document outgrew the array, in which
+   case the caller must rebuild with nx_layout_build(). */
+bool nx_layout_restyle(NxLayout* lay, NxDocument* doc, const CsSheet* const* sheets,
+                       int sheet_count, float viewport_w, float viewport_h, int32_t font);
 
 #endif /* NATIVAX_LAYOUT_H */

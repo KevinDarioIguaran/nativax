@@ -15,6 +15,7 @@
 #include "nativax/gfx.h"
 #include "nativax/hotreload.h"
 #include "nativax/log.h"
+#include "nativax/meminfo.h"
 #include "nativax/raster.h"
 #include "nativax/text.h"
 #include "sokol_app.h"
@@ -41,7 +42,10 @@ typedef struct AppState {
     int width, height; /* CSS px */
     bool deterministic;
     bool stats;
+    bool mem;
     float dpi;
+    long rss_start_kb;
+    long rss_loaded_kb;
     NxApp* app;
     NxHotReload* hr;
     double start_ms;
@@ -123,6 +127,7 @@ static void init_cb(void) {
         return;
     }
     free(err);
+    g_state.rss_loaded_kb = nx_mem_rss_kb();
     nx_app_set_dpi(g_state.app, g_state.dpi);
     nx_app_update(g_state.app, now_ms() - g_state.start_ms);
 
@@ -151,8 +156,16 @@ static void frame_cb(void) {
     }
 }
 
+static void print_mem_report(void) {
+    printf("{\"rss_start_kb\":%ld,\"rss_after_load_kb\":%ld,\"rss_kb\":%ld,"
+           "\"peak_rss_kb\":%ld,\"frames\":%d}\n",
+           g_state.rss_start_kb, g_state.rss_loaded_kb, nx_mem_rss_kb(), nx_mem_peak_kb(),
+           g_state.frame_count);
+}
+
 static void cleanup_cb(void) {
     if (g_state.hr) nx_hot_reload_free(g_state.hr);
+    if (g_state.mem) print_mem_report();
     if (g_state.stats && g_state.app) {
         char* json = nx_app_stats_json(g_state.app);
         if (json) {
@@ -214,6 +227,7 @@ static int run_headless(void) {
     }
     free(err);
     g_state.start_ms = now_ms();
+    g_state.rss_loaded_kb = nx_mem_rss_kb();
     nx_app_update(app, 0.0);
 
     int frames = g_state.max_frames > 0 ? g_state.max_frames : 1;
@@ -240,7 +254,8 @@ static int run_headless(void) {
             free(json);
         }
     }
-    if (!g_state.stats) printf("nativax-runtime headless OK\n");
+    if (g_state.mem) print_mem_report();
+    if (!g_state.stats && !g_state.mem) printf("nativax-runtime headless OK\n");
     nx_app_free(app);
     return 0;
 }
@@ -257,6 +272,7 @@ static void usage(const char* argv0) {
             "  --screenshot FILE    write a PNG screenshot at frame 3\n"
             "  --dev URL            connect to the dev server (ws://127.0.0.1:PORT/__nativax_ws)\n"
             "  --stats              print pipeline stats JSON on exit\n"
+            "  --mem                print RSS/peak memory JSON on exit\n"
             "  --verbose            debug logging\n",
             argv0);
 }
@@ -268,6 +284,7 @@ int main(int argc, char** argv) {
     g_state.width = 1024;
     g_state.height = 768;
     g_state.start_ms = now_ms();
+    g_state.rss_start_kb = nx_mem_rss_kb();
 
     for (int i = 1; i < argc; i++) {
         if (strcmp(argv[i], "--headless") == 0) {
@@ -289,6 +306,8 @@ int main(int argc, char** argv) {
             g_state.dev_url = argv[++i];
         } else if (strcmp(argv[i], "--stats") == 0) {
             g_state.stats = true;
+        } else if (strcmp(argv[i], "--mem") == 0) {
+            g_state.mem = true;
         } else if (strcmp(argv[i], "--verbose") == 0) {
             nx_log_set_level(NX_LOG_DEBUG);
         } else if (strcmp(argv[i], "--help") == 0) {

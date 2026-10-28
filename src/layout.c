@@ -298,6 +298,17 @@ void nx_layout_run(NxLayout* lay, NxDocument* doc, float viewport_w, float viewp
         layout_block(root->children[i], doc, lay->styles, 0, 0, viewport_w, font, 0);
 }
 
+bool nx_layout_restyle(NxLayout* lay, NxDocument* doc, const CsSheet* const* sheets,
+                       int sheet_count, float viewport_w, float viewport_h, int32_t font) {
+    if (!lay || !doc || !lay->styles) return false;
+    if (nx_node_slot_bound(doc) > lay->styles_cap) return false;
+    if (!nx_style_resolve_into(doc, sheets, sheet_count, viewport_w, 16.0f, lay->styles,
+                               lay->styles_cap))
+        return false;
+    nx_layout_run(lay, doc, viewport_w, viewport_h, font);
+    return true;
+}
+
 void nx_layout_free(NxLayout* lay) {
     if (!lay) return;
     box_free_tree(lay->root);
@@ -308,13 +319,21 @@ void nx_layout_free(NxLayout* lay) {
 NxLayout* nx_layout_build(NxDocument* doc, const CsSheet* const* sheets, int sheet_count,
                            float viewport_w, float viewport_h, int32_t font) {
     if (!doc) return NULL;
-    NxComputedStyle* styles =
-        nx_style_resolve(doc, sheets, sheet_count, viewport_w, 16.0f);
+    /* Size per-node arrays to the live document, not the 100k hard limit:
+       a small page must not pay for a 100k-entry style table. */
+    int cap = nx_node_slot_bound(doc);
+    if (cap < 1) cap = 1;
+    NxComputedStyle* styles = (NxComputedStyle*)calloc((size_t)cap, sizeof(NxComputedStyle));
     if (!styles) return NULL;
+    if (!nx_style_resolve_into(doc, sheets, sheet_count, viewport_w, 16.0f, styles, cap)) {
+        free(styles);
+        return NULL;
+    }
 
     NxLayout* lay = (NxLayout*)calloc(1, sizeof(NxLayout));
     if (!lay) { free(styles); return NULL; }
     lay->styles = styles;
+    lay->styles_cap = cap;
     lay->viewport_w = viewport_w;
     lay->viewport_h = viewport_h;
 
