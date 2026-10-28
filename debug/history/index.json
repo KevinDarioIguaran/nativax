@@ -88,5 +88,23 @@
       "total": 31
     },
     "path": "debug/history/runs/20261028T233346Z-eafdbac.json"
+  },
+  {
+    "run_id": "20261028T233437Z-48bde3c",
+    "timestamp": "2026-10-28T23:34:37.735476+00:00",
+    "git": {
+      "branch": "native-c-sokol",
+      "commit": "48bde3cded65b240d76b56c7856818126dbc1f9e",
+      "short": "48bde3c",
+      "dirty": true
+    },
+    "totals": {
+      "pass": 1,
+      "fail": 0,
+      "blocked": 31,
+      "error": 0,
+      "total": 32
+    },
+    "path": "debug/history/runs/20261028T233437Z-48bde3c.json"
   }
 ]

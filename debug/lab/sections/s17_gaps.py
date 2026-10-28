@@ -129,3 +129,8 @@ def _(ctx):
 @case(17, "gap.031", 'video playback')
 def _(ctx):
     raise Blocked('Video playback/decoding is not implemented (no decoder available).')
+
+
+@case(17, "gap.032", 'scroll support')
+def _(ctx):
+    raise Blocked('Scroll/overflow scrolling is not implemented.')
