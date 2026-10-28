@@ -44,4 +44,7 @@ void nxd_dump_layout(FILE* out, NxDocument* doc, const NxLayout* lay);
 /* display list: groups, vertices, indices, scissor and layer records */
 void nxd_dump_display_list(FILE* out, const NxDisplayList* dl);
 
+/* box and text-run counts for summary.json */
+void nxd_layout_stats(const NxLayout* lay, int* boxes, int* runs);
+
 #endif /* NATIVAX_DEBUG_DUMP_H */

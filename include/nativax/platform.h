@@ -130,6 +130,11 @@ bool nx_platform_run(const NxPlatformDesc* desc);
 /* Ask the loop to stop after the current callback (safe from any callback). */
 void nx_platform_quit(void);
 
+/* Install a best-effort crash reporter: on SIGSEGV/SIGABRT/SIGFPE/SIGILL it
+   prints a backtrace to stderr and re-raises. No-op on platforms without
+   execinfo. */
+void nx_crash_init(void);
+
 int nx_platform_width(void);             /* CSS px */
 int nx_platform_height(void);            /* CSS px */
 int nx_platform_framebuffer_width(void); /* physical px */

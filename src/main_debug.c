@@ -20,6 +20,10 @@
 #include "nativax/debug_dump.h"
 #include "nativax/display_list.h"
 #include "nativax/dom.h"
+#include "nativax/platform.h"
+#include <signal.h>
+#include <execinfo.h>
+#include <unistd.h>
 #include "nativax/html.h"
 #include "nativax/layout.h"
 #include "nativax/paint.h"
@@ -35,7 +39,24 @@ static void usage(void) {
             "--out dir [--width px --height px] [--render out.png]\n");
 }
 
+
+static void nx_debug_crash_handler(int sig) {
+    void* fr[64];
+    int n = backtrace(fr, 64);
+    fprintf(stderr, "\nnativax-debug: fatal signal %d\n", sig);
+    backtrace_symbols_fd(fr, n, STDERR_FILENO);
+    signal(sig, SIG_DFL);
+    raise(sig);
+}
+static void nx_debug_crash_init(void) {
+    signal(SIGSEGV, nx_debug_crash_handler);
+    signal(SIGABRT, nx_debug_crash_handler);
+    signal(SIGFPE, nx_debug_crash_handler);
+    signal(SIGILL, nx_debug_crash_handler);
+}
+
 int main(int argc, char** argv) {
+    nx_debug_crash_init();
     const char* html_path = NULL;
     const char* css_paths[MAX_CSS];
     int css_count = 0;

@@ -379,6 +379,7 @@ static void usage(const char* argv0) {
 }
 
 int main(int argc, char** argv) {
+    nx_crash_init();
     bool headless = false;
     g_state.root = ".";
     g_state.entry = "index.html";
