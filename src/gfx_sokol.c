@@ -17,6 +17,7 @@ typedef struct TexEntry {
 
 static struct {
     sg_shader shd;
+    sg_shader shd_glyph;
     sg_pipeline pipe_ui;
     sg_pipeline pipe_glyph;
     sg_sampler sampler;
@@ -154,9 +155,9 @@ void nx_gfx_init(void) {
     if (g.initialized) return;
     memset(&g, 0, sizeof(g));
     g.shd = make_shader(FS_UI);
-    sg_shader shd_glyph = make_shader(FS_GLYPH);
+    g.shd_glyph = make_shader(FS_GLYPH);
     g.pipe_ui = make_pipeline(g.shd, false);
-    g.pipe_glyph = make_pipeline(shd_glyph, true);
+    g.pipe_glyph = make_pipeline(g.shd_glyph, true);
     g.sampler = sg_make_sampler(&(sg_sampler_desc){
         .min_filter = SG_FILTER_LINEAR,
         .mag_filter = SG_FILTER_LINEAR,
@@ -197,6 +198,7 @@ void nx_gfx_shutdown(void) {
     sg_destroy_pipeline(g.pipe_ui);
     sg_destroy_pipeline(g.pipe_glyph);
     sg_destroy_shader(g.shd);
+    sg_destroy_shader(g.shd_glyph);
     memset(&g, 0, sizeof(g));
 }
 
@@ -221,8 +223,8 @@ void nx_gfx_sync_textures(void) {
         g.tex_cap = new_cap;
     }
     for (int i = 0; i < n; i++) {
-        TexEntry* e = &g.tex[i + 1]; /* registry id = index + 1 */
-        const NxTextureInfo* info = nx_tex_info(i);
+        TexEntry* e = &g.tex[i + 1];             /* registry id = index + 1 */
+        const NxTextureInfo* info = nx_tex_info(i + 1); /* ids are 1-based */
         if (!info || !info->pixels) {
             if (e->ready) {
                 sg_destroy_view(e->view);

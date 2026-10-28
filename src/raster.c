@@ -82,12 +82,36 @@ static inline float edge(float ax, float ay, float bx, float by, float px, float
     return (bx - ax) * (py - ay) - (by - ay) * (px - ax);
 }
 
+/* Canonical endpoint order for an edge: lexicographic on (x, y). Both triangles
+   sharing an edge evaluate it with the SAME arithmetic (bitwise-identical edge
+   value), so "sample exactly on the shared edge" is decided identically by
+   both. The triangle that traverses the edge in canonical order owns such
+   samples (fwd); the other excludes them -> exactly-once coverage, no
+   double-blended seams along fan/quad diagonals. */
+static inline bool canon_fwd(const NxVertex* a, const NxVertex* b) {
+    return a->x < b->x || (a->x == b->x && a->y <= b->y);
+}
+
 static void raster_triangle(NxRaster* r, const NxVertex* v0, const NxVertex* v1, const NxVertex* v2,
                             const NxTextureInfo* tex, bool alpha_only) {
     float area = edge(v0->x, v0->y, v1->x, v1->y, v2->x, v2->y);
     if (fabsf(area) < 1e-6f) return;
     float inv_area = 1.0f / area;
     int winding = area > 0 ? 1 : -1;
+
+    /* canonical edge endpoints + ownership (loop-invariant) */
+    const NxVertex *ca0 = v0, *cb0 = v1;
+    float s0 = 1.0f, m0 = 1.0f;
+    if (!canon_fwd(v0, v1)) { ca0 = v1; cb0 = v0; s0 = -1.0f; }
+    m0 = s0 * winding;
+    const NxVertex *ca1 = v1, *cb1 = v2;
+    float s1 = 1.0f, m1 = 1.0f;
+    if (!canon_fwd(v1, v2)) { ca1 = v2; cb1 = v1; s1 = -1.0f; }
+    m1 = s1 * winding;
+    const NxVertex *ca2 = v2, *cb2 = v0;
+    float s2 = 1.0f, m2 = 1.0f;
+    if (!canon_fwd(v2, v0)) { ca2 = v0; cb2 = v2; s2 = -1.0f; }
+    m2 = s2 * winding;
 
     int minx = (int)floorf(fminf(v0->x, fminf(v1->x, v2->x)));
     int maxx = (int)ceilf(fmaxf(v0->x, fmaxf(v1->x, v2->x)));
@@ -105,10 +129,20 @@ static void raster_triangle(NxRaster* r, const NxVertex* v0, const NxVertex* v1,
             int hits = 0;
             for (int s = 0; s < 4; s++) {
                 float px = x + subs[s][0], py = y + subs[s][1];
-                float e0 = edge(v0->x, v0->y, v1->x, v1->y, px, py) * winding;
-                float e1 = edge(v1->x, v1->y, v2->x, v2->y, px, py) * winding;
-                float e2 = edge(v2->x, v2->y, v0->x, v0->y, px, py) * winding;
-                if (e0 >= 0 && e1 >= 0 && e2 >= 0) hits++;
+                /* canonical edge values (identical arithmetic in both adjacent
+                   triangles); s_i reconstructs this triangle's orientation */
+                float e0 = edge(ca0->x, ca0->y, cb0->x, cb0->y, px, py);
+                float e1 = edge(ca1->x, ca1->y, cb1->x, cb1->y, px, py);
+                float e2 = edge(ca2->x, ca2->y, cb2->x, cb2->y, px, py);
+                /* inside: positive side of all three (winding-normalized), or
+                   exactly on a canonically-traversed edge (owned sample) */
+                float f0 = e0 * m0, f1 = e1 * m1, f2 = e2 * m2;
+                if (f0 > 0 && f1 > 0 && f2 > 0) {
+                    hits++;
+                } else if ((e0 == 0.0f && s0 > 0) || (e1 == 0.0f && s1 > 0) ||
+                           (e2 == 0.0f && s2 > 0)) {
+                    if (f0 >= 0 && f1 >= 0 && f2 >= 0) hits++;
+                }
             }
             if (hits == 0) continue;
             float cov = hits * 0.25f;

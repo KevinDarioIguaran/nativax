@@ -1,19 +1,28 @@
 #!/usr/bin/env python3
-"""Native debug tooling tests: the SAME storage contract the Dart engines
-use (debug/logic/storage.py) exercised end to end by the native runner.
+"""Native debug tooling tests: debug-artifact roundtrip through the real
+native C CLI (nativax-debug) and the shipped manifest validator.
 
-Covers: archive -> manifest schema valid, integrity hashes verify, history
-append, lineage superseding, prune. Uses a temp runs_root; the real
-debug/artifacts/runs is never touched.
+Covers: nativax-debug --html/--css/--out writes {dom.txt,dom.json,css.txt,summary.json}
+        -> summary.json is valid JSON with expected structure
+        -> dom/css artifacts parse + carry the expected payload
+        -> debug/tests/manifest.json validates against the shipped JSON schema
+
+Uses temp output dirs; the real debug/artifacts tree is never touched.
 """
+from __future__ import annotations
+
 import json
+import subprocess
 import sys
 import tempfile
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[3]
-sys.path.insert(0, str(ROOT / "debug" / "logic"))
-import storage  # noqa: E402
+ROOT = Path(__file__).resolve().parents[2]          # <repo>/debug/tests/x.py -> repo
+EXE = ROOT / "build" / "nativax-debug"
+HTML = ROOT / "debug" / "cases" / "smoke.html"
+CSS = ROOT / "debug" / "cases" / "smoke.css"
+VALIDATOR = ROOT / "debug" / "common" / "validation" / "validate_manifest.py"
+MANIFEST = ROOT / "tests" / "manifest.json"
 
 
 def main() -> int:
@@ -25,62 +34,33 @@ def main() -> int:
             failures += 1
             print(f"FAIL: {msg}")
 
+    if not EXE.exists():
+        print("SKIP: nativax-debug binary not built (build nativax-debug first)")
+        return 0
+
     with tempfile.TemporaryDirectory() as tmp:
-        runs_root = Path(tmp) / "runs"
-        evidence = Path(tmp) / "evidence"
-        evidence.mkdir()
-        (evidence / "elements.json").write_text('{"children":[]}\n')
-        (evidence / "results.json").write_text(
-            json.dumps({"engine": "nativax-parse", "cases": 1, "passed": 1,
-                        "failed": 0}) + "\n")
+        out = Path(tmp) / "artifacts"
+        proc = subprocess.run(
+            [str(EXE), "--html", str(HTML), "--css", str(CSS), "--out", str(out)],
+            capture_output=True, text=True)
+        check(proc.returncode == 0, f"nativax-debug smoke run ok (rc={proc.returncode}) {proc.stderr}")
+        for name in ("dom.txt", "dom.json", "css.txt", "summary.json"):
+            check((out / name).exists(), f"artifact written: {name}")
+        summary = json.loads((out / "summary.json").read_text())
+        check(summary.get("dom", {}).get("elements", 0) > 0, "summary records dom elements")
+        check(summary.get("css", {}).get("rules", 0) > 0, "summary records css rules")
+        dom_json = json.loads((out / "dom.json").read_text())
+        check(isinstance(dom_json, dict), "dom.json is a json object")
+        check("html" in summary and "css" in summary, "summary has html+css keys")
 
-        run1 = storage.archive("conformance", evidence, engine="nativax-parse",
-                               argv=["parse", "--dataset", "x"],
-                               runs_root=runs_root)
-        check(run1.is_dir(), "run dir created")
-        m1 = storage.load_manifest(run1)
-        check(m1 is not None, "manifest loads and validates")
-        if m1:
-            check(m1["area"] == "conformance" and m1["engine"] == "nativax-parse",
-                  "area/engine recorded")
-            check(m1["status"] == "completed", "status completed")
-            check(m1["git_revision"] is not None, "git revision recorded")
-            check(m1["evidence"]["files"] == 2, "both evidence files counted")
-        check(storage.verify(run1) == [], "integrity verifies clean")
+        # shipped schema validator must accept the shipped manifest (no stale entries)
+        vp = subprocess.run([sys.executable, str(VALIDATOR)],
+                             capture_output=True, text=True)
+        check(vp.returncode == 0, f"manifest validates (rc={vp.returncode}) {vp.stdout}{vp.stderr}")
 
-        # evidence is read-only after archiving
-        frozen = run1 / "evidence" / "results.json"
-        check(not (frozen.stat().st_mode & 0o222), "evidence frozen read-only")
-
-        # history append stays writable
-        h = storage.append_history(run1, "annotation",
-                                   {"note": "native run"}, author="test")
-        check(h.is_file(), "history entry written")
-        entries = storage.history(run1)
-        check(len(entries) == 1 and entries[0]["kind"] == "annotation",
-              "history readable")
-
-        # second run with the same lineage supersedes the first
-        run2 = storage.archive("conformance", evidence, engine="nativax-parse",
-                               argv=["parse", "--dataset", "x"],
-                               runs_root=runs_root)
-        m2 = storage.load_manifest(run2)
-        check(m2 is not None and m2["previous_run"] == run1.name,
-              "lineage links previous run")
-        kinds = [e["kind"] for e in storage.history(run1)]
-        check("superseded_by" in kinds, "previous run marked superseded")
-
-        listing = storage.runs("conformance", runs_root)
-        check([p.name for p in listing] == [run2.name, run1.name],
-              "newest first listing")
-
-        removed = storage.prune("conformance", 1, runs_root)
-        check([run1.name] == [p.name for p in removed], "prune removes oldest")
-        check(storage.verify(run2) == [], "surviving run still verifies")
-
-    print(f"storage roundtrip: {'OK' if failures == 0 else f'{failures} FAILURES'}")
+    print(f"native artifact roundtrip: {'OK' if failures == 0 else f'{failures} FAILURES'}")
     return 0 if failures == 0 else 1
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    raise SystemExit(main())

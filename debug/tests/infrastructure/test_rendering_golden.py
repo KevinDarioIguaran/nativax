@@ -20,7 +20,8 @@ def main():
     with tempfile.TemporaryDirectory() as td:
         td = Path(td)
         cur = td / "cur.png"
-        subprocess.run([str(EXE), "--screenshot", str(cur), "--frames", "3"],
+        subprocess.run([str(EXE), "--deterministic", "--size", "1024", "768",
+                        "--screenshot", str(cur), "--frames", "4"],
                        check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         r = subprocess.run([sys.executable, str(JUDGE), str(GOLDEN), str(cur)], capture_output=True, text=True)
         if r.returncode != 0:

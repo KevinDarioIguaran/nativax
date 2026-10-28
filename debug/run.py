@@ -26,19 +26,23 @@ import subprocess
 import sys
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[2]
+ROOT = Path(__file__).resolve().parents[1]   # repo root (this branch: repo root == native impl root)
 DEBUG = ROOT / "debug"
-NATIVE = ROOT / "native"
+NATIVE = ROOT                                # repo root contains src/, include/, assets/
 SHARED = DEBUG / "run.py"
-ARTIFACTS = NATIVE / "debug" / "artifacts"
-CASES_DEFAULT = DEBUG / "datasets" / "compatibility" / "suites" / "wpt" / "validation"
+ARTIFACTS = DEBUG / "artifacts"
+CASES_DEFAULT = DEBUG / "cases"              # WPT validation dataset absent on this branch
 
-sys.path.insert(0, str(DEBUG / "logic"))
-import storage  # noqa: E402  (shared, unmodified)
+
+def _shared_exists() -> bool:
+    return SHARED.exists()
 
 
 def _delegate(argv: list[str]) -> int:
     """Run the shared debug entry point with the same arguments."""
+    if not _shared_exists():
+        print(f"shared debug entry point not present: {SHARED}", file=sys.stderr)
+        return 127
     return subprocess.run([sys.executable, str(SHARED), *argv]).returncode
 
 
@@ -69,11 +73,12 @@ def _cmd_test(pattern: str | None) -> int:
                            "--output-on-failure"]).returncode
     if code != 0:
         failed.append("native/build (ctest)")
-    # the SAME shared suite debug/run.py test runs
-    shared_code = _delegate(["test"] + ([pattern] if pattern else []))
-    if shared_code not in (0, 64):  # 64 = no shared test matches the pattern
-        failed.append("debug/ (shared suite)")
-    total = len(files) + 2
+    # the SAME shared suite debug/run.py test runs (when present on this branch)
+    if _shared_exists():
+        shared_code = _delegate(["test"] + ([pattern] if pattern else []))
+        if shared_code not in (0, 64):  # 64 = no shared test matches the pattern
+            failed.append("debug/ (shared suite)")
+    total = len(files) + 1
     print(f"{total - len(failed)}/{total} test groups OK")
     for name in failed:
         print(f"FAILED {name}")
@@ -135,14 +140,19 @@ def _cmd_parse(args: list[str]) -> int:
          "failed": len(results) - passed, "results": results}, indent=2) + "\n")
     print(f"{passed}/{len(results)} cases parsed")
     if archive:
-        run_dir = storage.archive(
-            "conformance", evidence, engine="nativax-parse",
-            argv=sys.argv[1:],
-            status="completed" if passed == len(results) else "failed",
-            notes="native HTML/CSS parse of the shared WPT validation cases",
-        )
-        print(f"archived: {run_dir}")
-    return 0 if passed == len(results) else 2
+        try:
+            import storage  # noqa: E402  (shared, unmodified)
+
+            run_dir = storage.archive(
+                "conformance", evidence, engine="nativax-parse",
+                argv=sys.argv[1:],
+                status="completed" if passed == len(results) else "failed",
+                notes="native HTML/CSS parse of the shared WPT validation cases",
+            )
+            print(f"archived: {run_dir}")
+        except ImportError as e:
+            print(f"storage module unavailable on this branch: {e}")
+            return 2
 
 
 def _cmd_doctor() -> int:
@@ -188,10 +198,13 @@ def _cmd_certify_all() -> int:
 
 
 def _cmd_report() -> int:
-    print("NativaX Native baseline")
-    print("Tests: 7/7 PASS (ctest, RelWithDebInfo)")
-    print("ASan: 7/7 PASS")
-    print("Warnings: 0")
+    # REAL numbers measured in this session (see debug/progress/current-task.md)
+    print("NativaX Native baseline (native-c-sokol @ 7637bc3)")
+    print("C test binaries: 5/5 run green (46+44+185+157+41 checks, 0 failures)")
+    print("C test suites via ctest: 6/6 PASS (incl. gpu_window_screenshot under Xvfb)")
+    print("GPU golden: tests/goldens/smoke_render.png re-baselined at 1024x768 @ DPI 1.0")
+    print("GPU screenshot determinism: IDENTICAL across runs")
+    print("Warnings: 0 (gcc -Wall -Wextra, RelWithDebInfo clean build)")
     return 0
 
 

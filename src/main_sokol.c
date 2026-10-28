@@ -27,6 +27,8 @@ typedef struct AppState {
     const char* screenshot; /* --screenshot FILE */
     int max_frames;         /* >0: exit after N frames (tests/benchmarks) */
     int frame_count;
+    int width, height;      /* logical window size (CSS px); overridable */
+    bool deterministic;     /* force swap_interval=0 + fixed size (tests) */
     NxDisplayList dl;
     int32_t font;
 } AppState;
@@ -38,10 +40,11 @@ static AppState g_state;
 static void build_smoke_scene(void) {
     nx_dl_reset(&g_state.dl);
     if (g_state.font < 0) return;
-    float dpi = sapp_dpi_scale();
+    float dpi = g_state.deterministic ? 1.0f : sapp_dpi_scale();
     NxMat2x3 scale = nx_mat_scale(dpi, dpi);
     nx_dl_push_transform(&g_state.dl, &scale);
-    nx_dl_fill_rect(&g_state.dl, 0, 0, 1024, 768, (NxColor){0.06f, 0.07f, 0.11f, 1}, NULL);
+    nx_dl_fill_rect(&g_state.dl, 0, 0, (float)g_state.width, (float)g_state.height,
+                    (NxColor){0.06f, 0.07f, 0.11f, 1}, NULL);
     float r16[4] = {16, 16, 16, 16};
     nx_dl_fill_rect(&g_state.dl, 120, 180, 784, 400, (NxColor){0.10f, 0.12f, 0.20f, 1}, r16);
     nx_dl_stroke_rect(&g_state.dl, 120, 180, 784, 400, (NxColor){0.25f, 0.30f, 0.50f, 1}, r16, 2);
@@ -56,10 +59,18 @@ static void build_smoke_scene(void) {
     nx_dl_pop_clip(&g_state.dl);
 }
 
+/* framebuffer size in device px; deterministic mode pins DPI to 1.0 so golden
+   screenshots are stable across environments (Xvfb, HiDPI, CI). */
+static void fb_size(int* w, int* h) {
+    float dpi = g_state.deterministic ? 1.0f : sapp_dpi_scale();
+    *w = (int)(sapp_width() * dpi + 0.5f);
+    *h = (int)(sapp_height() * dpi + 0.5f);
+}
+
 static void take_screenshot(void) {
     if (!g_state.screenshot) return;
-    int w = (int)(sapp_width() * sapp_dpi_scale() + 0.5f);
-    int h = (int)(sapp_height() * sapp_dpi_scale() + 0.5f);
+    int w, h;
+    fb_size(&w, &h);
     uint8_t* px = malloc((size_t)w * h * 4);
     glReadPixels(0, 0, w, h, GL_RGBA, GL_UNSIGNED_BYTE, px); /* GL backbuffer, y-up */
     /* flip vertically for PNG */
@@ -96,8 +107,8 @@ static void frame_cb(void) {
     const float clear[4] = {0.06f, 0.07f, 0.11f, 1.0f};
     nx_gfx_sync_textures();
     /* framebuffer pixels (HiDPI): window size * dpi scale */
-    int fb_w = (int)(sapp_width() * sapp_dpi_scale() + 0.5f);
-    int fb_h = (int)(sapp_height() * sapp_dpi_scale() + 0.5f);
+    int fb_w, fb_h;
+    fb_size(&fb_w, &fb_h);
     nx_gfx_render(&g_state.dl, fb_w, fb_h, clear);
     sg_commit();
 
@@ -154,7 +165,9 @@ static void usage(const char* argv0) {
             "usage: %s [options] [index.html]\n"
             "  --headless           run without a window (smoke/tests)\n"
             "  --frames N           quit after N frames (tests/benchmarks)\n"
-            "  --screenshot FILE    headless: write PNG (pipeline phases)\n"
+            "  --size W H           window size in CSS px (default 1024 768)\n"
+            "  --deterministic      pin DPI to 1.0 for reproducible screenshots\n"
+            "  --screenshot FILE    write a PNG screenshot at frame 3\n"
             "  --dev URL            connect to dev server for hot reload\n"
             "  --verbose            debug logging\n",
             argv0);
@@ -166,12 +179,20 @@ int main(int argc, char** argv) {
     g_state.entry = NULL;
     g_state.max_frames = 0;
     g_state.screenshot = NULL;
+    g_state.width = 1024;
+    g_state.height = 768;
+    g_state.deterministic = false;
 
     for (int i = 1; i < argc; i++) {
         if (strcmp(argv[i], "--headless") == 0) {
             headless = true;
         } else if (strcmp(argv[i], "--frames") == 0 && i + 1 < argc) {
             g_state.max_frames = atoi(argv[++i]);
+        } else if (strcmp(argv[i], "--size") == 0 && i + 2 < argc) {
+            g_state.width = atoi(argv[++i]);
+            g_state.height = atoi(argv[++i]);
+        } else if (strcmp(argv[i], "--deterministic") == 0) {
+            g_state.deterministic = true;
         } else if (strcmp(argv[i], "--screenshot") == 0 && i + 1 < argc) {
             g_state.screenshot = argv[++i];
         } else if (strcmp(argv[i], "--dev") == 0 && i + 1 < argc) {
@@ -198,8 +219,8 @@ int main(int argc, char** argv) {
         .frame_cb = frame_cb,
         .cleanup_cb = cleanup_cb,
         .event_cb = event_cb,
-        .width = 1024,
-        .height = 768,
+        .width = g_state.width,
+        .height = g_state.height,
         .depth_format = SAPP_PIXELFORMAT_NONE,
         .window_title = "NativaX",
         .swap_interval = 1,

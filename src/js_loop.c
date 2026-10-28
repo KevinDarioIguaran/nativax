@@ -21,6 +21,7 @@ struct NxLoop {
     Timer* timers;
     int count, cap;
     int32_t next_id;
+    int pending; /* number of pending timers + rAFs (O(1) counter) */
 };
 
 /* ---- internals ---- */
@@ -37,14 +38,13 @@ static Timer* timer_slot(NxLoop* loop) {
 }
 
 static int pending_count(const NxLoop* loop) {
-    int n = 0;
-    for (int i = 0; i < loop->count; i++) n += loop->timers[i].pending ? 1 : 0;
-    return n;
+    (void)loop;
+    return loop->pending;
 }
 
 static int32_t schedule(NxLoop* loop, JSContextRef ctx, JSObjectRef cb, double delay_ms,
                         double interval_ms) {
-    if (pending_count(loop) >= NX_MAX_TIMERS) {
+    if (loop->pending >= NX_MAX_TIMERS) {
         NX_WARN("timer limit reached (%d), refusing new timer", NX_MAX_TIMERS);
         return 0;
     }
@@ -57,6 +57,7 @@ static int32_t schedule(NxLoop* loop, JSContextRef ctx, JSObjectRef cb, double d
     t->due_ms = 0; /* set by caller after reading now — see run() note */
     t->interval_ms = interval_ms;
     t->pending = true;
+    loop->pending++;
     return t->id;
 }
 
@@ -108,6 +109,7 @@ static JSValueRef js_clear_timer(JSContextRef ctx, JSObjectRef fn, JSObjectRef s
         if (loop->timers[i].pending && loop->timers[i].id == id) {
             JSValueUnprotect(ctx, loop->timers[i].callback);
             loop->timers[i].pending = false;
+            loop->pending--;
             break;
         }
     }
@@ -127,6 +129,7 @@ static JSValueRef js_raf(JSContextRef ctx, JSObjectRef fn, JSObjectRef self, siz
     t->due_ms = 0;
     t->interval_ms = 0;
     t->pending = true;
+    loop->pending++;
     return nx_js_number(ctx, t->id);
 }
 
@@ -180,6 +183,7 @@ static void run_due(NxLoop* loop, double now_ms) {
             if (t->due_ms <= now_ms) t->due_ms = now_ms + t->interval_ms; /* catch-up guard */
         } else {
             t->pending = false;
+            loop->pending--;
         }
         JSValueRef exc = NULL;
         JSObjectRef global = (JSObjectRef)JSContextGetGlobalObject(ctx);
@@ -212,6 +216,7 @@ void nx_loop_frame(NxLoop* loop, double now_ms) {
             cbs[n++] = t->callback;
             JSValueUnprotect(ctx, t->callback);
             t->pending = false;
+            loop->pending--;
         }
     }
     JSObjectRef global = (JSObjectRef)JSContextGetGlobalObject(ctx);

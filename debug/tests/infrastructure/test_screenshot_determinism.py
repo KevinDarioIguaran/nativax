@@ -20,7 +20,8 @@ def main():
         td = Path(td)
         a = td / "a.png"; b = td / "b.png"
         for out in (a, b):
-            subprocess.run([str(EXE), "--screenshot", str(out), "--frames", "3"],
+            subprocess.run([str(EXE), "--deterministic", "--size", "1024", "768",
+                            "--screenshot", str(out), "--frames", "4"],
                            check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         r = subprocess.run([sys.executable, str(JUDGE), str(a), str(b)], capture_output=True, text=True)
         if r.returncode != 0:

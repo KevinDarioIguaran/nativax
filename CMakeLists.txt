@@ -106,6 +106,16 @@ add_executable(nativax_debug_tests
 target_link_libraries(nativax_debug_tests PRIVATE nativax_core)
 add_test(NAME unit_debug COMMAND nativax_debug_tests)
 
+# Renderer benchmark (archived by debug/benchmarks/workloads/render_benchmark.py).
+add_executable(nativax_bench
+  tests/bench_render.c
+)
+target_compile_definitions(nativax_bench PRIVATE NATIVAX_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}")
+target_link_libraries(nativax_bench PRIVATE nativax_core)
+# keep the bench honest: it must run in CI too (tiny scene, exit-code checked)
+add_test(NAME bench_smoke
+  COMMAND nativax_bench --w 320 --h 200 --cards 2 --text 12 --iters 2)
+
 # Windowed GPU smoke: only when a display is available at configure time.
 if(DEFINED ENV{DISPLAY})
   add_test(NAME gpu_window_screenshot
