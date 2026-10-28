@@ -92,7 +92,12 @@ uint32_t nx_rgba_pack(NxColor c) {
 }
 
 /* ---- display list ---- */
-void nx_dl_init(NxDisplayList* dl) { memset(dl, 0, sizeof(*dl)); }
+/* init must leave the list USABLE: a zero transform would collapse every
+   emitted point onto the origin (init + emit without reset is a valid use). */
+void nx_dl_init(NxDisplayList* dl) {
+    memset(dl, 0, sizeof(*dl));
+    dl->transform = nx_mat_identity();
+}
 
 void nx_dl_reset(NxDisplayList* dl) {
     dl->vert_count = dl->index_count = dl->group_count = 0;

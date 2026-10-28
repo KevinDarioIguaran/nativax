@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+  body { margin: 0; font-family: sans-serif; color: #1a1a2e; background: #f5f5fa; }
+  header { background: #0f3460; color: #ffffff; padding: 24px; text-align: center; }
+  h1 { font-size: 32px; margin: 0; }
+  main { padding: 24px; }
+  .card { background: #ffffff; padding: 20px; border-width: 1px; border-color: #dddddd;
+          margin-bottom: 16px; width: 60%; }
+  h2 { color: #e94560; font-size: 22px; margin-top: 0; }
+  p { font-size: 16px; line-height: 1.5; }
+  .note { background: #fff3cd; color: #664d03; padding: 12px; width: 60%; }
+  footer { color: #888888; font-size: 13px; padding: 16px; text-align: center; }
+</style>
+</head>
+<body>
+  <header>
+    <h1>NativaX Native Runtime</h1>
+  </header>
+  <main>
+    <div class="card">
+      <h2>Style, layout and paint</h2>
+      <p>This page was parsed from HTML, cascaded through the CSS engine,
+      laid out as a block box tree and painted into a display list by the
+      C11 runtime, then rasterized to this PNG on the CPU path.</p>
+    </div>
+    <div class="card">
+      <h2>Deferred percentages</h2>
+      <p>Each card is 60 percent of its containing block, resolved at layout
+      time rather than at cascade time, so nested boxes shrink correctly.</p>
+    </div>
+    <div class="note">Word wrapping and text alignment run on real font metrics.</div>
+  </main>
+  <footer>NativaX debug lab — style/layout/paint phase</footer>
+</body>
+</html>

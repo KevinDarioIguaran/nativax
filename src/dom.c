@@ -267,6 +267,10 @@ void nx_doc_free(NxDocument* doc) {
 
 NxNodeRef nx_doc_root(NxDocument* doc) { return doc ? handle_of(doc, 0) : 0; }
 
+int32_t nx_node_index(NxNodeRef ref) {
+    return (int32_t)((uint32_t)ref & NX_HANDLE_IDX_MASK);
+}
+
 /* ---- accessors ---- */
 NxNodeType nx_node_type(NxDocument* doc, NxNodeRef node) {
     NxNode* n = slot(doc, node);

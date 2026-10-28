@@ -460,3 +460,75 @@ void nxd_dump_dom_json(FILE* out, NxDocument* doc, NxNodeRef node) {
     }
     fputs("]}\n", out);
 }
+
+/* ------------------------------------------------------------------ */
+/* layout tree                                                         */
+/* ------------------------------------------------------------------ */
+
+static void box_label(NxDocument* doc, NxNodeRef node, char* buf, int cap) {
+    if (!node) {
+        snprintf(buf, (size_t)cap, "viewport");
+        return;
+    }
+    const char* tag = nx_node_name(doc, node);
+    int n = snprintf(buf, (size_t)cap, "%s", tag ? tag : "?");
+    if (n < 0 || n >= cap) return;
+    const char* id = nx_node_get_attr(doc, node, "id");
+    if (id) n += snprintf(buf + n, (size_t)(cap - n), "#%s", id);
+    if (n < 0 || n >= cap) return;
+    const char* cls = nx_node_get_attr(doc, node, "class");
+    if (cls && *cls) {
+        /* first class only: keeps dump lines short */
+        const char* sp = strchr(cls, ' ');
+        int cl = sp ? (int)(sp - cls) : (int)strlen(cls);
+        snprintf(buf + n, (size_t)(cap - n), ".*%.*s", cl, cls);
+    }
+}
+
+static void dump_box(FILE* out, NxDocument* doc, const NxBox* b, int depth) {
+    if (!b) return;
+    char label[256];
+    box_label(doc, b->node, label, sizeof(label));
+    for (int i = 0; i < depth; i++) fputs("  ", out);
+    fprintf(out, "%s pos=[%.1f %.1f] size=[%.1f %.1f] content=[%.1f %.1f %.1f %.1f] runs=%d\n",
+            label, b->x, b->y, b->w, b->h, b->content_x, b->content_y, b->content_w,
+            b->content_h, b->run_count);
+    for (int i = 0; i < b->run_count; i++) {
+        const NxTextRun* r = &b->runs[i];
+        for (int d = 0; d < depth + 1; d++) fputs("  ", out);
+        fputs("run ", out);
+        put_escaped(out, r->utf8 ? r->utf8 : "", r->len);
+        fprintf(out, " @ [%.1f %.1f] w=%.1f\n", r->x, r->y, r->width);
+    }
+    for (int i = 0; i < b->child_count; i++) dump_box(out, doc, b->children[i], depth + 1);
+}
+
+void nxd_dump_layout(FILE* out, NxDocument* doc, const NxLayout* lay) {
+    if (!lay) {
+        fputs("# layout unavailable\n", out);
+        return;
+    }
+    fprintf(out, "# viewport %.0fx%.0f\n", lay->viewport_w, lay->viewport_h);
+    char label[256];
+    box_label(doc, 0, label, sizeof(label));
+    fprintf(out, "%s size=[%.1f %.1f] children=%d\n", label, lay->viewport_w,
+            lay->viewport_h, lay->root ? lay->root->child_count : 0);
+    if (!lay->root) return;
+    for (int i = 0; i < lay->root->child_count; i++)
+        dump_box(out, doc, lay->root->children[i], 1);
+}
+
+static void count_box(const NxBox* b, int* boxes, int* runs) {
+    if (!b) return;
+    (*boxes)++;
+    *runs += b->run_count;
+    for (int i = 0; i < b->child_count; i++) count_box(b->children[i], boxes, runs);
+}
+
+void nxd_layout_stats(const NxLayout* lay, int* boxes, int* runs) {
+    *boxes = 0;
+    *runs = 0;
+    if (!lay || !lay->root) return;
+    for (int i = 0; i < lay->root->child_count; i++)
+        count_box(lay->root->children[i], boxes, runs);
+}

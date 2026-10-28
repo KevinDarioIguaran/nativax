@@ -4,10 +4,11 @@
     Parses HTML (+ optional CSS files) and writes reviewable artifacts:
       <out>/dom.txt      indented DOM tree with attributes and text
       <out>/css.txt      parsed rules: canonical selectors, media, decls
+      <out>/layout.txt   box tree: geometry + text runs (style/layout/paint)
       <out>/summary.json machine-readable counts for diffing runs
+      <out>/render.png   optional CPU raster of the painted page (--render)
 
     Exit codes: 0 ok, 1 usage, 2 parse error, 3 io error.
-    Style/layout dumps join when style.c/layout.c land (Phase 6).
 */
 #include <errno.h>
 #include <stdio.h>
@@ -19,13 +20,18 @@
 #include "nativax/debug_dump.h"
 #include "nativax/dom.h"
 #include "nativax/html.h"
+#include "nativax/layout.h"
+#include "nativax/paint.h"
+#include "nativax/raster.h"
+#include "nativax/text.h"
 
 #define MAX_CSS 16
+#define MAX_INLINE 32
 
 static void usage(void) {
     fprintf(stderr,
             "usage: nativax-debug --html file.html [--css file.css ...] "
-            "--out dir\n");
+            "--out dir [--width px --height px] [--render out.png]\n");
 }
 
 int main(int argc, char** argv) {
@@ -33,17 +39,22 @@ int main(int argc, char** argv) {
     const char* css_paths[MAX_CSS];
     int css_count = 0;
     const char* out_dir = NULL;
+    const char* render_path = NULL;
+    int width = 1024, height = 768;
     for (int i = 1; i < argc; i++) {
         if (strcmp(argv[i], "--html") == 0 && i + 1 < argc) html_path = argv[++i];
         else if (strcmp(argv[i], "--css") == 0 && i + 1 < argc) {
             if (css_count < MAX_CSS) css_paths[css_count++] = argv[++i];
         } else if (strcmp(argv[i], "--out") == 0 && i + 1 < argc) out_dir = argv[++i];
+        else if (strcmp(argv[i], "--render") == 0 && i + 1 < argc) render_path = argv[++i];
+        else if (strcmp(argv[i], "--width") == 0 && i + 1 < argc) width = atoi(argv[++i]);
+        else if (strcmp(argv[i], "--height") == 0 && i + 1 < argc) height = atoi(argv[++i]);
         else {
             usage();
             return 1;
         }
     }
-    if (!html_path || !out_dir) {
+    if (!html_path || !out_dir || width <= 0 || height <= 0) {
         usage();
         return 1;
     }
@@ -99,6 +110,12 @@ int main(int argc, char** argv) {
         fclose(cf);
         sheets[i] = cs_sheet_parse(css, (int)crd);
         free(css);
+        if (!sheets[i]) {
+            fprintf(stderr, "nativax-debug: css parse failed: %s\n", css_paths[i]);
+            for (int k = 0; k < i; k++) cs_sheet_free(sheets[k]);
+            nx_doc_free(doc);
+            return 2;
+        }
     }
 
     if (mkdir(out_dir, 0755) != 0 && errno != EEXIST) {
@@ -106,6 +123,31 @@ int main(int argc, char** argv) {
         for (int i = 0; i < css_count; i++) cs_sheet_free(sheets[i]);
         nx_doc_free(doc);
         return 3;
+    }
+
+    /* ---- style → layout → paint ---------------------------------------- */
+    /* inline <style> sheets (v1 order: file sheets first, then inline) */
+    CsSheet* inline_sheets[MAX_INLINE];
+    int inline_count = nx_style_collect_inline(doc, inline_sheets, MAX_INLINE);
+    const CsSheet* all_sheets[MAX_CSS + MAX_INLINE];
+    int all_count = 0;
+    for (int i = 0; i < css_count; i++) all_sheets[all_count++] = sheets[i];
+    for (int i = 0; i < inline_count; i++) all_sheets[all_count++] = inline_sheets[i];
+
+    int32_t font = nx_font_load(NATIVAX_SOURCE_DIR "/assets/fonts/DejaVuSans.ttf");
+    if (font < 0) font = nx_font_load("assets/fonts/DejaVuSans.ttf");
+    NxLayout* lay = NULL;
+    if (font < 0) {
+        fprintf(stderr, "nativax-debug: warning: font unavailable; layout skipped\n");
+    } else {
+        lay = nx_layout_build(doc, all_sheets, all_count, (float)width, (float)height, font);
+        if (!lay) {
+            fprintf(stderr, "nativax-debug: layout failed\n");
+            for (int i = 0; i < css_count; i++) cs_sheet_free(sheets[i]);
+            for (int i = 0; i < inline_count; i++) cs_sheet_free(inline_sheets[i]);
+            nx_doc_free(doc);
+            return 2;
+        }
     }
 
     char path[1024];
@@ -149,7 +191,48 @@ int main(int argc, char** argv) {
             dropped_rules += sheets[i]->dropped_rules;
             dropped_decls += sheets[i]->dropped_decls;
         }
+        for (int i = 0; i < inline_count; i++) {
+            fprintf(cf2, "# inline <style> [%d]\n", i);
+            nxd_dump_css(cf2, inline_sheets[i]);
+            rules += inline_sheets[i]->rule_count;
+            dropped_rules += inline_sheets[i]->dropped_rules;
+            dropped_decls += inline_sheets[i]->dropped_decls;
+        }
         fclose(cf2);
+    }
+
+    /* ---- layout.txt ----------------------------------------------------- */
+    int lay_boxes = 0, lay_runs = 0;
+    snprintf(path, sizeof(path), "%s/layout.txt", out_dir);
+    FILE* lf = fopen(path, "w");
+    if (!lf) {
+        fprintf(stderr, "nativax-debug: write %s: %s\n", path, strerror(errno));
+        ok = 0;
+    } else {
+        nxd_dump_layout(lf, doc, lay);
+        fclose(lf);
+    }
+    if (lay) nxd_layout_stats(lay, &lay_boxes, &lay_runs);
+
+    /* ---- optional PNG render ------------------------------------------- */
+    if (render_path && lay) {
+        NxDisplayList dl;
+        nx_dl_init(&dl);
+        if (!nx_paint(&dl, lay, font)) {
+            fprintf(stderr, "nativax-debug: paint failed\n");
+            ok = 0;
+        } else {
+            NxRaster raster;
+            nx_raster_init(&raster, width, height);
+            nx_raster_clear(&raster, (NxColor){1, 1, 1, 1});
+            nx_raster_run(&raster, &dl);
+            if (!nx_raster_write_png(&raster, render_path)) {
+                fprintf(stderr, "nativax-debug: write %s failed\n", render_path);
+                ok = 0;
+            }
+            nx_raster_free(&raster);
+        }
+        nx_dl_free(&dl);
     }
 
     snprintf(path, sizeof(path), "%s/summary.json", out_dir);
@@ -161,17 +244,22 @@ int main(int argc, char** argv) {
         fprintf(jf,
                 "{\"html\": \"%s\", \"dom\": {\"elements\": %d, \"text\": %d,"
                 " \"comments\": %d, \"max_depth\": %d},"
-                " \"css\": {\"files\": %d, \"rules\": %d,"
-                " \"dropped_rules\": %d, \"dropped_decls\": %d}}\n",
+                " \"css\": {\"files\": %d, \"inline_styles\": %d, \"rules\": %d,"
+                " \"dropped_rules\": %d, \"dropped_decls\": %d},"
+                " \"layout\": {\"viewport\": [%d, %d], \"boxes\": %d,"
+                " \"runs\": %d}}\n",
                 html_path, st.elements, st.text, st.comments, st.max_depth,
-                css_count, rules, dropped_rules, dropped_decls);
+                css_count, inline_count, rules, dropped_rules, dropped_decls,
+                width, height, lay_boxes, lay_runs);
         fclose(jf);
     }
 
     for (int i = 0; i < css_count; i++) cs_sheet_free(sheets[i]);
+    for (int i = 0; i < inline_count; i++) cs_sheet_free(inline_sheets[i]);
+    nx_layout_free(lay);
     nx_doc_free(doc);
     if (!ok) return 3;
-    printf("nativax-debug: wrote %s/{dom.txt,dom.json,css.txt,summary.json}\n",
-           out_dir);
+    printf("nativax-debug: wrote %s/{dom.txt,dom.json,css.txt,layout.txt,summary.json}%s%s\n",
+           out_dir, render_path ? ", " : "", render_path ? render_path : "");
     return 0;
 }

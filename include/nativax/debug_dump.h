@@ -12,6 +12,7 @@
 
 #include "nativax/css.h"
 #include "nativax/dom.h"
+#include "nativax/layout.h"
 
 /* indented DOM tree: tag#id.class, attributes, escaped/truncated text */
 void nxd_dump_dom(FILE* out, NxDocument* doc, NxNodeRef node, int depth);
@@ -33,5 +34,13 @@ typedef struct NxdDomStats {
 } NxdDomStats;
 
 void nxd_dom_stats(NxDocument* doc, NxNodeRef node, int depth, NxdDomStats* st);
+
+/* ---- layout (style/layout/paint phase) ---- */
+
+/* indented box tree: tag#id.class, border-box/content-box geometry, runs */
+void nxd_dump_layout(FILE* out, NxDocument* doc, const NxLayout* lay);
+
+/* box and text-run counts for summary.json */
+void nxd_layout_stats(const NxLayout* lay, int* boxes, int* runs);
 
 #endif /* NATIVAX_DEBUG_DUMP_H */

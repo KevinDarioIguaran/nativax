@@ -1,0 +1,85 @@
+#ifndef NATIVAX_STYLE_H
+#define NATIVAX_STYLE_H
+
+/*
+    Style resolution: selector matching + cascade + inheritance.
+
+    Produces one NxComputedStyle per element node. Only the properties the
+    layout/paint pipeline actually consumes are resolved (documented subset):
+
+      display (block|inline|none), width/height (auto|px|%), margin, padding,
+      border-width/border-color, color, background-color, font-size,
+      font-weight, text-align, line-height.
+
+    Values are resolved to CSS px at cascade time using the supplied viewport
+    width for percentages. Unsupported or unknown properties keep the initial
+    value; the resolver never invents values.
+
+    Selector matching supports: type/#id/.class, attribute selectors, the
+    pseudo-classes the CSS parser records, descendant/child/sibling combinators,
+    and :not(). Pseudo-elements are ignored by style v1 (documented).
+*/
+
+#include <stdbool.h>
+#include <stdint.h>
+
+#include "nativax/css.h"
+#include "nativax/dom.h"
+
+typedef enum NxDisplayKind {
+    NX_DISPLAY_BLOCK = 0,
+    NX_DISPLAY_INLINE,
+    NX_DISPLAY_NONE,
+} NxDisplayKind;
+
+typedef enum NxAlignKind {
+    NX_ALIGN_LEFT = 0,
+    NX_ALIGN_CENTER,
+    NX_ALIGN_RIGHT,
+} NxAlignKind;
+
+/* A computed length: absolute px, a deferred percentage, or auto. */
+typedef struct NxLength {
+    float px;    /* resolved px when neither pct_ nor auto_ */
+    float pct;   /* percentage as a fraction (0.5 = 50%) when pct_ */
+    bool auto_;
+    bool pct_;   /* resolved by layout against the containing block */
+} NxLength;
+
+/* Resolve against an auto fallback and a containing-block context. */
+NxLength nx_len_resolve(const NxLength* L, float auto_val, float ctx);
+
+typedef struct NxComputedStyle {
+    NxDisplayKind display;
+    NxLength width, height;
+    NxLength margin[4];  /* top, right, bottom, left */
+    NxLength padding[4];
+    float border[4];     /* border-width px, top/right/bottom/left */
+    float r, g, b, a;    /* text color */
+    float br, bg, bb, ba;/* background color (a<=0 = transparent) */
+    /* border color: currentColor when bc_set is false (CSS initial value) */
+    bool bc_set;
+    float bc_r, bc_g, bc_b, bc_a;
+    float font_size;
+    int font_weight;
+    NxAlignKind align;
+    float line_height;   /* px; <=0 means "normal" (use font metrics) */
+} NxComputedStyle;
+
+/* Match a parsed selector group against an element in the document.
+   viewport_w is used for percentage resolution inside attribute-free matching
+   (not needed for matching itself, kept for symmetry with the resolver). */
+bool nx_selector_matches(NxDocument* doc, NxNodeRef el, const CsGroup* grp);
+
+/* Parse every <style> element's text content into a sheet (document order).
+   Returns the number written (up to cap); each sheet is owned by the caller
+   (cs_sheet_free). <link rel=stylesheet> is not fetched in v1 (documented). */
+int nx_style_collect_inline(NxDocument* doc, CsSheet** out, int cap);
+
+/* Resolve styles for every element under root (inclusive when root is an
+   element). Returns a heap array of NX_MAX_NODES entries; free with free().
+   Index entries with nx_node_index(handle); non-element slots are zeroed. */
+NxComputedStyle* nx_style_resolve(NxDocument* doc, const CsSheet* const* sheets, int sheet_count,
+                                  float viewport_w, float default_font_size);
+
+#endif /* NATIVAX_STYLE_H */

@@ -112,4 +112,8 @@ bool nx_event_dispatch(NxDocument* doc, NxNodeRef target, NxEvent* ev);
 /* string interning used by parser + dom (case-sensitive canonical pointers) */
 const char* nx_intern(NxDocument* doc, const char* s, int len);
 
+/* Slot index behind a handle (0 for the invalid handle): lets callers index
+   dense per-node arrays sized NX_MAX_NODES with a handle. */
+int32_t nx_node_index(NxNodeRef ref);
+
 #endif /* NATIVAX_DOM_H */

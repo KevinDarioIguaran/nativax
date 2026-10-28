@@ -38,6 +38,9 @@ add_library(nativax_core STATIC
   src/dom.c
   src/html.c
   src/css.c
+  src/style.c
+  src/layout.c
+  src/paint.c
   src/debug_dump.c
 )
 target_include_directories(nativax_core PUBLIC include)
@@ -69,6 +72,7 @@ target_link_libraries(nativax-runtime PRIVATE nativax_core nativax_gfx)
 add_executable(nativax-debug
   src/main_debug.c
 )
+target_compile_definitions(nativax-debug PRIVATE NATIVAX_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}")
 target_link_libraries(nativax-debug PRIVATE nativax_core)
 
 # ---- tests -------------------------------------------------------------------
@@ -105,6 +109,14 @@ add_executable(nativax_debug_tests
 )
 target_link_libraries(nativax_debug_tests PRIVATE nativax_core)
 add_test(NAME unit_debug COMMAND nativax_debug_tests)
+
+# Style → layout → paint pipeline: asserts real geometry from parsed HTML+CSS.
+add_executable(nativax_layout_tests
+  tests/test_layout.c
+)
+target_compile_definitions(nativax_layout_tests PRIVATE NATIVAX_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}")
+target_link_libraries(nativax_layout_tests PRIVATE nativax_core)
+add_test(NAME unit_layout COMMAND nativax_layout_tests)
 
 # Renderer benchmark (archived by debug/benchmarks/workloads/render_benchmark.py).
 add_executable(nativax_bench
