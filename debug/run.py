@@ -306,7 +306,10 @@ def main(argv: list[str]) -> int:
         print("parse:   python3 native/debug/run.py parse "
               "[--dataset DIR] [--css F]... [--no-archive]")
         return code
-    # storage, verify, compare, context, llm, gate, audit, recommend, gui:
+    if head == "gui":
+        return subprocess.run([sys.executable, str(NATIVE / "debug" / "gui.py")]).returncode
+
+    # storage, verify, compare, context, llm, gate, audit, recommend:
     # the SAME command on the shared entry point.
     return _delegate(args)
 
