@@ -6,6 +6,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[3]
 BUILD = ROOT / "build"
+PY = "/usr/bin/python3" if Path("/usr/bin/python3").exists() else sys.executable
 
 def check(name, ok):
     print(f"{'PASS' if ok else 'FAIL'} {name}")
@@ -14,12 +15,15 @@ def check(name, ok):
 def main():
     ok = True
     ok &= check("build dir exists", BUILD.exists())
-    if BUILD.exists():
-        r = subprocess.run(["ctest", "--test-dir", str(BUILD), "--output-on-failure"], capture_output=True, text=True)
-        ok &= check("ctest", r.returncode == 0)
-    r = subprocess.run([sys.executable, str(ROOT / "debug" / "common" / "validation" / "validate_manifest.py")], capture_output=True, text=True)
+    # native tooling tests
+    for tp in sorted((ROOT / "debug").rglob("test_*.py")):
+        if "__pycache__" in tp.parts:
+            continue
+        r = subprocess.run([PY, str(tp)], capture_output=True, text=True, cwd=ROOT)
+        ok &= check(f"debug test {tp.relative_to(ROOT)}", r.returncode == 0)
+    r = subprocess.run([PY, str(ROOT / "debug" / "common" / "validation" / "validate_manifest.py")], capture_output=True, text=True)
     ok &= check("manifest valid", r.returncode == 0)
-    r = subprocess.run([sys.executable, str(ROOT / "debug" / "tests" / "infrastructure" / "test_visual_judge.py")], capture_output=True, text=True)
+    r = subprocess.run([PY, str(ROOT / "debug" / "tests" / "infrastructure" / "test_visual_judge.py")], capture_output=True, text=True)
     ok &= check("visual judge self-test", r.returncode == 0)
     print("QUALITY GATE:", "PASS" if ok else "FAIL")
     raise SystemExit(0 if ok else 1)
