@@ -28,6 +28,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/stat.h>
+#include <sys/types.h>
 #include <time.h>
 
 #include "stb_image_write.h"
@@ -36,6 +38,7 @@ typedef struct AppState {
     const char* root;
     const char* entry;
     const char* screenshot;
+    const char* screenshot_dir;
     const char* dev_url;
     const char* probe;
     const char* probe_out;
@@ -441,11 +444,42 @@ static int run_headless(void) {
     nx_app_update(app, 0.0);
 
     int frames = g_state.max_frames > 0 ? g_state.max_frames : 1;
-    for (int i = 0; i < frames; i++) nx_app_update(app, (double)(i + 1) * 16.7);
+    if (g_state.screenshot_dir) {
+        mkdir(g_state.screenshot_dir, 0755);
+    }
+    for (int i = 0; i < frames; i++) {
+        nx_app_update(app, (double)(i + 1) * 16.7);
+        if (g_state.screenshot_dir) {
+            NxRaster raster;
+            nx_raster_init(&raster, g_state.width, g_state.height);
+            nx_raster_clear(&raster, (NxColor){1, 1, 1, 1});
+            nx_raster_run(&raster, nx_app_list(app));
+            char fpath[4096];
+            snprintf(fpath, sizeof(fpath), "%s/frame-%04d.png",
+                     g_state.screenshot_dir, i + 1);
+            if (!nx_raster_write_png(&raster, fpath)) {
+                fprintf(stderr, "nativax-runtime: cannot write %s\n", fpath);
+            }
+            nx_raster_free(&raster);
+        }
+    }
 
     if (g_state.input) {
         run_input_spec(app, g_state.input);
         nx_app_update(app, (double)(frames + 1) * 16.7);
+        if (g_state.screenshot_dir) {
+            NxRaster raster;
+            nx_raster_init(&raster, g_state.width, g_state.height);
+            nx_raster_clear(&raster, (NxColor){1, 1, 1, 1});
+            nx_raster_run(&raster, nx_app_list(app));
+            char fpath[4096];
+            snprintf(fpath, sizeof(fpath), "%s/frame-%04d.png",
+                     g_state.screenshot_dir, frames + 1);
+            if (!nx_raster_write_png(&raster, fpath)) {
+                fprintf(stderr, "nativax-runtime: cannot write %s\n", fpath);
+            }
+            nx_raster_free(&raster);
+        }
     }
     int probe_rc = run_probe(app);
 
@@ -487,6 +521,7 @@ static void usage(const char* argv0) {
             "  --size W H           window size in CSS px (default 1024 768)\n"
             "  --deterministic      pin DPI to 1.0 for reproducible screenshots\n"
             "  --screenshot FILE    write a PNG screenshot at frame 3\n"
+            "  --screenshot-dir DIR write one PNG per frame (frame-0001.png...)\n"
             "  --probe FILE         evaluate a JS expression after load, print {\"probe\":...}\n"
             "  --probe-out FILE     also write the probe result JSON to FILE\n"
             "  --input SPEC         synthetic input before the probe, e.g.\n"
@@ -526,6 +561,8 @@ int main(int argc, char** argv) {
             g_state.deterministic = true;
         } else if (strcmp(argv[i], "--screenshot") == 0 && i + 1 < argc) {
             g_state.screenshot = argv[++i];
+        } else if (strcmp(argv[i], "--screenshot-dir") == 0 && i + 1 < argc) {
+            g_state.screenshot_dir = argv[++i];
         } else if (strcmp(argv[i], "--dev") == 0 && i + 1 < argc) {
             g_state.dev_url = argv[++i];
         } else if (strcmp(argv[i], "--probe") == 0 && i + 1 < argc) {
