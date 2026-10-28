@@ -199,6 +199,9 @@ static void emit_inline_text(NxDocument* doc, NxNodeRef node, LineState* ls, int
     }
 }
 
+static void layout_flex(NxBox* box, NxDocument* doc, const NxComputedStyle* styles,
+                      float x, float y, float avail_w, int32_t font, int depth);
+
 static void layout_block(NxBox* box, NxDocument* doc, const NxComputedStyle* styles,
                          float x, float y, float avail_w, int32_t font, int depth) {
     if (depth > NX_MAX_DEPTH) return;
@@ -246,6 +249,10 @@ static void layout_block(NxBox* box, NxDocument* doc, const NxComputedStyle* sty
     box->content_y = box->y + bt + pt_r;
 
     float cy = box->content_y;
+    if (st->display == NX_DISPLAY_FLEX) {
+        layout_flex(box, doc, styles, x, y, avail_w, font, depth);
+        return;
+    }
     LineState ls;
     line_init(&ls, box, box->content_x, content_w, st, &cy, font);
 
@@ -263,7 +270,7 @@ static void layout_block(NxBox* box, NxDocument* doc, const NxComputedStyle* sty
         } else {
             const NxComputedStyle* cst = &styles[nx_node_index(ch)];
             if (cst->display == NX_DISPLAY_NONE) continue;
-            if (cst->display == NX_DISPLAY_BLOCK) {
+            if (cst->display == NX_DISPLAY_BLOCK || cst->display == NX_DISPLAY_FLEX) {
                 line_end(&ls); /* blocks drop below the pending line */
                 ls.ws_pending = false; /* whitespace around blocks is discarded */
                 NxBox* child = make_box(doc, ch, styles);
@@ -352,4 +359,206 @@ NxLayout* nx_layout_build(NxDocument* doc, const CsSheet* const* sheets, int she
         layout_block(child, doc, styles, 0, 0, viewport_w, font, 0);
     }
     return lay;
+}
+
+/* ---- Flexbox (subset) --------------------------------------------------- */
+typedef struct FlexItem {
+    NxBox* box;
+    int order;
+    float grow, shrink, base, final_main, cross_pref;
+} FlexItem;
+
+static int flex_cmp(const void* a, const void* b) {
+    const FlexItem* x = a; const FlexItem* y = b;
+    if (x->order != y->order) return x->order - y->order;
+    return 0;
+}
+
+static void layout_flex(NxBox* box, NxDocument* doc, const NxComputedStyle* styles,
+                        float x, float y, float avail_w, int32_t font, int depth) {
+    if (depth > NX_MAX_DEPTH) return;
+    const NxComputedStyle* st = box->style;
+    /* geometry already computed by caller */
+    float bt = st->border[0], bb = st->border[2], bl = st->border[3], brr = st->border[1];
+    float pt_r = nx_len_resolve(&st->padding[0], 0, avail_w).px;
+    float pb_r = nx_len_resolve(&st->padding[2], 0, avail_w).px;
+    (void)pt_r; (void)pb_r; (void)bl; (void)brr;
+    bool horizontal = (st->flex_direction == NX_FLEX_ROW ||
+                       st->flex_direction == NX_FLEX_ROW_REVERSE);
+    bool reverse = (st->flex_direction == NX_FLEX_ROW_REVERSE ||
+                    st->flex_direction == NX_FLEX_COLUMN_REVERSE);
+
+    /* collect items */
+    int cap = 8, n = 0;
+    FlexItem* items = (FlexItem*)malloc((size_t)cap * sizeof(FlexItem));
+    for (NxNodeRef ch = nx_node_first_child(doc, box->node); ch;
+         ch = nx_node_next_sibling(doc, ch)) {
+        if (nx_node_type(doc, ch) != NX_NODE_ELEMENT) continue;
+        const NxComputedStyle* cst = &styles[nx_node_index(ch)];
+        if (cst->display == NX_DISPLAY_NONE) continue;
+        NxBox* child = make_box(doc, ch, styles);
+        if (!child) continue;
+        if (!box_add_child(box, child)) { box_free_tree(child); continue; }
+        /* preferred layout at full container size */
+        layout_block(child, doc, styles, 0, 0,
+                     horizontal ? box->content_w : box->content_w, font, depth + 1);
+        if (n == cap) {
+            cap *= 2;
+            items = (FlexItem*)realloc(items, (size_t)cap * sizeof(FlexItem));
+        }
+        items[n].box = child;
+        items[n].order = cst->order;
+        items[n].grow = cst->flex_grow;
+        items[n].shrink = cst->flex_shrink;
+        /* flex basis */
+        float basis = 0;
+        if (cst->flex_basis.auto_) {
+            basis = horizontal ? child->w : child->h;
+        } else if (cst->flex_basis.pct_) {
+            float ctx = horizontal ? box->content_w : (st->height.pct_ || st->height.auto_ ? 0 : box->content_h);
+            if (ctx <= 0) ctx = horizontal ? box->content_w : child->h;
+            basis = cst->flex_basis.pct * ctx;
+        } else {
+            basis = cst->flex_basis.px;
+        }
+        items[n].base = basis;
+        items[n].cross_pref = horizontal ? child->h : child->w;
+        items[n].final_main = basis;
+        n++;
+    }
+
+    if (n == 0) {
+        box->h = (st->height.pct_ || st->height.auto_) ? (box->content_y - box->y + 0) : st->height.px;
+        if (st->height.auto_ || st->height.pct_) {
+            box->h = bt + pt_r + pb_r + bb;
+            box->content_h = 0;
+        }
+        free(items);
+        return;
+    }
+
+    /* sort by order */
+    qsort(items, (size_t)n, sizeof(FlexItem), flex_cmp);
+
+    float main_avail = horizontal ? box->content_w : ((st->height.pct_ || st->height.auto_) ? 0 : (box->h - bt - pt_r - pb_r - bb));
+    /* if auto height, main_avail unknown -> use sum of bases */
+    float total_base = 0, total_grow = 0, total_shrink = 0;
+    for (int i = 0; i < n; i++) total_base += items[i].base;
+    for (int i = 0; i < n; i++) { total_grow += items[i].grow; total_shrink += items[i].shrink * items[i].base; }
+    float gaps = st->gap * (n > 1 ? n - 1 : 0);
+
+    if (main_avail <= 0) {
+        main_avail = total_base + gaps; /* auto: no free space */
+    }
+    float free_space = main_avail - total_base - gaps;
+
+    if (free_space >= 0) {
+        if (total_grow > 0) {
+            for (int i = 0; i < n; i++) {
+                items[i].final_main = items[i].base + free_space * (items[i].grow / total_grow);
+            }
+        } else {
+            for (int i = 0; i < n; i++) items[i].final_main = items[i].base;
+        }
+    } else {
+        float deficit = -free_space;
+        if (total_shrink > 0) {
+            for (int i = 0; i < n; i++) {
+                float factor = (items[i].shrink * items[i].base) / (total_shrink > 0 ? total_shrink : 1);
+                items[i].final_main = items[i].base - deficit * factor;
+                if (items[i].final_main < 0) items[i].final_main = 0;
+            }
+        } else {
+            for (int i = 0; i < n; i++) items[i].final_main = items[i].base;
+        }
+    }
+
+    /* recompute leftover for justify */
+    float sum_final = 0;
+    for (int i = 0; i < n; i++) sum_final += items[i].final_main;
+    float leftover = main_avail - sum_final - gaps;
+
+    float start_offset = 0, between = 0;
+    switch (st->justify_content) {
+        case NX_JUSTIFY_START: start_offset = 0; between = 0; break;
+        case NX_JUSTIFY_END: start_offset = leftover; between = 0; break;
+        case NX_JUSTIFY_CENTER: start_offset = leftover / 2; between = 0; break;
+        case NX_JUSTIFY_SPACE_BETWEEN:
+            start_offset = 0;
+            between = (n > 1) ? leftover / (n - 1) : 0;
+            break;
+        case NX_JUSTIFY_SPACE_AROUND:
+            between = (n > 0) ? leftover / n : 0;
+            start_offset = between / 2;
+            break;
+        case NX_JUSTIFY_SPACE_EVENLY:
+            between = (n > 0) ? leftover / (n + 1) : 0;
+            start_offset = between;
+            break;
+    }
+
+    /* cross container size */
+    float max_cross = 0;
+    for (int i = 0; i < n; i++) if (items[i].cross_pref > max_cross) max_cross = items[i].cross_pref;
+    float cross_container = 0;
+    if (!(st->height.pct_ || st->height.auto_)) {
+        cross_container = (box->h - bt - pt_r - pb_r - bb);
+    } else {
+        cross_container = max_cross;
+    }
+    if (cross_container < max_cross) cross_container = max_cross;
+
+    /* position */
+    float main_cursor = (horizontal ? box->content_x : box->content_y) + start_offset;
+    if (reverse) main_cursor = (horizontal ? box->content_x : box->content_y) + main_avail - start_offset;
+
+    for (int i = 0; i < n; i++) {
+        FlexItem* it = reverse ? &items[n - 1 - i] : &items[i];
+        NxBox* child = it->box;
+        float cross_size = it->cross_pref;
+        if (st->align_items == NX_FLEX_ALIGN_STRETCH) cross_size = cross_container;
+        /* align-items mapping */
+        float cross_offset = 0;
+        switch (st->align_items) {
+            case NX_FLEX_ALIGN_START: cross_offset = 0; break;
+            case NX_FLEX_ALIGN_END: cross_offset = cross_container - cross_size; break;
+            case NX_FLEX_ALIGN_CENTER: cross_offset = (cross_container - cross_size) / 2; break;
+            case NX_FLEX_ALIGN_STRETCH: cross_offset = 0; break;
+            case NX_FLEX_ALIGN_BASELINE: cross_offset = 0; break;
+        }
+
+        if (horizontal) {
+            child->w = it->final_main;
+            child->h = cross_size;
+            child->x = main_cursor;
+            child->y = box->content_y + cross_offset;
+            child->content_w = child->w - child->style->padding[1].px - child->style->padding[3].px - child->style->border[1] - child->style->border[3];
+            if (child->content_w < 0) child->content_w = 0;
+            child->content_x = child->x + child->style->border[3] + nx_len_resolve(&child->style->padding[3],0,child->w).px;
+            child->content_y = child->y + child->style->border[0] + nx_len_resolve(&child->style->padding[0],0,child->w).px;
+            main_cursor += it->final_main + st->gap + between;
+        } else {
+            child->h = it->final_main;
+            child->w = cross_size;
+            child->x = box->content_x + cross_offset;
+            child->y = main_cursor;
+            child->content_w = child->w - child->style->padding[1].px - child->style->padding[3].px - child->style->border[1] - child->style->border[3];
+            if (child->content_w < 0) child->content_w = 0;
+            child->content_x = child->x + child->style->border[3] + nx_len_resolve(&child->style->padding[3],0,child->w).px;
+            child->content_y = child->y + child->style->border[0] + nx_len_resolve(&child->style->padding[0],0,child->w).px;
+            main_cursor += it->final_main + st->gap + between;
+        }
+    }
+
+    /* container height */
+    if (st->height.auto_ || st->height.pct_) {
+        if (horizontal) {
+            box->h = bt + pt_r + pb_r + bb + cross_container;
+            box->content_h = cross_container;
+        } else {
+            box->h = bt + pt_r + pb_r + bb + sum_final + st->gap * (n > 1 ? n - 1 : 0);
+            box->content_h = sum_final + st->gap * (n > 1 ? n - 1 : 0);
+        }
+    }
+    free(items);
 }

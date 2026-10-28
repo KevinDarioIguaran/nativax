@@ -37,14 +37,16 @@
 typedef enum NxDisplayKind {
     NX_DISPLAY_BLOCK = 0,
     NX_DISPLAY_INLINE,
+    NX_DISPLAY_FLEX,
     NX_DISPLAY_NONE,
 } NxDisplayKind;
 
-typedef enum NxAlignKind {
-    NX_ALIGN_LEFT = 0,
-    NX_ALIGN_CENTER,
-    NX_ALIGN_RIGHT,
-} NxAlignKind;
+typedef enum NxFlexDirection { NX_FLEX_ROW=0, NX_FLEX_ROW_REVERSE, NX_FLEX_COLUMN, NX_FLEX_COLUMN_REVERSE } NxFlexDirection;
+typedef enum NxFlexWrap { NX_FLEX_NOWRAP=0, NX_FLEX_WRAP, NX_FLEX_WRAP_REVERSE } NxFlexWrap;
+typedef enum NxJustify { NX_JUSTIFY_START=0, NX_JUSTIFY_END, NX_JUSTIFY_CENTER, NX_JUSTIFY_SPACE_BETWEEN, NX_JUSTIFY_SPACE_AROUND, NX_JUSTIFY_SPACE_EVENLY } NxJustify;
+typedef enum NxAlignKind { NX_ALIGN_LEFT = 0, NX_ALIGN_CENTER, NX_ALIGN_RIGHT } NxAlignKind;
+
+typedef enum NxFlexAlign { NX_FLEX_ALIGN_STRETCH=0, NX_FLEX_ALIGN_START, NX_FLEX_ALIGN_END, NX_FLEX_ALIGN_CENTER, NX_FLEX_ALIGN_BASELINE } NxFlexAlign;
 
 /* A computed length: absolute px, a deferred percentage, or auto. */
 typedef struct NxLength {
@@ -80,6 +82,18 @@ typedef struct NxComputedStyle {
     bool transform_set;        /* transform != none */
     NxMat2x3 transform;        /* CSS transform list, no origin applied */
     NxLength transform_origin[2]; /* x, y; initial 50% 50% */
+
+    /* Flexbox (subset) */
+    NxFlexDirection flex_direction;
+    NxFlexWrap flex_wrap;
+    NxJustify justify_content;
+    NxFlexAlign align_items;
+    NxFlexAlign align_content;
+    float gap;                 /* px, main+cross (single gap value) */
+    float flex_grow;
+    float flex_shrink;
+    NxLength flex_basis;       /* auto/px/% */
+    int order;
 } NxComputedStyle;
 
 /* Match a parsed selector group against an element in the document.

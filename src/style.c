@@ -413,6 +413,16 @@ static void style_init(NxComputedStyle* s, float font_size) {
     s->transform = nx_mat_identity();
     s->transform_origin[0] = len_pct(0.5f);
     s->transform_origin[1] = len_pct(0.5f);
+    s->flex_direction = NX_FLEX_ROW;
+    s->flex_wrap = NX_FLEX_NOWRAP;
+    s->justify_content = NX_JUSTIFY_START;
+    s->align_items = NX_FLEX_ALIGN_STRETCH;
+    s->align_content = NX_FLEX_ALIGN_STRETCH;
+    s->gap = 0;
+    s->flex_grow = 0;
+    s->flex_shrink = 1;
+    s->flex_basis = len_auto();
+    s->order = 0;
 }
 
 /* Collect the space-separated components of a box shorthand. Returns count. */
@@ -631,9 +641,8 @@ static void apply_decl(NxComputedStyle* st, const CsDecl* d, float font_size) {
             if (cs_is_ident(&v[0], "block")) st->display = NX_DISPLAY_BLOCK;
             else if (cs_is_ident(&v[0], "inline")) st->display = NX_DISPLAY_INLINE;
             else if (cs_is_ident(&v[0], "none")) st->display = NX_DISPLAY_NONE;
-            else if (cs_is_ident(&v[0], "flex") || cs_is_ident(&v[0], "grid") ||
-                     cs_is_ident(&v[0], "inline-block") || cs_is_ident(&v[0], "list-item"))
-                st->display = NX_DISPLAY_BLOCK; /* v1: block layout (documented) */
+            else if (cs_is_ident(&v[0], "flex") || cs_is_ident(&v[0], "inline-flex"))
+                st->display = NX_DISPLAY_FLEX;
         }
     } else if (IS("width")) st->width = parse_length(v, nt, font_size);
     else if (IS("height")) st->height = parse_length(v, nt, font_size);
@@ -776,6 +785,83 @@ static void apply_decl(NxComputedStyle* st, const CsDecl* d, float font_size) {
                 st->transform_set = true;
             }
         }
+    } else if (IS("flex-direction")) {
+        if (v[0].kind == CS_IDENT) {
+            if (cs_is_ident(&v[0], "row")) st->flex_direction = NX_FLEX_ROW;
+            else if (cs_is_ident(&v[0], "row-reverse")) st->flex_direction = NX_FLEX_ROW_REVERSE;
+            else if (cs_is_ident(&v[0], "column")) st->flex_direction = NX_FLEX_COLUMN;
+            else if (cs_is_ident(&v[0], "column-reverse")) st->flex_direction = NX_FLEX_COLUMN_REVERSE;
+        }
+    } else if (IS("flex-wrap")) {
+        if (v[0].kind == CS_IDENT) {
+            if (cs_is_ident(&v[0], "nowrap")) st->flex_wrap = NX_FLEX_NOWRAP;
+            else if (cs_is_ident(&v[0], "wrap")) st->flex_wrap = NX_FLEX_WRAP;
+            else if (cs_is_ident(&v[0], "wrap-reverse")) st->flex_wrap = NX_FLEX_WRAP_REVERSE;
+        }
+    } else if (IS("justify-content")) {
+        if (v[0].kind == CS_IDENT) {
+            if (cs_is_ident(&v[0], "flex-start") || cs_is_ident(&v[0], "start"))
+                st->justify_content = NX_JUSTIFY_START;
+            else if (cs_is_ident(&v[0], "flex-end") || cs_is_ident(&v[0], "end"))
+                st->justify_content = NX_JUSTIFY_END;
+            else if (cs_is_ident(&v[0], "center")) st->justify_content = NX_JUSTIFY_CENTER;
+            else if (cs_is_ident(&v[0], "space-between")) st->justify_content = NX_JUSTIFY_SPACE_BETWEEN;
+            else if (cs_is_ident(&v[0], "space-around")) st->justify_content = NX_JUSTIFY_SPACE_AROUND;
+            else if (cs_is_ident(&v[0], "space-evenly")) st->justify_content = NX_JUSTIFY_SPACE_EVENLY;
+        }
+    } else if (IS("align-items")) {
+        if (v[0].kind == CS_IDENT) {
+            if (cs_is_ident(&v[0], "stretch")) st->align_items = NX_FLEX_ALIGN_STRETCH;
+            else if (cs_is_ident(&v[0], "flex-start") || cs_is_ident(&v[0], "start"))
+                st->align_items = NX_FLEX_ALIGN_START;
+            else if (cs_is_ident(&v[0], "flex-end") || cs_is_ident(&v[0], "end"))
+                st->align_items = NX_FLEX_ALIGN_END;
+            else if (cs_is_ident(&v[0], "center")) st->align_items = NX_FLEX_ALIGN_CENTER;
+            else if (cs_is_ident(&v[0], "baseline")) st->align_items = NX_FLEX_ALIGN_BASELINE;
+        }
+    } else if (IS("align-content")) {
+        if (v[0].kind == CS_IDENT) {
+            if (cs_is_ident(&v[0], "stretch")) st->align_content = NX_FLEX_ALIGN_STRETCH;
+            else if (cs_is_ident(&v[0], "flex-start") || cs_is_ident(&v[0], "start"))
+                st->align_content = NX_FLEX_ALIGN_START;
+            else if (cs_is_ident(&v[0], "flex-end") || cs_is_ident(&v[0], "end"))
+                st->align_content = NX_FLEX_ALIGN_END;
+            else if (cs_is_ident(&v[0], "center")) st->align_content = NX_FLEX_ALIGN_CENTER;
+        }
+    } else if (IS("gap") || IS("row-gap") || IS("column-gap")) {
+        NxLength L = parse_length(v, nt, font_size);
+        if (!L.auto_ && !L.pct_) st->gap = L.px;
+        else if (v[0].kind == CS_NUMBER) st->gap = (float)v[0].num;
+    } else if (IS("flex")) {
+        /* flex: grow shrink basis | grow | grow shrink | none */
+        if (v[0].kind == CS_IDENT && cs_is_ident(&v[0], "none")) {
+            st->flex_grow = 0; st->flex_shrink = 0; st->flex_basis = len_px(0); /* auto? none => 0 */
+        } else {
+            int n = 0;
+            for (int i = 0; i < nt; i++) {
+                if (v[i].kind == CS_WS) continue;
+                if (v[i].kind == CS_NUMBER && n == 0) { st->flex_grow = (float)v[i].num; n++; }
+                else if (v[i].kind == CS_NUMBER && n == 1) { st->flex_shrink = (float)v[i].num; n++; }
+                else {
+                    NxLength L = parse_length(&v[i], 1, font_size);
+                    if (!L.auto_) { st->flex_basis = L; n++; }
+                    else if (v[i].kind == CS_IDENT && cs_is_ident(&v[i], "auto")) { st->flex_basis = len_auto(); n++; }
+                }
+            }
+            if (n == 1 && st->flex_basis.auto_ && st->flex_grow > 0 && st->flex_shrink == 1) {
+                /* flex: <grow> => basis 0% */
+                st->flex_basis = len_px(0);
+            }
+        }
+    } else if (IS("flex-grow")) {
+        if (v[0].kind == CS_NUMBER) st->flex_grow = (float)v[0].num;
+    } else if (IS("flex-shrink")) {
+        if (v[0].kind == CS_NUMBER) st->flex_shrink = (float)v[0].num;
+    } else if (IS("flex-basis")) {
+        if (v[0].kind == CS_IDENT && cs_is_ident(&v[0], "auto")) st->flex_basis = len_auto();
+        else st->flex_basis = parse_length(v, nt, font_size);
+    } else if (IS("order")) {
+        if (v[0].kind == CS_NUMBER) st->order = (int)v[0].num;
     } else if (IS("transform-origin")) {
         const CsTok* a[4];
         int na = 0;

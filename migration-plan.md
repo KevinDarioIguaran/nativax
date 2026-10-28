@@ -63,9 +63,10 @@ model, no shadow DOM.
 combinators, `:not()`, structural pseudo-classes), cascade with specificity +
 source order + `!important`, `@media` width/height, inheritance, inline
 `style=""` (also written by scripts). Layout: normal-flow blocks, inline text
-wrapping, percentages, auto margins, text-align. Gaps: flexbox, grid, floats,
-absolute/fixed, inline-block boxes (inline subtrees are flattened), margin
-collapsing.
+wrapping, percentages, auto margins, text-align, and a flexbox subset
+(`display:flex`, row/column, wrap, justify-content, align-items/align-content,
+gap, flex-grow/shrink/basis, order). Gaps: grid, floats, absolute/fixed,
+inline-block boxes, margin collapsing, flex wrap line cross sizing.
 
 ## Phase 7 — Complete pipeline
 

@@ -545,7 +545,37 @@ static void test_effects_style(void) {
     page_close(&p);
 }
 
-/* ---- idempotent re-run --------------------------------------------------- */
+/* ---- flexbox (subset) ---- */
+static void test_flexbox(void) {
+    int32_t font = nx_font_load(font_path());
+    CHECK(font >= 0, "font loads");
+    if (font < 0) return;
+
+    Page p;
+    CHECK(page_open(&p,
+                    "<html><body><div id=\"c\" style=\"display:flex; gap:10px; width:200px;\">"
+                    "<div id=\"a\" style=\"flex:1; background:#f00;\">a</div>"
+                    "<div id=\"b\" style=\"width:50px; background:#0f0;\">b</div>"
+                    "</div></body></html>",
+                    NULL),
+          "flex fixture");
+    NxLayout* lay = page_layout(&p, 800, 600, font);
+    CHECK(lay != NULL, "layout builds");
+    if (!lay) { page_close(&p); return; }
+    NxBox* c = box_by_id(lay, p.doc, "c");
+    NxBox* a = box_by_id(lay, p.doc, "a");
+    NxBox* b = box_by_id(lay, p.doc, "b");
+    CHECK(c && a && b, "boxes exist");
+    if (c && a && b) {
+        /* a grows to fill remaining space */
+        CHECK(a->x >= c->content_x - 0.5f && a->w > 50.0f, "flex grow applied (a w=%.1f)", a->w);
+        CHECK(b->w > 45.0f && b->w < 55.0f, "fixed item width (b w=%.1f)", b->w);
+        CHECK(fabsf(b->x - (a->x + a->w + 10.0f)) < 1.0f, "gap applied");
+    }
+    nx_layout_free(lay);
+    page_close(&p);
+}
+
 
 static void test_rerun(void) {
     int32_t font = nx_font_load(font_path());
@@ -590,6 +620,7 @@ int main(void) {
     test_display_none_and_inline_flatten();
     test_paint();
     test_effects_style();
+    test_flexbox();
     test_rerun();
 
     printf("unit_layout: %d checks, %d failures\n", g_checks, g_failures);
