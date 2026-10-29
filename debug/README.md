@@ -10,7 +10,7 @@ reported as `blocked` because the capability does not exist.
 ```
 debug/
   bootstrap.py          # installs deps, builds, smoke-tests, writes lab/env.json
-  gui.py                # native pywebview dashboard (browser fallback)
+  gui.py                # native dashboard (pywebview → GTK/WebKit → browser)
   dashboard/            # tabs: Resumen, Chrome vs NativaX, Informes, Historial, Artefactos
   judges/visual/
     chrome_compare.py   # Chrome vs NativaX screenshots, diff, MAE/RMSE/SSIM
@@ -36,8 +36,29 @@ python3 debug/bootstrap.py --with-browsers  # deps + build + smoke test + Chromi
 python3 debug/lab/run_lab.py --list # show sections and case counts
 python3 debug/lab/run_lab.py --section 1
 python3 debug/lab/run_lab.py --all   # 240 real cases + 25 capability gaps, ~10 min
-python3 debug/gui.py                 # dashboard (pywebview, browser fallback)
+python3 debug/gui.py                 # native window (pywebview or GTK/WebKit)
+python3 debug/gui.py --check         # explain what is missing, if anything
+python3 debug/gui.py --browser       # force the browser instead of a window
 ```
+
+### Dashboard window dependencies
+
+The native window needs GTK 3 + WebKit2. On Debian/Ubuntu/MX Linux:
+
+```bash
+sudo apt install python3-gi gir1.2-gtk-3.0 gir1.2-webkit2-4.1
+```
+
+`gui.py` opens a real window in this order:
+
+1. **pywebview** (interactive buttons), when installed with a working backend.
+2. **GTK/WebKit directly** (read-only), when only the distro packages exist.
+3. **Your browser**, as the last fallback, with the exact path printed.
+
+If you run from a venv that cannot import `gi`, the launcher automatically
+re-executes with the system Python. Python packages can be installed with
+`debug/.venv/bin/pip install -r debug/requirements.txt` (or
+`python3 debug/bootstrap.py --with-browsers`).
 
 ## Chrome vs NativaX design comparison
 

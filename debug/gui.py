@@ -224,6 +224,78 @@ def _has_gui_backend(python: str | None = None) -> bool:
     return qt.returncode == 0
 
 
+def _has_gtk(python: str | None = None) -> bool:
+    """True when GTK 3 + WebKit2 (4.1/4.0) are importable."""
+    probe = (
+        "import gi\n"
+        "gi.require_version('Gtk', '3.0')\n"
+        "for v in ('4.1', '4.0'):\n"
+        "    try:\n"
+        "        gi.require_version('WebKit2', v); break\n"
+        "    except ValueError: pass\n"
+        "from gi.repository import Gtk, WebKit2\n"
+    )
+    return subprocess.run([python or sys.executable, "-c", probe],
+                          stdout=subprocess.DEVNULL,
+                          stderr=subprocess.DEVNULL).returncode == 0
+
+
+GTK_WINDOW = r'''
+import sys
+try:
+    import gi
+    gi.require_version("Gtk", "3.0")
+    for ver in ("4.1", "4.0"):
+        try:
+            gi.require_version("WebKit2", ver)
+            break
+        except ValueError:
+            continue
+    from gi.repository import Gtk, WebKit2
+except Exception as exc:  # noqa: BLE001
+    print(f"[nativax-gui] GTK/WebKit no disponible: {exc}", file=sys.stderr)
+    raise SystemExit(3)
+
+uri = sys.argv[1]
+window = Gtk.Window(title="NativaX Debug Lab")
+window.set_default_size(1380, 900)
+window.set_position(Gtk.WindowPosition.CENTER)
+view = WebKit2.WebView()
+view.load_uri(uri)
+window.add(view)
+window.connect("destroy", Gtk.main_quit)
+window.show_all()
+Gtk.main()
+'''
+
+
+def _gtk_python() -> str | None:
+    """Interpreter that can open a real GTK/WebKit window."""
+    for py in (sys.executable, _system_python()):
+        if py and _has_gtk(py):
+            return py
+    return None
+
+
+def _launch_gtk() -> bool:
+    """Open the dashboard in a native GTK/WebKit window (no pywebview).
+
+    This is the reliable path on Linux: it only needs the distro packages
+    python3-gi, gir1.2-gtk-3.0 and gir1.2-webkit2-4.1. The page is read-only
+    (no pywebview JS bridge), but it is a real native window.
+    """
+    py = _gtk_python()
+    if not py:
+        return False
+    log(f"abriendo ventana GTK/WebKit con {py} (modo lectura)")
+    try:
+        return subprocess.run(
+            [py, "-c", GTK_WINDOW, DASHBOARD_HTML.as_uri()]).returncode == 0
+    except OSError as exc:
+        log(f"no pude lanzar GTK/WebKit: {exc}")
+        return False
+
+
 def _ensure_webview():
     # pywebview itself imports without a GUI backend, but webview.start()
     # then crashes. Check the backend too, and use the system interpreter
@@ -250,17 +322,10 @@ def _ensure_webview():
         log("no hay backend GTK/WebKit ni Qt disponible")
         return None
 
-    # Try to install pywebview into the current interpreter.
-    try:
-        log("instalando pywebview…")
-        subprocess.run([sys.executable, "-m", "pip", "install", "pywebview",
-                        "--break-system-packages"], check=False,
-                       stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-        import webview  # type: ignore
-        return webview
-    except Exception as exc:
-        log(f"pywebview sigue sin poder importarse: {exc}")
-        return None
+    # Do not block the user with a pip install here: the GTK fallback opens
+    # the window immediately. pywebview only adds the interactive JS bridge.
+    log("pywebview no está disponible; se usará la ventana GTK/WebKit")
+    return None
 
 
 def _open_dashboard() -> bool:
@@ -302,13 +367,15 @@ def _check() -> int:
 
     def probe(python: str, label: str) -> bool:
         backend = _has_gui_backend(python)
+        gtk = _has_gtk(python)
         try:
             has_webview = subprocess.run(
                 [python, "-c", "import webview"], stdout=subprocess.DEVNULL,
                 stderr=subprocess.DEVNULL).returncode == 0
         except OSError:
             has_webview = False
-        log(f"{label}: backend={'sí' if backend else 'no'} "
+        log(f"{label}: GTK/WebKit={'sí' if gtk else 'no'} "
+            f"backend={'sí' if backend else 'no'} "
             f"pywebview={'sí' if has_webview else 'no'}")
         return backend
 
@@ -322,8 +389,9 @@ def _check() -> int:
         log("no hay backend GTK/WebKit ni Qt: instala python3-gi, "
             "gir1.2-gtk-3.0 y gir1.2-webkit2-4.1")
         ok = False
-    elif not current_backend:
-        log("el dashboard abrirá re-ejecutando con el Python del sistema")
+    else:
+        log("la ventana nativa se abrirá con GTK/WebKit "
+            "(pywebview solo añade los botones interactivos)")
     return 0 if ok else 1
 
 
@@ -348,20 +416,25 @@ def main(argv: list[str] | None = None) -> int:
 
     if webview is not None:
         api = Api()
-        log(f"abriendo ventana nativa ({sys.executable})")
+        log(f"abriendo ventana nativa con pywebview ({sys.executable})")
         webview.create_window("NativaX Debug Lab", DASHBOARD_HTML.as_uri(),
                               js_api=api, width=1380, height=900)
         webview.start()
         return 0
 
-    # Fallback: open the static dashboard in the default browser.
+    # Native window without pywebview: only needs distro GTK/WebKit packages.
+    if _launch_gtk():
+        return 0
+
+    # Last resort: open the static dashboard in the default browser.
     if _open_dashboard():
         print(f"dashboard abierto en el navegador: {DASHBOARD_HTML} "
               f"(modo lectura; instala pywebview para el modo interactivo)")
         return 0
     log("no pude abrir una ventana ni el navegador automáticamente.")
-    log(f"abre este archivo a mano: {DASHBOARD_HTML.as_uri()}")
-    log("diagnóstico: python3 debug/gui.py --check")
+    log("faltan las librerías GTK/WebKit. En MX Linux / Debian:")
+    log("  sudo apt install python3-gi gir1.2-gtk-3.0 gir1.2-webkit2-4.1")
+    log(f"o abre este archivo a mano: {DASHBOARD_HTML.as_uri()}")
     return 1
 
 

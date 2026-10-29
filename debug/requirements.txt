@@ -1,0 +1,12 @@
+# Python dependencies for the NativaX debug laboratory.
+#
+#   python3 -m venv debug/.venv
+#   debug/.venv/bin/pip install -r debug/requirements.txt
+#   debug/.venv/bin/python -m playwright install chromium
+#
+# The native dashboard window itself needs the distro packages
+# python3-gi, gir1.2-gtk-3.0 and gir1.2-webkit2-4.1 (GTK/WebKit).
+pillow>=10.0
+numpy>=1.26
+playwright>=1.40
+pywebview>=5.0
