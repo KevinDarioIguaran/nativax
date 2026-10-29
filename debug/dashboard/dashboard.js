@@ -66,7 +66,8 @@
   }
 
   function emptyState(icon, title, text) {
-    return `<div class="empty"><div class="ico">${icon}</div>` +
+    const ico = icon === '◌' ? '<i class="fa-solid fa-inbox"></i>' : icon;
+    return `<div class="empty"><div class="ico">${ico}</div>` +
       `<b>${esc(title)}</b><div>${esc(text)}</div></div>`;
   }
 
@@ -437,8 +438,8 @@
 
     if (!hasRunData() && !executed && !liveVisual) {
       host.innerHTML = emptyState('◌', 'No runs yet',
-        'Ejecuta desde la barra superior. Los resultados aparecerán aquí ' +
-        'y en el juez de la derecha, sin datos de ejemplo.');
+        'Run from the top bar. Results will appear here ' +
+        'and in the judge on the right. No sample data.');
       return;
     }
 
@@ -529,8 +530,8 @@
     const id = e.id || e.case || '';
     const label = e.type === 'stage'
       ? `etapa: ${e.stage || ''}`
-      : e.type === 'section_start' ? `sección ${e.section}`
-      : e.type === 'section_done' ? `sección ${e.section} terminada`
+      : e.type === 'section_start' ? `section ${e.section}`
+      : e.type === 'section_done' ? `section ${e.section} finished`
       : e.type === 'case_start' ? 'inicio'
       : e.type === 'finish' ? 'fin'
       : '';
@@ -545,9 +546,9 @@
     if (!host) return;
     if (!LIVE) {
       host.innerHTML = emptyState('◌', 'No run in progress',
-        'Pulsa “Start” en la barra superior para ver cada case ejecutarse ' +
-        'en tiempo real. Las capturas de pantalla solo se generan en el modo ' +
-        '“Chrome vs NativaX”. El juez de la derecha muestra los estándares.');
+        'Press Start in the top bar to watch each case run live. ' +
+        'Screenshots are only produced in Chrome vs NativaX mode. ' +
+        'The judge on the right shows the standards.');
       return;
     }
     const p = LIVE;
@@ -611,8 +612,8 @@
     if (!host) return;
     if (!DATA.report || !DATA.report.available) {
       host.innerHTML = emptyState('◌', 'No reports yet',
-        'Cuando termine una ejecución se escribirá el informe real en ' +
-        'debug/reports/lab. No hay informes de ejemplo.');
+        'When a run finishes the real report is written to ' +
+        'debug/reports/lab. No sample reports.');
       return;
     }
     const s = DATA.report.summary || {};
@@ -685,8 +686,8 @@
     if (!v.cases || !Object.keys(v.cases).length) {
       if (!liveVisual) {
         host.innerHTML = html + emptyState('◌', 'No comparisons yet',
-          'Elige un case y pulsa “Chrome vs NativaX” en la barra superior. ' +
-          'Verás Chrome → NativaX → diferencia mientras se calcula.');
+          'Pick a case and press Chrome vs NativaX in the top bar. ' +
+          'You will see Chrome → NativaX → diff as it runs.');
       } else {
         host.innerHTML = html;
       }
@@ -755,8 +756,8 @@
     const measured = (DATA.cases || []).filter((c) => Number(c.ms) > 0);
     if (!measured.length) {
       host.innerHTML = emptyState('◌', 'No performance data',
-        'Las duraciones salen de tus ejecuciones reales. Ejecuta el ' +
-        'laboratorio para medirlas.');
+        'Durations come from your real runs. Run the ' +
+        'lab to measure them.');
       return;
     }
     const total = measured.reduce((a, c) => a + Number(c.ms), 0);
@@ -801,8 +802,8 @@
     const hist = DATA.history || [];
     if (!hist.length) {
       host.innerHTML = emptyState('◌', 'No history',
-        'No hay ejecuciones guardadas. El historial solo contiene lo que ' +
-        'se ejecute en esta máquina; no hay corridas de ejemplo.');
+        'No saved runs. History only contains what runs on ' +
+        'this machine; no sample runs.');
       return;
     }
     host.innerHTML = `<section class="panel"><div class="panel-head">` +
@@ -820,8 +821,18 @@
     $$('#view-historial tr[data-run]').forEach((tr) => {
       tr.onclick = () => {
         const h = hist.find((x) => x.run_id === tr.dataset.run) || {};
-        dialog(tr.dataset.run || 'Ejecución',
-               `<pre class="log">${esc(JSON.stringify(h, null, 2))}</pre>`);
+        const existing = tr.nextElementSibling;
+        if (existing && existing.classList.contains('hist-detail')) {
+          existing.remove();
+          return;
+        }
+        const row = document.createElement('tr');
+        row.className = 'hist-detail';
+        const cell = document.createElement('td');
+        cell.colSpan = 7;
+        cell.innerHTML = `<pre class="log" style="max-height:200px">${esc(JSON.stringify(h, null, 2))}</pre>`;
+        row.appendChild(cell);
+        tr.after(row);
       };
     });
   }
@@ -832,8 +843,8 @@
     const items = DATA.artifacts || [];
     if (!items.length) {
       host.innerHTML = emptyState('◌', 'No artifacts',
-        'Las capturas de Chrome, NativaX y los mapas de diferencia ' +
-        'aparecerán aquí cuando ejecutes una comparación.');
+        'Chrome, NativaX and diff captures will appear here ' +
+        'once you run a comparison.');
       return;
     }
     host.innerHTML = `<section class="panel"><div class="panel-head">` +
@@ -846,8 +857,10 @@
         `${esc(a.path)}</div><div class="hint">${Math.round(a.size / 1024)} KB</div>` +
         `</div>`).join('') + `</div></section>`;
     $$('#view-artefactos .artifact').forEach((el) => {
-      el.onclick = () => dialog(el.dataset.path,
-        `<img src="${esc(el.querySelector('img').src)}" style="max-width:100%;border-radius:8px">`);
+      el.onclick = () => {
+        const img = el.querySelector('img');
+        if (img && img.src) window.open(img.src, '_blank');
+      };
     });
   }
 
@@ -916,8 +929,8 @@
       badge.className = 'badge unrun';
       badge.textContent = 'no run';
       const t = defaults;
-      host.innerHTML = `<div class="judge-meta">El juez evalúa cada ejecución. ` +
-        `Todavía no hay resultados: estos son los estándares que se aplicarán.</div>` +
+      host.innerHTML = `<div class="judge-meta">The judge evaluates each run. ` +
+        `No results yet: these are the standards that will apply.</div>` +
         `<div class="judge-section"><h3>Lab standards</h3>` +
         stdRow('Pass', '—', '', 'assertion holds') +
         stdRow('Fail', '—', '', 'real regression; verdict fails') +
@@ -983,7 +996,7 @@
                1, mismatch === true ? 'bad' : (mismatch === false ? 'ok' : ''),
                'igual = ok') +
         stdBar('Tolerancia', `${num(t.tolerance, 0)}/255`, 255, 'ok',
-               'diferencia ignorada') +
+               'ignored difference') +
         `</div><div class="judge-section"><h3>Real counts</h3>` +
         stdRow('Comparisons', num(s.comparisons ?? 0), '', '') +
         stdRow('Pass', num(s.pass ?? 0), (Number(s.pass) || 0) ? 'ok' : '', '') +
@@ -1013,21 +1026,8 @@
         setTimeout(() => {
           $$('#judge-body .judge-case').forEach((el) => {
             el.onclick = () => {
-              const c = (DATA.visual && DATA.visual.cases || {})[el.dataset.case];
-              if (!c) return;
-              const r = (c.results || [])[0] || {};
-              const m = r.metrics || {};
-              dialog(el.dataset.case,
-                `<div class="compare">` +
-                `<figure><figcaption>Chrome</figcaption><img src="${esc((r.chrome || {}).url || '')}" style="max-width:100%"></figure>` +
-                `<figure><figcaption>NativaX</figcaption><img src="${esc((r.nativax || {}).url || '')}" style="max-width:100%"></figure>` +
-                `<figure><figcaption>Diff</figcaption><img src="${esc(m.diff_url || '')}" style="max-width:100%"></figure>` +
-                `</div>` +
-                `<div class="metrics">` +
-                `<div class="metric"><div class="v">${pct(m.changed_percent)}</div><div class="l">change</div></div>` +
-                `<div class="metric"><div class="v">${num(m.mae, 2)}</div><div class="l">MAE</div></div>` +
-                `<div class="metric"><div class="v">${num(m.ssim, 4)}</div><div class="l">SSIM</div></div>` +
-                `</div>`);
+              VSEL = el.dataset.case;
+              showView('visual');
             };
           });
         }, 0);
@@ -1046,9 +1046,16 @@
             el.onclick = () => {
               const c = (DATA.cases || []).find((x) => x.id === el.dataset.case);
               if (!c) return;
-              dialog(c.id, `<div class="hint">Section ${esc(c.sid)} · ${esc(c.name)}</div>` +
+              // show details inline in the judge, no modal
+              const host = $('#judge-body');
+              const detail = host.querySelector('.judge-detail');
+              const html = `<div class="judge-detail" style="margin-top:8px">` +
+                `<div class="hint">Section ${esc(c.sid)} · ${esc(c.name)}</div>` +
                 `<div class="hint">Status: ${esc(c.status)} · duration ${ms(c.ms)}</div>` +
-                `<pre class="log">${esc(JSON.stringify(c, null, 2))}</pre>`);
+                `<pre class="log" style="max-height:160px">${esc(JSON.stringify(c, null, 2))}</pre>` +
+                `</div>`;
+              if (detail) detail.outerHTML = html;
+              else host.insertAdjacentHTML('beforeend', html);
             };
           });
         }, 0);
