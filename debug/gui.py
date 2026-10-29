@@ -436,6 +436,19 @@ def _run_qt(api: Api) -> int:
     else:
         log("no pude leer qwebchannel.js de los recursos de Qt")
 
+    # Build dashboard_data.js in the background so the window appears immediately.
+    import threading as _threading
+    pending_data = {"value": None}
+
+    def _refresh_data() -> None:
+        try:
+            run_build()
+            pending_data["value"] = load_data()
+        except Exception as exc:  # noqa: BLE001
+            log(f"build en segundo plano falló: {exc}")
+
+    _threading.Thread(target=_refresh_data, daemon=True).start()
+
     previous = {"running": False}
 
     def push() -> None:
@@ -443,8 +456,14 @@ def _run_qt(api: Api) -> int:
         finished = previous["running"] and not status["running"]
         previous["running"] = status["running"]
         payload = {"status": status}
+        if pending_data["value"] is not None:
+            payload["data"] = pending_data["value"]
+            pending_data["value"] = None
         if finished:
-            payload["data"] = api.get_data()
+            try:
+                payload["data"] = api.get_data()
+            except Exception:
+                pass
         page.runJavaScript(
             "window.NATIVAX_PUSH && window.NATIVAX_PUSH(%s);"
             % _json.dumps(payload))
@@ -615,7 +634,8 @@ def main(argv: list[str] | None = None) -> int:
             f"{DASHBOARD_HTML.as_uri()}")
         return 1
 
-    run_build()
+    if not DASHBOARD_DATA.exists():
+        run_build()
     if not DASHBOARD_HTML.exists():
         log(f"no existe el dashboard: {DASHBOARD_HTML}")
         return 1
