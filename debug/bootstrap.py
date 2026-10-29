@@ -56,18 +56,22 @@ APT_PACKAGES = [
     "python3",
     "python3-venv",
     "python3-pip",
+    "python3-gi",
+    "gir1.2-gtk-3.0",
+    "gir1.2-webkit2-4.1",
     "file",
 ]
 DNF_PACKAGES = [
     "gcc", "gcc-c++", "make", "cmake", "ninja-build", "pkgconf-pkg-config",
     "javascriptcoregtk4.1-devel", "mesa-libGL-devel", "libXcursor-devel",
     "libXi-devel", "xorg-x11-server-Xvfb", "dejavu-sans-fonts", "python3",
-    "python3-pip", "python3-virtualenv", "file",
+    "python3-pip", "python3-virtualenv", "python3-gobject",
+    "webkit2gtk4.1", "file",
 ]
 PACMAN_PACKAGES = [
     "base-devel", "cmake", "ninja", "pkgconf", "javascriptcoregtk-4.1",
     "mesa", "libxcursor", "libxi", "xorg-server-xvfb", "ttf-dejavu",
-    "python", "python-pip", "file",
+    "python", "python-pip", "python-gobject", "webkit2gtk-4.1", "file",
 ]
 BREW_PACKAGES = [
     "cmake", "ninja", "pkg-config", "webkitgtk", "python", "pillow",
