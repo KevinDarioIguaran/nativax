@@ -35,6 +35,7 @@ for path in (str(DEBUG), str(HERE)):
         sys.path.insert(0, path)
 
 import harness  # noqa: E402
+import live  # noqa: E402
 from harness import Lab, registered, run_section, summarize, write_reports  # noqa: E402
 
 HISTORY_DIR = DEBUG / "history"
@@ -78,6 +79,10 @@ def main() -> int:
                     help="skip the 50px responsive sweep (faster, debugging only)")
     ap.add_argument("--responsive-tolerance", type=float, default=1.0,
                     help="allowed overflow in pixels for the responsive sweep")
+    ap.add_argument("--progress", default="",
+                    help="write a live progress snapshot (JSON) for the dashboard")
+    ap.add_argument("--label", default="",
+                    help="label for the live run (shown in the dashboard)")
     args = ap.parse_args()
 
     harness.load_sections()
@@ -113,56 +118,121 @@ def main() -> int:
 
     lab = Lab(jobs=1, responsive=not args.no_responsive)
     started = time.time()
-    all_results = []
+
+    selected: list[tuple[int, list]] = []
+    planned: dict[str, int] = {}
     for sec in sections:
         cases = registered(sec)
-        if not cases:
-            print(f"[lab] section {sec}: no cases registered", file=sys.stderr)
-            continue
-        print(f"[lab] section {sec}: {len(cases)} cases", flush=True)
-        t0 = time.time()
-        results = run_section(lab, sec, name_filter=args.filter)
-        all_results.extend(results)
-        s = summarize(results)
-        print(f"[lab] section {sec}: pass={s['pass']} fail={s['fail']} "
-              f"blocked={s['blocked']} error={s['error']} "
-              f"({time.time() - t0:.1f}s)", flush=True)
-        for r in results:
-            if args.verbose or r.status != "pass":
-                print(f"  {r.status.upper():7s} {r.cid} {r.name}"
-                      + (f" — {r.message}" if r.message else ""))
+        if args.filter:
+            cases = [c for c in cases
+                     if args.filter in c.cid or args.filter in c.name]
+        selected.append((sec, cases))
+        planned[str(sec)] = len(cases)
+
+    progress = None
+    if args.progress:
+        progress = live.Progress(
+            args.progress, "lab",
+            args.label or ("Laboratorio · todas las secciones" if args.all
+                           else "Laboratorio · secciones "
+                                + ", ".join(str(s) for s in sections)),
+            total=sum(planned.values()), sections=planned,
+            command=" ".join(sys.argv),
+            standards={
+                "responsive": not args.no_responsive,
+                "responsive_tolerance": args.responsive_tolerance,
+                "strict": args.strict,
+                "filter": args.filter,
+            })
+
+    all_results = []
+    exit_code = 0
+    try:
+        for sec, cases in selected:
+            if not cases:
+                print(f"[lab] section {sec}: no cases registered", file=sys.stderr)
+                if progress:
+                    progress.section_done(sec, summarize([]))
+                continue
+            print(f"[lab] section {sec}: {len(cases)} cases", flush=True)
+            if progress:
+                progress.section_started(sec, len(cases))
+            counter = {"n": 0}
+
+            def on_start(c, _sec=sec, _total=len(cases)):
+                counter["n"] += 1
+                if progress:
+                    progress.case_started(c.cid, c.name, _sec,
+                                          counter["n"], _total)
+
+            def on_result(r):
+                if progress:
+                    progress.case_done(r.as_dict())
+
+            t0 = time.time()
+            results = run_section(lab, sec, name_filter=args.filter,
+                                  on_start=on_start, on_result=on_result)
+            all_results.extend(results)
+            s = summarize(results)
+            if progress:
+                progress.section_done(sec, s)
+            print(f"[lab] section {sec}: pass={s['pass']} fail={s['fail']} "
+                  f"blocked={s['blocked']} error={s['error']} "
+                  f"({time.time() - t0:.1f}s)", flush=True)
+            for r in results:
+                if args.verbose or r.status != "pass":
+                    print(f"  {r.status.upper():7s} {r.cid} {r.name}"
+                          + (f" — {r.message}" if r.message else ""))
+            if not args.no_report:
+                write_reports(results, label=f"section-{sec:02d}")
+
+        total = summarize(all_results)
+        elapsed = time.time() - started
+        print(f"[lab] total: {total['total']} cases, pass={total['pass']} "
+              f"fail={total['fail']} blocked={total['blocked']} "
+              f"error={total['error']} in {elapsed:.1f}s", flush=True)
         if not args.no_report:
-            write_reports(results, label=f"section-{sec:02d}")
+            write_reports(all_results, label="latest",
+                          extra={"elapsed_seconds": round(elapsed, 2),
+                                 "sections": sections})
+        if args.json:
+            print(json.dumps({"summary": total,
+                              "elapsed_seconds": round(elapsed, 2)},
+                             indent=2))
 
-    total = summarize(all_results)
-    elapsed = time.time() - started
-    print(f"[lab] total: {total['total']} cases, pass={total['pass']} "
-          f"fail={total['fail']} blocked={total['blocked']} "
-          f"error={total['error']} in {elapsed:.1f}s", flush=True)
-    if not args.no_report:
-        write_reports(all_results, label="latest",
-                      extra={"elapsed_seconds": round(elapsed, 2),
-                             "sections": sections})
-    if args.json:
-        print(json.dumps({"summary": total, "elapsed_seconds": round(elapsed, 2)},
-                         indent=2))
+        if history_mod is not None and not args.no_history and all_results:
+            try:
+                cmd = " ".join(sys.argv)
+                path = history_mod.save_run(
+                    all_results, sections=sections, elapsed=elapsed,
+                    command=cmd,
+                    label=f"section-{','.join(str(s) for s in sections)}")
+                print(f"[lab] history snapshot: {path.relative_to(ROOT)}",
+                      flush=True)
+                print(f"[lab] ai digest: "
+                      f"{ROOT / 'debug' / 'history' / 'ai_digest.json'}",
+                      flush=True)
+            except Exception as exc:  # noqa: BLE001
+                print(f"[lab] history snapshot failed: {exc}", file=sys.stderr)
 
-    if history_mod is not None and not args.no_history and all_results:
-        try:
-            cmd = " ".join(sys.argv)
-            path = history_mod.save_run(
-                all_results, sections=sections, elapsed=elapsed,
-                command=cmd, label=f"section-{','.join(str(s) for s in sections)}")
-            print(f"[lab] history snapshot: {path.relative_to(ROOT)}", flush=True)
-            print(f"[lab] ai digest: {ROOT / 'debug' / 'history' / 'ai_digest.json'}", flush=True)
-        except Exception as exc:  # noqa: BLE001
-            print(f"[lab] history snapshot failed: {exc}", file=sys.stderr)
+        if total["fail"] or total["error"]:
+            exit_code = 1
+        elif args.strict and total["blocked"]:
+            exit_code = 1
+    except KeyboardInterrupt:
+        if progress:
+            progress.fail("cancelado por el usuario")
+        raise
+    except Exception as exc:
+        if progress:
+            progress.fail(f"{type(exc).__name__}: {exc}")
+        raise
+    else:
+        if progress:
+            progress.finish({**total, "elapsed_seconds": round(elapsed, 2)},
+                            exit_code=exit_code)
 
-    if total["fail"] or total["error"]:
-        return 1
-    if args.strict and total["blocked"]:
-        return 1
-    return 0
+    return exit_code
 
 
 if __name__ == "__main__":

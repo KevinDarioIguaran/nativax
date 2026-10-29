@@ -36,24 +36,34 @@ python3 debug/bootstrap.py --with-browsers  # deps + build + smoke test + Chromi
 python3 debug/lab/run_lab.py --list # show sections and case counts
 python3 debug/lab/run_lab.py --section 1
 python3 debug/lab/run_lab.py --all   # 240 real cases + 25 capability gaps, ~10 min
-python3 debug/gui.py                 # native window (pywebview or GTK/WebKit)
-python3 debug/gui.py --check         # explain what is missing, if anything
-python3 debug/gui.py --browser       # force the browser instead of a window
+python3 debug/gui.py                 # ventana nativa (PyQt6-WebEngine)
+python3 debug/gui.py --check         # explica qué falta, si algo
+python3 debug/gui.py --browser       # fuerza el navegador (solo lectura)
 ```
 
 ### Dashboard window dependencies
 
-The native window needs GTK 3 + WebKit2. On Debian/Ubuntu/MX Linux:
+La ventana nativa usa PyQt6 + QtWebEngine (recomendado):
+
+```bash
+pip install -r debug/requirements.txt   # incluye PyQt6 y PyQt6-WebEngine
+```
+
+O, en Debian/Ubuntu/MX Linux, el respaldo GTK/WebKit:
 
 ```bash
 sudo apt install python3-gi gir1.2-gtk-3.0 gir1.2-webkit2-4.1
 ```
 
-`gui.py` opens a real window in this order:
+`gui.py` abre la ventana en este orden:
 
-1. **pywebview** (interactive buttons), when installed with a working backend.
-2. **GTK/WebKit directly** (read-only), when only the distro packages exist.
-3. **Your browser**, as the last fallback, with the exact path printed.
+1. **PyQt6-WebEngine** (interactivo, con puente QWebChannel).
+2. **pywebview** (si está instalado con backend real).
+3. **GTK/WebKit** directo (solo lectura, con puente `nativax://`).
+4. **Navegador**, como último recurso (solo lectura).
+
+No se usa ningún servidor HTTP ni puerto. El dashboard es un archivo local
+y el puente nativo le empuja el progreso en vivo.
 
 If you run from a venv that cannot import `gi`, the launcher automatically
 re-executes with the system Python. Python packages can be installed with

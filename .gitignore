@@ -10,7 +10,11 @@ debug/lab/env.json
 __pycache__/
 debug/lab/__pycache__/
 debug/lab/sections/__pycache__/
-debug/history/__pycache__/
+debug/history/index.json
+debug/history/latest.json
+debug/history/ai_digest.json
+debug/history/runs/
+debug/reports/live.json
 debug/__pycache__/
 debug/tools/__pycache__/
 debug/dashboard/dashboard_data.js

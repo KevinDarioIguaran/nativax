@@ -1,17 +1,35 @@
+/* NativaX debug dashboard — local HTML, no HTTP server.
+ *
+ * Live data arrives through the native window bridge:
+ *   - PyQt6-WebEngine: QWebChannel object "nativax" (window.NATIVAX_QT)
+ *   - pywebview: window.pywebview.api
+ *   - GTK/WebKit: window.NATIVAX_PUSH + nativax:// navigation hook
+ * Opened directly in a browser it is read-only and uses dashboard_data.js.
+ */
 (() => {
-  const API = ''; // same origin when served by dashboard_server
-  let DATA = window.DASHBOARD_DATA || {};
-  let SECTIONS = DATA.sections || [];
-  let REPOS = DATA.repos || [];
-  let GAPS = DATA.gaps || [];
-  let TREE = DATA.tree || '';
-  let CLI = DATA.cli || [];
-  let REPORT = DATA.report || { available: false };
-  let VISUAL = DATA.visual || {};
-  let cases = DATA.cases || [];
+  'use strict';
 
-  const $ = (s) => document.querySelector(s);
-  const state = { q: '', section: '', status: '', page: 0, size: 12 };
+  let DATA = window.DASHBOARD_DATA || {};
+  let LIVE = null;
+  let STATUS = null;
+  let MODE = 'tests';
+  let VIEW = 'resumen';
+  let SECTION = '';
+  let QUERY = '';
+  let STATUS_FILTER = '';
+  let VSEL = '';
+  let wasRunning = false;
+  let lastLiveKey = '';
+  let lastPollError = '';
+
+  const $ = (s, root = document) => root.querySelector(s);
+  const $$ = (s, root = document) => Array.from(root.querySelectorAll(s));
+  const esc = (v) => String(v ?? '').replace(/[&<>"']/g, (c) => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
+  }[c]));
+  const num = (v, d = 0) => (v === null || v === undefined || v === '') ? '—' : Number(v).toFixed(d);
+  const pct = (v) => (v === null || v === undefined) ? '—' : `${Number(v).toFixed(2)} %`;
+  const ms = (v) => (v === null || v === undefined) ? '—' : `${Math.round(Number(v))} ms`;
 
   function toast(msg) {
     const t = $('#toast');
@@ -19,648 +37,1008 @@
     t.textContent = msg;
     t.classList.add('show');
     clearTimeout(toast._t);
-    toast._t = setTimeout(() => t.classList.remove('show'), 2200);
+    toast._t = setTimeout(() => t.classList.remove('show'), 2600);
   }
 
-  async function api(path, options) {
-    try {
-      const res = await fetch(API + path, options);
-      if (!res.ok) throw new Error(res.status + ' ' + res.statusText);
-      const ct = res.headers.get('content-type') || '';
-      if (ct.includes('application/json')) return await res.json();
-      return await res.text();
-    } catch (e) {
-      return null;
+  function dialog(title, html) {
+    const d = $('#dlg');
+    if (!d) return;
+    $('#dlg-title').textContent = title;
+    $('#dlg-body').innerHTML = html;
+    d.showModal();
+  }
+
+  function hasRunData() {
+    return !!(DATA.report && DATA.report.available);
+  }
+
+  function executedCount() {
+    return (DATA.cases || []).filter((c) => c.status && c.status !== 'unrun').length;
+  }
+
+  function statusBadge(status) {
+    const s = status || 'unrun';
+    const label = {
+      pass: 'pass', fail: 'fail', blocked: 'blocked', error: 'error',
+      warn: 'warn', skip: 'skip', unrun: 'sin ejecutar', running: 'ejecutando',
+    }[s] || s;
+    return `<span class="badge ${esc(s)}">${esc(label)}</span>`;
+  }
+
+  function emptyState(icon, title, text) {
+    return `<div class="empty"><div class="ico">${icon}</div>` +
+      `<b>${esc(title)}</b><div>${esc(text)}</div></div>`;
+  }
+
+  /* ---------------------------------------------------------------- bridges */
+  function setupQtBridge() {
+    if (typeof QWebChannel === 'undefined' || !window.qt ||
+        !window.qt.webChannelTransport || window.NATIVAX_QT) return;
+    new QWebChannel(window.qt.webChannelTransport, (channel) => {
+      const obj = channel.objects.nativax;
+      if (!obj) return;
+      const call = (name, args = []) => new Promise((resolve) => {
+        try {
+          obj[name](...args, (raw) => {
+            try { resolve(JSON.parse(raw)); } catch (e) { resolve(raw); }
+          });
+        } catch (e) { resolve(null); }
+      });
+      window.NATIVAX_QT = {
+        get_data: () => call('get_data'),
+        get_live: () => call('get_live'),
+        run_tests: (scope, section, responsive, filt) =>
+          call('run_tests', [scope, section, !!responsive, filt]),
+        run_visual: (scope, caseId, section, widths) =>
+          call('run_visual', [scope, caseId, section, widths]),
+        stop: () => call('stop_run'),
+      };
+      poll();
+    });
+  }
+
+  function nativeApi() {
+    if (window.NATIVAX_QT) return { kind: 'qt', ...window.NATIVAX_QT };
+    if (window.pywebview && window.pywebview.api) {
+      const api = window.pywebview.api;
+      return {
+        kind: 'pywebview',
+        get_data: () => api.get_data(),
+        get_live: () => api.get_live(),
+        run_tests: (scope, section, responsive, filt) =>
+          api.run_tests(scope, section, responsive, filt),
+        run_visual: (scope, caseId, section, widths) =>
+          api.run_visual(scope, caseId, section, widths),
+        stop: () => api.stop_run(),
+      };
     }
+    return null;
   }
 
-  async function loadData() {
-    let fresh = null;
-    if (window.pywebview && window.pywebview.api && window.pywebview.api.reload_data) {
-      fresh = await window.pywebview.api.reload_data();
+  window.NATIVAX_PUSH = (payload) => {
+    if (!payload) return;
+    if (payload.data) {
+      DATA = payload.data;
+      renderAll();
     }
-    if (fresh && fresh.cases) {
-      DATA = fresh;
-      SECTIONS = DATA.sections || [];
-      REPOS = DATA.repos || [];
-      GAPS = DATA.gaps || [];
-      TREE = DATA.tree || '';
-      CLI = DATA.cli || [];
-      REPORT = DATA.report || { available: false };
-      VISUAL = DATA.visual || {};
-      cases = DATA.cases || [];
-      window.DASHBOARD_DATA = DATA;
+    if (payload.status) applyStatus(payload.status);
+  };
+
+  /* ------------------------------------------------------------------ status */
+  async function poll() {
+    let st = null;
+    const api = nativeApi();
+    if (api) {
+      try {
+        st = await api.get_live();
+        lastPollError = '';
+      } catch (e) {
+        lastPollError = String(e);
+      }
     }
+    if (!st) {
+      if (!LIVE && !DATA) return;
+      st = { running: !!(LIVE && LIVE.running), progress: LIVE, log: [] };
+    }
+    applyStatus(st);
   }
 
-  function counts(list) {
-    return list.reduce((a, c) => ((a[c.status] = (a[c.status] || 0) + 1), a), {});
-  }
+  function applyStatus(st) {
+    if (!st) return;
+    STATUS = st;
+    if (st.progress) LIVE = st.progress;
+    const running = !!st.running || !!(LIVE && LIVE.running && !st.stale);
+    const key = LIVE ? `${LIVE.updated_at}|${(LIVE.events || []).length}` : '';
+    const changed = key !== lastLiveKey;
+    lastLiveKey = key;
 
-  function renderKpis() {
-    const c = counts(cases);
-    const total = cases.length;
-    const reported = cases.filter((x) => x.ms && x.ms > 0);
-    const avg = reported.length
-      ? Math.round(reported.reduce((s, x) => s + x.ms, 0) / reported.length)
-      : '—';
-    const items = [
-      ['Casos reales', total, ''],
-      ['Secciones', SECTIONS.length, ''],
-      ['Pass', c.pass || 0, 'pass'],
-      ['Fail', c.fail || 0, 'fail'],
-      ['Blocked', c.blocked || 0, 'skip'],
-      ['Unrun', c.unrun || 0, ''],
-      ['Gaps documentados', GAPS.length, ''],
-      ['Tiempo medio', (typeof avg === 'number' ? avg + ' ms' : avg), ''],
-    ];
-    if (!REPORT.available) {
-      items.push(['Informe lab', 'no ejecutado', 'fail']);
+    renderRunState(running);
+    if (changed) {
+      renderSections();
+      if (VIEW === 'envivo' || VIEW === 'visual') renderView(VIEW);
+      renderJudge();
     } else {
-      items.push(['Informe lab', REPORT.label || 'latest', 'pass']);
+      renderJudge();
     }
-    $('#kpis').innerHTML = items
-      .map(([l, v, k]) => `<div class="kpi ${k}"><div class="v">${v}</div><div class="l">${l}</div></div>`)
-      .join('');
-  }
 
-  function renderSections() {
-    $('#sections').innerHTML = SECTIONS.map(([sid, name]) => {
-      const list = cases.filter((c) => c.sid === sid);
-      const c = counts(list);
-      const pct = (n) => (list.length ? ((n || 0) / list.length) * 100 : 0);
-      return `<div class="sec ${state.section === sid ? 'active' : ''}" data-sid="${sid}">
-        <div class="row"><b>${sid} · ${name}</b><small>${c.pass || 0}/${list.length}</small></div>
-        <div class="bar">
-          <i class="p" style="width:${pct(c.pass)}%"></i>
-          <i class="f" style="width:${pct(c.fail)}%"></i>
-          <i class="s" style="width:${pct((c.skip || 0) + (c.blocked || 0))}%"></i>
-        </div></div>`;
-    }).join('');
-  }
-
-  function filtered() {
-    const q = state.q.toLowerCase();
-    return cases.filter((c) =>
-      (!state.section || c.sid === state.section) &&
-      (!state.status || c.status === state.status) &&
-      (!q || `${c.id} ${c.name} ${c.repo} ${c.path}`.toLowerCase().includes(q)));
-  }
-
-  function renderTable() {
-    const list = filtered();
-    const pages = Math.max(1, Math.ceil(list.length / state.size));
-    state.page = Math.min(state.page, pages - 1);
-    const slice = list.slice(state.page * state.size, (state.page + 1) * state.size);
-    $('#cases tbody').innerHTML = slice.map((c) => `
-      <tr data-id="${c.id}">
-        <td class="mono">${c.id}</td>
-        <td>${c.name}</td>
-        <td class="mono">${c.repo}@${c.commit}</td>
-        <td>${c.facts}</td>
-        <td>${c.ms}</td>
-        <td><span class="badge ${c.status}">${c.status}</span></td>
-      </tr>`).join('') || '<tr><td colspan="6">Sin resultados</td></tr>';
-    $('#count').textContent = `${list.length} casos · página ${state.page + 1}/${pages}`;
-    $('#prev').disabled = state.page === 0;
-    $('#next').disabled = state.page >= pages - 1;
-  }
-
-  function renderStatic() {
-    $('#gaps').innerHTML = GAPS.map((g, i) =>
-      `<li><span class="n">${String(i + 1).padStart(2, '0')}</span>${g}<em>bloqueada</em></li>`).join('');
-    $('#gaps-count').textContent = `${GAPS.length} capacidades`;
-    $('#tree').textContent = TREE;
-    $('#cli').innerHTML = CLI.map((c) => `<code>$ ${c}</code>`).join('');
-    $('#f-section').innerHTML = '<option value="">Todas las secciones</option>' +
-      SECTIONS.map(([s, n]) => `<option value="${s}">${s} · ${n}</option>`).join('');
-    // run section select
-    const rs = $('#run-section');
-    if (rs) {
-      rs.innerHTML = SECTIONS.map(([s, n]) => `<option value="${s.replace('s','')}">${s} · ${n}</option>`).join('');
+    if (wasRunning && !running) {
+      refreshData();
     }
+    wasRunning = running;
   }
 
-  function drawCharts() {
-    const cSec = $('#chart-sections');
-    if (cSec) {
-      const ctx = cSec.getContext('2d');
-      ctx.clearRect(0, 0, cSec.width, cSec.height);
-      const w = cSec.width, h = cSec.height;
-      const pad = 30;
-      const bw = (w - pad * 2) / Math.max(SECTIONS.length, 1);
-      SECTIONS.forEach(([sid], i) => {
-        const list = cases.filter((c) => c.sid === sid);
-        const pass = list.filter((c) => c.status === 'pass').length;
-        const pct = list.length ? pass / list.length : 0;
-        const bh = (h - pad * 2) * pct;
-        const x = pad + i * bw + bw * 0.15;
-        const y = h - pad - bh;
-        ctx.fillStyle = '#16a34a';
-        ctx.fillRect(x, y, bw * 0.7, bh);
-        ctx.fillStyle = '#6b7385';
-        ctx.font = '10px monospace';
-        ctx.fillText(sid, x, h - 12);
-      });
+  async function refreshData() {
+    const api = nativeApi();
+    if (!api) return;
+    try {
+      const fresh = await api.get_data();
+      if (fresh && typeof fresh === 'object') {
+        DATA = fresh;
+        renderAll();
+      }
+    } catch (e) { /* keep the previous data */ }
+  }
+
+  /* ------------------------------------------------------------------- runs */
+  function currentModeConfig() {
+    if (MODE === 'visual') {
+      return { scopes: [['case', 'Un caso'], ['section', 'Sección'], ['all', 'Todo']] };
     }
-    const cSt = $('#chart-status');
-    if (cSt) {
-      const ctx = cSt.getContext('2d');
-      ctx.clearRect(0, 0, cSt.width, cSt.height);
-      const c = counts(cases);
-      const entries = Object.entries(c);
-      const total = cases.length || 1;
-      let angle = -Math.PI / 2;
-      const colors = { pass: '#16a34a', fail: '#dc2626', blocked: '#d97706', skip: '#d97706', error: '#dc2626', unrun: '#6b7385' };
-      const cx = cSt.width / 2, cy = cSt.height / 2, r = Math.min(cx, cy) - 20;
-      entries.forEach(([k, v]) => {
-        const a = (v / total) * Math.PI * 2;
-        ctx.beginPath();
-        ctx.moveTo(cx, cy);
-        ctx.arc(cx, cy, r, angle, angle + a);
-        ctx.closePath();
-        ctx.fillStyle = colors[k] || '#4f46e5';
-        ctx.fill();
-        angle += a;
-      });
-      // legend
-      let ly = 10;
-      entries.forEach(([k, v]) => {
-        ctx.fillStyle = colors[k] || '#4f46e5';
-        ctx.fillRect(10, ly, 12, 12);
-        ctx.fillStyle = '#1c2230';
-        ctx.font = '12px sans-serif';
-        ctx.fillText(`${k}: ${v}`, 28, ly + 10);
-        ly += 16;
-      });
+    return { scopes: [['all', 'Todo'], ['section', 'Sección']] };
+  }
+
+  function syncControls() {
+    const scope = $('#scope');
+    const previous = scope.value;
+    const cfg = currentModeConfig();
+    scope.innerHTML = cfg.scopes.map(([v, l]) =>
+      `<option value="${v}">${esc(l)}</option>`).join('');
+    if (cfg.scopes.some(([v]) => v === previous)) scope.value = previous;
+
+    $('#case-wrap').hidden = MODE !== 'visual';
+    $('#widths-wrap').hidden = MODE !== 'visual';
+    $('#sweep-wrap').hidden = true;
+    $('#section-wrap').hidden = scope.value === 'all';
+    $('#scope').onchange = () => {
+      $('#section-wrap').hidden = scope.value === 'all';
+    };
+  }
+
+  function selectedSection() {
+    return parseInt($('#section').value || '1', 10) || 1;
+  }
+
+  async function startRun() {
+    const api = nativeApi();
+    const scope = $('#scope').value;
+    const section = selectedSection();
+    let result = null;
+
+    if (MODE === 'visual') {
+      const caseId = $('#case').value || '';
+      if (api) {
+        result = await api.run_visual(scope, caseId, section,
+                                      $('#widths').value || '1024');
+      } else if (window.NATIVAX_BRIDGE === 'gtk') {
+        location.href = 'nativax://run?' + new URLSearchParams({
+          kind: 'visual', scope, case: caseId, section: String(section),
+          widths: $('#widths').value || '1024',
+        }).toString();
+        result = { started: true };
+      }
+    } else {
+      const responsive = MODE === 'responsive';
+      if (api) {
+        result = await api.run_tests(scope, section, responsive, '');
+      } else if (window.NATIVAX_BRIDGE === 'gtk') {
+        location.href = 'nativax://run?' + new URLSearchParams({
+          kind: 'lab', scope, section: String(section),
+          responsive: responsive ? '1' : '0',
+        }).toString();
+        result = { started: true };
+      }
     }
-  }
 
-  function openCase(id) {
-    const c = cases.find((x) => x.id === id);
-    $('#dlg-title').textContent = `case ${c.id}`;
-    $('#dlg-body').innerHTML = `
-      <dt>Sección</dt><dd>${c.name}</dd>
-      <dt>Repo</dt><dd>${c.repo}</dd>
-      <dt>Commit</dt><dd>${c.commit}</dd>
-      <dt>Ruta original</dt><dd>${c.path}</dd>
-      <dt>Facts</dt><dd>${c.facts} verificaciones independientes</dd>
-      <dt>Duración</dt><dd>${c.ms} ms</dd>
-      <dt>Estado</dt><dd><span class="badge ${c.status}">${c.status}</span></dd>`;
-    $('#dlg').showModal();
-  }
-
-  function refresh() { renderKpis(); renderSections(); renderTable(); drawCharts(); }
-
-  async function runTests() {
-    const btn = $('#btn-run');
-    if (!window.pywebview || !window.pywebview.api || !window.pywebview.api.run_tests) {
-      toast('Ejecución disponible solo en la app nativa (pywebview)');
+    if (!api && window.NATIVAX_BRIDGE !== 'gtk') {
+      toast('Abre la ventana nativa (PyQt6-WebEngine) para ejecutar. ' +
+            'El navegador es solo lectura.');
       return;
     }
-    btn.disabled = true;
-    const scope = $('#run-scope').value;
-    const section = parseInt($('#run-section').value, 10) || 1;
-    const responsive = $('#run-responsive').checked;
-    const res = await window.pywebview.api.run_tests(scope, section, responsive);
-    if (!res || !res.started) {
-      toast('No se pudo iniciar: ' + (res && res.error ? res.error : 'error'));
-      btn.disabled = false;
+    if (result && result.started === false) {
+      toast(result.error || 'No se pudo iniciar la ejecución');
       return;
     }
     toast('Ejecución iniciada');
-    pollRun();
+    showView(MODE === 'visual' ? 'visual' : 'envivo');
   }
 
-  async function pollRun() {
-    const logEl = $('#run-log');
-    const statusEl = $('#run-status');
-    const btn = $('#btn-run');
-    const timer = setInterval(async () => {
-      if (!window.pywebview || !window.pywebview.api) return;
-      const st = await window.pywebview.api.get_status();
-      if (!st) return;
-      if (statusEl) statusEl.textContent = st.running ? 'Ejecutando…' : `Finalizado (exit ${st.exit_code})`;
-      if (logEl) {
-        logEl.textContent = (st.log || []).join('\n');
-        logEl.scrollTop = logEl.scrollHeight;
-      }
-      if (!st.running) {
-        clearInterval(timer);
-        btn.disabled = false;
-        await loadData();
-        renderStatic();
-        refresh();
-        await loadArtifacts();
-        toast('Datos recargados');
-      }
-    }, 1000);
-  }
-
-  async function loadArtifacts() {
-    // Static data keeps the tab useful when the HTML is opened directly.
-    let list = DATA.artifacts || [];
-    if (window.pywebview && window.pywebview.api && window.pywebview.api.get_artifacts) {
-      const live = await window.pywebview.api.get_artifacts();
-      if (live && live.length) list = live;
-    }
-    const el = $('#artifacts');
-    const count = $('#artifacts-count');
-    if (!list || !el) return;
-    if (count) count.textContent = `${list.length} archivos`;
-    el.innerHTML = list.map((a) => {
-      if (a.path.match(/\.(png|jpg|jpeg)$/i)) {
-        return `<div class="artifact"><img src="${a.url}" alt="${a.path}" onerror="this.style.display='none'"><div>${a.path}</div></div>`;
-      }
-      return `<div class="artifact"><div>${a.path}</div><div>${a.size} bytes</div></div>`;
-    }).join('');
-  }
-
-  // ---------------------------------------------------------------- visual
-  function visualRows() {
-    return Object.values(VISUAL.cases || {});
-  }
-
-  function fillVisualCases() {
-    const sel = $('#visual-case');
-    if (!sel) return;
-    const current = sel.value;
-    sel.innerHTML = cases.map((c) =>
-      `<option value="${c.id}">${c.id} · ${c.repo} · ${c.path}</option>`).join('');
-    const known = new Set(cases.map((c) => c.id));
-    if (current && known.has(current)) {
-      sel.value = current;
-      return;
-    }
-    // Open on a case that already has a comparison, so the images are visible.
-    const reported = Object.keys(VISUAL.cases || {}).find((id) => known.has(id));
-    if (reported) sel.value = reported;
-  }
-
-  function renderVisualKpis() {
-    const el = $('#visual-kpis');
-    if (!el) return;
-    const s = VISUAL.summary || {};
-    const items = [
-      ['Casos comparados', s.cases || 0, ''],
-      ['Capturas', s.comparisons || 0, ''],
-      ['Pass', s.pass || 0, 'pass'],
-      ['Warn', s.warn || 0, 'skip'],
-      ['Fail', s.fail || 0, 'fail'],
-      ['Error', s.error || 0, 'fail'],
-      ['% distinto medio', s.mean_changed_percent == null ? '—' : s.mean_changed_percent + '%', ''],
-      ['SSIM medio', s.mean_ssim == null ? '—' : s.mean_ssim, ''],
-    ];
-    el.innerHTML = items.map(([l, v, k]) =>
-      `<div class="kpi ${k}"><div class="v">${v}</div><div class="l">${l}</div></div>`).join('');
-    const meta = $('#visual-meta');
-    if (meta) {
-      meta.textContent = VISUAL.generated_at
-        ? `informe ${VISUAL.generated_at} · ${s.comparisons || 0} capturas`
-        : 'Sin comparaciones todavía';
-    }
-    const th = VISUAL.thresholds || {};
-    const tel = $('#visual-thresholds');
-    if (tel) {
-      tel.textContent = th.tolerance == null ? '' :
-        `pass ≤ ${th.max_changed_percent}% · warn ≤ ${th.warn_changed_percent}% · MAE ≤ ${th.max_mae} · SSIM ≥ ${th.min_ssim}`;
+  async function stopRun() {
+    const api = nativeApi();
+    if (api) {
+      await api.stop();
+      toast('Detención solicitada');
+    } else if (window.NATIVAX_BRIDGE === 'gtk') {
+      location.href = 'nativax://run?kind=stop';
     }
   }
 
-  function renderVisualTable() {
-    const tbody = document.querySelector('#visual-cases tbody');
-    const count = $('#visual-count');
-    if (!tbody) return;
-    const rows = visualRows().sort((a, b) =>
-      (b.mean_changed_percent || 0) - (a.mean_changed_percent || 0));
-    if (count) count.textContent = `${rows.length} caso(s)`;
-    tbody.innerHTML = rows.map((c) => {
-      const widths = c.results.map((r) => r.width).join(', ');
-      return `<tr data-cid="${c.id}">
-        <td class="mono">${c.id}</td>
-        <td>${c.section}</td>
-        <td><span class="badge ${c.status}">${c.status}</span></td>
-        <td>${c.mean_changed_percent == null ? '—' : c.mean_changed_percent + '%'}</td>
-        <td>${c.mean_ssim == null ? '—' : c.mean_ssim}</td>
-        <td>${widths}</td>
-      </tr>`;
-    }).join('') || '<tr><td colspan="6">Sin comparaciones. Usa «Comparar caso».</td></tr>';
+  /* -------------------------------------------------------------- runs state */
+  function renderRunState(running) {
+    const dot = $('#run-dot');
+    const text = $('#run-text');
+    const bar = $('#run-bar');
+    if (!dot) return;
+    dot.className = 'dot' + (running ? ' running' : (LIVE && LIVE.summary ? ' pass' : ''));
+    const p = LIVE || {};
+    const total = Number(p.total || 0);
+    const done = Number(p.done || 0);
+    if (running) {
+      const pctDone = total ? Math.min(100, Math.round((done / total) * 100)) : 0;
+      bar.style.width = `${pctDone}%`;
+      const cur = p.current;
+      text.textContent = cur && cur.id
+        ? `${done}/${total || '?'} · ${cur.id}`
+        : `ejecutando ${p.kind || ''}`;
+    } else if (p.summary || (STATUS && STATUS.exit_code !== null &&
+                             STATUS.exit_code !== undefined)) {
+      const s = p.summary || {};
+      const label = p.kind === 'visual'
+        ? `visual ${s.pass || 0} pass · ${s.fail || 0} fail · ${s.error || 0} error`
+        : `lab ${s.pass || 0} pass · ${s.fail || 0} fail · ${s.blocked || 0} blocked`;
+      text.textContent = `terminado · ${label}`;
+      bar.style.width = '100%';
+    } else {
+      text.textContent = 'Sin ejecución';
+      bar.style.width = '0';
+    }
+    $('#btn-run').disabled = !!running;
+    $('#btn-stop').disabled = !running;
   }
 
-  function renderVisualResult() {
-    const cid = $('#visual-case') ? $('#visual-case').value : '';
-    const sel = $('#visual-result');
-    const row = (VISUAL.cases || {})[cid];
-    const imgs = {
-      chrome: $('#visual-chrome'), nativax: $('#visual-nativax'), diff: $('#visual-diff'),
-      chromeLink: $('#visual-chrome-link'), nativaxLink: $('#visual-nativax-link'),
-      diffLink: $('#visual-diff-link'),
-      chromeSize: $('#visual-chrome-size'), nativaxSize: $('#visual-nativax-size'),
-      diffSize: $('#visual-diff-size'),
-    };
-    const clear = () => {
-      ['chrome', 'nativax', 'diff'].forEach((k) => {
-        if (imgs[k]) imgs[k].removeAttribute('src');
-        if (imgs[k + 'Link']) imgs[k + 'Link'].removeAttribute('href');
-        if (imgs[k + 'Size']) imgs[k + 'Size'].textContent = '';
+  /* --------------------------------------------------------------- rendering */
+  function renderAll() {
+    renderSections();
+    renderControls();
+    renderView(VIEW);
+    renderJudge();
+    renderFoot();
+  }
+
+  function renderFoot() {
+    const n = executedCount();
+    const corpus = (DATA.cases || []).length;
+    $('#side-foot').innerHTML = corpus
+      ? `${corpus} casos registrados · ${n} ejecutados.<br>` +
+        (n ? 'Los datos son de tus ejecuciones locales.' : 'Sin resultados todavía.')
+      : 'Sin corpus cargado.';
+  }
+
+  function renderControls() {
+    const secSel = $('#section');
+    const sections = DATA.sections || [];
+    const prev = secSel.value;
+    secSel.innerHTML = sections.map(([sid, name]) =>
+      `<option value="${esc(String(parseInt(sid.replace('s', ''), 10)))}">` +
+      `${esc(sid)} · ${esc(name)}</option>`).join('');
+    const values = Array.from(secSel.options).map((o) => o.value);
+    if (values.includes(prev)) secSel.value = prev;
+
+    const caseSel = $('#case');
+    const prevCase = caseSel.value;
+    caseSel.innerHTML = (DATA.cases || []).map((c) =>
+      `<option value="${esc(c.id)}">${esc(c.id)} · ${esc(c.name)}</option>`).join('');
+    const caseValues = Array.from(caseSel.options).map((o) => o.value);
+    if (caseValues.includes(prevCase)) caseSel.value = prevCase;
+    else if (caseValues.length) caseSel.value = caseValues[0];
+
+    syncControls();
+  }
+
+  function sectionCounts() {
+    const out = {};
+    for (const c of DATA.cases || []) {
+      const row = out[c.sid] || (out[c.sid] = {
+        total: 0, pass: 0, fail: 0, blocked: 0, error: 0, warn: 0,
+        unrun: 0, done: 0,
       });
-      $('#visual-metrics').innerHTML = '';
-    };
-    if (!row || !sel) { if (sel) sel.innerHTML = '<option value="">Sin comparación</option>'; clear(); return; }
-    sel.innerHTML = row.results.map((r, i) => {
-      const pct = r.metrics ? ` · ${r.metrics.changed_percent}%` : '';
-      return `<option value="${i}">${r.width}x${r.height} · ${r.status}${pct}</option>`;
+      row.total += 1;
+      const st = c.status || 'unrun';
+      row[st] = (row[st] || 0) + 1;
+      if (st !== 'unrun') row.done += 1;
+    }
+    const live = (LIVE && LIVE.sections) || {};
+    for (const [num, row] of Object.entries(live)) {
+      const sid = `s${String(num).padStart(2, '0')}`;
+      const target = out[sid] || (out[sid] = {
+        total: 0, pass: 0, fail: 0, blocked: 0, error: 0, warn: 0,
+        unrun: 0, done: 0,
+      });
+      target.total = Math.max(target.total, row.total || 0);
+      target.done = Math.max(target.done, row.done || 0);
+      for (const k of ['pass', 'fail', 'blocked', 'error', 'warn']) {
+        target[k] = Math.max(target[k] || 0, row[k] || 0);
+      }
+    }
+    return out;
+  }
+
+  function renderSections() {
+    const host = $('#sections');
+    if (!host) return;
+    const sections = DATA.sections || [];
+    const counts = sectionCounts();
+    if (!sections.length) {
+      host.innerHTML = '<div class="side-foot">Sin secciones registradas.</div>';
+      return;
+    }
+    host.innerHTML = sections.map(([sid, name], index) => {
+      const row = counts[sid] || { total: 0, done: 0, pass: 0, fail: 0,
+                                   blocked: 0, error: 0, warn: 0 };
+      const running = !!(LIVE && LIVE.running && LIVE.current &&
+                         String(LIVE.current.section) === String(index + 1));
+      let cls = 'unrun';
+      if (running) cls = 'running';
+      else if (row.fail || row.error) cls = 'fail';
+      else if (row.warn || row.blocked) cls = 'warn';
+      else if (row.pass) cls = 'pass';
+      const active = SECTION === sid ? ' active' : '';
+      const small = sid === 's17'
+        ? `${(DATA.gaps || []).length} gaps`
+        : `${row.done}/${row.total || 0}`;
+      return `<button class="sec-item${active}" data-section="${esc(sid)}">` +
+        `<span class="dot ${cls}"></span><b>${esc(sid)}</b>` +
+        `<small>${esc(small)}</small></button>`;
     }).join('');
-    showVisualResult(0);
+    $$('#sections .sec-item').forEach((btn) => {
+      btn.onclick = () => {
+        SECTION = btn.dataset.section;
+        showView('resumen');
+      };
+    });
   }
 
-  function showVisualResult(index) {
-    const cid = $('#visual-case') ? $('#visual-case').value : '';
-    const row = (VISUAL.cases || {})[cid];
-    if (!row) return;
-    const r = row.results[Number(index)] || row.results[0];
-    if (!r) return;
-    const m = r.metrics || {};
-    const chrome = r.chrome || {};
-    const nativax = r.nativax || {};
-    const setImg = (id, link, src, sizeEl, w, h) => {
-      const img = $(id);
-      if (!img) return;
-      if (src) {
-        img.src = src;
-        if (link) link.href = src;
-        if (sizeEl) sizeEl.textContent = `${w}×${h}`;
-      } else {
-        img.removeAttribute('src');
-        if (link) link.removeAttribute('href');
-        if (sizeEl) sizeEl.textContent = '';
-      }
-    };
-    setImg('#visual-chrome', '#visual-chrome-link', chrome.url,
-      '#visual-chrome-size', r.width, r.height);
-    setImg('#visual-nativax', '#visual-nativax-link', nativax.url,
-      '#visual-nativax-size', r.width, r.height);
-    setImg('#visual-diff', '#visual-diff-link', m.diff_url,
-      '#visual-diff-size', m.width, m.height);
-
-    const metrics = [
-      ['Estado', r.status, r.status],
-      ['% distinto', m.changed_percent == null ? '—' : m.changed_percent, ''],
-      ['MAE', m.mae == null ? '—' : m.mae, ''],
-      ['RMSE', m.rmse == null ? '—' : m.rmse, ''],
-      ['SSIM', m.ssim == null ? '—' : m.ssim, ''],
-      ['Píxeles', m.total_pixels == null ? '—' :
-        `${m.changed_pixels} / ${m.total_pixels}`, ''],
-    ];
-    $('#visual-metrics').innerHTML = metrics.map(([l, v, k]) =>
-      `<div class="metric ${k || ''}"><div class="v">${v}</div><div class="l">${l}</div></div>`).join('');
-    const statusEl = $('#visual-status');
-    if (statusEl) {
-      const bits = [`${r.width}×${r.height}`, `Chrome ${chrome.ok === false ? 'error' : 'ok'}`,
-        `NativaX ${nativax.ok ? 'ok' : 'error'}`];
-      if (r.error) bits.push(r.error);
-      statusEl.textContent = bits.join(' · ');
-    }
+  function showView(name) {
+    VIEW = name;
+    $$('#views button').forEach((b) =>
+      b.classList.toggle('active', b.dataset.view === name));
+    $$('.view').forEach((v) =>
+      v.classList.toggle('active', v.id === `view-${name}`));
+    renderView(name);
   }
 
-  async function pollVisual(btn) {
-    const logEl = $('#visual-log');
-    const statusEl = $('#visual-status');
-    const btns = ['#btn-visual-case', '#btn-visual-section', '#btn-visual-all']
-      .map((s) => $(s)).filter(Boolean);
-    btns.forEach((b) => { b.disabled = true; });
-    const timer = setInterval(async () => {
-      if (!window.pywebview || !window.pywebview.api) return;
-      const st = await window.pywebview.api.get_status();
-      if (!st) return;
-      if (statusEl) statusEl.textContent = st.running ? 'Comparando…' : `Finalizado (exit ${st.exit_code})`;
-      if (logEl) {
-        logEl.textContent = (st.log || []).join('\n');
-        logEl.scrollTop = logEl.scrollHeight;
-      }
-      if (!st.running) {
-        clearInterval(timer);
-        btns.forEach((b) => { b.disabled = false; });
-        await loadData();
-        renderVisualKpis();
-        renderVisualTable();
-        fillVisualCases();
-        renderVisualResult();
-        await loadArtifacts();
-        toast('Comparación terminada');
-      }
-    }, 1000);
+  function renderView(name) {
+    if (name === 'resumen') renderResumen();
+    else if (name === 'envivo') renderEnVivo();
+    else if (name === 'informes') renderInformes();
+    else if (name === 'visual') renderVisual();
+    else if (name === 'rendimiento') renderRendimiento();
+    else if (name === 'historial') renderHistorial();
+    else if (name === 'artefactos') renderArtefactos();
   }
 
-  async function startVisual(scope) {
-    if (!window.pywebview || !window.pywebview.api || !window.pywebview.api.run_visual) {
-      toast('La comparación con Chrome requiere la app nativa (pywebview)');
+  function kpi(label, value, cls = '') {
+    return `<div class="kpi ${cls}"><div class="v">${esc(value)}</div>` +
+      `<div class="l">${esc(label)}</div></div>`;
+  }
+
+  function summaryOf() {
+    if (LIVE && LIVE.summary) return LIVE.summary;
+    if (DATA.report && DATA.report.summary) return DATA.report.summary;
+    return null;
+  }
+
+  function renderResumen() {
+    const host = $('#view-resumen');
+    if (!host) return;
+    const executed = executedCount();
+    const s = summaryOf();
+    const liveVisual = LIVE && LIVE.kind === 'visual' && LIVE.summary;
+
+    if (!hasRunData() && !executed && !liveVisual) {
+      host.innerHTML = emptyState('◌', 'Sin ejecuciones todavía',
+        'Ejecuta desde la barra superior. Los resultados aparecerán aquí ' +
+        'y en el juez de la derecha, sin datos de ejemplo.');
       return;
     }
-    const cid = $('#visual-case').value;
-    const c = cases.find((x) => x.id === cid);
-    const section = c ? parseInt(String(c.sid).replace('s', ''), 10) : 1;
-    const widths = $('#visual-widths').value;
-    const res = await window.pywebview.api.run_visual(scope, cid, section, widths);
-    if (!res || !res.started) {
-      toast('No se pudo iniciar: ' + (res && res.error ? res.error : 'error'));
+
+    const sums = s || {};
+    let html = `<section class="panel"><div class="panel-head">` +
+      `<h2>Resumen de la ejecución</h2>` +
+      `<span class="hint">${esc(DATA.report && DATA.report.generated_at || '')}` +
+      `</span></div><div class="kpis">` +
+      kpi('Casos', sums.total ?? executed) +
+      kpi('Pass', sums.pass ?? 0, 'pass') +
+      kpi('Fail', sums.fail ?? 0, 'fail') +
+      kpi('Blocked', sums.blocked ?? 0, 'blocked') +
+      kpi('Error', sums.error ?? 0, 'error') +
+      `</div></section>`;
+
+    const counts = sectionCounts();
+    html += `<section class="panel"><div class="panel-head">` +
+      `<h2>Secciones</h2><span class="hint">pass / total ejecutado</span></div>` +
+      `<div class="table-wrap"><table><thead><tr><th>Sección</th><th>Estado</th>` +
+      `<th>Pass</th><th>Fail</th><th>Blocked</th><th>Error</th><th>Avance</th>` +
+      `</tr></thead><tbody>` +
+      (DATA.sections || []).map(([sid]) => {
+        const r = counts[sid] || { total: 0, done: 0, pass: 0, fail: 0,
+                                   blocked: 0, error: 0 };
+        const pctDone = r.total ? Math.round((r.done / r.total) * 100) : 0;
+        const cls = (r.fail || r.error) ? 'fail' : (r.pass ? 'pass' : 'unrun');
+        return `<tr><td class="mono">${esc(sid)}</td><td>${statusBadge(cls)}</td>` +
+          `<td class="num">${r.pass || 0}</td><td class="num">${r.fail || 0}</td>` +
+          `<td class="num">${r.blocked || 0}</td><td class="num">${r.error || 0}</td>` +
+          `<td><div class="bar-mini"><i class="i-pass" style="width:${pctDone}%"></i></div></td></tr>`;
+      }).join('') + `</tbody></table></div></section>`;
+
+    if (executed) {
+      let rows = (DATA.cases || []).filter((c) =>
+        (!SECTION || c.sid === SECTION) &&
+        (!STATUS_FILTER || c.status === STATUS_FILTER) &&
+        (!QUERY || `${c.id} ${c.name} ${c.repo}`.toLowerCase().includes(QUERY)));
+      const total = rows.length;
+      rows = rows.slice(0, 80);
+      html += `<section class="panel"><div class="panel-head"><h2>Casos</h2>` +
+        `<div class="filters"><input id="q" type="search" placeholder="Buscar caso o repo…" value="${esc(QUERY)}">` +
+        `<select id="f-status"><option value="">Todos</option>` +
+        ['pass', 'fail', 'blocked', 'error', 'unrun'].map((v) =>
+          `<option value="${v}"${STATUS_FILTER === v ? ' selected' : ''}>${v}</option>`).join('') +
+        `</select></div></div>` +
+        `<div class="table-wrap"><table><thead><tr><th>ID</th><th>Sección</th>` +
+        `<th>Nombre</th><th>ms</th><th>Estado</th></tr></thead><tbody>` +
+        rows.map((c) => `<tr><td class="mono">${esc(c.id)}</td>` +
+          `<td>${esc(c.sid)}</td><td>${esc(c.name)}</td>` +
+          `<td class="num">${c.ms ? num(c.ms) : '—'}</td>` +
+          `<td>${statusBadge(c.status)}</td></tr>`).join('') +
+        `</tbody></table></div><div class="hint" style="margin-top:8px">` +
+        `${rows.length} de ${total} casos` +
+        (SECTION ? ` · sección ${esc(SECTION)}` : '') + `</div></section>`;
+      setTimeout(() => {
+        const q = $('#q');
+        const f = $('#f-status');
+        if (q) q.oninput = () => { QUERY = q.value.toLowerCase(); renderResumen(); };
+        if (f) f.onchange = () => { STATUS_FILTER = f.value; renderResumen(); };
+      }, 0);
+    }
+    host.innerHTML = html;
+  }
+
+  function stageIndex(stage) {
+    if (!stage) return -1;
+    if (stage === 'chrome') return 0;
+    if (stage === 'chrome_done') return 1;
+    if (stage === 'nativax') return 1;
+    if (stage === 'nativax_done') return 2;
+    if (stage === 'diff') return 2;
+    if (stage === 'diff_done' || stage === 'comparison_done' || stage === 'case_done') return 3;
+    return -1;
+  }
+
+  function pipelineHTML(stage) {
+    const idx = stageIndex(stage);
+    const cls = (i) => i < idx ? 'done' : (i === idx ? 'active' : '');
+    return `<div class="pipeline">` +
+      `<div class="step ${cls(0)}">1 · Chrome</div>` +
+      `<div class="step ${cls(1)}">2 · NativaX</div>` +
+      `<div class="step ${cls(2)}">3 · Diferencia</div>` +
+      `</div>`;
+  }
+
+  function eventHTML(e) {
+    const st = e.status || (e.type === 'stage' ? 'running' : '');
+    const id = e.id || e.case || '';
+    const label = e.type === 'stage'
+      ? `etapa: ${e.stage || ''}`
+      : e.type === 'section_start' ? `sección ${e.section}`
+      : e.type === 'section_done' ? `sección ${e.section} terminada`
+      : e.type === 'case_start' ? 'inicio'
+      : e.type === 'finish' ? 'fin'
+      : '';
+    return `<div class="event"><span class="id">${esc(id)}</span>` +
+      `<span class="msg">${esc(label)}${e.name ? ' · ' + esc(e.name) : ''}` +
+      `${e.message ? ' · ' + esc(e.message) : ''}</span>` +
+      (st ? `<span class="st">${statusBadge(st)}</span>` : '') + `</div>`;
+  }
+
+  function renderEnVivo() {
+    const host = $('#view-envivo');
+    if (!host) return;
+    if (!LIVE) {
+      host.innerHTML = emptyState('◌', 'Sin ejecución en curso',
+        'Pulsa “Iniciar” en la barra superior para ver cada caso ejecutarse ' +
+        'en tiempo real. El juez de la derecha muestra los estándares.');
       return;
     }
-    toast('Comparación iniciada');
-    pollVisual();
+    const p = LIVE;
+    const s = p.summary || {};
+    const running = !!(p.running && !(STATUS && STATUS.stale));
+    const done = Number(p.done || 0);
+    const total = Number(p.total || 0);
+    const pctDone = total ? Math.min(100, Math.round((done / total) * 100)) : 0;
+    const cur = p.current || {};
+
+    let html = `<section class="panel"><div class="panel-head">` +
+      `<h2>${esc(p.title || 'Ejecución')}</h2>` +
+      `<span class="badge ${running ? 'running' : ((s.fail || s.error) ? 'fail' : 'pass')}">` +
+      `${running ? 'en curso' : 'terminado'}</span></div>` +
+      `<div class="hint">${done} / ${total || '?'} casos · ${pctDone}% · ` +
+      `${esc(p.kind === 'visual' ? 'Chrome vs NativaX' : 'laboratorio')}</div>` +
+      `<div class="bar-mini" style="height:9px;margin:10px 0"><i class="i-pass" style="width:${pctDone}%"></i></div>`;
+
+    if (p.kind === 'visual') {
+      html += pipelineHTML(p.stage);
+      const c = p.case || {};
+      const m = c.metrics || {};
+      html += `<div class="compare">` +
+        `<figure><figcaption><span>Chrome</span></figcaption>` +
+        `<img src="${esc(c.chrome || '')}" alt="Chrome"></figure>` +
+        `<figure><figcaption><span>NativaX</span></figcaption>` +
+        `<img src="${esc(c.nativax || '')}" alt="NativaX"></figure>` +
+        `<figure><figcaption><span>Diferencia</span></figcaption>` +
+        `<img src="${esc(c.diff || '')}" alt="Diferencia"></figure></div>`;
+      html += `<div class="metrics">` +
+        `<div class="metric"><div class="v">${pct(m.changed_percent)}</div><div class="l">cambio</div></div>` +
+        `<div class="metric"><div class="v">${num(m.mae, 2)}</div><div class="l">MAE</div></div>` +
+        `<div class="metric"><div class="v">${num(m.ssim, 4)}</div><div class="l">SSIM</div></div>` +
+        `<div class="metric"><div class="v">${statusBadge(c.status)}</div><div class="l">caso actual</div></div>` +
+        `</div>`;
+    } else {
+      html += `<div class="hint">Caso actual: <b class="mono">` +
+        `${esc(cur.id || '—')}</b> ${esc(cur.name || '')} ` +
+        `${cur.status ? statusBadge(cur.status) : ''}</div>`;
+    }
+    html += `</section>`;
+
+    html += `<section class="panel"><div class="panel-head">` +
+      `<h2>Casos en vivo</h2><span class="hint">los últimos 120 eventos</span></div>` +
+      `<div class="events">` +
+      (p.events || []).slice(-120).reverse().map(eventHTML).join('') +
+      `</div></section>`;
+
+    if (STATUS && STATUS.log && STATUS.log.length) {
+      html += `<section class="panel"><div class="panel-head"><h2>Salida del proceso</h2>` +
+        `</div><pre class="log">${esc(STATUS.log.join('\n'))}</pre></section>`;
+    }
+    host.innerHTML = html;
+  }
+
+  function renderInformes() {
+    const host = $('#view-informes');
+    if (!host) return;
+    if (!DATA.report || !DATA.report.available) {
+      host.innerHTML = emptyState('◌', 'Sin informes todavía',
+        'Cuando termine una ejecución se escribirá el informe real en ' +
+        'debug/reports/lab. No hay informes de ejemplo.');
+      return;
+    }
+    const s = DATA.report.summary || {};
+    let html = `<section class="panel"><div class="panel-head">` +
+      `<h2>Informe del laboratorio</h2><span class="hint">` +
+      `${esc(DATA.report.generated_at || '')} · ${esc(DATA.report.label || '')}` +
+      `</span></div><div class="kpis">` +
+      kpi('Total', s.total ?? 0) + kpi('Pass', s.pass ?? 0, 'pass') +
+      kpi('Fail', s.fail ?? 0, 'fail') + kpi('Blocked', s.blocked ?? 0, 'blocked') +
+      kpi('Error', s.error ?? 0, 'error') + `</div></section>`;
+
+    const reps = DATA.report_sections || [];
+    html += `<section class="panel"><div class="panel-head"><h2>Informes por sección</h2>` +
+      `<span class="hint">${reps.length}</span></div><div class="table-wrap">` +
+      `<table><thead><tr><th>Informe</th><th>Total</th><th>Pass</th><th>Fail</th>` +
+      `<th>Blocked</th><th>Error</th></tr></thead><tbody>` +
+      reps.map((r) => `<tr><td class="mono">${esc(r.label || r.file)}</td>` +
+        `<td class="num">${r.summary.total ?? 0}</td>` +
+        `<td class="num">${r.summary.pass ?? 0}</td>` +
+        `<td class="num">${r.summary.fail ?? 0}</td>` +
+        `<td class="num">${r.summary.blocked ?? 0}</td>` +
+        `<td class="num">${r.summary.error ?? 0}</td></tr>`).join('') +
+      `</tbody></table></div></section>`;
+    host.innerHTML = html;
+  }
+
+  function visualCase() {
+    const cases = DATA.visual && DATA.visual.cases;
+    if (!cases) return null;
+    if (VSEL && cases[VSEL]) return cases[VSEL];
+    const keys = Object.keys(cases);
+    if (!keys.length) return null;
+    VSEL = keys[keys.length - 1];
+    return cases[VSEL];
   }
 
   function renderVisual() {
-    renderVisualKpis();
-    fillVisualCases();
-    renderVisualTable();
-    renderVisualResult();
-  }
+    const host = $('#view-visual');
+    if (!host) return;
+    const v = DATA.visual || {};
+    const liveVisual = LIVE && LIVE.kind === 'visual';
 
-  // events
-  $('#sections').addEventListener('click', (e) => {
-    const el = e.target.closest('.sec');
-    if (!el) return;
-    state.section = state.section === el.dataset.sid ? '' : el.dataset.sid;
-    $('#f-section').value = state.section;
-    state.page = 0;
-    renderSections(); renderTable();
-  });
-  $('#q').addEventListener('input', (e) => { state.q = e.target.value; state.page = 0; renderTable(); });
-  $('#f-section').addEventListener('change', (e) => { state.section = e.target.value; state.page = 0; renderSections(); renderTable(); });
-  $('#f-status').addEventListener('change', (e) => { state.status = e.target.value; state.page = 0; renderTable(); });
-  $('#prev').addEventListener('click', () => { state.page--; renderTable(); });
-  $('#next').addEventListener('click', () => { state.page++; renderTable(); });
-  $('#cases tbody').addEventListener('click', (e) => {
-    const tr = e.target.closest('tr[data-id]');
-    if (tr) openCase(tr.dataset.id);
-  });
-  $('#btn-theme').addEventListener('click', () => {
-    const root = document.documentElement;
-    root.dataset.theme = root.dataset.theme === 'dark' ? 'light' : 'dark';
-  });
-  $('#cli').addEventListener('click', (e) => {
-    if (e.target.tagName === 'CODE') {
-      navigator.clipboard?.writeText(e.target.textContent.replace(/^\$ /, ''));
-      toast('Comando copiado');
+    let html = '';
+    if (liveVisual) {
+      const p = LIVE;
+      const c = p.case || {};
+      const m = c.metrics || {};
+      html += `<section class="panel"><div class="panel-head">` +
+        `<h2>Comparación en vivo</h2>` +
+        `<span class="badge ${p.running ? 'running' : 'pass'}">` +
+        `${p.running ? 'en curso' : 'terminado'}</span></div>` +
+        pipelineHTML(p.stage) +
+        `<div class="hint">Caso: <b class="mono">${esc(c.id || '—')}</b> ` +
+        `${esc(c.name || '')} ${c.status ? statusBadge(c.status) : ''}</div>` +
+        `<div class="compare">` +
+        `<figure><figcaption><span>Chrome</span></figcaption>` +
+        `<img src="${esc(c.chrome || '')}" alt="Chrome"></figure>` +
+        `<figure><figcaption><span>NativaX</span></figcaption>` +
+        `<img src="${esc(c.nativax || '')}" alt="NativaX"></figure>` +
+        `<figure><figcaption><span>Diferencia</span></figcaption>` +
+        `<img src="${esc(c.diff || '')}" alt="Diferencia"></figure></div>` +
+        `<div class="metrics">` +
+        `<div class="metric"><div class="v">${pct(m.changed_percent)}</div><div class="l">cambio</div></div>` +
+        `<div class="metric"><div class="v">${num(m.mae, 2)}</div><div class="l">MAE</div></div>` +
+        `<div class="metric"><div class="v">${num(m.ssim, 4)}</div><div class="l">SSIM</div></div>` +
+        `<div class="metric"><div class="v">${num(m.rmse, 2)}</div><div class="l">RMSE</div></div>` +
+        `</div></section>`;
     }
-  });
-  const runBtn = $('#btn-run');
-  if (runBtn) {
-    runBtn.addEventListener('click', runTests);
-    if (!window.pywebview || !window.pywebview.api) {
-      runBtn.disabled = true;
-      runBtn.title = 'Disponible solo en la app nativa (pywebview)';
-    }
-  }
-  const refreshBtn = $('#btn-refresh');
-  if (refreshBtn) refreshBtn.addEventListener('click', async () => {
-    await loadData();
-    renderStatic();
-    refresh();
-    await loadArtifacts();
-    toast('Datos recargados');
-  });
-  const scopeSel = $('#run-scope');
-  if (scopeSel) scopeSel.addEventListener('change', () => {
-    const sec = $('#run-section');
-    if (sec) sec.disabled = scopeSel.value !== 'section';
-  });
 
-  const visualCaseSel = $('#visual-case');
-  if (visualCaseSel) visualCaseSel.addEventListener('change', renderVisualResult);
-  const visualResultSel = $('#visual-result');
-  if (visualResultSel) visualResultSel.addEventListener('change', (e) => showVisualResult(e.target.value));
-  const visualCaseBtn = $('#btn-visual-case');
-  if (visualCaseBtn) visualCaseBtn.addEventListener('click', () => startVisual('case'));
-  const visualSectionBtn = $('#btn-visual-section');
-  if (visualSectionBtn) visualSectionBtn.addEventListener('click', () => startVisual('section'));
-  const visualAllBtn = $('#btn-visual-all');
-  if (visualAllBtn) visualAllBtn.addEventListener('click', () => startVisual('all'));
-  const visualTable = document.querySelector('#visual-cases tbody');
-  if (visualTable) visualTable.addEventListener('click', (e) => {
-    const tr = e.target.closest('tr[data-cid]');
-    if (!tr) return;
-    const sel = $('#visual-case');
-    if (sel) { sel.value = tr.dataset.cid; renderVisualResult(); }
-  });
-
-  function setupTabs() {
-    const tabs = document.querySelectorAll('.tab');
-    const panels = document.querySelectorAll('.tab-panel');
-    function show(name) {
-      tabs.forEach((t) => t.classList.toggle('active', t.dataset.tab === name));
-      panels.forEach((p) => p.classList.toggle('active', p.dataset.tab === name));
-    }
-    tabs.forEach((t) => t.addEventListener('click', () => show(t.dataset.tab)));
-    show('resumen');
-  }
-
-  async function renderReports() {
-    let report = null;
-    if (window.pywebview && window.pywebview.api && window.pywebview.api.get_latest_report) {
-      report = await window.pywebview.api.get_latest_report();
-    }
-    if (!report && REPORT.available) {
-      report = { summary: REPORT.summary || {},
-                 generated_at: REPORT.generated_at, label: REPORT.label };
-    }
-    const meta = $('#report-meta');
-    const summary = $('#report-summary');
-    const tbody = document.querySelector('#report-sections tbody');
-    if (report && summary) {
-      const s = report.summary || {};
-      if (meta) meta.textContent = report.generated_at ? `generado ${report.generated_at}` : '';
-      summary.innerHTML = `<div class="kpis" style="margin:10px 0">
-        <div class="kpi"><div class="v">${s.total || 0}</div><div class="l">Total</div></div>
-        <div class="kpi pass"><div class="v">${s.pass || 0}</div><div class="l">Pass</div></div>
-        <div class="kpi fail"><div class="v">${s.fail || 0}</div><div class="l">Fail</div></div>
-        <div class="kpi skip"><div class="v">${s.blocked || 0}</div><div class="l">Blocked</div></div>
-      </div>`;
-    }
-    let sections = DATA.report_sections || [];
-    if (window.pywebview && window.pywebview.api && window.pywebview.api.get_section_reports) {
-      const live = await window.pywebview.api.get_section_reports();
-      if (live && live.length) sections = live;
-    }
-    if (tbody) {
-      tbody.innerHTML = sections.map((r) => {
-        const s = r.summary || {};
-        return `<tr><td>${r.label || r.file}</td><td>${s.total || 0}</td><td>${s.pass || 0}</td><td>${s.fail || 0}</td><td>${s.blocked || 0}</td><td>${s.error || 0}</td></tr>`;
-      }).join('') || '<tr><td colspan="6">Sin informes</td></tr>';
-    }
-    let smoke = null;
-    if (window.pywebview && window.pywebview.api && window.pywebview.api.get_smoke_summary) {
-      smoke = await window.pywebview.api.get_smoke_summary();
-    }
-    if (smoke && summary) {
-      summary.innerHTML += `<h3>Smoke test</h3><pre class="tree">${JSON.stringify(smoke, null, 2)}</pre>`;
-    }
-  }
-
-  async function renderHistory() {
-    const tbody = document.querySelector('#history-table tbody');
-    const detail = $('#history-detail');
-    let idx = DATA.history || [];
-    if (window.pywebview && window.pywebview.api && window.pywebview.api.get_history_index) {
-      const live = await window.pywebview.api.get_history_index();
-      if (live && live.length) idx = live;
-    }
-    if (tbody) {
-      tbody.innerHTML = (idx || []).map((r) => {
-        const t = r.totals || {};
-        return `<tr data-path="${r.path || ''}"><td>${r.run_id}</td><td>${r.timestamp || ''}</td><td>${t.total || 0}</td><td>${t.pass || 0}</td><td>${t.blocked || 0}</td></tr>`;
-      }).join('') || '<tr><td colspan="5">Sin historial</td></tr>';
-    }
-    if (tbody && !tbody.dataset.wired) {
-      tbody.dataset.wired = '1';
-      tbody.addEventListener('click', async (e) => {
-        const tr = e.target.closest('tr[data-path]');
-        if (!tr || !detail) return;
-        const path = tr.dataset.path;
-        let run = (idx || []).find((r) => r.path === path) || null;
-        if (window.pywebview && window.pywebview.api && window.pywebview.api.get_history_run) {
-          const live = await window.pywebview.api.get_history_run(path);
-          if (live) run = live;
-        }
-        detail.textContent = run ? JSON.stringify(run, null, 2) : 'Sin detalle disponible.';
-      });
-    }
-  }
-
-  function onApiReady(cb) {
-    if (window.pywebview && window.pywebview.api) { cb(); return; }
-    window.addEventListener('pywebviewready', cb, { once: true });
-    // fallback poll
-    const t = setInterval(() => {
-      if (window.pywebview && window.pywebview.api) { clearInterval(t); cb(); }
-    }, 200);
-  }
-
-  // init
-  (async () => {
-    await loadData();
-    renderStatic();
-    refresh();
-    setupTabs();
-    renderVisual();
-    await renderReports();
-    await renderHistory();
-    await loadArtifacts();
-    const sec = $('#run-section');
-    if (sec) sec.disabled = true;
-    const runBtn = $('#btn-run');
-    onApiReady(async () => {
-      if (runBtn) runBtn.disabled = false;
-      await renderReports();
-      await renderHistory();
-    });
-    // if no api after 2s, keep disabled
-    setTimeout(() => {
-      if (!(window.pywebview && window.pywebview.api) && runBtn) {
-        runBtn.disabled = true;
-        runBtn.title = 'Disponible solo en la app nativa (pywebview)';
+    if (!v.cases || !Object.keys(v.cases).length) {
+      if (!liveVisual) {
+        host.innerHTML = html + emptyState('◌', 'Sin comparaciones todavía',
+          'Elige un caso y pulsa “Chrome vs NativaX” en la barra superior. ' +
+          'Verás Chrome → NativaX → diferencia mientras se calcula.');
+      } else {
+        host.innerHTML = html;
       }
-    }, 2000);
-  })();
+      return;
+    }
+
+    const summary = v.summary || {};
+    html += `<section class="panel"><div class="panel-head">` +
+      `<h2>Resultados Chrome vs NativaX</h2><span class="hint">` +
+      `${esc(v.generated_at || '')}</span></div><div class="kpis">` +
+      kpi('Casos', summary.cases ?? 0) + kpi('Comparaciones', summary.comparisons ?? 0) +
+      kpi('Pass', summary.pass ?? 0, 'pass') + kpi('Warn', summary.warn ?? 0, 'warn') +
+      kpi('Fail', summary.fail ?? 0, 'fail') + kpi('Error', summary.error ?? 0, 'error') +
+      `</div><div class="hint" style="margin-top:10px">` +
+      `Cambio medio ${pct(summary.mean_changed_percent)} · ` +
+      `SSIM medio ${num(summary.mean_ssim, 4)}</div></section>`;
+
+    const keys = Object.keys(v.cases);
+    const current = visualCase();
+    const selected = VSEL;
+    html += `<section class="panel"><div class="panel-head"><h2>Comparación por caso</h2>` +
+      `<div class="filters"><select id="v-case">` +
+      keys.map((k) => `<option value="${esc(k)}"${k === selected ? ' selected' : ''}>` +
+        `${esc(k)} · ${esc(v.cases[k].name || '')}</option>`).join('') +
+      `</select></div></div>`;
+    if (current) {
+      const row = (current.results || [])[0] || {};
+      const m = row.metrics || {};
+      const chrome = row.chrome || {};
+      const nativax = row.nativax || {};
+      html += `<div class="compare">` +
+        `<figure><figcaption><span>Chrome</span><span>${esc(row.width ? row.width + 'px' : '')}</span></figcaption>` +
+        `<a href="${esc(chrome.url || '')}" target="_blank"><img src="${esc(chrome.url || '')}" alt="Chrome"></a></figure>` +
+        `<figure><figcaption><span>NativaX</span></figcaption>` +
+        `<a href="${esc(nativax.url || '')}" target="_blank"><img src="${esc(nativax.url || '')}" alt="NativaX"></a></figure>` +
+        `<figure><figcaption><span>Diferencia</span></figcaption>` +
+        `<a href="${esc(m.diff_url || '')}" target="_blank"><img src="${esc(m.diff_url || '')}" alt="Diferencia"></a></figure>` +
+        `</div><div class="metrics">` +
+        `<div class="metric"><div class="v">${pct(m.changed_percent)}</div><div class="l">cambio</div></div>` +
+        `<div class="metric"><div class="v">${num(m.mae, 2)}</div><div class="l">MAE</div></div>` +
+        `<div class="metric"><div class="v">${num(m.rmse, 2)}</div><div class="l">RMSE</div></div>` +
+        `<div class="metric"><div class="v">${num(m.ssim, 4)}</div><div class="l">SSIM</div></div>` +
+        `<div class="metric"><div class="v">${m.bbox ? esc(JSON.stringify(m.bbox)) : '—'}</div><div class="l">bbox</div></div>` +
+        `<div class="metric"><div class="v">${statusBadge(row.status)}</div><div class="l">estado</div></div>` +
+        `</div>`;
+    }
+    html += `<div class="table-wrap"><table><thead><tr><th>Caso</th><th>Sección</th>` +
+      `<th>Estado</th><th>Cambio medio</th><th>SSIM medio</th><th>Anchos</th>` +
+      `</tr></thead><tbody>` +
+      keys.map((k) => {
+        const c = v.cases[k];
+        return `<tr><td class="mono">${esc(k)}</td><td>${esc(c.section)}</td>` +
+          `<td>${statusBadge(c.status)}</td><td class="num">${pct(c.mean_changed_percent)}</td>` +
+          `<td class="num">${num(c.mean_ssim, 4)}</td>` +
+          `<td>${(c.results || []).map((r) => r.width + 'px').join(', ')}</td></tr>`;
+      }).join('') + `</tbody></table></div></section>`;
+
+    host.innerHTML = html;
+    const sel = $('#v-case');
+    if (sel) sel.onchange = () => { VSEL = sel.value; renderVisual(); };
+  }
+
+  function renderRendimiento() {
+    const host = $('#view-rendimiento');
+    if (!host) return;
+    const measured = (DATA.cases || []).filter((c) => Number(c.ms) > 0);
+    if (!measured.length) {
+      host.innerHTML = emptyState('◌', 'Sin datos de rendimiento',
+        'Las duraciones salen de tus ejecuciones reales. Ejecuta el ' +
+        'laboratorio para medirlas.');
+      return;
+    }
+    const total = measured.reduce((a, c) => a + Number(c.ms), 0);
+    const max = Math.max(...measured.map((c) => Number(c.ms)));
+    const rows = measured.slice().sort((a, b) => Number(b.ms) - Number(a.ms));
+    const bySec = {};
+    for (const c of measured) {
+      const r = bySec[c.sid] || (bySec[c.sid] = { n: 0, ms: 0, max: 0 });
+      r.n += 1;
+      r.ms += Number(c.ms);
+      r.max = Math.max(r.max, Number(c.ms));
+    }
+    let html = `<section class="panel"><div class="panel-head"><h2>Rendimiento</h2>` +
+      `<span class="hint">duraciones medidas por caso</span></div><div class="kpis">` +
+      kpi('Casos medidos', measured.length) +
+      kpi('Tiempo total', ms(total)) +
+      kpi('Media', ms(total / measured.length)) +
+      kpi('Máximo', ms(max)) + `</div></section>`;
+
+    html += `<section class="panel"><div class="panel-head"><h2>Por sección</h2></div>` +
+      `<div class="table-wrap"><table><thead><tr><th>Sección</th><th>Casos</th>` +
+      `<th>Total</th><th>Media</th><th>Máximo</th></tr></thead><tbody>` +
+      Object.entries(bySec).sort((a, b) => b[1].ms - a[1].ms).map(([sid, r]) =>
+        `<tr><td class="mono">${esc(sid)}</td><td class="num">${r.n}</td>` +
+        `<td class="num">${ms(r.ms)}</td><td class="num">${ms(r.ms / r.n)}</td>` +
+        `<td class="num">${ms(r.max)}</td></tr>`).join('') +
+      `</tbody></table></div></section>`;
+
+    html += `<section class="panel"><div class="panel-head"><h2>Casos más lentos</h2></div>` +
+      `<div class="table-wrap"><table><thead><tr><th>Caso</th><th>Sección</th>` +
+      `<th>Duración</th><th>Estado</th></tr></thead><tbody>` +
+      rows.slice(0, 20).map((c) => `<tr><td class="mono">${esc(c.id)}</td>` +
+        `<td>${esc(c.sid)}</td><td class="num">${ms(c.ms)}</td>` +
+        `<td>${statusBadge(c.status)}</td></tr>`).join('') +
+      `</tbody></table></div></section>`;
+    host.innerHTML = html;
+  }
+
+  function renderHistorial() {
+    const host = $('#view-historial');
+    if (!host) return;
+    const hist = DATA.history || [];
+    if (!hist.length) {
+      host.innerHTML = emptyState('◌', 'Sin historial',
+        'No hay ejecuciones guardadas. El historial solo contiene lo que ' +
+        'se ejecute en esta máquina; no hay corridas de ejemplo.');
+      return;
+    }
+    host.innerHTML = `<section class="panel"><div class="panel-head">` +
+      `<h2>Historial de ejecuciones</h2><span class="hint">${hist.length}</span>` +
+      `</div><div class="table-wrap"><table><thead><tr><th>Run</th><th>Fecha</th>` +
+      `<th>Total</th><th>Pass</th><th>Fail</th><th>Blocked</th><th>Error</th>` +
+      `</tr></thead><tbody>` +
+      hist.slice().reverse().map((h) => {
+        const t = h.totals || {};
+        return `<tr data-run="${esc(h.run_id || '')}"><td class="mono">${esc(h.run_id || '')}</td>` +
+          `<td>${esc(h.timestamp || '')}</td><td class="num">${t.total ?? 0}</td>` +
+          `<td class="num">${t.pass ?? 0}</td><td class="num">${t.fail ?? 0}</td>` +
+          `<td class="num">${t.blocked ?? 0}</td><td class="num">${t.error ?? 0}</td></tr>`;
+      }).join('') + `</tbody></table></div></section>`;
+    $$('#view-historial tr[data-run]').forEach((tr) => {
+      tr.onclick = () => {
+        const h = hist.find((x) => x.run_id === tr.dataset.run) || {};
+        dialog(tr.dataset.run || 'Ejecución',
+               `<pre class="log">${esc(JSON.stringify(h, null, 2))}</pre>`);
+      };
+    });
+  }
+
+  function renderArtefactos() {
+    const host = $('#view-artefactos');
+    if (!host) return;
+    const items = DATA.artifacts || [];
+    if (!items.length) {
+      host.innerHTML = emptyState('◌', 'Sin artefactos',
+        'Las capturas de Chrome, NativaX y los mapas de diferencia ' +
+        'aparecerán aquí cuando ejecutes una comparación.');
+      return;
+    }
+    host.innerHTML = `<section class="panel"><div class="panel-head">` +
+      `<h2>Artefactos visuales</h2><span class="hint">${items.length}</span></div>` +
+      `<div class="artifacts">` +
+      items.map((a) => `<div class="artifact" data-path="${esc(a.path)}">` +
+        `<img src="${esc(a.url)}" alt="${esc(a.path)}" loading="lazy" ` +
+        `onerror="this.style.display='none'">` +
+        `<div class="mono" style="margin-top:5px;word-break:break-all">` +
+        `${esc(a.path)}</div><div class="hint">${Math.round(a.size / 1024)} KB</div>` +
+        `</div>`).join('') + `</div></section>`;
+    $$('#view-artefactos .artifact').forEach((el) => {
+      el.onclick = () => dialog(el.dataset.path,
+        `<img src="${esc(el.querySelector('img').src)}" style="max-width:100%;border-radius:8px">`);
+    });
+  }
+
+  /* ------------------------------------------------------------------ judge */
+  function judgeSource() {
+    if (LIVE) {
+      return {
+        kind: LIVE.kind || 'lab',
+        running: !!LIVE.running && !(STATUS && STATUS.stale),
+        summary: LIVE.summary || {},
+        standards: LIVE.standards || {},
+        title: LIVE.title || 'Ejecución',
+        generated: LIVE.started_at || '',
+      };
+    }
+    if (MODE === 'visual' && DATA.visual && DATA.visual.summary) {
+      return {
+        kind: 'visual', running: false,
+        summary: DATA.visual.summary,
+        standards: DATA.visual.thresholds || (DATA.standards &&
+          DATA.standards.visual && DATA.standards.visual.thresholds) || {},
+        title: 'Chrome vs NativaX',
+        generated: DATA.visual.generated_at || '',
+      };
+    }
+    if (DATA.report && DATA.report.available) {
+      return {
+        kind: 'lab', running: false,
+        summary: DATA.report.summary || {}, standards: {},
+        title: 'Laboratorio',
+        generated: DATA.report.generated_at || '',
+      };
+    }
+    return null;
+  }
+
+  function stdRow(label, value, state, rule) {
+    const mark = state === 'ok' ? '✓' : state === 'bad' ? '✗'
+      : state === 'warn' ? '!' : '·';
+    return `<div class="std ${esc(state || '')}"><span class="mark">${mark}</span>` +
+      `<span>${esc(label)}${rule ? `<div class="hint">${esc(rule)}</div>` : ''}</span>` +
+      `<span class="val">${esc(value)}</span></div>`;
+  }
+
+  function renderJudge() {
+    const host = $('#judge-body');
+    const badge = $('#judge-badge');
+    if (!host || !badge) return;
+    const src = judgeSource();
+    const defaults = (DATA.standards && DATA.standards.visual &&
+                      DATA.standards.visual.thresholds) || {};
+
+    if (!src) {
+      badge.className = 'badge unrun';
+      badge.textContent = 'sin ejecución';
+      const t = defaults;
+      host.innerHTML = `<div class="judge-meta">El juez evalúa cada ejecución. ` +
+        `Todavía no hay resultados: estos son los estándares que se aplicarán.</div>` +
+        `<div class="judge-section"><h3>Estándares del laboratorio</h3>` +
+        stdRow('Pass', '—', '', 'la aserción se cumple') +
+        stdRow('Fail', '—', '', 'regresión real; el veredicto falla') +
+        stdRow('Blocked', '—', '', 'capacidad no implementada (s17)') +
+        stdRow('Error', '—', '', 'excepción del harness; nunca es pass') +
+        `</div><div class="judge-section"><h3>Estándares visuales</h3>` +
+        stdRow('Cambio máximo', `≤ ${num(t.max_changed_percent, 1)} %`, '',
+               'píxeles distintos permitidos para pass') +
+        stdRow('Aviso', `≤ ${num(t.warn_changed_percent, 1)} %`, '', 'por encima es fail') +
+        stdRow('MAE', `≤ ${num(t.max_mae, 1)}`, '', 'error absoluto medio') +
+        stdRow('SSIM', `≥ ${num(t.min_ssim, 2)}`, '', 'similitud estructural') +
+        stdRow('Tolerancia', `≤ ${num(t.tolerance, 0)}/255`, '', 'diferencia por canal ignorada') +
+        `</div>`;
+      return;
+    }
+
+    const s = src.summary || {};
+    const running = src.running;
+    let verdict = 'unrun';
+    let verdictText = 'SIN EJECUCIÓN';
+    if (running) {
+      verdict = 'running';
+      verdictText = 'EN CURSO';
+    } else if (src.kind === 'visual') {
+      const bad = (Number(s.fail) || 0) + (Number(s.error) || 0);
+      verdict = bad ? 'fail' : ((Number(s.comparisons) || 0) ? 'pass' : 'unrun');
+      verdictText = bad ? 'FAIL' : ((Number(s.comparisons) || 0)
+        ? 'PASS' : 'SIN COMPARACIONES');
+    } else {
+      const bad = (Number(s.fail) || 0) + (Number(s.error) || 0);
+      verdict = bad ? 'fail' : ((Number(s.total) || 0) ? 'pass' : 'unrun');
+      verdictText = bad ? 'FAIL' : ((Number(s.total) || 0) ? 'PASS' : 'SIN CASOS');
+    }
+    badge.className = `badge ${verdict}`;
+    badge.textContent = verdictText;
+
+    let html = `<div class="verdict ${verdict}">${esc(verdictText)}</div>` +
+      `<div class="judge-meta">${esc(src.title)}` +
+      (src.generated ? `<br>${esc(src.generated)}` : '') + `</div>`;
+
+    if (src.kind === 'visual') {
+      const t = src.standards || defaults;
+      const liveCase = (LIVE && LIVE.case) || {};
+      const m = liveCase.metrics || {};
+      const changed = m.changed_percent ?? (s.mean_changed_percent ?? null);
+      const mae = m.mae ?? null;
+      const ssim = m.ssim ?? (s.mean_ssim ?? null);
+      const okChanged = changed === null ? '' :
+        (Number(changed) <= Number(t.max_changed_percent ?? 2) ? 'ok' : 'bad');
+      const okMae = mae === null ? '' :
+        (Number(mae) <= Number(t.max_mae ?? 6) ? 'ok' : 'bad');
+      const okSsim = ssim === null ? '' :
+        (Number(ssim) >= Number(t.min_ssim ?? 0.9) ? 'ok' : 'bad');
+      const mismatch = m.size_mismatch;
+      html += `<div class="judge-section"><h3>Estándares visuales</h3>` +
+        stdRow('Cambio máximo', `${pct(changed)} / ≤ ${num(t.max_changed_percent, 1)} %`,
+               okChanged, 'píxeles distintos') +
+        stdRow('MAE', `${num(mae, 2)} / ≤ ${num(t.max_mae, 1)}`, okMae,
+               'error absoluto medio') +
+        stdRow('SSIM', `${num(ssim, 4)} / ≥ ${num(t.min_ssim, 2)}`, okSsim,
+               'similitud estructural') +
+        stdRow('Tamaño', mismatch === undefined ? '—' : (mismatch ? 'distinto' : 'igual'),
+               mismatch === true ? 'bad' : (mismatch === false ? 'ok' : ''),
+               'un tamaño distinto es fail') +
+        stdRow('Tolerancia', `${num(t.tolerance, 0)}/255`, '', 'diferencia ignorada') +
+        stdRow('Aviso', `≤ ${num(t.warn_changed_percent, 1)} %`, '', 'por encima es fail') +
+        `</div><div class="judge-section"><h3>Conteo real</h3>` +
+        stdRow('Comparaciones', num(s.comparisons ?? 0), '', '') +
+        stdRow('Pass', num(s.pass ?? 0), (Number(s.pass) || 0) ? 'ok' : '', '') +
+        stdRow('Warn', num(s.warn ?? 0), (Number(s.warn) || 0) ? 'warn' : '', 'no es pass') +
+        stdRow('Fail', num(s.fail ?? 0), (Number(s.fail) || 0) ? 'bad' : 'ok', 'debe ser 0') +
+        stdRow('Error', num(s.error ?? 0), (Number(s.error) || 0) ? 'bad' : 'ok', 'debe ser 0') +
+        `</div>`;
+    } else {
+      const resp = src.standards && src.standards.responsive;
+      html += `<div class="judge-section"><h3>Estándares del laboratorio</h3>` +
+        stdRow('Casos', num(s.total ?? 0), '', 'ejecutados de verdad') +
+        stdRow('Pass', num(s.pass ?? 0), (Number(s.pass) || 0) ? 'ok' : '', '') +
+        stdRow('Fail', num(s.fail ?? 0), (Number(s.fail) || 0) ? 'bad' : 'ok', 'debe ser 0') +
+        stdRow('Error', num(s.error ?? 0), (Number(s.error) || 0) ? 'bad' : 'ok', 'debe ser 0') +
+        stdRow('Blocked', num(s.blocked ?? 0), (Number(s.blocked) || 0) ? 'warn' : 'ok', 'gaps s17') +
+        stdRow('Sweep responsive', resp === true ? 'sí' : resp === false ? 'no' : '—',
+               resp === true ? 'ok' : (resp === false ? 'warn' : ''),
+               resp === false ? 'no ejecutado en esta corrida' : '') +
+        `</div>`;
+    }
+
+    if (LIVE && LIVE.events) {
+      const last = LIVE.events.slice(-1)[0];
+      if (last) {
+        html += `<div class="judge-meta">último evento: ${esc(last.type)}` +
+          `${last.id ? ' · ' + esc(last.id) : ''}` +
+          `${last.status ? ' · ' + statusBadge(last.status) : ''}</div>`;
+      }
+    }
+    host.innerHTML = html;
+  }
+
+  /* ------------------------------------------------------------------- boot */
+  function bind() {
+    $$('#run-tabs .run-tab').forEach((btn) => {
+      btn.onclick = () => {
+        MODE = btn.dataset.mode;
+        $$('#run-tabs .run-tab').forEach((b) =>
+          b.classList.toggle('active', b === btn));
+        syncControls();
+        renderJudge();
+        showView(MODE === 'visual' ? 'visual' : 'envivo');
+      };
+    });
+    $$('#views button').forEach((btn) => {
+      btn.onclick = () => showView(btn.dataset.view);
+    });
+    $('#btn-run').onclick = startRun;
+    $('#btn-stop').onclick = stopRun;
+    $('#btn-theme').onclick = () => {
+      const cur = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
+      document.documentElement.dataset.theme = cur;
+      try { localStorage.setItem('nativax-theme', cur); } catch (e) {}
+    };
+  }
+
+  function init() {
+    try {
+      const saved = localStorage.getItem('nativax-theme');
+      if (saved) document.documentElement.dataset.theme = saved;
+    } catch (e) {}
+    setupQtBridge();
+    bind();
+    renderAll();
+    showView('resumen');
+    poll();
+    setInterval(poll, 800);
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
 })();

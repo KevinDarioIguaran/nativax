@@ -3,21 +3,23 @@
 from __future__ import annotations
 
 import json
+import os
 import re
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 DEBUG = ROOT / "debug"
 LAB = DEBUG / "lab"
+DASHBOARD = DEBUG / "dashboard"
 CORPUS = LAB / "corpus.json"
 REPORT = DEBUG / "reports" / "lab" / "latest.json"
 VISUAL_REPORT = DEBUG / "reports" / "visual" / "latest.json"
-OUT = DEBUG / "dashboard" / "dashboard_data.js"
+OUT = DASHBOARD / "dashboard_data.js"
 
 PREFIX = {
     1: "html", 2: "css", 3: "box", 4: "typo", 5: "color", 6: "anim",
     7: "resp", 8: "flex", 9: "pos", 10: "jsdom", 11: "events", 12: "forms",
-    13: "a11y", 14: "media", 15: "perf", 16: "integ",
+    13: "a11y", 14: "media", 15: "perf", 16: "integ", 17: "gaps",
 }
 
 TREE = """debug/
@@ -82,7 +84,7 @@ def main() -> int:
     by_id = {c["id"]: c for c in report.get("cases", [])}
 
     sections = []
-    for sec in sorted({c["section"] for c in corpus.get("cases", [])}):
+    for sec in sorted({c["section"] for c in corpus.get("cases", [])} | {17}):
         sections.append([f"s{sec:02d}", PREFIX.get(sec, f"s{sec:02d}")])
 
     cases = []
@@ -143,10 +145,21 @@ def main() -> int:
             if not p.is_file() or p.suffix.lower() not in {".png", ".jpg", ".jpeg"}:
                 continue
             try:
+                rel = os.path.relpath(p, DASHBOARD).replace(os.sep, "/")
                 artifacts.append({"path": str(p.relative_to(DEBUG)),
-                                  "size": p.stat().st_size, "url": p.as_uri()})
+                                  "size": p.stat().st_size, "url": rel})
             except OSError:
                 continue
+
+    visual_thresholds = {
+        "tolerance": 4,
+        "max_changed_percent": 2.0,
+        "warn_changed_percent": 8.0,
+        "max_mae": 6.0,
+        "min_ssim": 0.9,
+    }
+    if isinstance(visual, dict) and isinstance(visual.get("thresholds"), dict):
+        visual_thresholds.update(visual["thresholds"])
 
     data = {
         "sections": sections,
@@ -165,6 +178,27 @@ def main() -> int:
         "history": history,
         "artifacts": artifacts[:600],
         "visual": visual,
+        "standards": {
+            "lab": {
+                "pass": "la aserción del caso se cumple",
+                "fail": "la aserción no se cumple (regresión real)",
+                "blocked": "capacidad no implementada, documentada en s17",
+                "error": "excepción inesperada del harness (nunca cuenta como pass)",
+                "responsive": "todo caso responsive debe caber en el viewport; "
+                              "el desbordamiento horizontal es un fail",
+                "gate": "el quality gate no admite SKIP como PASS",
+            },
+            "visual": {
+                "thresholds": visual_thresholds,
+                "rules": [
+                    "size_mismatch = fail",
+                    "pass: changed% <= max_changed_percent AND "
+                    "mae <= max_mae AND ssim >= min_ssim",
+                    "warn: changed% <= warn_changed_percent (no es pass)",
+                    "fail: changed% > warn_changed_percent",
+                ],
+            },
+        },
     }
     OUT.write_text("window.DASHBOARD_DATA = " + json.dumps(data, ensure_ascii=False) + ";\n")
     print(f"wrote {OUT} ({len(cases)} cases, report={'yes' if report else 'no'})")

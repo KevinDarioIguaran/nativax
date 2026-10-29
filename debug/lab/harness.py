@@ -958,11 +958,27 @@ def run_case(lab: Lab, c: Case) -> CaseResult:
                       ev.value, tb, c.tags)
 
 
-def run_section(lab: Lab, section: int, *, name_filter: str = "") -> list[CaseResult]:
+def run_section(lab: Lab, section: int, *, name_filter: str = "",
+                on_start: Callable[[Case], None] | None = None,
+                on_result: Callable[[CaseResult], None] | None = None) -> list[CaseResult]:
     cases = registered(section)
     if name_filter:
         cases = [c for c in cases if name_filter in c.cid or name_filter in c.name]
-    return [run_case(lab, c) for c in cases]
+    results: list[CaseResult] = []
+    for c in cases:
+        if on_start is not None:
+            try:
+                on_start(c)
+            except Exception:  # progress must never break a run
+                pass
+        result = run_case(lab, c)
+        results.append(result)
+        if on_result is not None:
+            try:
+                on_result(result)
+            except Exception:  # progress must never break a run
+                pass
+    return results
 
 
 def summarize(results: list[CaseResult]) -> dict:

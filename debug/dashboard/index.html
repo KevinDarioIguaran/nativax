@@ -3,453 +3,349 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Debug Lab · Dashboard</title>
+  <title>NativaX Debug Lab</title>
   <style>
 :root {
-  --bg: #f5f6f8;
+  --bg: #f4f5f8;
   --panel: #ffffff;
-  --text: #1c2230;
+  --panel-2: #fafbfd;
+  --text: #1b2130;
   --muted: #6b7385;
-  --line: #e3e6ec;
+  --line: #e2e5ec;
   --accent: #4f46e5;
-  --pass: #16a34a;
-  --fail: #dc2626;
-  --skip: #d97706;
+  --accent-soft: #eef0ff;
+  --pass: #15803d;
+  --pass-soft: #e8f7ee;
+  --fail: #b91c1c;
+  --fail-soft: #fdeaea;
+  --warn: #b45309;
+  --warn-soft: #fdf3e3;
+  --unrun: #8b93a7;
   --radius: 12px;
   --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 }
 :root[data-theme="dark"] {
-  --bg: #0f1320;
-  --panel: #171c2e;
-  --text: #e7eaf3;
-  --muted: #8d96ad;
-  --line: #262d45;
-  --accent: #818cf8;
+  --bg: #0e1220;
+  --panel: #161b2c;
+  --panel-2: #121728;
+  --text: #e8ebf4;
+  --muted: #939cb4;
+  --line: #272e46;
+  --accent: #8b93ff;
+  --accent-soft: #222447;
+  --pass: #4ade80;
+  --pass-soft: #143024;
+  --fail: #f87171;
+  --fail-soft: #35191c;
+  --warn: #fbbf24;
+  --warn-soft: #352a14;
+  --unrun: #7c859b;
 }
 * { box-sizing: border-box; }
+html, body { height: 100%; }
 body {
-  margin: 0;
-  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
-  background: var(--bg);
-  color: var(--text);
+  margin: 0; background: var(--bg); color: var(--text);
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif; font-size: 14px;
 }
-.topbar {
-  display: flex; justify-content: space-between; align-items: center;
-  padding: 16px 24px; background: var(--panel); border-bottom: 1px solid var(--line);
-  position: sticky; top: 0; z-index: 5;
+button, input, select { font: inherit; color: inherit; }
+button { cursor: pointer; }
+.app {
+  display: grid; min-height: 100vh;
+  grid-template-columns: 232px minmax(0, 1fr);
+  grid-template-rows: auto 1fr;
 }
-.brand { display: flex; gap: 12px; align-items: center; }
-.logo {
-  width: 40px; height: 40px; display: grid; place-items: center;
-  background: var(--accent); color: #fff; border-radius: 10px; font-size: 22px;
-}
-.brand h1 { margin: 0; font-size: 18px; }
-.brand p { margin: 0; font-size: 12px; color: var(--muted); font-family: var(--mono); }
-.actions { display: flex; gap: 8px; }
 
+/* ---------- top navbar: execution tabs (no logo) ---------- */
+.topbar {
+  grid-column: 1 / -1; position: sticky; top: 0; z-index: 20;
+  display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
+  padding: 10px 16px; background: var(--panel);
+  border-bottom: 1px solid var(--line);
+}
+.run-tabs { display: flex; gap: 6px; flex-wrap: wrap; }
+.run-tab {
+  border: 1px solid var(--line); background: var(--panel-2); border-radius: 999px;
+  padding: 7px 14px; font-size: 13px; font-weight: 600;
+}
+.run-tab:hover { border-color: var(--accent); }
+.run-tab.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+.run-controls { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.run-controls label { display: flex; gap: 5px; align-items: center; font-size: 12px; color: var(--muted); }
+.run-controls select, .run-controls input[type="text"] {
+  padding: 6px 8px; border: 1px solid var(--line); border-radius: 8px;
+  background: var(--panel-2); font-size: 13px;
+}
 .btn {
-  border: 1px solid var(--line); background: var(--panel); color: var(--text);
-  padding: 8px 14px; border-radius: 8px; cursor: pointer; font: inherit; font-size: 14px;
+  border: 1px solid var(--line); background: var(--panel); border-radius: 8px;
+  padding: 7px 13px; font-size: 13px; font-weight: 600;
 }
 .btn:hover { border-color: var(--accent); }
-.btn.primary { background: var(--accent); color: #fff; border-color: var(--accent); }
-.btn:disabled { opacity: .5; cursor: default; }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+.btn.danger { color: var(--fail); border-color: var(--fail); }
+.btn:disabled { opacity: .55; cursor: default; }
+.run-state { display: flex; align-items: center; gap: 8px; margin-left: auto; min-width: 220px; }
+.run-state .txt { font-size: 12px; color: var(--muted); white-space: nowrap; }
+.run-state .bar { width: 120px; height: 6px; border-radius: 999px; background: var(--line); overflow: hidden; }
+.run-state .bar i { display: block; height: 100%; width: 0; background: var(--accent); transition: width .3s; }
+.dot { width: 9px; height: 9px; border-radius: 50%; background: var(--unrun); flex: none; }
+.dot.running { background: var(--accent); animation: pulse 1s infinite; }
+.dot.pass { background: var(--pass); }
+.dot.fail, .dot.error { background: var(--fail); }
+.dot.warn, .dot.blocked { background: var(--warn); }
+@keyframes pulse { 50% { opacity: .25; } }
+.icon-btn { border: 1px solid var(--line); background: var(--panel-2); border-radius: 8px; padding: 7px 10px; }
 
-main { max-width: 1200px; margin: 0 auto; padding: 24px 16px 48px; }
-.tabs {
-  max-width: 1200px; margin: 16px auto 0; padding: 0 16px;
-  display: flex; gap: 6px; flex-wrap: wrap;
+/* ---------- left sidebar ---------- */
+.sidebar {
+  border-right: 1px solid var(--line); background: var(--panel);
+  padding: 14px 10px 24px; overflow: auto;
+  position: sticky; top: 58px; height: calc(100vh - 58px);
 }
-.tab {
-  border: 1px solid var(--line); background: var(--panel); color: var(--text);
-  padding: 9px 14px; border-radius: 999px; cursor: pointer; font: inherit; font-size: 13px;
+.side-title {
+  font-size: 11px; text-transform: uppercase; letter-spacing: .08em;
+  color: var(--muted); padding: 6px 10px; margin-top: 8px;
 }
-.tab:hover { border-color: var(--accent); }
-.tab.active { background: var(--accent); color: #fff; border-color: var(--accent); }
-.tab-panel { display: none; gap: 20px; }
-.tab-panel.active { display: grid; }
+.nav { display: grid; gap: 2px; }
+.nav button {
+  display: flex; align-items: center; gap: 9px; width: 100%;
+  border: 0; background: transparent; color: var(--text);
+  padding: 8px 10px; border-radius: 8px; text-align: left; font-size: 13px;
+}
+.nav button:hover { background: var(--panel-2); }
+.nav button.active { background: var(--accent-soft); color: var(--accent); font-weight: 700; }
+.nav .count { margin-left: auto; font-size: 11px; color: var(--muted); font-family: var(--mono); }
+.sec-item b { font-family: var(--mono); font-size: 12px; }
+.sec-item small { color: var(--muted); font-size: 11px; margin-left: auto; }
+.side-foot { margin: 16px 8px 0; padding-top: 12px; border-top: 1px solid var(--line); font-size: 11px; color: var(--muted); line-height: 1.5; }
 
-.kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; }
-.kpi {
-  background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius);
-  padding: 16px;
-}
-.kpi .v { font-size: 28px; font-weight: 700; }
-.kpi .l { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; }
-.kpi.pass .v { color: var(--pass); }
-.kpi.fail .v { color: var(--fail); }
-.kpi.skip .v { color: var(--skip); }
-
-.panel {
-  background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius);
-  padding: 18px;
-}
-.panel-head {
-  display: flex; justify-content: space-between; align-items: center;
-  flex-wrap: wrap; gap: 10px; margin-bottom: 14px;
-}
-.panel h2 { margin: 0; font-size: 16px; }
-.panel h3 { font-size: 13px; color: var(--muted); margin: 18px 0 8px; }
+/* ---------- content + right judge ---------- */
+.content { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 16px; padding: 16px; align-items: start; }
+.work { min-width: 0; display: grid; gap: 14px; }
+.view { display: none; gap: 14px; }
+.view.active { display: grid; }
+.panel { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); padding: 16px; }
+.panel-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; margin-bottom: 12px; }
+.panel h2 { margin: 0; font-size: 15px; }
+.panel h3 { margin: 16px 0 8px; font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; }
 .hint { font-size: 12px; color: var(--muted); }
-
-.sections { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 10px; }
-.sec {
-  border: 1px solid var(--line); border-radius: 10px; padding: 12px;
-  cursor: pointer; transition: transform .15s, border-color .15s; background: var(--bg);
+.mono { font-family: var(--mono); }
+.empty {
+  display: grid; place-items: center; text-align: center; gap: 6px;
+  padding: 56px 20px; color: var(--muted);
+  border: 1px dashed var(--line); border-radius: var(--radius); background: var(--panel);
 }
-.sec:hover { transform: translateY(-2px); border-color: var(--accent); }
-.sec.active { border-color: var(--accent); box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 25%, transparent); }
-.sec .row { display: flex; justify-content: space-between; align-items: baseline; }
-.sec b { font-family: var(--mono); font-size: 13px; }
-.sec small { color: var(--muted); }
-.bar { height: 6px; border-radius: 3px; background: var(--line); overflow: hidden; display: flex; margin-top: 10px; }
-.bar i { display: block; height: 100%; transition: width .4s; }
-.bar .p { background: var(--pass); }
-.bar .f { background: var(--fail); }
-.bar .s { background: var(--skip); }
+.empty b { color: var(--text); font-size: 15px; }
+.empty .ico { font-size: 28px; opacity: .5; }
+
+.kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; }
+.kpi { background: var(--panel-2); border: 1px solid var(--line); border-radius: 10px; padding: 12px; }
+.kpi .v { font-size: 24px; font-weight: 800; }
+.kpi .l { font-size: 10px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin-top: 2px; }
+.kpi.pass .v { color: var(--pass); } .kpi.fail .v, .kpi.error .v { color: var(--fail); }
+.kpi.warn .v, .kpi.blocked .v { color: var(--warn); }
+
+.badge { display: inline-block; padding: 2px 9px; border-radius: 999px; font-size: 11px; font-weight: 700; white-space: nowrap; }
+.badge.pass { background: var(--pass-soft); color: var(--pass); }
+.badge.fail, .badge.error { background: var(--fail-soft); color: var(--fail); }
+.badge.warn, .badge.blocked { background: var(--warn-soft); color: var(--warn); }
+.badge.unrun { background: var(--panel-2); color: var(--muted); border: 1px solid var(--line); }
+.badge.running { background: var(--accent-soft); color: var(--accent); }
+
+.table-wrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; }
+th, td { text-align: left; padding: 8px 9px; border-bottom: 1px solid var(--line); font-size: 13px; white-space: nowrap; }
+th { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; }
+tbody tr:hover { background: var(--panel-2); }
+td.num { text-align: right; font-family: var(--mono); }
+.bar-mini { height: 6px; border-radius: 999px; background: var(--line); overflow: hidden; display: flex; min-width: 70px; }
+.bar-mini i { display: block; height: 100%; }
+.i-pass { background: var(--pass); } .i-fail { background: var(--fail); }
+.i-blocked, .i-warn { background: var(--warn); } .i-unrun { background: var(--line); }
 
 .filters { display: flex; gap: 8px; flex-wrap: wrap; }
 .filters input, .filters select {
-  padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px;
-  background: var(--bg); color: var(--text); font: inherit; font-size: 14px;
+  padding: 7px 9px; border: 1px solid var(--line); border-radius: 8px;
+  background: var(--panel-2); font-size: 13px;
 }
-.filters input { min-width: 220px; }
+.filters input { min-width: 200px; }
 
-.table-wrap { overflow-x: auto; }
-table { width: 100%; border-collapse: collapse; font-size: 14px; }
-th, td { text-align: left; padding: 9px 10px; border-bottom: 1px solid var(--line); white-space: nowrap; }
-th { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
-tbody tr { cursor: pointer; }
-tbody tr:hover { background: var(--bg); }
-td.mono { font-family: var(--mono); font-size: 13px; }
-.badge {
-  display: inline-block; padding: 2px 9px; border-radius: 999px; font-size: 12px; font-weight: 600;
+.log {
+  margin: 10px 0 0; max-height: 230px; overflow: auto; background: #0b1020;
+  color: #d9e2ff; padding: 10px; border-radius: 8px;
+  font-family: var(--mono); font-size: 11px; white-space: pre-wrap; line-height: 1.5;
 }
-.badge.pass { background: color-mix(in srgb, var(--pass) 15%, transparent); color: var(--pass); }
-.badge.fail { background: color-mix(in srgb, var(--fail) 15%, transparent); color: var(--fail); }
-.badge.warn { background: color-mix(in srgb, var(--skip) 15%, transparent); color: var(--skip); }
-.badge.blocked { background: color-mix(in srgb, var(--skip) 15%, transparent); color: var(--skip); }
-.badge.skip { background: color-mix(in srgb, var(--skip) 15%, transparent); color: var(--skip); }
-.badge.error { background: color-mix(in srgb, var(--fail) 15%, transparent); color: var(--fail); }
-.badge.unrun { background: color-mix(in srgb, var(--muted) 15%, transparent); color: var(--muted); }
-
-.pager { display: flex; justify-content: space-between; align-items: center; margin-top: 12px; font-size: 13px; color: var(--muted); }
-.pager .btn { padding: 4px 12px; }
-
-.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-@media (max-width: 800px) { .grid-2 { grid-template-columns: 1fr; } }
-
-.gaps { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; max-height: 420px; overflow: auto; }
-.gaps li {
-  display: flex; gap: 10px; align-items: center; padding: 8px 10px;
-  border: 1px dashed var(--line); border-radius: 8px; font-size: 13px;
+.events { margin-top: 10px; max-height: 320px; overflow: auto; display: grid; gap: 4px; }
+.event {
+  display: flex; gap: 8px; align-items: baseline; padding: 5px 8px;
+  border-radius: 6px; background: var(--panel-2); font-size: 12px;
 }
-.gaps li span.n { font-family: var(--mono); color: var(--muted); width: 28px; }
-.gaps li em { margin-left: auto; font-style: normal; font-size: 11px; color: var(--skip); }
+.event .id { font-family: var(--mono); }
+.event .msg { color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.event .st { margin-left: auto; }
 
-.tree, .cli {
-  background: var(--bg); border: 1px solid var(--line); border-radius: 8px;
-  padding: 12px; font-family: var(--mono); font-size: 12px; line-height: 1.6;
-  overflow: auto; margin: 0;
+.pipeline { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 10px 0; }
+.step {
+  border: 1px solid var(--line); border-radius: 10px; padding: 10px;
+  background: var(--panel-2); text-align: center; font-size: 12px; font-weight: 700;
+  color: var(--muted);
 }
-.cli code { display: block; cursor: pointer; }
-.cli code:hover { color: var(--accent); }
+.step.active { border-color: var(--accent); color: var(--accent); background: var(--accent-soft); }
+.step.done { border-color: var(--pass); color: var(--pass); background: var(--pass-soft); }
+.compare { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.compare figure { margin: 0; border: 1px solid var(--line); border-radius: 10px; background: var(--panel-2); padding: 8px; }
+.compare figcaption { font-size: 10px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); display: flex; justify-content: space-between; margin-bottom: 6px; }
+.compare img { width: 100%; display: block; border-radius: 6px; background: #fff; min-height: 90px; }
+.compare img[src=""] { visibility: hidden; }
+.metrics { display: grid; grid-template-columns: repeat(auto-fit, minmax(105px, 1fr)); gap: 8px; margin: 10px 0; }
+.metric { border: 1px solid var(--line); border-radius: 8px; background: var(--panel-2); padding: 8px 10px; }
+.metric .v { font-size: 18px; font-weight: 800; }
+.metric .l { font-size: 10px; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); }
 
-dialog {
-  border: 1px solid var(--line); border-radius: var(--radius);
-  background: var(--panel); color: var(--text); max-width: 520px; width: calc(100% - 32px);
+.artifacts { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
+.artifact { border: 1px solid var(--line); border-radius: 8px; padding: 7px; background: var(--panel-2); font-size: 11px; }
+.artifact img { width: 100%; height: 100px; object-fit: cover; border-radius: 5px; background: var(--line); }
+
+/* ---------- judge (right) ---------- */
+.judge {
+  position: sticky; top: 74px; background: var(--panel);
+  border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden;
 }
+.judge-head {
+  display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  padding: 12px 14px; border-bottom: 1px solid var(--line);
+}
+.judge-head h2 { margin: 0; font-size: 14px; }
+.judge-body { padding: 12px 14px; display: grid; gap: 12px; }
+.judge-meta { font-size: 11px; color: var(--muted); line-height: 1.5; }
+.judge-section { display: grid; gap: 6px; }
+.judge-section h3 { margin: 0; font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: .07em; }
+.std {
+  display: grid; grid-template-columns: 16px 1fr auto; gap: 8px; align-items: baseline;
+  padding: 6px 8px; border-radius: 7px; background: var(--panel-2);
+  border: 1px solid var(--line); font-size: 12px;
+}
+.std .mark { font-weight: 800; }
+.std.ok { border-color: color-mix(in srgb, var(--pass) 35%, var(--line)); }
+.std.ok .mark { color: var(--pass); }
+.std.bad { border-color: color-mix(in srgb, var(--fail) 35%, var(--line)); }
+.std.bad .mark { color: var(--fail); }
+.std.warn { border-color: color-mix(in srgb, var(--warn) 35%, var(--line)); }
+.std.warn .mark { color: var(--warn); }
+.std .val { font-family: var(--mono); font-size: 11px; color: var(--muted); }
+.verdict { padding: 10px; border-radius: 9px; font-weight: 800; text-align: center; font-size: 13px; }
+.verdict.pass { background: var(--pass-soft); color: var(--pass); }
+.verdict.fail { background: var(--fail-soft); color: var(--fail); }
+.verdict.warn { background: var(--warn-soft); color: var(--warn); }
+.verdict.running { background: var(--accent-soft); color: var(--accent); }
+.verdict.unrun { background: var(--panel-2); color: var(--muted); border: 1px solid var(--line); }
+
+dialog { border: 1px solid var(--line); border-radius: var(--radius); background: var(--panel); color: var(--text); max-width: 560px; width: calc(100% - 32px); }
 dialog::backdrop { background: rgba(0, 0, 0, .45); }
 dialog h3 { margin-top: 0; font-family: var(--mono); }
-dialog dl { display: grid; grid-template-columns: 110px 1fr; gap: 6px 12px; font-size: 14px; }
-dialog dt { color: var(--muted); }
-dialog dd { margin: 0; word-break: break-word; }
-
 .toast {
   position: fixed; bottom: 20px; left: 50%; transform: translate(-50%, 80px);
-  background: var(--text); color: var(--bg); padding: 10px 18px; border-radius: 8px;
-  font-size: 14px; opacity: 0; transition: .3s; pointer-events: none;
+  background: var(--text); color: var(--bg); padding: 10px 16px; border-radius: 8px;
+  font-size: 13px; opacity: 0; transition: .3s; pointer-events: none; z-index: 90;
 }
 .toast.show { transform: translate(-50%, 0); opacity: 1; }
 
-.control-panel .controls { display: flex; gap: 12px; flex-wrap: wrap; align-items: end; }
-.control-panel label, .visual-controls label { display: grid; gap: 4px; font-size: 13px; color: var(--muted); }
-.control-panel select, .control-panel input,
-.visual-controls select, .visual-controls input {
-  padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px;
-  background: var(--bg); color: var(--text); font: inherit;
+@media (max-width: 1180px) { .content { grid-template-columns: minmax(0, 1fr); } .judge { position: static; } }
+@media (max-width: 860px) {
+  .app { grid-template-columns: 1fr; }
+  .sidebar { position: static; height: auto; border-right: 0; border-bottom: 1px solid var(--line); }
+  .compare, .pipeline { grid-template-columns: 1fr; }
 }
-.log {
-  margin-top: 12px; max-height: 220px; overflow: auto; background: #0b1020; color: #d7e0ff;
-  padding: 10px; border-radius: 8px; font-family: var(--mono); font-size: 12px; white-space: pre-wrap;
-}
-.artifacts { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 10px; }
-.artifact { border: 1px solid var(--line); border-radius: 8px; padding: 8px; font-size: 12px; }
-.artifact img { width: 100%; height: 100px; object-fit: cover; border-radius: 6px; background: var(--line); }
-canvas { width: 100%; height: auto; }
-
-/* Chrome vs NativaX */
-.visual-controls { display: flex; gap: 12px; flex-wrap: wrap; align-items: end; margin-bottom: 12px; }
-.visual-controls select { min-width: 200px; }
-.compare-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
-@media (max-width: 1000px) { .compare-grid { grid-template-columns: 1fr; } }
-.compare-grid figure { margin: 0; border: 1px solid var(--line); border-radius: 10px; background: var(--bg); padding: 8px; }
-.compare-grid figcaption {
-  font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: .05em;
-  margin-bottom: 6px; display: flex; justify-content: space-between;
-}
-.compare-grid img { width: 100%; border-radius: 6px; background: #fff; display: block; min-height: 120px; }
-.compare-grid img:not([src]) { visibility: hidden; }
-.metrics { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 8px; margin: 12px 0; }
-.metric { border: 1px solid var(--line); border-radius: 8px; padding: 10px; background: var(--bg); }
-.metric .v { font-size: 20px; font-weight: 700; }
-.metric .l { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
-.visual-result { display: flex; gap: 12px; flex-wrap: wrap; align-items: end; margin: 12px 0; }
   </style>
 </head>
 <body>
+<div class="app">
   <header class="topbar">
-    <div class="brand">
-      <span class="logo">⌁</span>
-      <div>
-        <h1>Debug Lab</h1>
-        <p>nativax-debug · nativax-runtime · Chrome</p>
-      </div>
-    </div>
-    <div class="actions">
-      <button id="btn-theme" class="btn" aria-label="Cambiar tema">◐</button>
-    </div>
-  </header>
+    <nav class="run-tabs" id="run-tabs" aria-label="Ejecuciones">
+      <button class="run-tab active" data-mode="tests">Ejecutar tests</button>
+      <button class="run-tab" data-mode="visual">Chrome vs NativaX</button>
+      <button class="run-tab" data-mode="responsive">Responsive</button>
+    </nav>
 
-  <section class="panel control-panel" style="max-width:1200px;margin:16px auto 0;">
-    <div class="panel-head">
-      <h2>Ejecución del laboratorio</h2>
-      <span class="hint" id="run-status">Sin ejecución</span>
-    </div>
-    <div class="controls">
+    <div class="run-controls" id="run-controls">
       <label>Alcance
-        <select id="run-scope">
-          <option value="all">Todo (--all)</option>
+        <select id="scope">
+          <option value="all">Todo</option>
           <option value="section">Sección</option>
         </select>
       </label>
-      <label>Sección
-        <select id="run-section"></select>
+      <label id="section-wrap">Sección
+        <select id="section"></select>
       </label>
-      <label><input type="checkbox" id="run-responsive"> Responsive sweep</label>
-      <button class="btn primary" id="btn-run">▶ Ejecutar</button>
-      <button class="btn" id="btn-refresh">↻ Recargar datos</button>
+      <label id="case-wrap" hidden>Caso
+        <select id="case"></select>
+      </label>
+      <label id="widths-wrap" hidden>Anchos
+        <select id="widths">
+          <option value="1024">1024 px</option>
+          <option value="768,1024">768 · 1024 px</option>
+          <option value="320,768,1024">320 · 768 · 1024 px</option>
+        </select>
+      </label>
+      <label id="sweep-wrap" hidden><input type="checkbox" id="sweep"> sweep responsive</label>
+      <button class="btn primary" id="btn-run">▶ Iniciar</button>
+      <button class="btn danger" id="btn-stop" disabled>■ Detener</button>
     </div>
-    <pre class="log" id="run-log"></pre>
-  </section>
 
-  <nav class="tabs" id="tabs" aria-label="Vistas">
-    <button class="tab active" data-tab="resumen">Resumen</button>
-    <button class="tab" data-tab="visual">Chrome vs NativaX</button>
-    <button class="tab" data-tab="informes">Informes</button>
-    <button class="tab" data-tab="historial">Historial</button>
-    <button class="tab" data-tab="artefactos">Artefactos</button>
-  </nav>
+    <div class="run-state">
+      <span class="dot" id="run-dot"></span>
+      <span class="txt" id="run-text">Sin ejecución</span>
+      <span class="bar"><i id="run-bar"></i></span>
+    </div>
+    <button class="icon-btn" id="btn-theme" aria-label="Cambiar tema">◐</button>
+  </header>
 
-  <main>
-    <div class="tab-panel active" data-tab="resumen">
-      <section class="grid-2">
-        <section class="panel">
-          <div class="panel-head"><h2>Pass por sección</h2></div>
-          <canvas id="chart-sections" width="520" height="260"></canvas>
-        </section>
-        <section class="panel">
-          <div class="panel-head"><h2>Estados</h2></div>
-          <canvas id="chart-status" width="520" height="260"></canvas>
-        </section>
-      </section>
+  <aside class="sidebar">
+    <div class="side-title">Vistas</div>
+    <nav class="nav" id="views">
+      <button data-view="resumen" class="active">Resumen</button>
+      <button data-view="envivo">En vivo <span class="count" id="cnt-live"></span></button>
+      <button data-view="informes">Informes</button>
+      <button data-view="visual">Visual</button>
+      <button data-view="rendimiento">Rendimiento</button>
+      <button data-view="historial">Historial</button>
+      <button data-view="artefactos">Artefactos</button>
+    </nav>
+    <div class="side-title">Secciones</div>
+    <nav class="nav" id="sections"></nav>
+    <div class="side-foot" id="side-foot">Sin ejecuciones todavía.</div>
+  </aside>
 
-      <section class="kpis" id="kpis" aria-label="Resumen"></section>
+  <main class="content">
+    <div class="work">
+      <section class="view active" id="view-resumen"></section>
+      <section class="view" id="view-envivo"></section>
+      <section class="view" id="view-informes"></section>
+      <section class="view" id="view-visual"></section>
+      <section class="view" id="view-rendimiento"></section>
+      <section class="view" id="view-historial"></section>
+      <section class="view" id="view-artefactos"></section>
+    </div>
 
-      <section class="panel">
-        <div class="panel-head">
-          <h2>Secciones</h2>
-          <span class="hint">Cada sección registra 15 casos reales (s01–s16)</span>
-        </div>
-        <div class="sections" id="sections"></div>
-      </section>
-
-      <section class="panel">
-        <div class="panel-head">
-          <h2>Casos</h2>
-          <div class="filters">
-            <input id="q" type="search" placeholder="Buscar caso, repo o fact…">
-            <select id="f-section"></select>
-            <select id="f-status">
-              <option value="">Todos los estados</option>
-              <option value="pass">Pass</option>
-              <option value="fail">Fail</option>
-              <option value="blocked">Blocked</option>
-              <option value="skip">Skip</option>
-              <option value="error">Error</option>
-              <option value="unrun">Unrun</option>
-            </select>
-          </div>
-        </div>
-        <div class="table-wrap">
-          <table id="cases">
-            <thead>
-              <tr><th>ID</th><th>Sección</th><th>Procedencia</th><th>Facts</th><th>ms</th><th>Estado</th></tr>
-            </thead>
-            <tbody></tbody>
-          </table>
-        </div>
-        <div class="pager">
-          <span id="count"></span>
-          <div>
-            <button class="btn" id="prev">←</button>
-            <button class="btn" id="next">→</button>
-          </div>
-        </div>
-      </section>
-
-      <div class="grid-2">
-        <section class="panel">
-          <div class="panel-head">
-            <h2>s17 · Capacidades bloqueadas</h2>
-            <span class="hint" id="gaps-count"></span>
-          </div>
-          <ul class="gaps" id="gaps"></ul>
-        </section>
-
-        <section class="panel">
-          <div class="panel-head"><h2>Estructura</h2></div>
-          <pre class="tree" id="tree"></pre>
-          <h3>CLI</h3>
-          <div class="cli" id="cli"></div>
-        </section>
+    <aside class="judge" aria-label="Juez de la ejecución">
+      <div class="judge-head">
+        <h2>Juez</h2>
+        <span class="badge unrun" id="judge-badge">sin ejecución</span>
       </div>
-    </div>
-
-    <div class="tab-panel" data-tab="visual">
-      <section class="panel">
-        <div class="panel-head">
-          <h2>Comparación de diseño: Chrome vs NativaX</h2>
-          <span class="hint" id="visual-meta">Sin comparaciones</span>
-        </div>
-        <div class="visual-controls">
-          <label>Caso
-            <select id="visual-case"></select>
-          </label>
-          <label>Anchos
-            <select id="visual-widths">
-              <option value="1024">1024 px</option>
-              <option value="768,1024">768 · 1024 px</option>
-              <option value="320,768,1024">320 · 768 · 1024 px</option>
-              <option value="320,480,768,1024,1280">320 · 480 · 768 · 1024 · 1280 px</option>
-            </select>
-          </label>
-          <button class="btn primary" id="btn-visual-case">Comparar caso</button>
-          <button class="btn" id="btn-visual-section">Comparar sección</button>
-          <button class="btn" id="btn-visual-all">Comparar todo</button>
-          <span class="hint" id="visual-status"></span>
-        </div>
-        <pre class="log" id="visual-log"></pre>
-
-        <div class="kpis" id="visual-kpis"></div>
-
-        <div class="visual-result">
-          <label class="hint">Resultado
-            <select id="visual-result"></select>
-          </label>
-          <span class="hint" id="visual-thresholds"></span>
-        </div>
-        <div class="metrics" id="visual-metrics"></div>
-        <div class="compare-grid">
-          <figure>
-            <figcaption><span>Chrome</span><span id="visual-chrome-size"></span></figcaption>
-            <a id="visual-chrome-link" target="_blank" rel="noopener"><img id="visual-chrome" alt="Captura de Chrome"></a>
-          </figure>
-          <figure>
-            <figcaption><span>NativaX</span><span id="visual-nativax-size"></span></figcaption>
-            <a id="visual-nativax-link" target="_blank" rel="noopener"><img id="visual-nativax" alt="Captura de NativaX"></a>
-          </figure>
-          <figure>
-            <figcaption><span>Diferencia</span><span id="visual-diff-size"></span></figcaption>
-            <a id="visual-diff-link" target="_blank" rel="noopener"><img id="visual-diff" alt="Mapa de diferencias"></a>
-          </figure>
-        </div>
-        <p class="hint" id="visual-note">
-          Rojo = píxeles distintos. El borde amarillo marca la caja que contiene todas las diferencias.
-        </p>
-      </section>
-
-      <section class="panel">
-        <div class="panel-head">
-          <h2>Casos comparados</h2>
-          <span class="hint" id="visual-count"></span>
-        </div>
-        <div class="table-wrap">
-          <table id="visual-cases">
-            <thead>
-              <tr><th>Caso</th><th>Sección</th><th>Estado</th><th>% distinto</th><th>SSIM</th><th>Anchos</th></tr>
-            </thead>
-            <tbody></tbody>
-          </table>
-        </div>
-      </section>
-    </div>
-
-    <div class="tab-panel" data-tab="informes">
-      <section class="panel">
-        <div class="panel-head">
-          <h2>Informe del laboratorio</h2>
-          <span class="hint" id="report-meta"></span>
-        </div>
-        <div id="report-summary"></div>
-      </section>
-      <section class="panel">
-        <div class="panel-head"><h2>Secciones</h2></div>
-        <div class="table-wrap">
-          <table id="report-sections">
-            <thead><tr><th>Label</th><th>Total</th><th>Pass</th><th>Fail</th><th>Blocked</th><th>Error</th></tr></thead>
-            <tbody></tbody>
-          </table>
-        </div>
-      </section>
-    </div>
-
-    <div class="tab-panel" data-tab="historial">
-      <section class="panel">
-        <div class="panel-head"><h2>Historial de ejecuciones</h2></div>
-        <div class="table-wrap">
-          <table id="history-table">
-            <thead><tr><th>Run</th><th>Timestamp</th><th>Total</th><th>Pass</th><th>Blocked</th></tr></thead>
-            <tbody></tbody>
-          </table>
-        </div>
-        <h3>Detalle</h3>
-        <pre class="tree" id="history-detail">Selecciona una ejecución.</pre>
-      </section>
-    </div>
-
-    <div class="tab-panel" data-tab="artefactos">
-      <section class="panel">
-        <div class="panel-head">
-          <h2>Artefactos visuales</h2>
-          <span class="hint" id="artifacts-count"></span>
-        </div>
-        <div class="artifacts" id="artifacts"></div>
-      </section>
-    </div>
+      <div class="judge-body" id="judge-body"></div>
+    </aside>
   </main>
+</div>
 
-  <dialog id="dlg">
-    <form method="dialog">
-      <h3 id="dlg-title"></h3>
-      <dl id="dlg-body"></dl>
-      <button class="btn primary">Cerrar</button>
-    </form>
-  </dialog>
+<dialog id="dlg">
+  <form method="dialog">
+    <h3 id="dlg-title"></h3>
+    <div id="dlg-body" class="hint"></div>
+    <p><button class="btn primary">Cerrar</button></p>
+  </form>
+</dialog>
+<div class="toast" id="toast" role="status"></div>
 
-  <div class="toast" id="toast" role="status"></div>
-
-  <script src="dashboard_data.js"></script>
-  <script src="dashboard.js"></script>
+<script src="dashboard_data.js"></script>
+<script src="dashboard.js"></script>
 </body>
 </html>

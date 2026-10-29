@@ -26,6 +26,7 @@ from __future__ import annotations
 import argparse
 import json
 import math
+import os
 import subprocess
 import sys
 import time
@@ -41,6 +42,7 @@ for path in (str(DEBUG), str(LAB)):
         sys.path.insert(0, path)
 
 import harness  # noqa: E402
+import live  # noqa: E402
 
 DEFAULT_OUT = DEBUG / "artifacts" / "visual"
 DEFAULT_REPORT = DEBUG / "reports" / "visual" / "latest.json"
@@ -110,7 +112,17 @@ def _rel(path: Path) -> str:
 
 
 def _url(path: Path) -> str:
-    return path.resolve().as_uri()
+    """URL that works both over HTTP (server root = debug/) and file://.
+
+    The dashboard lives in ``debug/dashboard/``, so ``../artifacts/...`` is
+    valid when the page is opened from disk and when gui.py serves ``debug/``
+    at http://127.0.0.1:PORT/.
+    """
+    try:
+        rel = os.path.relpath(path.resolve(), DEBUG / "dashboard")
+        return rel.replace(os.sep, "/")
+    except (ValueError, OSError):
+        return path.resolve().as_uri()
 
 
 def render_chrome(case_dir: Path, entry: str, width: int, height: int,
@@ -342,6 +354,56 @@ def select_cases(lab: harness.Lab, *, cases: list[str], sections: list[int],
     return found[:limit] if limit > 0 else found
 
 
+def _summarize(report: dict[str, Any]) -> dict[str, Any]:
+    final_results = [r for c in report["cases"].values()
+                     for r in c.get("results", [])]
+    counts: dict[str, int] = {}
+    for r in final_results:
+        counts[r["status"]] = counts.get(r["status"], 0) + 1
+    changed_values = [r["metrics"]["changed_percent"] for r in final_results
+                      if r.get("metrics")]
+    ssim_values = [r["metrics"]["ssim"] for r in final_results
+                   if r.get("metrics")]
+    return {
+        "cases": len(report["cases"]),
+        "comparisons": len(final_results),
+        "pass": counts.get("pass", 0),
+        "warn": counts.get("warn", 0),
+        "fail": counts.get("fail", 0),
+        "error": counts.get("error", 0),
+        "mean_changed_percent": round(sum(changed_values) / len(changed_values), 3)
+        if changed_values else None,
+        "mean_ssim": round(sum(ssim_values) / len(ssim_values), 5)
+        if ssim_values else None,
+        "worst": sorted(
+            ({"id": cid, "status": c["status"],
+              "mean_changed_percent": c.get("mean_changed_percent")}
+             for cid, c in report["cases"].items()
+             if c.get("mean_changed_percent") is not None),
+            key=lambda item: item["mean_changed_percent"], reverse=True)[:10],
+    }
+
+
+def _live_sections(report: dict[str, Any]) -> dict[str, dict[str, int]]:
+    """Per-section totals/status counts for the live dashboard."""
+    out: dict[str, dict[str, int]] = {}
+    for case in report["cases"].values():
+        sec = str(case.get("section", ""))
+        row = out.setdefault(sec, {"total": 0, "done": 0, "pass": 0,
+                                   "warn": 0, "fail": 0, "error": 0})
+        row["total"] += 1
+        row["done"] += 1
+        status = case.get("status", "error")
+        row[status if status in row else "error"] = row.get(
+            status if status in row else "error", 0) + 1
+    return out
+
+
+def _write_report(path: Path, report: dict[str, Any]) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(report, indent=2) + "\n")
+
+
 def run(args) -> int:
     _require_deps()
     harness.load_sections()
@@ -366,6 +428,16 @@ def run(args) -> int:
         except Exception:
             previous = {}
 
+    standards = {
+        "tolerance": args.tolerance,
+        "max_changed_percent": args.max_changed,
+        "warn_changed_percent": args.warn_changed,
+        "max_mae": args.max_mae,
+        "min_ssim": args.min_ssim,
+        "size_mismatch": "fail",
+        "widths": widths,
+        "height": args.height,
+    }
     report: dict[str, Any] = {
         "generated_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
         "command": " ".join(sys.argv),
@@ -381,122 +453,208 @@ def run(args) -> int:
         "cases": dict(previous),
         "summary": {},
     }
+    report["summary"] = _summarize(report)
 
-    for index, c in enumerate(chosen, 1):
-        case_dir = lab.case_dir(c.cid)
-        entry = lab.case_meta(c.cid).get("entry", "index.html")
-        print(f"[visual] {index}/{len(chosen)} {c.cid} {c.name}", flush=True)
-        case_row: dict[str, Any] = {
-            "id": c.cid, "section": c.section, "name": c.name,
-            "entry": entry, "results": [],
-        }
-        for width in widths:
-            work = out_root / c.cid / f"{width}x{args.height}"
-            work.mkdir(parents=True, exist_ok=True)
-            chrome_png = work / "chrome.png"
-            nativax_png = work / "nativax.png"
-            diff_png = work / "diff.png"
-            for stale in (chrome_png, nativax_png, diff_png):
-                stale.unlink(missing_ok=True)
+    progress = None
+    progress_path = getattr(args, "progress", "")
+    if progress_path:
+        totals: dict[str, int] = {}
+        for c in chosen:
+            totals[str(c.section)] = totals.get(str(c.section), 0) + 1
+        progress = live.Progress(
+            progress_path, "visual",
+            args.label or "Chrome vs NativaX",
+            total=len(chosen), sections=totals,
+            command=" ".join(sys.argv), standards=standards)
+        progress.update(stage="selecting", done=0,
+                        summary=report["summary"],
+                        sections={k: {"total": v, "done": 0, "pass": 0,
+                                      "warn": 0, "fail": 0, "error": 0}
+                                  for k, v in totals.items()})
 
-            row: dict[str, Any] = {"width": width, "height": args.height}
-            try:
-                row["chrome"] = render_chrome(
-                    case_dir, entry, width, args.height, chrome_png,
-                    frames=args.frames,
-                    freeze_animations=not args.no_freeze_animations,
-                    allow_remote=args.allow_remote,
-                    timeout_ms=args.chrome_timeout * 1000)
-            except Exception as exc:  # noqa: BLE001 - report, never crash the run
-                row["chrome"] = {"ok": False, "error": f"{type(exc).__name__}: {exc}"}
-            row["nativax"] = render_nativax(
-                lab, case_dir, entry, width, args.height, nativax_png,
-                frames=args.frames, timeout=args.nativax_timeout)
+    exit_code = 0
+    try:
+        for index, c in enumerate(chosen, 1):
+            case_dir = lab.case_dir(c.cid)
+            entry = lab.case_meta(c.cid).get("entry", "index.html")
+            print(f"[visual] {index}/{len(chosen)} {c.cid} {c.name}", flush=True)
+            if progress:
+                progress.case_started(c.cid, c.name, c.section, index, len(chosen))
+                progress.update(case={"id": c.cid, "name": c.name,
+                                      "section": c.section, "entry": entry,
+                                      "status": "running", "widths": widths})
+            case_row: dict[str, Any] = {
+                "id": c.cid, "section": c.section, "name": c.name,
+                "entry": entry, "results": [],
+            }
+            for width in widths:
+                work = out_root / c.cid / f"{width}x{args.height}"
+                work.mkdir(parents=True, exist_ok=True)
+                chrome_png = work / "chrome.png"
+                nativax_png = work / "nativax.png"
+                diff_png = work / "diff.png"
+                for stale in (chrome_png, nativax_png, diff_png):
+                    stale.unlink(missing_ok=True)
 
-            chrome_ok = chrome_png.exists() and row["chrome"].get("ok", True)
-            nativax_ok = bool(row["nativax"].get("ok"))
-            if not chrome_ok or not nativax_ok:
-                status = "error"
-                row["status"] = status
-                row["error"] = ("chrome render failed" if not chrome_ok
-                                else "nativax render failed")
-            else:
+                row: dict[str, Any] = {"width": width, "height": args.height}
+                if progress:
+                    progress.stage("chrome", case=c.cid, width=width,
+                                   label="Renderizando Chrome")
                 try:
-                    metrics = compare_images(chrome_png, nativax_png, diff_png,
-                                             tolerance=args.tolerance)
-                    row["metrics"] = metrics
-                    row["status"] = classify(
-                        metrics,
-                        max_changed=args.max_changed,
-                        warn_changed=args.warn_changed,
-                        max_mae=args.max_mae,
-                        min_ssim=args.min_ssim)
-                except Exception as exc:  # noqa: BLE001
-                    row["status"] = "error"
-                    row["error"] = f"{type(exc).__name__}: {exc}"
+                    row["chrome"] = render_chrome(
+                        case_dir, entry, width, args.height, chrome_png,
+                        frames=args.frames,
+                        freeze_animations=not args.no_freeze_animations,
+                        allow_remote=args.allow_remote,
+                        timeout_ms=args.chrome_timeout * 1000)
+                except Exception as exc:  # noqa: BLE001 - report, never crash
+                    row["chrome"] = {"ok": False,
+                                     "error": f"{type(exc).__name__}: {exc}"}
+                if progress:
+                    progress.stage("chrome_done", case=c.cid, width=width,
+                                   image=row["chrome"].get("url"),
+                                   ok=bool(row["chrome"].get("ok")))
+                    progress.update(case={
+                        "id": c.cid, "name": c.name, "section": c.section,
+                        "entry": entry, "status": "running",
+                        "width": width, "stage": "chrome_done",
+                        "chrome": row["chrome"].get("url")})
 
-            if row["status"] != "pass":
-                metric = row.get("metrics", {})
-                print(f"  {row['status'].upper():5s} {width}px "
-                      f"changed={metric.get('changed_percent', '?')}% "
-                      f"mae={metric.get('mae', '?')} ssim={metric.get('ssim', '?')}",
-                      flush=True)
-            case_row["results"].append(row)
+                if progress:
+                    progress.stage("nativax", case=c.cid, width=width,
+                                   label="Renderizando NativaX")
+                row["nativax"] = render_nativax(
+                    lab, case_dir, entry, width, args.height, nativax_png,
+                    frames=args.frames, timeout=args.nativax_timeout)
+                if progress:
+                    progress.stage("nativax_done", case=c.cid, width=width,
+                                   image=row["nativax"].get("url"),
+                                   ok=bool(row["nativax"].get("ok")))
+                    current = dict(progress.data.get("case") or {})
+                    current.update({"nativax": row["nativax"].get("url"),
+                                    "stage": "nativax_done"})
+                    progress.update(case=current)
 
-        statuses = [r["status"] for r in case_row["results"]]
-        case_row["status"] = ("fail" if "fail" in statuses else
-                              "error" if "error" in statuses else
-                              "warn" if "warn" in statuses else "pass")
-        pct = [r["metrics"]["changed_percent"] for r in case_row["results"]
-               if r.get("metrics")]
-        ssim = [r["metrics"]["ssim"] for r in case_row["results"]
-                if r.get("metrics")]
-        case_row["mean_changed_percent"] = round(sum(pct) / len(pct), 3) if pct else None
-        case_row["mean_ssim"] = round(sum(ssim) / len(ssim), 5) if ssim else None
-        report["cases"][c.cid] = case_row
+                chrome_ok = chrome_png.exists() and row["chrome"].get("ok", True)
+                nativax_ok = bool(row["nativax"].get("ok"))
+                if not chrome_ok or not nativax_ok:
+                    status = "error"
+                    row["status"] = status
+                    row["error"] = ("chrome render failed" if not chrome_ok
+                                    else "nativax render failed")
+                else:
+                    if progress:
+                        progress.stage("diff", case=c.cid, width=width,
+                                       label="Calculando diferencia")
+                    try:
+                        metrics = compare_images(chrome_png, nativax_png,
+                                                 diff_png,
+                                                 tolerance=args.tolerance)
+                        row["metrics"] = metrics
+                        row["status"] = classify(
+                            metrics,
+                            max_changed=args.max_changed,
+                            warn_changed=args.warn_changed,
+                            max_mae=args.max_mae,
+                            min_ssim=args.min_ssim)
+                    except Exception as exc:  # noqa: BLE001
+                        row["status"] = "error"
+                        row["error"] = f"{type(exc).__name__}: {exc}"
 
-    report["elapsed_seconds"] = round(time.time() - started, 2)
-    final_results = [r for c in report["cases"].values()
-                     for r in c.get("results", [])]
-    counts: dict[str, int] = {}
-    for r in final_results:
-        counts[r["status"]] = counts.get(r["status"], 0) + 1
-    changed_values = [r["metrics"]["changed_percent"] for r in final_results
-                      if r.get("metrics")]
-    ssim_values = [r["metrics"]["ssim"] for r in final_results
+                if progress:
+                    metrics = row.get("metrics") or {}
+                    progress.stage(
+                        "diff_done", case=c.cid, width=width,
+                        status=row["status"], diff=metrics.get("diff_url"),
+                        metrics={k: metrics.get(k) for k in (
+                            "changed_percent", "mae", "rmse", "ssim",
+                            "bbox", "size_mismatch") if k in metrics})
+                    current = dict(progress.data.get("case") or {})
+                    current.update({
+                        "diff": metrics.get("diff_url"),
+                        "metrics": metrics,
+                        "status": row["status"],
+                        "stage": "comparison_done",
+                    })
+                    progress.update(case=current)
+
+                if row["status"] != "pass":
+                    metric = row.get("metrics", {})
+                    print(f"  {row['status'].upper():5s} {width}px "
+                          f"changed={metric.get('changed_percent', '?')}% "
+                          f"mae={metric.get('mae', '?')} "
+                          f"ssim={metric.get('ssim', '?')}", flush=True)
+                case_row["results"].append(row)
+
+            statuses = [r["status"] for r in case_row["results"]]
+            case_row["status"] = ("fail" if "fail" in statuses else
+                                  "error" if "error" in statuses else
+                                  "warn" if "warn" in statuses else "pass")
+            pct = [r["metrics"]["changed_percent"] for r in case_row["results"]
                    if r.get("metrics")]
-    report["summary"] = {
-        "cases": len(report["cases"]),
-        "comparisons": len(final_results),
-        "pass": counts.get("pass", 0),
-        "warn": counts.get("warn", 0),
-        "fail": counts.get("fail", 0),
-        "error": counts.get("error", 0),
-        "mean_changed_percent": round(sum(changed_values) / len(changed_values), 3)
-        if changed_values else None,
-        "mean_ssim": round(sum(ssim_values) / len(ssim_values), 5)
-        if ssim_values else None,
-        "worst": sorted(
-            ({"id": cid, "status": c["status"],
-              "mean_changed_percent": c.get("mean_changed_percent")}
-             for cid, c in report["cases"].items()
-             if c.get("mean_changed_percent") is not None),
-            key=lambda item: item["mean_changed_percent"], reverse=True)[:10],
-    }
+            ssim = [r["metrics"]["ssim"] for r in case_row["results"]
+                    if r.get("metrics")]
+            case_row["mean_changed_percent"] = (round(sum(pct) / len(pct), 3)
+                                                if pct else None)
+            case_row["mean_ssim"] = (round(sum(ssim) / len(ssim), 5)
+                                     if ssim else None)
+            report["cases"][c.cid] = case_row
+            report["summary"] = _summarize(report)
 
-    report_path.parent.mkdir(parents=True, exist_ok=True)
-    report_path.write_text(json.dumps(report, indent=2) + "\n")
-    # Local run history: keeps evidence even when latest.json is replaced.
-    runs_dir = report_path.parent / "runs"
-    runs_dir.mkdir(parents=True, exist_ok=True)
-    stamp = time.strftime("%Y%m%dT%H%M%SZ", time.gmtime())
-    (runs_dir / f"{stamp}.json").write_text(json.dumps(report, indent=2) + "\n")
-    print(f"[visual] report: {_rel(report_path)}", flush=True)
-    print(json.dumps(report["summary"], indent=2))
+            # Persist after every case: the dashboard sees each finished
+            # comparison without waiting for the whole run.
+            _write_report(report_path, report)
+
+            if progress:
+                summary = report["summary"]
+                current = progress.data.get("case") or {}
+                current.update({"status": case_row["status"],
+                                "mean_changed_percent":
+                                    case_row["mean_changed_percent"],
+                                "mean_ssim": case_row["mean_ssim"],
+                                "stage": "case_done"})
+                progress.update(case=current, summary=summary,
+                                sections=_live_sections(report),
+                                done=summary["cases"],
+                                **{"pass": summary["pass"],
+                                   "warn": summary["warn"],
+                                   "fail": summary["fail"],
+                                   "error": summary["error"]})
+                progress.event("case_done", id=c.cid,
+                               section=c.section, status=case_row["status"],
+                               mean_changed_percent=case_row["mean_changed_percent"],
+                               mean_ssim=case_row["mean_ssim"])
+
+        report["elapsed_seconds"] = round(time.time() - started, 2)
+        report["summary"] = _summarize(report)
+        _write_report(report_path, report)
+        # Local run history: keeps evidence even when latest.json is replaced.
+        runs_dir = report_path.parent / "runs"
+        runs_dir.mkdir(parents=True, exist_ok=True)
+        stamp = time.strftime("%Y%m%dT%H%M%SZ", time.gmtime())
+        (runs_dir / f"{stamp}.json").write_text(json.dumps(report, indent=2) + "\n")
+        print(f"[visual] report: {_rel(report_path)}", flush=True)
+        print(json.dumps(report["summary"], indent=2))
+
+        if report["summary"]["fail"] or report["summary"]["error"]:
+            exit_code = 1
+    except KeyboardInterrupt:
+        if progress:
+            progress.fail("cancelado por el usuario")
+        raise
+    except Exception as exc:
+        if progress:
+            progress.fail(f"{type(exc).__name__}: {exc}")
+        raise
+    else:
+        if progress:
+            progress.finish({**report["summary"],
+                             "elapsed_seconds": report.get("elapsed_seconds")},
+                            exit_code=exit_code)
 
     if args.json:
         print(json.dumps(report, indent=2))
-    return 0 if report["summary"]["fail"] == 0 and report["summary"]["error"] == 0 else 1
+    return exit_code
 
 
 def main(argv=None) -> int:
@@ -515,6 +673,10 @@ def main(argv=None) -> int:
                     help="NativaX frames before the screenshot")
     ap.add_argument("--out", default=str(DEFAULT_OUT))
     ap.add_argument("--report", default=str(DEFAULT_REPORT))
+    ap.add_argument("--progress", default="",
+                    help="write a live progress snapshot (JSON) for the dashboard")
+    ap.add_argument("--label", default="",
+                    help="label for the live run (shown in the dashboard)")
     ap.add_argument("--json", action="store_true", help="print the full report")
     ap.add_argument("--fresh", action="store_true",
                     help="drop previously compared cases instead of merging")
