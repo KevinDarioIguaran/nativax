@@ -1,13 +1,13 @@
 (() => {
-  const DATA = window.DASHBOARD_DATA || {};
-  const SECTIONS = DATA.sections || [];
-  const REPOS = DATA.repos || [];
-  const GAPS = DATA.gaps || [];
-  const TREE = DATA.tree || '';
-  const CLI = DATA.cli || [];
-  const REPORT = DATA.report || { available: false };
-
-  const cases = DATA.cases || [];
+  const API = ''; // same origin when served by dashboard_server
+  let DATA = window.DASHBOARD_DATA || {};
+  let SECTIONS = DATA.sections || [];
+  let REPOS = DATA.repos || [];
+  let GAPS = DATA.gaps || [];
+  let TREE = DATA.tree || '';
+  let CLI = DATA.cli || [];
+  let REPORT = DATA.report || { available: false };
+  let cases = DATA.cases || [];
 
   const $ = (s) => document.querySelector(s);
   const state = { q: '', section: '', status: '', page: 0, size: 12 };
@@ -19,6 +19,33 @@
     t.classList.add('show');
     clearTimeout(toast._t);
     toast._t = setTimeout(() => t.classList.remove('show'), 2200);
+  }
+
+  async function api(path, options) {
+    try {
+      const res = await fetch(API + path, options);
+      if (!res.ok) throw new Error(res.status + ' ' + res.statusText);
+      const ct = res.headers.get('content-type') || '';
+      if (ct.includes('application/json')) return await res.json();
+      return await res.text();
+    } catch (e) {
+      return null;
+    }
+  }
+
+  async function loadData() {
+    const fresh = await api('/api/dashboard-data');
+    if (fresh && fresh.cases) {
+      DATA = fresh;
+      SECTIONS = DATA.sections || [];
+      REPOS = DATA.repos || [];
+      GAPS = DATA.gaps || [];
+      TREE = DATA.tree || '';
+      CLI = DATA.cli || [];
+      REPORT = DATA.report || { available: false };
+      cases = DATA.cases || [];
+      window.DASHBOARD_DATA = DATA;
+    }
   }
 
   function counts(list) {
@@ -62,7 +89,7 @@
         <div class="bar">
           <i class="p" style="width:${pct(c.pass)}%"></i>
           <i class="f" style="width:${pct(c.fail)}%"></i>
-          <i class="s" style="width:${pct(c.skip || 0) + pct(c.blocked || 0)}%"></i>
+          <i class="s" style="width:${pct((c.skip || 0) + (c.blocked || 0))}%"></i>
         </div></div>`;
     }).join('');
   }
@@ -102,6 +129,66 @@
     $('#cli').innerHTML = CLI.map((c) => `<code>$ ${c}</code>`).join('');
     $('#f-section').innerHTML = '<option value="">Todas las secciones</option>' +
       SECTIONS.map(([s, n]) => `<option value="${s}">${s} · ${n}</option>`).join('');
+    // run section select
+    const rs = $('#run-section');
+    if (rs) {
+      rs.innerHTML = SECTIONS.map(([s, n]) => `<option value="${s.replace('s','')}">${s} · ${n}</option>`).join('');
+    }
+  }
+
+  function drawCharts() {
+    const cSec = $('#chart-sections');
+    if (cSec) {
+      const ctx = cSec.getContext('2d');
+      ctx.clearRect(0, 0, cSec.width, cSec.height);
+      const w = cSec.width, h = cSec.height;
+      const pad = 30;
+      const bw = (w - pad * 2) / Math.max(SECTIONS.length, 1);
+      SECTIONS.forEach(([sid], i) => {
+        const list = cases.filter((c) => c.sid === sid);
+        const pass = list.filter((c) => c.status === 'pass').length;
+        const pct = list.length ? pass / list.length : 0;
+        const bh = (h - pad * 2) * pct;
+        const x = pad + i * bw + bw * 0.15;
+        const y = h - pad - bh;
+        ctx.fillStyle = '#16a34a';
+        ctx.fillRect(x, y, bw * 0.7, bh);
+        ctx.fillStyle = '#6b7385';
+        ctx.font = '10px monospace';
+        ctx.fillText(sid, x, h - 12);
+      });
+    }
+    const cSt = $('#chart-status');
+    if (cSt) {
+      const ctx = cSt.getContext('2d');
+      ctx.clearRect(0, 0, cSt.width, cSt.height);
+      const c = counts(cases);
+      const entries = Object.entries(c);
+      const total = cases.length || 1;
+      let angle = -Math.PI / 2;
+      const colors = { pass: '#16a34a', fail: '#dc2626', blocked: '#d97706', skip: '#d97706', error: '#dc2626', unrun: '#6b7385' };
+      const cx = cSt.width / 2, cy = cSt.height / 2, r = Math.min(cx, cy) - 20;
+      entries.forEach(([k, v]) => {
+        const a = (v / total) * Math.PI * 2;
+        ctx.beginPath();
+        ctx.moveTo(cx, cy);
+        ctx.arc(cx, cy, r, angle, angle + a);
+        ctx.closePath();
+        ctx.fillStyle = colors[k] || '#4f46e5';
+        ctx.fill();
+        angle += a;
+      });
+      // legend
+      let ly = 10;
+      entries.forEach(([k, v]) => {
+        ctx.fillStyle = colors[k] || '#4f46e5';
+        ctx.fillRect(10, ly, 12, 12);
+        ctx.fillStyle = '#1c2230';
+        ctx.font = '12px sans-serif';
+        ctx.fillText(`${k}: ${v}`, 28, ly + 10);
+        ly += 16;
+      });
+    }
   }
 
   function openCase(id) {
@@ -118,8 +205,64 @@
     $('#dlg').showModal();
   }
 
-  function refresh() { renderKpis(); renderSections(); renderTable(); }
+  function refresh() { renderKpis(); renderSections(); renderTable(); drawCharts(); }
 
+  async function runTests() {
+    const btn = $('#btn-run');
+    btn.disabled = true;
+    const scope = $('#run-scope').value;
+    const section = parseInt($('#run-section').value, 10) || 1;
+    const responsive = $('#run-responsive').checked;
+    const body = { scope, section, responsive };
+    const res = await api('/api/run', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+    if (!res || !res.started) {
+      toast('No se pudo iniciar (¿servidor activo?)');
+      btn.disabled = false;
+      return;
+    }
+    toast('Ejecución iniciada');
+    pollRun();
+  }
+
+  async function pollRun() {
+    const logEl = $('#run-log');
+    const statusEl = $('#run-status');
+    const btn = $('#btn-run');
+    const timer = setInterval(async () => {
+      const st = await api('/api/run/status');
+      if (!st) return;
+      if (statusEl) statusEl.textContent = st.running ? 'Ejecutando…' : `Finalizado (exit ${st.exit_code})`;
+      if (logEl) {
+        logEl.textContent = (st.log || []).join('\n');
+        logEl.scrollTop = logEl.scrollHeight;
+      }
+      if (!st.running) {
+        clearInterval(timer);
+        btn.disabled = false;
+        await loadData();
+        renderStatic();
+        refresh();
+        await loadArtifacts();
+        toast('Datos recargados');
+      }
+    }, 1000);
+  }
+
+  async function loadArtifacts() {
+    const list = await api('/api/artifacts');
+    const el = $('#artifacts');
+    const count = $('#artifacts-count');
+    if (!list || !el) return;
+    if (count) count.textContent = `${list.length} archivos`;
+    el.innerHTML = list.map((a) => {
+      if (a.path.match(/\.(png|jpg|jpeg)$/i)) {
+        return `<div class="artifact"><img src="/${a.path}" alt="${a.path}"><div>${a.path}</div></div>`;
+      }
+      return `<div class="artifact"><div>${a.path}</div><div>${a.size} bytes</div></div>`;
+    }).join('');
+  }
+
+  // events
   $('#sections').addEventListener('click', (e) => {
     const el = e.target.closest('.sec');
     if (!el) return;
@@ -147,7 +290,29 @@
       toast('Comando copiado');
     }
   });
+  const runBtn = $('#btn-run');
+  if (runBtn) runBtn.addEventListener('click', runTests);
+  const refreshBtn = $('#btn-refresh');
+  if (refreshBtn) refreshBtn.addEventListener('click', async () => {
+    await loadData();
+    renderStatic();
+    refresh();
+    await loadArtifacts();
+    toast('Datos recargados');
+  });
+  const scopeSel = $('#run-scope');
+  if (scopeSel) scopeSel.addEventListener('change', () => {
+    const sec = $('#run-section');
+    if (sec) sec.disabled = scopeSel.value !== 'section';
+  });
 
-  renderStatic();
-  refresh();
+  // init
+  (async () => {
+    await loadData();
+    renderStatic();
+    refresh();
+    await loadArtifacts();
+    const sec = $('#run-section');
+    if (sec) sec.disabled = true;
+  })();
 })();

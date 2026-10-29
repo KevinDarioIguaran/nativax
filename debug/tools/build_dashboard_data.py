@@ -57,12 +57,27 @@ def load_gaps() -> list[str]:
 
 def main() -> int:
     corpus = json.loads(CORPUS.read_text()) if CORPUS.exists() else {"cases": []}
-    report = {}
+    # Merge every available section report so partial runs do not erase the
+    # results of previously run sections.
+    report_files = sorted((DEBUG / "reports" / "lab").glob("section-*.json"))
     if REPORT.exists():
+        report_files.append(REPORT)
+    merged_cases = {}
+    generated_at = None
+    label = None
+    for rf in report_files:
         try:
-            report = json.loads(REPORT.read_text())
+            payload = json.loads(rf.read_text())
         except Exception:
-            report = {}
+            continue
+        for c in payload.get("cases", []):
+            merged_cases[c["id"]] = c
+        ga = payload.get("generated_at")
+        if ga and (generated_at is None or ga > generated_at):
+            generated_at = ga
+            label = "merged" if len(report_files) > 1 else payload.get("label", rf.stem)
+    report = {"cases": list(merged_cases.values()),
+              "generated_at": generated_at, "label": label} if merged_cases else {}
     by_id = {c["id"]: c for c in report.get("cases", [])}
 
     sections = []

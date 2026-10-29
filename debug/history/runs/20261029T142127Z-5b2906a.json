@@ -1,0 +1,2005 @@
+{
+  "run_id": "20261029T142127Z-5b2906a",
+  "timestamp": "2026-10-29T14:21:27.410628+00:00",
+  "label": "section-1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17",
+  "command": "debug/lab/run_lab.py --all --no-responsive",
+  "git": {
+    "branch": "native-c-sokol",
+    "commit": "5b2906a9eff1b3cc2dfb8901223953d0f84a3335",
+    "short": "5b2906a",
+    "dirty": true
+  },
+  "elapsed_seconds": 42.56,
+  "sections": {
+    "1": {
+      "pass": 15,
+      "fail": 0,
+      "blocked": 0,
+      "error": 0,
+      "total": 15
+    },
+    "2": {
+      "pass": 15,
+      "fail": 0,
+      "blocked": 0,
+      "error": 0,
+      "total": 15
+    },
+    "3": {
+      "pass": 15,
+      "fail": 0,
+      "blocked": 0,
+      "error": 0,
+      "total": 15
+    },
+    "4": {
+      "pass": 15,
+      "fail": 0,
+      "blocked": 0,
+      "error": 0,
+      "total": 15
+    },
+    "5": {
+      "pass": 15,
+      "fail": 0,
+      "blocked": 0,
+      "error": 0,
+      "total": 15
+    },
+    "6": {
+      "pass": 15,
+      "fail": 0,
+      "blocked": 0,
+      "error": 0,
+      "total": 15
+    },
+    "7": {
+      "pass": 15,
+      "fail": 0,
+      "blocked": 0,
+      "error": 0,
+      "total": 15
+    },
+    "8": {
+      "pass": 15,
+      "fail": 0,
+      "blocked": 0,
+      "error": 0,
+      "total": 15
+    },
+    "9": {
+      "pass": 15,
+      "fail": 0,
+      "blocked": 0,
+      "error": 0,
+      "total": 15
+    },
+    "10": {
+      "pass": 15,
+      "fail": 0,
+      "blocked": 0,
+      "error": 0,
+      "total": 15
+    },
+    "11": {
+      "pass": 15,
+      "fail": 0,
+      "blocked": 0,
+      "error": 0,
+      "total": 15
+    },
+    "12": {
+      "pass": 15,
+      "fail": 0,
+      "blocked": 0,
+      "error": 0,
+      "total": 15
+    },
+    "13": {
+      "pass": 15,
+      "fail": 0,
+      "blocked": 0,
+      "error": 0,
+      "total": 15
+    },
+    "14": {
+      "pass": 15,
+      "fail": 0,
+      "blocked": 0,
+      "error": 0,
+      "total": 15
+    },
+    "15": {
+      "pass": 15,
+      "fail": 0,
+      "blocked": 0,
+      "error": 0,
+      "total": 15
+    },
+    "16": {
+      "pass": 15,
+      "fail": 0,
+      "blocked": 0,
+      "error": 0,
+      "total": 15
+    },
+    "17": {
+      "pass": 0,
+      "fail": 0,
+      "blocked": 26,
+      "error": 0,
+      "total": 26
+    }
+  },
+  "totals": {
+    "pass": 240,
+    "fail": 0,
+    "blocked": 26,
+    "error": 0,
+    "total": 266
+  },
+  "cases": {
+    "html.001": {
+      "section": 1,
+      "name": "learning-zone/website-templates \u00b7 skytouch-onepage-bootstrap-responsive-web-template",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 720.64
+    },
+    "html.002": {
+      "section": 1,
+      "name": "learning-zone/website-templates \u00b7 webtrends-free-bootstrap-responsive-web-template",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 729.78
+    },
+    "html.003": {
+      "section": 1,
+      "name": "learning-zone/website-templates \u00b7 vibrant-corporate-bootstrap-responsive-website-template",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 527.58
+    },
+    "html.004": {
+      "section": 1,
+      "name": "learning-zone/website-templates \u00b7 midway-free-html5-website-template-for-multi-purpose",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 518.52
+    },
+    "html.005": {
+      "section": 1,
+      "name": "learning-zone/website-templates \u00b7 trendy-free-bootstrap-responsive-website-template",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 722.63
+    },
+    "html.006": {
+      "section": 1,
+      "name": "learning-zone/website-templates \u00b7 startbootstrap-sb-admin-1.0.2",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 510.47
+    },
+    "html.007": {
+      "section": 1,
+      "name": "learning-zone/website-templates \u00b7 sb-admin",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 485.35
+    },
+    "html.008": {
+      "section": 1,
+      "name": "learning-zone/website-templates \u00b7 startbootstrap-stylish-portfolio-1.0.2",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 322.28
+    },
+    "html.009": {
+      "section": 1,
+      "name": "learning-zone/website-templates \u00b7 touch-hospital-medical-bootstrap-html5-template",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 555.23
+    },
+    "html.010": {
+      "section": 1,
+      "name": "keshavgbpecdelhi/Web-Development \u00b7 projects/resume_builder",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 67.14
+    },
+    "html.011": {
+      "section": 1,
+      "name": "learning-zone/website-templates \u00b7 the-best-wedding-free-bootstrap-template",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 334.02
+    },
+    "html.012": {
+      "section": 1,
+      "name": "learning-zone/website-templates \u00b7 viver-free-html5-bootstrap-coming-soon-template",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 411.39
+    },
+    "html.013": {
+      "section": 1,
+      "name": "learning-zone/website-templates \u00b7 techro",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 350.54
+    },
+    "html.014": {
+      "section": 1,
+      "name": "learning-zone/website-templates \u00b7 vone-free-business-html5-responsive-website",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 391.71
+    },
+    "html.015": {
+      "section": 1,
+      "name": "learning-zone/website-templates \u00b7 vteam-a-corporate-multipurpose-free-bootstrap-responsive-template",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 401.97
+    },
+    "css.001": {
+      "section": 2,
+      "name": "learning-zone/website-templates \u00b7 css3-photo-two",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 40.11
+    },
+    "css.002": {
+      "section": 2,
+      "name": "learning-zone/website-templates \u00b7 css3-seascape",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 143.2
+    },
+    "css.003": {
+      "section": 2,
+      "name": "learning-zone/website-templates \u00b7 css3-seascape-two",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 96.87
+    },
+    "css.004": {
+      "section": 2,
+      "name": "learning-zone/website-templates \u00b7 full-slider",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 272.8
+    },
+    "css.005": {
+      "section": 2,
+      "name": "learning-zone/website-templates \u00b7 half-slider",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 187.03
+    },
+    "css.006": {
+      "section": 2,
+      "name": "learning-zone/website-templates \u00b7 html5-responsive-coming-soon-page",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 221.64
+    },
+    "css.007": {
+      "section": 2,
+      "name": "learning-zone/website-templates \u00b7 lazydays",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 77.06
+    },
+    "css.008": {
+      "section": 2,
+      "name": "learning-zone/website-templates \u00b7 learn-educational-free-responsive-web-template",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 432.76
+    },
+    "css.009": {
+      "section": 2,
+      "name": "learning-zone/website-templates \u00b7 light-coming-soon-html-responsive-template",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 189.92
+    },
+    "css.010": {
+      "section": 2,
+      "name": "learning-zone/website-templates \u00b7 photo-art",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 99.05
+    },
+    "css.011": {
+      "section": 2,
+      "name": "learning-zone/website-templates \u00b7 photo-style-two",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 94.32
+    },
+    "css.012": {
+      "section": 2,
+      "name": "keshavgbpecdelhi/Web-Development \u00b7 projects/Startup Landing Page",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 121.69
+    },
+    "css.013": {
+      "section": 2,
+      "name": "learning-zone/website-templates \u00b7 prosimii",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 39.01
+    },
+    "css.014": {
+      "section": 2,
+      "name": "learning-zone/website-templates \u00b7 scenic-photo",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 43.47
+    },
+    "css.015": {
+      "section": 2,
+      "name": "learning-zone/website-templates \u00b7 simply-bootstrap-coming-soon-template",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 238.3
+    },
+    "box.001": {
+      "section": 3,
+      "name": "learning-zone/website-templates \u00b7 extent",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 27.29
+    },
+    "box.002": {
+      "section": 3,
+      "name": "learning-zone/website-templates \u00b7 internet-portal",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 66.74
+    },
+    "box.003": {
+      "section": 3,
+      "name": "learning-zone/website-templates \u00b7 sinorca",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 79.07
+    },
+    "box.004": {
+      "section": 3,
+      "name": "learning-zone/website-templates \u00b7 zenlike",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 67.69
+    },
+    "box.005": {
+      "section": 3,
+      "name": "keshavgbpecdelhi/Web-Development \u00b7 projects/TinDog Website [HTML + CSS + Bootstrap]/Little Portfolio",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 52.23
+    },
+    "box.006": {
+      "section": 3,
+      "name": "learning-zone/website-templates \u00b7 greenery",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 42.08
+    },
+    "box.007": {
+      "section": 3,
+      "name": "keshavgbpecdelhi/Web-Development \u00b7 projects/ProfileCardsWithSlider",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 36.05
+    },
+    "box.008": {
+      "section": 3,
+      "name": "learning-zone/website-templates \u00b7 thin-green-line",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 58.9
+    },
+    "box.009": {
+      "section": 3,
+      "name": "learning-zone/website-templates \u00b7 gunmetal-portal",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 29.41
+    },
+    "box.010": {
+      "section": 3,
+      "name": "learning-zone/website-templates \u00b7 street-life",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 18.49
+    },
+    "box.011": {
+      "section": 3,
+      "name": "keshavgbpecdelhi/Web-Development \u00b7 projects/calculator",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 16.59
+    },
+    "box.012": {
+      "section": 3,
+      "name": "keshavgbpecdelhi/Web-Development \u00b7 projects/TinDog Website [HTML + CSS + Bootstrap]/bootstrap-form",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 13.66
+    },
+    "box.013": {
+      "section": 3,
+      "name": "keshavgbpecdelhi/Web-Development \u00b7 projects/DiskSchedulingAlgorithms",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 16.47
+    },
+    "box.014": {
+      "section": 3,
+      "name": "learning-zone/website-templates \u00b7 super-simple-site",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 45.19
+    },
+    "box.015": {
+      "section": 3,
+      "name": "learning-zone/website-templates \u00b7 metropolis",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 14.74
+    },
+    "typo.001": {
+      "section": 4,
+      "name": "zxuqian/html-css-examples \u00b7 37-container-queries",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 8.53
+    },
+    "typo.002": {
+      "section": 4,
+      "name": "zxuqian/html-css-examples \u00b7 46-css-aspect-ratio",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 6.85
+    },
+    "typo.003": {
+      "section": 4,
+      "name": "zxuqian/html-css-examples \u00b7 48-css-clay-morphism",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 7.96
+    },
+    "typo.004": {
+      "section": 4,
+      "name": "zxuqian/html-css-examples \u00b7 49-html-buit-in-dialog",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 9.03
+    },
+    "typo.005": {
+      "section": 4,
+      "name": "zxuqian/html-css-examples \u00b7 50-css-grid-irregular-layout",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 10.31
+    },
+    "typo.006": {
+      "section": 4,
+      "name": "zxuqian/html-css-examples \u00b7 51-css-scroll-based-animation",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 5.99
+    },
+    "typo.007": {
+      "section": 4,
+      "name": "zxuqian/html-css-examples \u00b7 55-beautiful-table",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 19.4
+    },
+    "typo.008": {
+      "section": 4,
+      "name": "zxuqian/html-css-examples \u00b7 56-animation-button",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 8.12
+    },
+    "typo.009": {
+      "section": 4,
+      "name": "learning-zone/website-templates \u00b7 css3-drop-shadows",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 10.2
+    },
+    "typo.010": {
+      "section": 4,
+      "name": "learning-zone/website-templates \u00b7 dreamy",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 20.26
+    },
+    "typo.011": {
+      "section": 4,
+      "name": "learning-zone/website-templates \u00b7 drifting",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 35.95
+    },
+    "typo.012": {
+      "section": 4,
+      "name": "learning-zone/website-templates \u00b7 droll",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 34.18
+    },
+    "typo.013": {
+      "section": 4,
+      "name": "learning-zone/website-templates \u00b7 funky-cool-blue",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 56.25
+    },
+    "typo.014": {
+      "section": 4,
+      "name": "learning-zone/website-templates \u00b7 gila",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 42.92
+    },
+    "typo.015": {
+      "section": 4,
+      "name": "learning-zone/website-templates \u00b7 grass-stains",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 75.27
+    },
+    "color.001": {
+      "section": 5,
+      "name": "zxuqian/html-css-examples \u00b7 26-glassmorphism",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 7.16
+    },
+    "color.002": {
+      "section": 5,
+      "name": "zxuqian/html-css-examples \u00b7 28-css-colors",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 10.83
+    },
+    "color.003": {
+      "section": 5,
+      "name": "zxuqian/html-css-examples \u00b7 32-place-item-center",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 7.39
+    },
+    "color.004": {
+      "section": 5,
+      "name": "zxuqian/html-css-examples \u00b7 33-text-image-layout",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 10.03
+    },
+    "color.005": {
+      "section": 5,
+      "name": "zxuqian/html-css-examples \u00b7 34-drag-drop-api",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 12.13
+    },
+    "color.006": {
+      "section": 5,
+      "name": "zxuqian/html-css-examples \u00b7 35-collision-physics",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 8.59
+    },
+    "color.007": {
+      "section": 5,
+      "name": "zxuqian/html-css-examples \u00b7 36-tech-website",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 12.56
+    },
+    "color.008": {
+      "section": 5,
+      "name": "zxuqian/html-css-examples \u00b7 38-horizontal-scrolling",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 6.96
+    },
+    "color.009": {
+      "section": 5,
+      "name": "zxuqian/html-css-examples \u00b7 39-web-animations",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 6.86
+    },
+    "color.010": {
+      "section": 5,
+      "name": "zxuqian/html-css-examples \u00b7 40-multi-column-layout",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 7.5
+    },
+    "color.011": {
+      "section": 5,
+      "name": "zxuqian/html-css-examples \u00b7 41-css-scroll-snap",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 6.95
+    },
+    "color.012": {
+      "section": 5,
+      "name": "zxuqian/html-css-examples \u00b7 42-clipboard-api",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 8.49
+    },
+    "color.013": {
+      "section": 5,
+      "name": "zxuqian/html-css-examples \u00b7 43-css-gradient-shadow",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 7.94
+    },
+    "color.014": {
+      "section": 5,
+      "name": "zxuqian/html-css-examples \u00b7 44-css-pointer-events",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 6.89
+    },
+    "color.015": {
+      "section": 5,
+      "name": "zxuqian/html-css-examples \u00b7 45-URLSearchParams",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 6.64
+    },
+    "anim.001": {
+      "section": 6,
+      "name": "keshavgbpecdelhi/Web-Development \u00b7 projects/car-animation",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 10.64
+    },
+    "anim.002": {
+      "section": 6,
+      "name": "keshavgbpecdelhi/Web-Development \u00b7 projects/Fancy-Buttons",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 10.63
+    },
+    "anim.003": {
+      "section": 6,
+      "name": "zxuqian/html-css-examples \u00b7 52-day-night-toggle-button",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 39.6
+    },
+    "anim.004": {
+      "section": 6,
+      "name": "zxuqian/html-css-examples \u00b7 20-typewritter-effect",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 15.77
+    },
+    "anim.005": {
+      "section": 6,
+      "name": "zxuqian/html-css-examples \u00b7 27-glitch-effect",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 11.85
+    },
+    "anim.006": {
+      "section": 6,
+      "name": "zxuqian/html-css-examples \u00b7 30-gradient-background-animation",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 10.78
+    },
+    "anim.007": {
+      "section": 6,
+      "name": "zxuqian/html-css-examples \u00b7 54-navbar-dark-bouncing",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 16.62
+    },
+    "anim.008": {
+      "section": 6,
+      "name": "keshavgbpecdelhi/Web-Development \u00b7 projects/Loading Screen",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 15.29
+    },
+    "anim.009": {
+      "section": 6,
+      "name": "keshavgbpecdelhi/Web-Development \u00b7 projects/Mathbot",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 18.25
+    },
+    "anim.010": {
+      "section": 6,
+      "name": "keshavgbpecdelhi/Web-Development \u00b7 projects/Random-color-Generator",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 17.65
+    },
+    "anim.011": {
+      "section": 6,
+      "name": "keshavgbpecdelhi/Web-Development \u00b7 projects/fluid-webpage/Fluid-Webpage",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 26.7
+    },
+    "anim.012": {
+      "section": 6,
+      "name": "keshavgbpecdelhi/Web-Development \u00b7 projects/joke-generator",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 16.26
+    },
+    "anim.013": {
+      "section": 6,
+      "name": "zxuqian/html-css-examples \u00b7 21-range-slider",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 14.59
+    },
+    "anim.014": {
+      "section": 6,
+      "name": "zxuqian/html-css-examples \u00b7 24-fetch-get-data",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 11.89
+    },
+    "anim.015": {
+      "section": 6,
+      "name": "zxuqian/html-css-examples \u00b7 29-resizable-element",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 20.98
+    },
+    "resp.001": {
+      "section": 7,
+      "name": "keshavgbpecdelhi/Web-Development \u00b7 projects/landing-page",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 53.39
+    },
+    "resp.002": {
+      "section": 7,
+      "name": "keshavgbpecdelhi/Web-Development \u00b7 projects/Metrics Calculator",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 28.79
+    },
+    "resp.003": {
+      "section": 7,
+      "name": "keshavgbpecdelhi/Web-Development \u00b7 projects/Name_Project",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 13.85
+    },
+    "resp.004": {
+      "section": 7,
+      "name": "keshavgbpecdelhi/Web-Development \u00b7 projects/gallery-website",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 69.52
+    },
+    "resp.005": {
+      "section": 7,
+      "name": "keshavgbpecdelhi/Web-Development \u00b7 projects/QR Code Scanner",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 20.56
+    },
+    "resp.006": {
+      "section": 7,
+      "name": "zxuqian/html-css-examples \u00b7 25-neumorphism-tabs",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 21.23
+    },
+    "resp.007": {
+      "section": 7,
+      "name": "keshavgbpecdelhi/Web-Development \u00b7 projects/ContactForm",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 24.07
+    },
+    "resp.008": {
+      "section": 7,
+      "name": "zxuqian/html-css-examples \u00b7 14-image-slider",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 22.36
+    },
+    "resp.009": {
+      "section": 7,
+      "name": "keshavgbpecdelhi/Web-Development \u00b7 projects/CSS-JS Hybrid Animation",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 10.57
+    },
+    "resp.010": {
+      "section": 7,
+      "name": "keshavgbpecdelhi/Web-Development \u00b7 projects/Random Number Gen_using local storage",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 11.4
+    },
+    "resp.011": {
+      "section": 7,
+      "name": "keshavgbpecdelhi/Web-Development \u00b7 projects/Socket IO Chat App/_html_css",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 14.26
+    },
+    "resp.012": {
+      "section": 7,
+      "name": "keshavgbpecdelhi/Web-Development \u00b7 projects/Socket IO Chat App/public",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 12.29
+    },
+    "resp.013": {
+      "section": 7,
+      "name": "keshavgbpecdelhi/Web-Development \u00b7 projects/parallax-website",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 14.41
+    },
+    "resp.014": {
+      "section": 7,
+      "name": "learning-zone/website-templates \u00b7 theme-changer-template",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 19.88
+    },
+    "resp.015": {
+      "section": 7,
+      "name": "zxuqian/html-css-examples \u00b7 17-upload-button",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 12.49
+    },
+    "flex.001": {
+      "section": 8,
+      "name": "zxuqian/html-css-examples \u00b7 01-social-icon-hover-glow-effect",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 10.33
+    },
+    "flex.002": {
+      "section": 8,
+      "name": "zxuqian/html-css-examples \u00b7 02-login-form-glass-effect",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 9.49
+    },
+    "flex.003": {
+      "section": 8,
+      "name": "zxuqian/html-css-examples \u00b7 03-chatting-ui",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 22.54
+    },
+    "flex.004": {
+      "section": 8,
+      "name": "zxuqian/html-css-examples \u00b7 04-svg-text-drawing-effect",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 8.18
+    },
+    "flex.005": {
+      "section": 8,
+      "name": "zxuqian/html-css-examples \u00b7 05-button-hover-border-drawing-effect",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 8.79
+    },
+    "flex.006": {
+      "section": 8,
+      "name": "zxuqian/html-css-examples \u00b7 06-libra-ui-concept",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 23.33
+    },
+    "flex.007": {
+      "section": 8,
+      "name": "zxuqian/html-css-examples \u00b7 07-3d-cubic-images",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 8.83
+    },
+    "flex.008": {
+      "section": 8,
+      "name": "zxuqian/html-css-examples \u00b7 08-parallax-scrolling",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 10.99
+    },
+    "flex.009": {
+      "section": 8,
+      "name": "zxuqian/html-css-examples \u00b7 09-japanese-pronunciation",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 75.48
+    },
+    "flex.010": {
+      "section": 8,
+      "name": "zxuqian/html-css-examples \u00b7 10-navigation-bar",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 18.24
+    },
+    "flex.011": {
+      "section": 8,
+      "name": "zxuqian/html-css-examples \u00b7 11-canvas-bar-chart",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 11.17
+    },
+    "flex.012": {
+      "section": 8,
+      "name": "zxuqian/html-css-examples \u00b7 12-skill-progress-bar",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 15.25
+    },
+    "flex.013": {
+      "section": 8,
+      "name": "zxuqian/html-css-examples \u00b7 13-css-3d-tutorial",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 13.01
+    },
+    "flex.014": {
+      "section": 8,
+      "name": "zxuqian/html-css-examples \u00b7 15-responsive-navbar",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 15.41
+    },
+    "flex.015": {
+      "section": 8,
+      "name": "zxuqian/html-css-examples \u00b7 16-svg-animation-truck",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 26.15
+    },
+    "pos.001": {
+      "section": 9,
+      "name": "keshavgbpecdelhi/Web-Development \u00b7 projects/Animated Search Form",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 10.81
+    },
+    "pos.002": {
+      "section": 9,
+      "name": "keshavgbpecdelhi/Web-Development \u00b7 projects/CSS-Adjuster",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 12.2
+    },
+    "pos.003": {
+      "section": 9,
+      "name": "keshavgbpecdelhi/Web-Development \u00b7 projects/Check Internet Connection Status",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 7.08
+    },
+    "pos.004": {
+      "section": 9,
+      "name": "keshavgbpecdelhi/Web-Development \u00b7 projects/Eyes Moving",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 8.59
+    },
+    "pos.005": {
+      "section": 9,
+      "name": "keshavgbpecdelhi/Web-Development \u00b7 projects/Mole in a Hole Game",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 11.71
+    },
+    "pos.006": {
+      "section": 9,
+      "name": "keshavgbpecdelhi/Web-Development \u00b7 projects/Windows11 Clone",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 9.93
+    },
+    "pos.007": {
+      "section": 9,
+      "name": "keshavgbpecdelhi/Web-Development \u00b7 projects/loginPage",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 8.0
+    },
+    "pos.008": {
+      "section": 9,
+      "name": "keshavgbpecdelhi/Web-Development \u00b7 projects/mdown-editor",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 8.54
+    },
+    "pos.009": {
+      "section": 9,
+      "name": "keshavgbpecdelhi/Web-Development \u00b7 projects/nft-preview-card-component",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 14.04
+    },
+    "pos.010": {
+      "section": 9,
+      "name": "keshavgbpecdelhi/Web-Development \u00b7 projects/twitterLogoCssOnly",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 8.74
+    },
+    "pos.011": {
+      "section": 9,
+      "name": "keshavgbpecdelhi/Web-Development \u00b7 projects/Countdown-Timer",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 9.67
+    },
+    "pos.012": {
+      "section": 9,
+      "name": "keshavgbpecdelhi/Web-Development \u00b7 projects/GERICHT/public",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 5.7
+    },
+    "pos.013": {
+      "section": 9,
+      "name": "keshavgbpecdelhi/Web-Development \u00b7 projects/Get Random Advice/public",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 6.36
+    },
+    "pos.014": {
+      "section": 9,
+      "name": "keshavgbpecdelhi/Web-Development \u00b7 projects/Math4Kids",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 12.35
+    },
+    "pos.015": {
+      "section": 9,
+      "name": "keshavgbpecdelhi/Web-Development \u00b7 projects/Profile Cards",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 8.0
+    },
+    "jsdom.001": {
+      "section": 10,
+      "name": "zxuqian/html-css-examples \u00b7 18-elsa-magic-effect",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 8.09
+    },
+    "jsdom.002": {
+      "section": 10,
+      "name": "zxuqian/html-css-examples \u00b7 53-screenshot-html2-canvas",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 50.18
+    },
+    "jsdom.003": {
+      "section": 10,
+      "name": "learning-zone/website-templates \u00b7 ace-responsive-coming-soon-template",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 160.23
+    },
+    "jsdom.004": {
+      "section": 10,
+      "name": "learning-zone/website-templates \u00b7 coming-soon-responsive-theme-jack",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 69.68
+    },
+    "jsdom.005": {
+      "section": 10,
+      "name": "learning-zone/website-templates \u00b7 css3-bw",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 39.81
+    },
+    "jsdom.006": {
+      "section": 10,
+      "name": "learning-zone/website-templates \u00b7 my-portfolio-two",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 29.88
+    },
+    "jsdom.007": {
+      "section": 10,
+      "name": "keshavgbpecdelhi/Web-Development \u00b7 projects/Wordle_Clone",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 22.05
+    },
+    "jsdom.008": {
+      "section": 10,
+      "name": "keshavgbpecdelhi/Web-Development \u00b7 projects/glassmorphism-calendar",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 33.64
+    },
+    "jsdom.009": {
+      "section": 10,
+      "name": "learning-zone/website-templates \u00b7 startbootstrap-clean-blog-1.0.2",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 277.37
+    },
+    "jsdom.010": {
+      "section": 10,
+      "name": "learning-zone/website-templates \u00b7 startbootstrap-grayscale-1.0.3",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 329.62
+    },
+    "jsdom.011": {
+      "section": 10,
+      "name": "learning-zone/website-templates \u00b7 stylish-bootstrap-coming-soon-template",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 278.38
+    },
+    "jsdom.012": {
+      "section": 10,
+      "name": "learning-zone/website-templates \u00b7 stylish-portfolio",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 390.79
+    },
+    "jsdom.013": {
+      "section": 10,
+      "name": "learning-zone/website-templates \u00b7 tech-city-free-coming-soon-bootstrap-responsive-template",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 373.7
+    },
+    "jsdom.014": {
+      "section": 10,
+      "name": "learning-zone/website-templates \u00b7 trendset-coming-soon-responsive-theme",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 36.47
+    },
+    "jsdom.015": {
+      "section": 10,
+      "name": "learning-zone/website-templates \u00b7 vento-coming-soon-responsive-theme",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 37.23
+    },
+    "events.001": {
+      "section": 11,
+      "name": "keshavgbpecdelhi/Web-Development \u00b7 projects/Convert",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 40.2
+    },
+    "events.002": {
+      "section": 11,
+      "name": "keshavgbpecdelhi/Web-Development \u00b7 projects/digitalClock",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 64.87
+    },
+    "events.003": {
+      "section": 11,
+      "name": "zxuqian/html-css-examples \u00b7 31-webcomponent-get-started",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 7.4
+    },
+    "events.004": {
+      "section": 11,
+      "name": "keshavgbpecdelhi/Web-Development \u00b7 projects/todo-app",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 15.61
+    },
+    "events.005": {
+      "section": 11,
+      "name": "keshavgbpecdelhi/Web-Development \u00b7 projects/ball game",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 9.01
+    },
+    "events.006": {
+      "section": 11,
+      "name": "keshavgbpecdelhi/Web-Development \u00b7 projects/simple-todo",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 12.61
+    },
+    "events.007": {
+      "section": 11,
+      "name": "keshavgbpecdelhi/Web-Development \u00b7 projects/Review Cards",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 20.65
+    },
+    "events.008": {
+      "section": 11,
+      "name": "keshavgbpecdelhi/Web-Development \u00b7 projects/OnlineMockTestSystem",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 13.51
+    },
+    "events.009": {
+      "section": 11,
+      "name": "keshavgbpecdelhi/Web-Development \u00b7 projects/snake game",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 6.99
+    },
+    "events.010": {
+      "section": 11,
+      "name": "keshavgbpecdelhi/Web-Development \u00b7 projects/Timer App",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 9.61
+    },
+    "events.011": {
+      "section": 11,
+      "name": "keshavgbpecdelhi/Web-Development \u00b7 projects/Random_Joke_Generator",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 26.24
+    },
+    "events.012": {
+      "section": 11,
+      "name": "keshavgbpecdelhi/Web-Development \u00b7 projects/webpage-using-api",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 29.1
+    },
+    "events.013": {
+      "section": 11,
+      "name": "keshavgbpecdelhi/Web-Development \u00b7 projects/Quote-generator/Quote-generator",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 48.03
+    },
+    "events.014": {
+      "section": 11,
+      "name": "keshavgbpecdelhi/Web-Development \u00b7 projects/search",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 9.91
+    },
+    "events.015": {
+      "section": 11,
+      "name": "keshavgbpecdelhi/Web-Development \u00b7 projects/github_profile",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 10.45
+    },
+    "forms.001": {
+      "section": 12,
+      "name": "keshavgbpecdelhi/Web-Development \u00b7 projects/VAT Calculator",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 11.04
+    },
+    "forms.002": {
+      "section": 12,
+      "name": "keshavgbpecdelhi/Web-Development \u00b7 projects/drum-kit",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 11.06
+    },
+    "forms.003": {
+      "section": 12,
+      "name": "keshavgbpecdelhi/Web-Development \u00b7 projects/drumkit",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 13.14
+    },
+    "forms.004": {
+      "section": 12,
+      "name": "keshavgbpecdelhi/Web-Development \u00b7 projects/Speed Typing Game",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 66.29
+    },
+    "forms.005": {
+      "section": 12,
+      "name": "keshavgbpecdelhi/Web-Development \u00b7 projects/TextUtils",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 26.33
+    },
+    "forms.006": {
+      "section": 12,
+      "name": "keshavgbpecdelhi/Web-Development \u00b7 projects/TV-show Search app",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 8.22
+    },
+    "forms.007": {
+      "section": 12,
+      "name": "keshavgbpecdelhi/Web-Development \u00b7 projects/pomodoro_webapp",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 59.21
+    },
+    "forms.008": {
+      "section": 12,
+      "name": "keshavgbpecdelhi/Web-Development \u00b7 projects/Random Color Flipper",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 9.28
+    },
+    "forms.009": {
+      "section": 12,
+      "name": "keshavgbpecdelhi/Web-Development \u00b7 projects/Weather App",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 21.62
+    },
+    "forms.010": {
+      "section": 12,
+      "name": "keshavgbpecdelhi/Web-Development \u00b7 projects/palindrome site",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 19.51
+    },
+    "forms.011": {
+      "section": 12,
+      "name": "keshavgbpecdelhi/Web-Development \u00b7 projects/shortLink",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 23.36
+    },
+    "forms.012": {
+      "section": 12,
+      "name": "keshavgbpecdelhi/Web-Development \u00b7 projects/Random Quote Generator",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 33.59
+    },
+    "forms.013": {
+      "section": 12,
+      "name": "keshavgbpecdelhi/Web-Development \u00b7 projects/Roll-the-Dice",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 21.08
+    },
+    "forms.014": {
+      "section": 12,
+      "name": "keshavgbpecdelhi/Web-Development \u00b7 projects/Simon Game",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 16.85
+    },
+    "forms.015": {
+      "section": 12,
+      "name": "keshavgbpecdelhi/Web-Development \u00b7 projects/Slide out Gallery",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 9.04
+    },
+    "a11y.001": {
+      "section": 13,
+      "name": "keshavgbpecdelhi/Web-Development \u00b7 projects/Responsive Bootstrap Website",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 67.04
+    },
+    "a11y.002": {
+      "section": 13,
+      "name": "learning-zone/website-templates \u00b7 fitness-zone-html5-bootstrap-responsive-web-template",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 1037.45
+    },
+    "a11y.003": {
+      "section": 13,
+      "name": "learning-zone/website-templates \u00b7 free-portfolio-html5-responsive-website-sam",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 720.54
+    },
+    "a11y.004": {
+      "section": 13,
+      "name": "learning-zone/website-templates \u00b7 me-resume-personal-portfolio-responsive-template",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 663.77
+    },
+    "a11y.005": {
+      "section": 13,
+      "name": "keshavgbpecdelhi/Web-Development \u00b7 projects/Music-Store",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 34.44
+    },
+    "a11y.006": {
+      "section": 13,
+      "name": "keshavgbpecdelhi/Web-Development \u00b7 projects/dynamic-page",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 621.65
+    },
+    "a11y.007": {
+      "section": 13,
+      "name": "learning-zone/website-templates \u00b7 john-bootstrap-one-page-html5-free-resume-template",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 729.88
+    },
+    "a11y.008": {
+      "section": 13,
+      "name": "keshavgbpecdelhi/Web-Development \u00b7 projects/TinDog Website [HTML + CSS + Bootstrap]",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 48.32
+    },
+    "a11y.009": {
+      "section": 13,
+      "name": "learning-zone/website-templates \u00b7 coffee-shop-free-html5-template",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 447.15
+    },
+    "a11y.010": {
+      "section": 13,
+      "name": "learning-zone/website-templates \u00b7 wedding-bells-free-responsive-html5-template",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 515.15
+    },
+    "a11y.011": {
+      "section": 13,
+      "name": "keshavgbpecdelhi/Web-Development \u00b7 projects/FAQ_Section",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 24.38
+    },
+    "a11y.012": {
+      "section": 13,
+      "name": "keshavgbpecdelhi/Web-Development \u00b7 projects/FRONTEND_COURSE_WEBSITE",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 74.26
+    },
+    "a11y.013": {
+      "section": 13,
+      "name": "keshavgbpecdelhi/Web-Development \u00b7 projects/Note_Pad",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 21.55
+    },
+    "a11y.014": {
+      "section": 13,
+      "name": "learning-zone/website-templates \u00b7 brand-html5-app-landing-page-responsive-web-template",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 818.23
+    },
+    "a11y.015": {
+      "section": 13,
+      "name": "learning-zone/website-templates \u00b7 businessr-corporate-bootstrap-responsive-web-template",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 659.43
+    },
+    "media.001": {
+      "section": 14,
+      "name": "keshavgbpecdelhi/Web-Development \u00b7 projects/Memory-game",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 36.99
+    },
+    "media.002": {
+      "section": 14,
+      "name": "keshavgbpecdelhi/Web-Development \u00b7 projects/e-commerce",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 132.79
+    },
+    "media.003": {
+      "section": 14,
+      "name": "learning-zone/website-templates \u00b7 free-bootstrap-template-rockline-business",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 674.16
+    },
+    "media.004": {
+      "section": 14,
+      "name": "keshavgbpecdelhi/Web-Development \u00b7 projects/mediabook",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 58.18
+    },
+    "media.005": {
+      "section": 14,
+      "name": "learning-zone/website-templates \u00b7 free-bootstrap-template-real-estate-my-home",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 734.95
+    },
+    "media.006": {
+      "section": 14,
+      "name": "keshavgbpecdelhi/Web-Development \u00b7 projects/Flipkart clone",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 57.37
+    },
+    "media.007": {
+      "section": 14,
+      "name": "learning-zone/website-templates \u00b7 eat-restaurant-bootstrap-html5-template",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 485.01
+    },
+    "media.008": {
+      "section": 14,
+      "name": "keshavgbpecdelhi/Web-Development \u00b7 projects/Skill Slider Frontend",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 12.95
+    },
+    "media.009": {
+      "section": 14,
+      "name": "learning-zone/website-templates \u00b7 creative-free-responsive-html5-business-template",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 445.98
+    },
+    "media.010": {
+      "section": 14,
+      "name": "learning-zone/website-templates \u00b7 relax-interior-free-bootstrap-responsive-website-template",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 615.45
+    },
+    "media.011": {
+      "section": 14,
+      "name": "learning-zone/website-templates \u00b7 rocket-business-bootstrap-free-responsive-web-theme",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 850.3
+    },
+    "media.012": {
+      "section": 14,
+      "name": "learning-zone/website-templates \u00b7 unique-free-responsive-html5-template",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 477.04
+    },
+    "media.013": {
+      "section": 14,
+      "name": "learning-zone/website-templates \u00b7 wow-portfolio-multi-purpose-html5-template",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 509.95
+    },
+    "media.014": {
+      "section": 14,
+      "name": "learning-zone/website-templates \u00b7 green-corp-flat-free-responsive-mobile-website",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 447.26
+    },
+    "media.015": {
+      "section": 14,
+      "name": "learning-zone/website-templates \u00b7 line-free-app-landing-page-responsive-web-template",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 484.6
+    },
+    "perf.001": {
+      "section": 15,
+      "name": "keshavgbpecdelhi/Web-Development \u00b7 projects/portfolio",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 620.43
+    },
+    "perf.002": {
+      "section": 15,
+      "name": "learning-zone/website-templates \u00b7 darktouch-corporate-portfolio-bootstrap-responsive-web-template",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 669.82
+    },
+    "perf.003": {
+      "section": 15,
+      "name": "learning-zone/website-templates \u00b7 vibe-free-html5-template-for-corporate-website",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 639.47
+    },
+    "perf.004": {
+      "section": 15,
+      "name": "learning-zone/website-templates \u00b7 techking-free-html5-template-for-corporate-business",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 620.89
+    },
+    "perf.005": {
+      "section": 15,
+      "name": "learning-zone/website-templates \u00b7 team-business-flat-bootstrap-html5-template",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 922.91
+    },
+    "perf.006": {
+      "section": 15,
+      "name": "learning-zone/website-templates \u00b7 traveller-bootstrap-responsive-web-template",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 795.71
+    },
+    "perf.007": {
+      "section": 15,
+      "name": "learning-zone/website-templates \u00b7 ideal-interior-design-free-bootstrap-website-template",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 860.4
+    },
+    "perf.008": {
+      "section": 15,
+      "name": "learning-zone/website-templates \u00b7 times-corporate-portfolio-bootstrap-responsive-web-template",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 632.86
+    },
+    "perf.009": {
+      "section": 15,
+      "name": "learning-zone/website-templates \u00b7 delite-music-html5-bootstrap-responsive-web-template",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 562.86
+    },
+    "perf.010": {
+      "section": 15,
+      "name": "learning-zone/website-templates \u00b7 agile-agency-free-bootstrap-web-template",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 704.15
+    },
+    "perf.011": {
+      "section": 15,
+      "name": "learning-zone/website-templates \u00b7 medplus-medical",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 676.35
+    },
+    "perf.012": {
+      "section": 15,
+      "name": "learning-zone/website-templates \u00b7 b-school-free-education-html5-website-template",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 565.12
+    },
+    "perf.013": {
+      "section": 15,
+      "name": "learning-zone/website-templates \u00b7 free-bootstrap-template-restaurant-website-treehut",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 617.49
+    },
+    "perf.014": {
+      "section": 15,
+      "name": "keshavgbpecdelhi/Web-Development \u00b7 projects/Digital Marketing Landing Page",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 661.82
+    },
+    "perf.015": {
+      "section": 15,
+      "name": "learning-zone/website-templates \u00b7 city-square-bootstrap-responsive-web-template",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 538.12
+    },
+    "integ.001": {
+      "section": 16,
+      "name": "keshavgbpecdelhi/Web-Development \u00b7 projects/TicTacToe",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 18.63
+    },
+    "integ.002": {
+      "section": 16,
+      "name": "keshavgbpecdelhi/Web-Development \u00b7 projects/Youtube-Clone",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 96.76
+    },
+    "integ.003": {
+      "section": 16,
+      "name": "zxuqian/html-css-examples \u00b7 19-profile-card",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 23.9
+    },
+    "integ.004": {
+      "section": 16,
+      "name": "learning-zone/website-templates \u00b7 3-col-portfolio",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 257.94
+    },
+    "integ.005": {
+      "section": 16,
+      "name": "zxuqian/html-css-examples \u00b7 31-05-wechat-emoji-effect",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 46.18
+    },
+    "integ.006": {
+      "section": 16,
+      "name": "learning-zone/website-templates \u00b7 alive-responsive-coming-soon-template",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 522.35
+    },
+    "integ.007": {
+      "section": 16,
+      "name": "learning-zone/website-templates \u00b7 amaze-photography-bootstrap-html5-template",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 548.51
+    },
+    "integ.008": {
+      "section": 16,
+      "name": "learning-zone/website-templates \u00b7 beauty-salon-bootstrap-html5-template",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 525.92
+    },
+    "integ.009": {
+      "section": 16,
+      "name": "learning-zone/website-templates \u00b7 clouds-html5-multipurpose-landing-page-template",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 529.62
+    },
+    "integ.010": {
+      "section": 16,
+      "name": "learning-zone/website-templates \u00b7 getdoctor-free-bootstrap-responsive-website-template",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 999.73
+    },
+    "integ.011": {
+      "section": 16,
+      "name": "learning-zone/website-templates \u00b7 grand-free-bootstrap-responsive-website-template",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 412.95
+    },
+    "integ.012": {
+      "section": 16,
+      "name": "learning-zone/website-templates \u00b7 iclick-photography-bootstrap-free-website-template",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 658.77
+    },
+    "integ.013": {
+      "section": 16,
+      "name": "learning-zone/website-templates \u00b7 lovely-wedding-bootstrap-free-website-template",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 600.77
+    },
+    "integ.014": {
+      "section": 16,
+      "name": "learning-zone/website-templates \u00b7 one-page-wonder",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 227.44
+    },
+    "integ.015": {
+      "section": 16,
+      "name": "learning-zone/website-templates \u00b7 portfolio-item",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 242.48
+    },
+    "gap.001": {
+      "section": 17,
+      "name": "var() custom properties",
+      "status": "blocked",
+      "message": "CSS var() is not evaluated by the engine.",
+      "duration_ms": 0.01
+    },
+    "gap.004": {
+      "section": 17,
+      "name": "position: absolute/fixed layout",
+      "status": "blocked",
+      "message": "Absolute/fixed positioning is not applied in layout.",
+      "duration_ms": 0.0
+    },
+    "gap.005": {
+      "section": 17,
+      "name": "float/clear layout",
+      "status": "blocked",
+      "message": "Float layout is not implemented.",
+      "duration_ms": 0.0
+    },
+    "gap.006": {
+      "section": 17,
+      "name": "display: grid",
+      "status": "blocked",
+      "message": "Grid layout is not implemented.",
+      "duration_ms": 0.0
+    },
+    "gap.007": {
+      "section": 17,
+      "name": "display: contents",
+      "status": "blocked",
+      "message": "display: contents is not implemented.",
+      "duration_ms": 0.0
+    },
+    "gap.008": {
+      "section": 17,
+      "name": "display: list-item",
+      "status": "blocked",
+      "message": "List-item marker layout is not implemented.",
+      "duration_ms": 0.0
+    },
+    "gap.009": {
+      "section": 17,
+      "name": "display: inline-block metrics",
+      "status": "blocked",
+      "message": "Inline-block shrink-to-fit is approximate.",
+      "duration_ms": 0.0
+    },
+    "gap.010": {
+      "section": 17,
+      "name": "img paint wiring",
+      "status": "blocked",
+      "message": "img/src background-image paint wiring is missing.",
+      "duration_ms": 0.0
+    },
+    "gap.011": {
+      "section": 17,
+      "name": "inline SVG",
+      "status": "blocked",
+      "message": "SVG rendering is not wired.",
+      "duration_ms": 0.0
+    },
+    "gap.012": {
+      "section": 17,
+      "name": "canvas element",
+      "status": "blocked",
+      "message": "Canvas 2D context is not implemented.",
+      "duration_ms": 0.0
+    },
+    "gap.013": {
+      "section": 17,
+      "name": "WebGL/Three.js",
+      "status": "blocked",
+      "message": "WebGL is not available.",
+      "duration_ms": 0.0
+    },
+    "gap.015": {
+      "section": 17,
+      "name": "font-weight application",
+      "status": "blocked",
+      "message": "font-weight is parsed but not applied in text metrics.",
+      "duration_ms": 0.0
+    },
+    "gap.016": {
+      "section": 17,
+      "name": "flex item coordinates",
+      "status": "blocked",
+      "message": "Flex item coordinate computation has a known bug.",
+      "duration_ms": 0.0
+    },
+    "gap.017": {
+      "section": 17,
+      "name": "Windows platform",
+      "status": "blocked",
+      "message": "Windows backend is not available in this environment.",
+      "duration_ms": 0.0
+    },
+    "gap.018": {
+      "section": 17,
+      "name": "macOS platform",
+      "status": "blocked",
+      "message": "macOS backend is not available in this environment.",
+      "duration_ms": 0.0
+    },
+    "gap.019": {
+      "section": 17,
+      "name": "iOS platform",
+      "status": "blocked",
+      "message": "iOS backend is not available in this environment.",
+      "duration_ms": 0.0
+    },
+    "gap.020": {
+      "section": 17,
+      "name": "Chromium comparison",
+      "status": "blocked",
+      "message": "Chromium comparison tooling is not available.",
+      "duration_ms": 0.0
+    },
+    "gap.022": {
+      "section": 17,
+      "name": "prefers-reduced-motion runtime",
+      "status": "blocked",
+      "message": "Reduced-motion switching is not tested at runtime.",
+      "duration_ms": 0.0
+    },
+    "gap.024": {
+      "section": 17,
+      "name": "@supports evaluation",
+      "status": "blocked",
+      "message": "@supports blocks are skipped, not evaluated.",
+      "duration_ms": 0.0
+    },
+    "gap.025": {
+      "section": 17,
+      "name": "@layer cascade",
+      "status": "blocked",
+      "message": "@layer is skipped, not cascaded.",
+      "duration_ms": 0.0
+    },
+    "gap.026": {
+      "section": 17,
+      "name": "@import resolution",
+      "status": "blocked",
+      "message": "@import is not resolved.",
+      "duration_ms": 0.0
+    },
+    "gap.027": {
+      "section": 17,
+      "name": "accessibility tree",
+      "status": "blocked",
+      "message": "No accessibility tree is exposed.",
+      "duration_ms": 0.0
+    },
+    "gap.028": {
+      "section": 17,
+      "name": "RTL/bidi text",
+      "status": "blocked",
+      "message": "RTL/bidi text is not handled.",
+      "duration_ms": 0.0
+    },
+    "gap.029": {
+      "section": 17,
+      "name": "localStorage",
+      "status": "blocked",
+      "message": "localStorage is not implemented.",
+      "duration_ms": 0.0
+    },
+    "gap.030": {
+      "section": 17,
+      "name": "IndexedDB",
+      "status": "blocked",
+      "message": "IndexedDB is not implemented.",
+      "duration_ms": 0.0
+    },
+    "gap.031": {
+      "section": 17,
+      "name": "video playback",
+      "status": "blocked",
+      "message": "Video playback/decoding is not implemented (no decoder available).",
+      "duration_ms": 0.0
+    }
+  }
+}

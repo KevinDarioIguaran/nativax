@@ -1,0 +1,136 @@
+{
+  "run_id": "20261029T142009Z-5b2906a",
+  "timestamp": "2026-10-29T14:20:09.910953+00:00",
+  "label": "section-3",
+  "command": "/workspaces/nativax/debug/lab/run_lab.py --section 3 --no-responsive",
+  "git": {
+    "branch": "native-c-sokol",
+    "commit": "5b2906a9eff1b3cc2dfb8901223953d0f84a3335",
+    "short": "5b2906a",
+    "dirty": true
+  },
+  "elapsed_seconds": 0.62,
+  "sections": {
+    "3": {
+      "pass": 15,
+      "fail": 0,
+      "blocked": 0,
+      "error": 0,
+      "total": 15
+    }
+  },
+  "totals": {
+    "pass": 15,
+    "fail": 0,
+    "blocked": 0,
+    "error": 0,
+    "total": 15
+  },
+  "cases": {
+    "box.001": {
+      "section": 3,
+      "name": "learning-zone/website-templates \u00b7 extent",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 246.59
+    },
+    "box.002": {
+      "section": 3,
+      "name": "learning-zone/website-templates \u00b7 internet-portal",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 44.32
+    },
+    "box.003": {
+      "section": 3,
+      "name": "learning-zone/website-templates \u00b7 sinorca",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 48.86
+    },
+    "box.004": {
+      "section": 3,
+      "name": "learning-zone/website-templates \u00b7 zenlike",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 47.68
+    },
+    "box.005": {
+      "section": 3,
+      "name": "keshavgbpecdelhi/Web-Development \u00b7 projects/TinDog Website [HTML + CSS + Bootstrap]/Little Portfolio",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 30.81
+    },
+    "box.006": {
+      "section": 3,
+      "name": "learning-zone/website-templates \u00b7 greenery",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 29.31
+    },
+    "box.007": {
+      "section": 3,
+      "name": "keshavgbpecdelhi/Web-Development \u00b7 projects/ProfileCardsWithSlider",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 21.94
+    },
+    "box.008": {
+      "section": 3,
+      "name": "learning-zone/website-templates \u00b7 thin-green-line",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 27.81
+    },
+    "box.009": {
+      "section": 3,
+      "name": "learning-zone/website-templates \u00b7 gunmetal-portal",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 23.36
+    },
+    "box.010": {
+      "section": 3,
+      "name": "learning-zone/website-templates \u00b7 street-life",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 20.07
+    },
+    "box.011": {
+      "section": 3,
+      "name": "keshavgbpecdelhi/Web-Development \u00b7 projects/calculator",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 16.69
+    },
+    "box.012": {
+      "section": 3,
+      "name": "keshavgbpecdelhi/Web-Development \u00b7 projects/TinDog Website [HTML + CSS + Bootstrap]/bootstrap-form",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 19.61
+    },
+    "box.013": {
+      "section": 3,
+      "name": "keshavgbpecdelhi/Web-Development \u00b7 projects/DiskSchedulingAlgorithms",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 13.68
+    },
+    "box.014": {
+      "section": 3,
+      "name": "learning-zone/website-templates \u00b7 super-simple-site",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 10.35
+    },
+    "box.015": {
+      "section": 3,
+      "name": "learning-zone/website-templates \u00b7 metropolis",
+      "status": "pass",
+      "message": "",
+      "duration_ms": 16.83
+    }
+  }
+}
