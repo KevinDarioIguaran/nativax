@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import os
 import queue
+import shutil
 import subprocess
 import sys
 import threading
@@ -21,14 +22,29 @@ DATA_SCRIPT = DEBUG / "tools" / "build_dashboard_data.py"
 DASHBOARD_HTML = DEBUG / "dashboard" / "index.html"
 
 
-def run_build() -> None:
-    subprocess.run([sys.executable, str(DATA_SCRIPT)], cwd=ROOT,
-                   stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+def log(msg: str) -> None:
+    """Progress/diagnostics always go to stderr, never silently swallowed."""
+    print(f"[nativax-gui] {msg}", file=sys.stderr, flush=True)
+
+
+def run_build() -> bool:
+    r = subprocess.run([sys.executable, str(DATA_SCRIPT)], cwd=ROOT,
+                       capture_output=True, text=True)
+    if r.returncode != 0:
+        log(f"no se pudo generar dashboard_data.js (exit {r.returncode})")
+        detail = ((r.stdout or "") + (r.stderr or "")).strip()
+        if detail:
+            log(detail[-800:])
+        return False
+    return True
 
 
 def load_data() -> dict:
     run_build()
     path = DEBUG / "dashboard" / "dashboard_data.js"
+    if not path.exists():
+        log(f"falta {path}; el dashboard se abrirá vacío")
+        return {}
     text = path.read_text(encoding="utf-8")
     prefix = "window.DASHBOARD_DATA = "
     return json.loads(text[len(prefix):].rstrip().rstrip(";"))
@@ -169,8 +185,15 @@ class Api:
 
 def _venv_python() -> str:
     """Interpreter that has numpy/pillow/playwright for visual comparisons."""
-    py = DEBUG / ".venv" / ("Scripts/python.exe" if os.name == "nt" else "bin/python")
-    return str(py) if py.exists() else sys.executable
+    candidates = [
+        DEBUG / ".venv",
+        ROOT / ".venv",
+    ]
+    for base in candidates:
+        py = base / ("Scripts/python.exe" if os.name == "nt" else "bin/python")
+        if py.exists():
+            return str(py)
+    return sys.executable
 
 
 def _system_python() -> str | None:
@@ -207,47 +230,139 @@ def _ensure_webview():
     # when the venv was built without Python 3 GI bindings.
     try:
         import webview  # type: ignore
-    except Exception:
+    except Exception as exc:
+        log(f"pywebview no está instalado en {sys.executable}: {exc}")
         webview = None
     if webview is not None and _has_gui_backend():
         return webview
+    if webview is not None:
+        log("pywebview existe pero no hay backend GTK/Qt en este intérprete")
 
     sp = _system_python()
     same = sp and Path(sp).resolve() == Path(sys.executable).resolve()
     if sp and not same and _has_gui_backend(sp) \
             and os.environ.get("NATIVAX_GUI_REEXEC") != "1":
+        log(f"reintentando con el Python del sistema: {sp}")
         os.environ["NATIVAX_GUI_REEXEC"] = "1"
         os.execv(sp, [sp, str(Path(__file__).resolve())] + sys.argv[1:])
 
     if not _has_gui_backend():
+        log("no hay backend GTK/WebKit ni Qt disponible")
         return None
 
     # Try to install pywebview into the current interpreter.
     try:
+        log("instalando pywebview…")
         subprocess.run([sys.executable, "-m", "pip", "install", "pywebview",
                         "--break-system-packages"], check=False,
                        stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         import webview  # type: ignore
         return webview
-    except Exception:
+    except Exception as exc:
+        log(f"pywebview sigue sin poder importarse: {exc}")
         return None
 
 
-def main() -> int:
+def _open_dashboard() -> bool:
+    """Open the dashboard in the user's browser (fallback path)."""
+    uri = DASHBOARD_HTML.as_uri()
+    try:
+        if webbrowser.open(uri):
+            log(f"dashboard abierto en el navegador: {uri}")
+            return True
+    except Exception as exc:  # noqa: BLE001
+        log(f"webbrowser.open falló: {exc}")
+    for opener in ("xdg-open", "gio", "sensible-browser"):
+        exe = shutil.which(opener)
+        if not exe:
+            continue
+        cmd = [exe, "open", uri] if opener == "gio" else [exe, uri]
+        try:
+            if subprocess.run(cmd, stdout=subprocess.DEVNULL,
+                              stderr=subprocess.DEVNULL).returncode == 0:
+                log(f"dashboard abierto con {opener}: {uri}")
+                return True
+        except Exception:  # noqa: BLE001
+            continue
+    return False
+
+
+def _check() -> int:
+    """Print why the GUI would or would not open. Exit 0 when usable."""
+    log(f"python: {sys.executable} ({sys.version.split()[0]})")
+    log(f"DISPLAY={os.environ.get('DISPLAY', '(sin definir)')} "
+        f"WAYLAND_DISPLAY={os.environ.get('WAYLAND_DISPLAY', '(sin definir)')}")
+    ok = True
+    for name, path in (("dashboard", DASHBOARD_HTML), ("datos", DATA_SCRIPT)):
+        exists = Path(path).exists()
+        log(f"{name}: {'ok' if exists else 'FALTA'} {path}")
+        ok &= exists
+    if not run_build():
+        ok = False
+
+    def probe(python: str, label: str) -> bool:
+        backend = _has_gui_backend(python)
+        try:
+            has_webview = subprocess.run(
+                [python, "-c", "import webview"], stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL).returncode == 0
+        except OSError:
+            has_webview = False
+        log(f"{label}: backend={'sí' if backend else 'no'} "
+            f"pywebview={'sí' if has_webview else 'no'}")
+        return backend
+
+    current_backend = probe(sys.executable, "intérprete actual")
+    sp = _system_python()
+    other_backend = False
+    if sp and Path(sp).resolve() != Path(sys.executable).resolve():
+        other_backend = probe(sp, "python del sistema")
+
+    if not (current_backend or other_backend):
+        log("no hay backend GTK/WebKit ni Qt: instala python3-gi, "
+            "gir1.2-gtk-3.0 y gir1.2-webkit2-4.1")
+        ok = False
+    elif not current_backend:
+        log("el dashboard abrirá re-ejecutando con el Python del sistema")
+    return 0 if ok else 1
+
+
+def main(argv: list[str] | None = None) -> int:
+    argv = list(sys.argv[1:] if argv is None else argv)
+    force_browser = "--browser" in argv
+    if "--check" in argv:
+        return _check()
+
     run_build()
+    if not DASHBOARD_HTML.exists():
+        log(f"no existe el dashboard: {DASHBOARD_HTML}")
+        return 1
+
+    if force_browser:
+        if _open_dashboard():
+            return 0
+        log(f"no pude abrir el navegador. Abre manualmente: {DASHBOARD_HTML.as_uri()}")
+        return 1
+
     webview = _ensure_webview()
 
     if webview is not None:
         api = Api()
+        log(f"abriendo ventana nativa ({sys.executable})")
         webview.create_window("NativaX Debug Lab", DASHBOARD_HTML.as_uri(),
                               js_api=api, width=1380, height=900)
         webview.start()
         return 0
 
     # Fallback: open the static dashboard in the default browser.
-    webbrowser.open(DASHBOARD_HTML.as_uri())
-    print(f"opened {DASHBOARD_HTML} (read-only; install pywebview for interactive mode)")
-    return 0
+    if _open_dashboard():
+        print(f"dashboard abierto en el navegador: {DASHBOARD_HTML} "
+              f"(modo lectura; instala pywebview para el modo interactivo)")
+        return 0
+    log("no pude abrir una ventana ni el navegador automáticamente.")
+    log(f"abre este archivo a mano: {DASHBOARD_HTML.as_uri()}")
+    log("diagnóstico: python3 debug/gui.py --check")
+    return 1
 
 
 if __name__ == "__main__":

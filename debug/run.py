@@ -307,7 +307,9 @@ def main(argv: list[str]) -> int:
               "[--dataset DIR] [--css F]... [--no-archive]")
         return code
     if head == "gui":
-        return subprocess.run([sys.executable, str(NATIVE / "debug" / "gui.py")]).returncode
+        # Forward flags (--browser, --check) to the dashboard launcher.
+        return subprocess.run([sys.executable, str(NATIVE / "debug" / "gui.py"),
+                               *args[1:]]).returncode
 
     # storage, verify, compare, context, llm, gate, audit, recommend:
     # the SAME command on the shared entry point.
