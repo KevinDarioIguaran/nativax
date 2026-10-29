@@ -115,8 +115,10 @@ td.mono { font-family: var(--mono); font-size: 13px; }
 }
 .badge.pass { background: color-mix(in srgb, var(--pass) 15%, transparent); color: var(--pass); }
 .badge.fail { background: color-mix(in srgb, var(--fail) 15%, transparent); color: var(--fail); }
+.badge.blocked { background: color-mix(in srgb, var(--skip) 15%, transparent); color: var(--skip); }
 .badge.skip { background: color-mix(in srgb, var(--skip) 15%, transparent); color: var(--skip); }
-.badge.run { background: color-mix(in srgb, var(--accent) 15%, transparent); color: var(--accent); }
+.badge.error { background: color-mix(in srgb, var(--fail) 15%, transparent); color: var(--fail); }
+.badge.unrun { background: color-mix(in srgb, var(--muted) 15%, transparent); color: var(--muted); }
 
 .pager { display: flex; justify-content: space-between; align-items: center; margin-top: 12px; font-size: 13px; color: var(--muted); }
 .pager .btn { padding: 4px 12px; }
@@ -168,7 +170,6 @@ dialog dd { margin: 0; word-break: break-word; }
       </div>
     </div>
     <div class="actions">
-      <button id="btn-run-all" class="btn primary">▶ Ejecutar todo (--all)</button>
       <button id="btn-theme" class="btn" aria-label="Cambiar tema">◐</button>
     </div>
   </header>
@@ -194,7 +195,10 @@ dialog dd { margin: 0; word-break: break-word; }
             <option value="">Todos los estados</option>
             <option value="pass">Pass</option>
             <option value="fail">Fail</option>
+            <option value="blocked">Blocked</option>
             <option value="skip">Skip</option>
+            <option value="error">Error</option>
+            <option value="unrun">Unrun</option>
           </select>
         </div>
       </div>
@@ -243,223 +247,5 @@ dialog dd { margin: 0; word-break: break-word; }
 
   <div class="toast" id="toast" role="status"></div>
 
-  <script>
-/* Debug Lab dashboard — datos de ejemplo generados localmente */
-(() => {
-  const SECTIONS = [
-    ['s01', 'html'], ['s02', 'css'], ['s03', 'box'], ['s04', 'typo'],
-    ['s05', 'color'], ['s06', 'anim'], ['s07', 'resp'], ['s08', 'flex'],
-    ['s09', 'pos'], ['s10', 'jsdom'], ['s11', 'events'], ['s12', 'forms'],
-    ['s13', 'a11y'], ['s14', 'media'], ['s15', 'perf'], ['s16', 'integ'],
-  ];
-  const REPOS = [
-    'mdn/css-examples', 'web-platform-tests/wpt', 'jsdom/jsdom',
-    'w3c/csswg-drafts', 'h5bp/html5-boilerplate', 'twbs/bootstrap',
-    'nicolo-ribaudo/tc39-proposal-examples', 'GoogleChrome/web-vitals',
-  ];
-  const GAPS = [
-    'CSS Houdini Paint API', 'Container queries', 'View Transitions', 'Subgrid',
-    ':has() selector', 'Scroll-driven animations', 'Anchor positioning', 'CSS nesting',
-    '@layer cascade', 'Web Animations API (completo)', 'IntersectionObserver real',
-    'ResizeObserver real', 'MutationObserver (avanzado)', 'Custom Elements', 'Shadow DOM',
-    'Canvas 2D', 'SVG filters', 'Web Fonts loading', 'Media queries de color-gamut',
-    'Pointer Events multitouch', 'Drag & Drop nativo', 'contenteditable',
-    'Form validation API (completa)', 'ARIA live regions', 'Print stylesheets', 'Service Workers',
-  ];
-  const TREE = `debug/
-├─ bootstrap.py
-├─ README.md
-├─ progress/
-├─ tools/
-│  └─ import_real_examples.py
-└─ lab/
-   ├─ harness.py
-   ├─ run_lab.py
-   ├─ corpus.py
-   ├─ corpus.json
-   ├─ ATTRIBUTION.md
-   ├─ sections/
-   │  ├─ s01.py … s16.py
-   │  └─ s17_gaps.py
-   └─ cases/
-      └─ s01/001 … s16/015  (240 ejemplos)`;
-  const CLI = [
-    'python debug/bootstrap.py',
-    'python debug/lab/run_lab.py --all',
-    'python debug/lab/run_lab.py s07',
-    'python debug/lab/run_lab.py --list',
-    'python debug/tools/import_real_examples.py --check',
-  ];
-
-  let seed = 42;
-  const rnd = () => ((seed = (seed * 1664525 + 1013904223) % 4294967296) / 4294967296);
-
-  const cases = [];
-  SECTIONS.forEach(([sid, name]) => {
-    for (let i = 1; i <= 15; i++) {
-      const r = rnd();
-      const repo = REPOS[Math.floor(rnd() * REPOS.length)];
-      cases.push({
-        id: `${sid}/${String(i).padStart(3, '0')}`,
-        sid, name,
-        repo,
-        commit: Math.floor(rnd() * 0xfffffff).toString(16).padStart(7, '0'),
-        path: `${name}/example-${i}/index.html`,
-        facts: 2 + Math.floor(rnd() * 5),
-        ms: Math.round(20 + rnd() * 380),
-        status: r < 0.88 ? 'pass' : r < 0.95 ? 'fail' : 'skip',
-      });
-    }
-  });
-
-  const $ = (s) => document.querySelector(s);
-  const state = { q: '', section: '', status: '', page: 0, size: 12 };
-
-  function toast(msg) {
-    const t = $('#toast');
-    t.textContent = msg;
-    t.classList.add('show');
-    clearTimeout(toast._t);
-    toast._t = setTimeout(() => t.classList.remove('show'), 2200);
-  }
-
-  function counts(list) {
-    return list.reduce((a, c) => ((a[c.status] = (a[c.status] || 0) + 1), a), {});
-  }
-
-  function renderKpis() {
-    const c = counts(cases);
-    const total = cases.length;
-    const avg = Math.round(cases.reduce((s, x) => s + x.ms, 0) / total);
-    const items = [
-      ['Casos reales', total, ''],
-      ['Secciones', SECTIONS.length, ''],
-      ['Pass', c.pass || 0, 'pass'],
-      ['Fail', c.fail || 0, 'fail'],
-      ['Skip', c.skip || 0, 'skip'],
-      ['Gaps documentados', GAPS.length, ''],
-      ['Tiempo medio', avg + ' ms', ''],
-    ];
-    $('#kpis').innerHTML = items
-      .map(([l, v, k]) => `<div class="kpi ${k}"><div class="v">${v}</div><div class="l">${l}</div></div>`)
-      .join('');
-  }
-
-  function renderSections() {
-    $('#sections').innerHTML = SECTIONS.map(([sid, name]) => {
-      const list = cases.filter((c) => c.sid === sid);
-      const c = counts(list);
-      const pct = (n) => ((n || 0) / list.length) * 100;
-      return `<div class="sec ${state.section === sid ? 'active' : ''}" data-sid="${sid}">
-        <div class="row"><b>${sid} · ${name}</b><small>${c.pass || 0}/${list.length}</small></div>
-        <div class="bar">
-          <i class="p" style="width:${pct(c.pass)}%"></i>
-          <i class="f" style="width:${pct(c.fail)}%"></i>
-          <i class="s" style="width:${pct(c.skip)}%"></i>
-        </div></div>`;
-    }).join('');
-  }
-
-  function filtered() {
-    const q = state.q.toLowerCase();
-    return cases.filter((c) =>
-      (!state.section || c.sid === state.section) &&
-      (!state.status || c.status === state.status) &&
-      (!q || `${c.id} ${c.name} ${c.repo} ${c.path}`.toLowerCase().includes(q)));
-  }
-
-  function renderTable() {
-    const list = filtered();
-    const pages = Math.max(1, Math.ceil(list.length / state.size));
-    state.page = Math.min(state.page, pages - 1);
-    const slice = list.slice(state.page * state.size, (state.page + 1) * state.size);
-    $('#cases tbody').innerHTML = slice.map((c) => `
-      <tr data-id="${c.id}">
-        <td class="mono">${c.id}</td>
-        <td>${c.name}</td>
-        <td class="mono">${c.repo}@${c.commit}</td>
-        <td>${c.facts}</td>
-        <td>${c.ms}</td>
-        <td><span class="badge ${c.status}">${c.status}</span></td>
-      </tr>`).join('') || '<tr><td colspan="6">Sin resultados</td></tr>';
-    $('#count').textContent = `${list.length} casos · página ${state.page + 1}/${pages}`;
-    $('#prev').disabled = state.page === 0;
-    $('#next').disabled = state.page >= pages - 1;
-  }
-
-  function renderStatic() {
-    $('#gaps').innerHTML = GAPS.map((g, i) =>
-      `<li><span class="n">${String(i + 1).padStart(2, '0')}</span>${g}<em>bloqueada</em></li>`).join('');
-    $('#gaps-count').textContent = `${GAPS.length} capacidades`;
-    $('#tree').textContent = TREE;
-    $('#cli').innerHTML = CLI.map((c) => `<code>$ ${c}</code>`).join('');
-    $('#f-section').innerHTML = '<option value="">Todas las secciones</option>' +
-      SECTIONS.map(([s, n]) => `<option value="${s}">${s} · ${n}</option>`).join('');
-  }
-
-  function openCase(id) {
-    const c = cases.find((x) => x.id === id);
-    $('#dlg-title').textContent = `case ${c.id}`;
-    $('#dlg-body').innerHTML = `
-      <dt>Sección</dt><dd>${c.name}</dd>
-      <dt>Repo</dt><dd>${c.repo}</dd>
-      <dt>Commit</dt><dd>${c.commit}</dd>
-      <dt>Ruta original</dt><dd>${c.path}</dd>
-      <dt>Facts</dt><dd>${c.facts} verificaciones independientes</dd>
-      <dt>Duración</dt><dd>${c.ms} ms</dd>
-      <dt>Estado</dt><dd><span class="badge ${c.status}">${c.status}</span></dd>`;
-    $('#dlg').showModal();
-  }
-
-  function refresh() { renderKpis(); renderSections(); renderTable(); }
-
-  async function runAll() {
-    const btn = $('#btn-run-all');
-    btn.disabled = true;
-    const rows = [...document.querySelectorAll('#cases tbody .badge')];
-    rows.forEach((b) => { b.className = 'badge run'; b.textContent = 'running'; });
-    for (let i = 0; i < SECTIONS.length; i++) {
-      btn.textContent = `Ejecutando ${SECTIONS[i][0]}… ${i + 1}/${SECTIONS.length}`;
-      await new Promise((r) => setTimeout(r, 180));
-    }
-    btn.textContent = '▶ Ejecutar todo (--all)';
-    btn.disabled = false;
-    refresh();
-    toast('Simulación completada (datos de ejemplo)');
-  }
-
-  $('#sections').addEventListener('click', (e) => {
-    const el = e.target.closest('.sec');
-    if (!el) return;
-    state.section = state.section === el.dataset.sid ? '' : el.dataset.sid;
-    $('#f-section').value = state.section;
-    state.page = 0;
-    renderSections(); renderTable();
-  });
-  $('#q').addEventListener('input', (e) => { state.q = e.target.value; state.page = 0; renderTable(); });
-  $('#f-section').addEventListener('change', (e) => { state.section = e.target.value; state.page = 0; renderSections(); renderTable(); });
-  $('#f-status').addEventListener('change', (e) => { state.status = e.target.value; state.page = 0; renderTable(); });
-  $('#prev').addEventListener('click', () => { state.page--; renderTable(); });
-  $('#next').addEventListener('click', () => { state.page++; renderTable(); });
-  $('#cases tbody').addEventListener('click', (e) => {
-    const tr = e.target.closest('tr[data-id]');
-    if (tr) openCase(tr.dataset.id);
-  });
-  $('#btn-run-all').addEventListener('click', runAll);
-  $('#btn-theme').addEventListener('click', () => {
-    const root = document.documentElement;
-    root.dataset.theme = root.dataset.theme === 'dark' ? 'light' : 'dark';
-  });
-  $('#cli').addEventListener('click', (e) => {
-    if (e.target.tagName === 'CODE') {
-      navigator.clipboard?.writeText(e.target.textContent.replace(/^\$ /, ''));
-      toast('Comando copiado');
-    }
-  });
-
-  renderStatic();
-  refresh();
-})();
-  </script>
-</body>
-</html>
+  <script src="dashboard_data.js"></script>
+  <script src="dashboard.js"></script>
