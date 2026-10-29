@@ -183,7 +183,8 @@ static void frame_cb(void* user) {
     sg_commit();
 
     g_state.frame_count++;
-    if (g_state.screenshot && g_state.frame_count == 3) take_screenshot();
+    int screenshot_frame = g_state.max_frames > 0 ? g_state.max_frames : 3;
+    if (g_state.screenshot && g_state.frame_count == screenshot_frame) take_screenshot();
     if (g_state.max_frames > 0 && g_state.frame_count >= g_state.max_frames) {
         NX_INFO("frame budget reached (%d), quitting", g_state.max_frames);
         nx_platform_quit();
