@@ -91,6 +91,53 @@ class Api:
     def reload_data(self):
         return load_data()
 
+    def get_latest_report(self):
+        p = DEBUG / "reports" / "lab" / "latest.json"
+        if not p.exists():
+            return None
+        try:
+            return json.loads(p.read_text())
+        except Exception:
+            return None
+
+    def get_section_reports(self):
+        out = []
+        base = DEBUG / "reports" / "lab"
+        for p in sorted(base.glob("section-*.json")):
+            try:
+                d = json.loads(p.read_text())
+                out.append({"file": p.name, "label": d.get("label"), "summary": d.get("summary", {})})
+            except Exception:
+                continue
+        return out
+
+    def get_history_index(self):
+        p = DEBUG / "history" / "index.json"
+        if not p.exists():
+            return []
+        try:
+            return json.loads(p.read_text())
+        except Exception:
+            return []
+
+    def get_history_run(self, path):
+        p = DEBUG / path
+        if not p.exists() or not p.is_file():
+            return None
+        try:
+            return json.loads(p.read_text())
+        except Exception:
+            return None
+
+    def get_smoke_summary(self):
+        p = DEBUG / "artifacts" / "bootstrap-smoke" / "summary.json"
+        if not p.exists():
+            return None
+        try:
+            return json.loads(p.read_text())
+        except Exception:
+            return None
+
     def get_artifacts(self):
         out = []
         for p in sorted(DEBUG.rglob("*")):

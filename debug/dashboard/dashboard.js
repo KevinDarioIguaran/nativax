@@ -322,12 +322,88 @@
     if (sec) sec.disabled = scopeSel.value !== 'section';
   });
 
+  function setupTabs() {
+    const tabs = document.querySelectorAll('.tab');
+    const panels = document.querySelectorAll('.tab-panel');
+    function show(name) {
+      tabs.forEach((t) => t.classList.toggle('active', t.dataset.tab === name));
+      panels.forEach((p) => p.classList.toggle('active', p.dataset.tab === name));
+    }
+    tabs.forEach((t) => t.addEventListener('click', () => show(t.dataset.tab)));
+    show('resumen');
+  }
+
+  async function renderReports() {
+    let report = null;
+    if (window.pywebview && window.pywebview.api && window.pywebview.api.get_latest_report) {
+      report = await window.pywebview.api.get_latest_report();
+    }
+    const meta = $('#report-meta');
+    const summary = $('#report-summary');
+    const tbody = document.querySelector('#report-sections tbody');
+    if (report && summary) {
+      const s = report.summary || {};
+      if (meta) meta.textContent = report.generated_at ? `generado ${report.generated_at}` : '';
+      summary.innerHTML = `<div class="kpis" style="margin:10px 0">
+        <div class="kpi"><div class="v">${s.total || 0}</div><div class="l">Total</div></div>
+        <div class="kpi pass"><div class="v">${s.pass || 0}</div><div class="l">Pass</div></div>
+        <div class="kpi fail"><div class="v">${s.fail || 0}</div><div class="l">Fail</div></div>
+        <div class="kpi skip"><div class="v">${s.blocked || 0}</div><div class="l">Blocked</div></div>
+      </div>`;
+    }
+    let sections = [];
+    if (window.pywebview && window.pywebview.api && window.pywebview.api.get_section_reports) {
+      sections = await window.pywebview.api.get_section_reports();
+    }
+    if (tbody) {
+      tbody.innerHTML = sections.map((r) => {
+        const s = r.summary || {};
+        return `<tr><td>${r.label || r.file}</td><td>${s.total || 0}</td><td>${s.pass || 0}</td><td>${s.fail || 0}</td><td>${s.blocked || 0}</td><td>${s.error || 0}</td></tr>`;
+      }).join('') || '<tr><td colspan="6">Sin informes</td></tr>';
+    }
+    let smoke = null;
+    if (window.pywebview && window.pywebview.api && window.pywebview.api.get_smoke_summary) {
+      smoke = await window.pywebview.api.get_smoke_summary();
+    }
+    if (smoke && summary) {
+      summary.innerHTML += `<h3>Smoke test</h3><pre class="tree">${JSON.stringify(smoke, null, 2)}</pre>`;
+    }
+  }
+
+  async function renderHistory() {
+    const tbody = document.querySelector('#history-table tbody');
+    const detail = $('#history-detail');
+    let idx = [];
+    if (window.pywebview && window.pywebview.api && window.pywebview.api.get_history_index) {
+      idx = await window.pywebview.api.get_history_index();
+    }
+    if (tbody) {
+      tbody.innerHTML = (idx || []).map((r) => {
+        const t = r.totals || {};
+        return `<tr data-path="${r.path || ''}"><td>${r.run_id}</td><td>${r.timestamp || ''}</td><td>${t.total || 0}</td><td>${t.pass || 0}</td><td>${t.blocked || 0}</td></tr>`;
+      }).join('') || '<tr><td colspan="5">Sin historial</td></tr>';
+    }
+    if (tbody) {
+      tbody.addEventListener('click', async (e) => {
+        const tr = e.target.closest('tr[data-path]');
+        if (!tr || !detail) return;
+        const path = tr.dataset.path;
+        if (!window.pywebview || !window.pywebview.api || !window.pywebview.api.get_history_run) return;
+        const run = await window.pywebview.api.get_history_run(path);
+        detail.textContent = JSON.stringify(run, null, 2);
+      });
+    }
+  }
+
   // init
   (async () => {
     await loadData();
     renderStatic();
     refresh();
+    setupTabs();
     await loadArtifacts();
+    await renderReports();
+    await renderHistory();
     const sec = $('#run-section');
     if (sec) sec.disabled = true;
   })();
