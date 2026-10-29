@@ -65,9 +65,9 @@ def _(ctx):
 def _(ctx):
     raise Blocked('iOS backend is not available in this environment.')
 
-@case(17, "gap.020", 'Chromium comparison')
-def _(ctx):
-    raise Blocked('Chromium comparison tooling is not available.')
+# gap.020 (Chromium comparison) is closed: debug/judges/visual/chrome_compare.py
+# now renders the same case in Chrome and NativaX and writes a pixel diff.
+# It is verified by debug/tests/test_chrome_compare.py, not reported as a gap.
 
 @case(17, "gap.022", 'prefers-reduced-motion runtime')
 def _(ctx):

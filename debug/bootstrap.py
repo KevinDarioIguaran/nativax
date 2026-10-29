@@ -77,7 +77,8 @@ BREW_PACKAGES = [
     "cmake", "ninja", "pkg-config", "webkitgtk", "python", "pillow",
 ]
 
-PIP_PACKAGES = ["pillow>=10.0", "pywebview>=5.0"]
+PIP_PACKAGES = ["pillow>=10.0", "numpy>=1.26", "playwright>=1.40",
+                "pywebview>=5.0"]
 
 
 def log(msg: str) -> None:

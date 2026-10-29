@@ -55,7 +55,19 @@ body {
 .btn.primary { background: var(--accent); color: #fff; border-color: var(--accent); }
 .btn:disabled { opacity: .5; cursor: default; }
 
-main { max-width: 1200px; margin: 0 auto; padding: 24px 16px 48px; display: grid; gap: 20px; }
+main { max-width: 1200px; margin: 0 auto; padding: 24px 16px 48px; }
+.tabs {
+  max-width: 1200px; margin: 16px auto 0; padding: 0 16px;
+  display: flex; gap: 6px; flex-wrap: wrap;
+}
+.tab {
+  border: 1px solid var(--line); background: var(--panel); color: var(--text);
+  padding: 9px 14px; border-radius: 999px; cursor: pointer; font: inherit; font-size: 13px;
+}
+.tab:hover { border-color: var(--accent); }
+.tab.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+.tab-panel { display: none; gap: 20px; }
+.tab-panel.active { display: grid; }
 
 .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; }
 .kpi {
@@ -115,6 +127,7 @@ td.mono { font-family: var(--mono); font-size: 13px; }
 }
 .badge.pass { background: color-mix(in srgb, var(--pass) 15%, transparent); color: var(--pass); }
 .badge.fail { background: color-mix(in srgb, var(--fail) 15%, transparent); color: var(--fail); }
+.badge.warn { background: color-mix(in srgb, var(--skip) 15%, transparent); color: var(--skip); }
 .badge.blocked { background: color-mix(in srgb, var(--skip) 15%, transparent); color: var(--skip); }
 .badge.skip { background: color-mix(in srgb, var(--skip) 15%, transparent); color: var(--skip); }
 .badge.error { background: color-mix(in srgb, var(--fail) 15%, transparent); color: var(--fail); }
@@ -160,8 +173,12 @@ dialog dd { margin: 0; word-break: break-word; }
 .toast.show { transform: translate(-50%, 0); opacity: 1; }
 
 .control-panel .controls { display: flex; gap: 12px; flex-wrap: wrap; align-items: end; }
-.control-panel label { display: grid; gap: 4px; font-size: 13px; color: var(--muted); }
-.control-panel select, .control-panel input { padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); color: var(--text); font: inherit; }
+.control-panel label, .visual-controls label { display: grid; gap: 4px; font-size: 13px; color: var(--muted); }
+.control-panel select, .control-panel input,
+.visual-controls select, .visual-controls input {
+  padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px;
+  background: var(--bg); color: var(--text); font: inherit;
+}
 .log {
   margin-top: 12px; max-height: 220px; overflow: auto; background: #0b1020; color: #d7e0ff;
   padding: 10px; border-radius: 8px; font-family: var(--mono); font-size: 12px; white-space: pre-wrap;
@@ -171,6 +188,23 @@ dialog dd { margin: 0; word-break: break-word; }
 .artifact img { width: 100%; height: 100px; object-fit: cover; border-radius: 6px; background: var(--line); }
 canvas { width: 100%; height: auto; }
 
+/* Chrome vs NativaX */
+.visual-controls { display: flex; gap: 12px; flex-wrap: wrap; align-items: end; margin-bottom: 12px; }
+.visual-controls select { min-width: 200px; }
+.compare-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+@media (max-width: 1000px) { .compare-grid { grid-template-columns: 1fr; } }
+.compare-grid figure { margin: 0; border: 1px solid var(--line); border-radius: 10px; background: var(--bg); padding: 8px; }
+.compare-grid figcaption {
+  font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: .05em;
+  margin-bottom: 6px; display: flex; justify-content: space-between;
+}
+.compare-grid img { width: 100%; border-radius: 6px; background: #fff; display: block; min-height: 120px; }
+.compare-grid img:not([src]) { visibility: hidden; }
+.metrics { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 8px; margin: 12px 0; }
+.metric { border: 1px solid var(--line); border-radius: 8px; padding: 10px; background: var(--bg); }
+.metric .v { font-size: 20px; font-weight: 700; }
+.metric .l { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
+.visual-result { display: flex; gap: 12px; flex-wrap: wrap; align-items: end; margin: 12px 0; }
   </style>
 </head>
 <body>
@@ -179,7 +213,7 @@ canvas { width: 100%; height: auto; }
       <span class="logo">⌁</span>
       <div>
         <h1>Debug Lab</h1>
-        <p>nativax-debug · nativax-runtime</p>
+        <p>nativax-debug · nativax-runtime · Chrome</p>
       </div>
     </div>
     <div class="actions">
@@ -187,8 +221,7 @@ canvas { width: 100%; height: auto; }
     </div>
   </header>
 
-
-  <section class="panel control-panel">
+  <section class="panel control-panel" style="max-width:1200px;margin:16px auto 0;">
     <div class="panel-head">
       <h2>Ejecución del laboratorio</h2>
       <span class="hint" id="run-status">Sin ejecución</span>
@@ -210,88 +243,200 @@ canvas { width: 100%; height: auto; }
     <pre class="log" id="run-log"></pre>
   </section>
 
+  <nav class="tabs" id="tabs" aria-label="Vistas">
+    <button class="tab active" data-tab="resumen">Resumen</button>
+    <button class="tab" data-tab="visual">Chrome vs NativaX</button>
+    <button class="tab" data-tab="informes">Informes</button>
+    <button class="tab" data-tab="historial">Historial</button>
+    <button class="tab" data-tab="artefactos">Artefactos</button>
+  </nav>
+
   <main>
-
-    <section class="grid-2">
-      <section class="panel">
-        <div class="panel-head"><h2>Pass por sección</h2></div>
-        <canvas id="chart-sections" width="520" height="260"></canvas>
+    <div class="tab-panel active" data-tab="resumen">
+      <section class="grid-2">
+        <section class="panel">
+          <div class="panel-head"><h2>Pass por sección</h2></div>
+          <canvas id="chart-sections" width="520" height="260"></canvas>
+        </section>
+        <section class="panel">
+          <div class="panel-head"><h2>Estados</h2></div>
+          <canvas id="chart-status" width="520" height="260"></canvas>
+        </section>
       </section>
-      <section class="panel">
-        <div class="panel-head"><h2>Estados</h2></div>
-        <canvas id="chart-status" width="520" height="260"></canvas>
-      </section>
-    </section>
 
-    <section class="kpis" id="kpis" aria-label="Resumen"></section>
+      <section class="kpis" id="kpis" aria-label="Resumen"></section>
 
-    <section class="panel">
-      <div class="panel-head">
-        <h2>Secciones</h2>
-        <span class="hint">Cada sección registra 15 casos reales (s01–s16)</span>
-      </div>
-      <div class="sections" id="sections"></div>
-    </section>
-
-    <section class="panel">
-      <div class="panel-head">
-        <h2>Casos</h2>
-        <div class="filters">
-          <input id="q" type="search" placeholder="Buscar caso, repo o fact…">
-          <select id="f-section"></select>
-          <select id="f-status">
-            <option value="">Todos los estados</option>
-            <option value="pass">Pass</option>
-            <option value="fail">Fail</option>
-            <option value="blocked">Blocked</option>
-            <option value="skip">Skip</option>
-            <option value="error">Error</option>
-            <option value="unrun">Unrun</option>
-          </select>
-        </div>
-      </div>
-      <div class="table-wrap">
-        <table id="cases">
-          <thead>
-            <tr><th>ID</th><th>Sección</th><th>Procedencia</th><th>Facts</th><th>ms</th><th>Estado</th></tr>
-          </thead>
-          <tbody></tbody>
-        </table>
-      </div>
-      <div class="pager">
-        <span id="count"></span>
-        <div>
-          <button class="btn" id="prev">←</button>
-          <button class="btn" id="next">→</button>
-        </div>
-      </div>
-    </section>
-
-    <div class="grid-2">
       <section class="panel">
         <div class="panel-head">
-          <h2>s17 · Capacidades bloqueadas</h2>
-          <span class="hint" id="gaps-count"></span>
+          <h2>Secciones</h2>
+          <span class="hint">Cada sección registra 15 casos reales (s01–s16)</span>
         </div>
-        <ul class="gaps" id="gaps"></ul>
+        <div class="sections" id="sections"></div>
       </section>
 
       <section class="panel">
-        <div class="panel-head"><h2>Estructura</h2></div>
-        <pre class="tree" id="tree"></pre>
-        <h3>CLI</h3>
-        <div class="cli" id="cli"></div>
+        <div class="panel-head">
+          <h2>Casos</h2>
+          <div class="filters">
+            <input id="q" type="search" placeholder="Buscar caso, repo o fact…">
+            <select id="f-section"></select>
+            <select id="f-status">
+              <option value="">Todos los estados</option>
+              <option value="pass">Pass</option>
+              <option value="fail">Fail</option>
+              <option value="blocked">Blocked</option>
+              <option value="skip">Skip</option>
+              <option value="error">Error</option>
+              <option value="unrun">Unrun</option>
+            </select>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table id="cases">
+            <thead>
+              <tr><th>ID</th><th>Sección</th><th>Procedencia</th><th>Facts</th><th>ms</th><th>Estado</th></tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+        <div class="pager">
+          <span id="count"></span>
+          <div>
+            <button class="btn" id="prev">←</button>
+            <button class="btn" id="next">→</button>
+          </div>
+        </div>
+      </section>
+
+      <div class="grid-2">
+        <section class="panel">
+          <div class="panel-head">
+            <h2>s17 · Capacidades bloqueadas</h2>
+            <span class="hint" id="gaps-count"></span>
+          </div>
+          <ul class="gaps" id="gaps"></ul>
+        </section>
+
+        <section class="panel">
+          <div class="panel-head"><h2>Estructura</h2></div>
+          <pre class="tree" id="tree"></pre>
+          <h3>CLI</h3>
+          <div class="cli" id="cli"></div>
+        </section>
+      </div>
+    </div>
+
+    <div class="tab-panel" data-tab="visual">
+      <section class="panel">
+        <div class="panel-head">
+          <h2>Comparación de diseño: Chrome vs NativaX</h2>
+          <span class="hint" id="visual-meta">Sin comparaciones</span>
+        </div>
+        <div class="visual-controls">
+          <label>Caso
+            <select id="visual-case"></select>
+          </label>
+          <label>Anchos
+            <select id="visual-widths">
+              <option value="1024">1024 px</option>
+              <option value="768,1024">768 · 1024 px</option>
+              <option value="320,768,1024">320 · 768 · 1024 px</option>
+              <option value="320,480,768,1024,1280">320 · 480 · 768 · 1024 · 1280 px</option>
+            </select>
+          </label>
+          <button class="btn primary" id="btn-visual-case">Comparar caso</button>
+          <button class="btn" id="btn-visual-section">Comparar sección</button>
+          <button class="btn" id="btn-visual-all">Comparar todo</button>
+          <span class="hint" id="visual-status"></span>
+        </div>
+        <pre class="log" id="visual-log"></pre>
+
+        <div class="kpis" id="visual-kpis"></div>
+
+        <div class="visual-result">
+          <label class="hint">Resultado
+            <select id="visual-result"></select>
+          </label>
+          <span class="hint" id="visual-thresholds"></span>
+        </div>
+        <div class="metrics" id="visual-metrics"></div>
+        <div class="compare-grid">
+          <figure>
+            <figcaption><span>Chrome</span><span id="visual-chrome-size"></span></figcaption>
+            <a id="visual-chrome-link" target="_blank" rel="noopener"><img id="visual-chrome" alt="Captura de Chrome"></a>
+          </figure>
+          <figure>
+            <figcaption><span>NativaX</span><span id="visual-nativax-size"></span></figcaption>
+            <a id="visual-nativax-link" target="_blank" rel="noopener"><img id="visual-nativax" alt="Captura de NativaX"></a>
+          </figure>
+          <figure>
+            <figcaption><span>Diferencia</span><span id="visual-diff-size"></span></figcaption>
+            <a id="visual-diff-link" target="_blank" rel="noopener"><img id="visual-diff" alt="Mapa de diferencias"></a>
+          </figure>
+        </div>
+        <p class="hint" id="visual-note">
+          Rojo = píxeles distintos. El borde amarillo marca la caja que contiene todas las diferencias.
+        </p>
+      </section>
+
+      <section class="panel">
+        <div class="panel-head">
+          <h2>Casos comparados</h2>
+          <span class="hint" id="visual-count"></span>
+        </div>
+        <div class="table-wrap">
+          <table id="visual-cases">
+            <thead>
+              <tr><th>Caso</th><th>Sección</th><th>Estado</th><th>% distinto</th><th>SSIM</th><th>Anchos</th></tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
       </section>
     </div>
 
-    <section class="panel">
-      <div class="panel-head">
-        <h2>Artefactos visuales</h2>
-        <span class="hint" id="artifacts-count"></span>
-      </div>
-      <div class="artifacts" id="artifacts"></div>
-    </section>
+    <div class="tab-panel" data-tab="informes">
+      <section class="panel">
+        <div class="panel-head">
+          <h2>Informe del laboratorio</h2>
+          <span class="hint" id="report-meta"></span>
+        </div>
+        <div id="report-summary"></div>
+      </section>
+      <section class="panel">
+        <div class="panel-head"><h2>Secciones</h2></div>
+        <div class="table-wrap">
+          <table id="report-sections">
+            <thead><tr><th>Label</th><th>Total</th><th>Pass</th><th>Fail</th><th>Blocked</th><th>Error</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </section>
+    </div>
 
+    <div class="tab-panel" data-tab="historial">
+      <section class="panel">
+        <div class="panel-head"><h2>Historial de ejecuciones</h2></div>
+        <div class="table-wrap">
+          <table id="history-table">
+            <thead><tr><th>Run</th><th>Timestamp</th><th>Total</th><th>Pass</th><th>Blocked</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+        <h3>Detalle</h3>
+        <pre class="tree" id="history-detail">Selecciona una ejecución.</pre>
+      </section>
+    </div>
+
+    <div class="tab-panel" data-tab="artefactos">
+      <section class="panel">
+        <div class="panel-head">
+          <h2>Artefactos visuales</h2>
+          <span class="hint" id="artifacts-count"></span>
+        </div>
+        <div class="artifacts" id="artifacts"></div>
+      </section>
+    </div>
   </main>
 
   <dialog id="dlg">
@@ -306,3 +451,5 @@ canvas { width: 100%; height: auto; }
 
   <script src="dashboard_data.js"></script>
   <script src="dashboard.js"></script>
+</body>
+</html>

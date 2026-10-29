@@ -723,7 +723,10 @@ class Lab:
     def fixture_sweep(self, cid: str, widths: Iterable[int] | None = None,
                       height: int = 768, *, render: bool = False) -> dict[int, Page]:
         html, css, _js = self.fixture_files(cid)
-        return self.sweep(html, css, widths, height, render=render)
+        # Responsive sweeps are throw-away: keeping every width of every case
+        # alive exhausted memory on the 240-case corpus (the --all run died in
+        # section 14). Only the derived metrics are retained, not the pages.
+        return self.sweep(html, css, widths, height, render=render, cache=False)
 
     def responsive_sweep(self, cid: str, widths: Iterable[int] | None = None,
                          height: int = 768, tolerance: float = 1.0) -> dict:
@@ -772,9 +775,10 @@ class Lab:
 
     # -- debug pipeline --------------------------------------------------
     def page(self, html: str, css: str = "", width: int = 1024, height: int = 768,
-             *, render: bool = False, fresh: bool = False) -> Page:
+             *, render: bool = False, fresh: bool = False,
+             cache: bool = True) -> Page:
         key = _sha(f"{width}x{height}|{render}|{html}|{css}")
-        if not fresh and key in self._pages:
+        if not fresh and cache and key in self._pages:
             return self._pages[key]
         work = self.cache / key
         work.mkdir(parents=True, exist_ok=True)
@@ -790,15 +794,17 @@ class Lab:
         if r.returncode != 0:
             raise LabError(f"nativax-debug failed for {key}: {r.stderr[-1500:]}")
         page = Page(work, html, css, width, height, render)
-        if not fresh:
+        if not fresh and cache:
             self._pages[key] = page
         return page
 
     def sweep(self, html: str, css: str = "", widths: Iterable[int] | None = None,
-              height: int = 768, *, render: bool = False) -> dict[int, Page]:
+              height: int = 768, *, render: bool = False,
+              cache: bool = False) -> dict[int, Page]:
         if widths is None:
             widths = RESPONSIVE_WIDTHS
-        return {w: self.page(html, css, w, height, render=render) for w in widths}
+        return {w: self.page(html, css, w, height, render=render, cache=cache)
+                for w in widths}
 
     # -- runtime / JS ----------------------------------------------------
     def run_app(self, html: str, *, js: str = "", css: str = "", probe: str = "null",
@@ -932,14 +938,15 @@ def run_case(lab: Lab, c: Case) -> CaseResult:
                                    "widths": report["widths"],
                                    "failures": report["failures"][:3]}})
             if not report["ok"]:
-                f = report["failures"][0]
-                # Real-world examples are not all designed for 320 px; record
-                # the overflow as evidence instead of failing the whole case.
-                ev.set({"responsive": {"ok": report["ok"],
-                                       "widths": report["widths"],
-                                       "failures": report["failures"][:3],
-                                       "overflow": True}})
-                # keep status as pass
+                # README contract: every responsive case must fit the viewport
+                # at every width. Recording overflow as a passing case hid real
+                # layout regressions, so it is a failure now.
+                first = report["failures"][0]
+                status = "fail"
+                message = (
+                    f"horizontal overflow at {first['width']}px: "
+                    f"{first['overflow_count']} box(es) past the viewport "
+                    f"(max right edge {first['overflow'][0]['right'] if first.get('overflow') else '?'}px)")
         except Exception as exc:  # noqa: BLE001 - keep going, report honestly
             status = "error"
             message = f"responsive sweep failed: {type(exc).__name__}: {exc}"

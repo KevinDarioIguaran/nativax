@@ -7,6 +7,7 @@
   let TREE = DATA.tree || '';
   let CLI = DATA.cli || [];
   let REPORT = DATA.report || { available: false };
+  let VISUAL = DATA.visual || {};
   let cases = DATA.cases || [];
 
   const $ = (s) => document.querySelector(s);
@@ -46,6 +47,7 @@
       TREE = DATA.tree || '';
       CLI = DATA.cli || [];
       REPORT = DATA.report || { available: false };
+      VISUAL = DATA.visual || {};
       cases = DATA.cases || [];
       window.DASHBOARD_DATA = DATA;
     }
@@ -256,9 +258,11 @@
   }
 
   async function loadArtifacts() {
-    let list = null;
+    // Static data keeps the tab useful when the HTML is opened directly.
+    let list = DATA.artifacts || [];
     if (window.pywebview && window.pywebview.api && window.pywebview.api.get_artifacts) {
-      list = await window.pywebview.api.get_artifacts();
+      const live = await window.pywebview.api.get_artifacts();
+      if (live && live.length) list = live;
     }
     const el = $('#artifacts');
     const count = $('#artifacts-count');
@@ -270,6 +274,207 @@
       }
       return `<div class="artifact"><div>${a.path}</div><div>${a.size} bytes</div></div>`;
     }).join('');
+  }
+
+  // ---------------------------------------------------------------- visual
+  function visualRows() {
+    return Object.values(VISUAL.cases || {});
+  }
+
+  function fillVisualCases() {
+    const sel = $('#visual-case');
+    if (!sel) return;
+    const current = sel.value;
+    sel.innerHTML = cases.map((c) =>
+      `<option value="${c.id}">${c.id} · ${c.repo} · ${c.path}</option>`).join('');
+    const known = new Set(cases.map((c) => c.id));
+    if (current && known.has(current)) {
+      sel.value = current;
+      return;
+    }
+    // Open on a case that already has a comparison, so the images are visible.
+    const reported = Object.keys(VISUAL.cases || {}).find((id) => known.has(id));
+    if (reported) sel.value = reported;
+  }
+
+  function renderVisualKpis() {
+    const el = $('#visual-kpis');
+    if (!el) return;
+    const s = VISUAL.summary || {};
+    const items = [
+      ['Casos comparados', s.cases || 0, ''],
+      ['Capturas', s.comparisons || 0, ''],
+      ['Pass', s.pass || 0, 'pass'],
+      ['Warn', s.warn || 0, 'skip'],
+      ['Fail', s.fail || 0, 'fail'],
+      ['Error', s.error || 0, 'fail'],
+      ['% distinto medio', s.mean_changed_percent == null ? '—' : s.mean_changed_percent + '%', ''],
+      ['SSIM medio', s.mean_ssim == null ? '—' : s.mean_ssim, ''],
+    ];
+    el.innerHTML = items.map(([l, v, k]) =>
+      `<div class="kpi ${k}"><div class="v">${v}</div><div class="l">${l}</div></div>`).join('');
+    const meta = $('#visual-meta');
+    if (meta) {
+      meta.textContent = VISUAL.generated_at
+        ? `informe ${VISUAL.generated_at} · ${s.comparisons || 0} capturas`
+        : 'Sin comparaciones todavía';
+    }
+    const th = VISUAL.thresholds || {};
+    const tel = $('#visual-thresholds');
+    if (tel) {
+      tel.textContent = th.tolerance == null ? '' :
+        `pass ≤ ${th.max_changed_percent}% · warn ≤ ${th.warn_changed_percent}% · MAE ≤ ${th.max_mae} · SSIM ≥ ${th.min_ssim}`;
+    }
+  }
+
+  function renderVisualTable() {
+    const tbody = document.querySelector('#visual-cases tbody');
+    const count = $('#visual-count');
+    if (!tbody) return;
+    const rows = visualRows().sort((a, b) =>
+      (b.mean_changed_percent || 0) - (a.mean_changed_percent || 0));
+    if (count) count.textContent = `${rows.length} caso(s)`;
+    tbody.innerHTML = rows.map((c) => {
+      const widths = c.results.map((r) => r.width).join(', ');
+      return `<tr data-cid="${c.id}">
+        <td class="mono">${c.id}</td>
+        <td>${c.section}</td>
+        <td><span class="badge ${c.status}">${c.status}</span></td>
+        <td>${c.mean_changed_percent == null ? '—' : c.mean_changed_percent + '%'}</td>
+        <td>${c.mean_ssim == null ? '—' : c.mean_ssim}</td>
+        <td>${widths}</td>
+      </tr>`;
+    }).join('') || '<tr><td colspan="6">Sin comparaciones. Usa «Comparar caso».</td></tr>';
+  }
+
+  function renderVisualResult() {
+    const cid = $('#visual-case') ? $('#visual-case').value : '';
+    const sel = $('#visual-result');
+    const row = (VISUAL.cases || {})[cid];
+    const imgs = {
+      chrome: $('#visual-chrome'), nativax: $('#visual-nativax'), diff: $('#visual-diff'),
+      chromeLink: $('#visual-chrome-link'), nativaxLink: $('#visual-nativax-link'),
+      diffLink: $('#visual-diff-link'),
+      chromeSize: $('#visual-chrome-size'), nativaxSize: $('#visual-nativax-size'),
+      diffSize: $('#visual-diff-size'),
+    };
+    const clear = () => {
+      ['chrome', 'nativax', 'diff'].forEach((k) => {
+        if (imgs[k]) imgs[k].removeAttribute('src');
+        if (imgs[k + 'Link']) imgs[k + 'Link'].removeAttribute('href');
+        if (imgs[k + 'Size']) imgs[k + 'Size'].textContent = '';
+      });
+      $('#visual-metrics').innerHTML = '';
+    };
+    if (!row || !sel) { if (sel) sel.innerHTML = '<option value="">Sin comparación</option>'; clear(); return; }
+    sel.innerHTML = row.results.map((r, i) => {
+      const pct = r.metrics ? ` · ${r.metrics.changed_percent}%` : '';
+      return `<option value="${i}">${r.width}x${r.height} · ${r.status}${pct}</option>`;
+    }).join('');
+    showVisualResult(0);
+  }
+
+  function showVisualResult(index) {
+    const cid = $('#visual-case') ? $('#visual-case').value : '';
+    const row = (VISUAL.cases || {})[cid];
+    if (!row) return;
+    const r = row.results[Number(index)] || row.results[0];
+    if (!r) return;
+    const m = r.metrics || {};
+    const chrome = r.chrome || {};
+    const nativax = r.nativax || {};
+    const setImg = (id, link, src, sizeEl, w, h) => {
+      const img = $(id);
+      if (!img) return;
+      if (src) {
+        img.src = src;
+        if (link) link.href = src;
+        if (sizeEl) sizeEl.textContent = `${w}×${h}`;
+      } else {
+        img.removeAttribute('src');
+        if (link) link.removeAttribute('href');
+        if (sizeEl) sizeEl.textContent = '';
+      }
+    };
+    setImg('#visual-chrome', '#visual-chrome-link', chrome.url,
+      '#visual-chrome-size', r.width, r.height);
+    setImg('#visual-nativax', '#visual-nativax-link', nativax.url,
+      '#visual-nativax-size', r.width, r.height);
+    setImg('#visual-diff', '#visual-diff-link', m.diff_url,
+      '#visual-diff-size', m.width, m.height);
+
+    const metrics = [
+      ['Estado', r.status, r.status],
+      ['% distinto', m.changed_percent == null ? '—' : m.changed_percent, ''],
+      ['MAE', m.mae == null ? '—' : m.mae, ''],
+      ['RMSE', m.rmse == null ? '—' : m.rmse, ''],
+      ['SSIM', m.ssim == null ? '—' : m.ssim, ''],
+      ['Píxeles', m.total_pixels == null ? '—' :
+        `${m.changed_pixels} / ${m.total_pixels}`, ''],
+    ];
+    $('#visual-metrics').innerHTML = metrics.map(([l, v, k]) =>
+      `<div class="metric ${k || ''}"><div class="v">${v}</div><div class="l">${l}</div></div>`).join('');
+    const statusEl = $('#visual-status');
+    if (statusEl) {
+      const bits = [`${r.width}×${r.height}`, `Chrome ${chrome.ok === false ? 'error' : 'ok'}`,
+        `NativaX ${nativax.ok ? 'ok' : 'error'}`];
+      if (r.error) bits.push(r.error);
+      statusEl.textContent = bits.join(' · ');
+    }
+  }
+
+  async function pollVisual(btn) {
+    const logEl = $('#visual-log');
+    const statusEl = $('#visual-status');
+    const btns = ['#btn-visual-case', '#btn-visual-section', '#btn-visual-all']
+      .map((s) => $(s)).filter(Boolean);
+    btns.forEach((b) => { b.disabled = true; });
+    const timer = setInterval(async () => {
+      if (!window.pywebview || !window.pywebview.api) return;
+      const st = await window.pywebview.api.get_status();
+      if (!st) return;
+      if (statusEl) statusEl.textContent = st.running ? 'Comparando…' : `Finalizado (exit ${st.exit_code})`;
+      if (logEl) {
+        logEl.textContent = (st.log || []).join('\n');
+        logEl.scrollTop = logEl.scrollHeight;
+      }
+      if (!st.running) {
+        clearInterval(timer);
+        btns.forEach((b) => { b.disabled = false; });
+        await loadData();
+        renderVisualKpis();
+        renderVisualTable();
+        fillVisualCases();
+        renderVisualResult();
+        await loadArtifacts();
+        toast('Comparación terminada');
+      }
+    }, 1000);
+  }
+
+  async function startVisual(scope) {
+    if (!window.pywebview || !window.pywebview.api || !window.pywebview.api.run_visual) {
+      toast('La comparación con Chrome requiere la app nativa (pywebview)');
+      return;
+    }
+    const cid = $('#visual-case').value;
+    const c = cases.find((x) => x.id === cid);
+    const section = c ? parseInt(String(c.sid).replace('s', ''), 10) : 1;
+    const widths = $('#visual-widths').value;
+    const res = await window.pywebview.api.run_visual(scope, cid, section, widths);
+    if (!res || !res.started) {
+      toast('No se pudo iniciar: ' + (res && res.error ? res.error : 'error'));
+      return;
+    }
+    toast('Comparación iniciada');
+    pollVisual();
+  }
+
+  function renderVisual() {
+    renderVisualKpis();
+    fillVisualCases();
+    renderVisualTable();
+    renderVisualResult();
   }
 
   // events
@@ -322,6 +527,24 @@
     if (sec) sec.disabled = scopeSel.value !== 'section';
   });
 
+  const visualCaseSel = $('#visual-case');
+  if (visualCaseSel) visualCaseSel.addEventListener('change', renderVisualResult);
+  const visualResultSel = $('#visual-result');
+  if (visualResultSel) visualResultSel.addEventListener('change', (e) => showVisualResult(e.target.value));
+  const visualCaseBtn = $('#btn-visual-case');
+  if (visualCaseBtn) visualCaseBtn.addEventListener('click', () => startVisual('case'));
+  const visualSectionBtn = $('#btn-visual-section');
+  if (visualSectionBtn) visualSectionBtn.addEventListener('click', () => startVisual('section'));
+  const visualAllBtn = $('#btn-visual-all');
+  if (visualAllBtn) visualAllBtn.addEventListener('click', () => startVisual('all'));
+  const visualTable = document.querySelector('#visual-cases tbody');
+  if (visualTable) visualTable.addEventListener('click', (e) => {
+    const tr = e.target.closest('tr[data-cid]');
+    if (!tr) return;
+    const sel = $('#visual-case');
+    if (sel) { sel.value = tr.dataset.cid; renderVisualResult(); }
+  });
+
   function setupTabs() {
     const tabs = document.querySelectorAll('.tab');
     const panels = document.querySelectorAll('.tab-panel');
@@ -338,6 +561,10 @@
     if (window.pywebview && window.pywebview.api && window.pywebview.api.get_latest_report) {
       report = await window.pywebview.api.get_latest_report();
     }
+    if (!report && REPORT.available) {
+      report = { summary: REPORT.summary || {},
+                 generated_at: REPORT.generated_at, label: REPORT.label };
+    }
     const meta = $('#report-meta');
     const summary = $('#report-summary');
     const tbody = document.querySelector('#report-sections tbody');
@@ -351,9 +578,10 @@
         <div class="kpi skip"><div class="v">${s.blocked || 0}</div><div class="l">Blocked</div></div>
       </div>`;
     }
-    let sections = [];
+    let sections = DATA.report_sections || [];
     if (window.pywebview && window.pywebview.api && window.pywebview.api.get_section_reports) {
-      sections = await window.pywebview.api.get_section_reports();
+      const live = await window.pywebview.api.get_section_reports();
+      if (live && live.length) sections = live;
     }
     if (tbody) {
       tbody.innerHTML = sections.map((r) => {
@@ -373,9 +601,10 @@
   async function renderHistory() {
     const tbody = document.querySelector('#history-table tbody');
     const detail = $('#history-detail');
-    let idx = [];
+    let idx = DATA.history || [];
     if (window.pywebview && window.pywebview.api && window.pywebview.api.get_history_index) {
-      idx = await window.pywebview.api.get_history_index();
+      const live = await window.pywebview.api.get_history_index();
+      if (live && live.length) idx = live;
     }
     if (tbody) {
       tbody.innerHTML = (idx || []).map((r) => {
@@ -383,14 +612,18 @@
         return `<tr data-path="${r.path || ''}"><td>${r.run_id}</td><td>${r.timestamp || ''}</td><td>${t.total || 0}</td><td>${t.pass || 0}</td><td>${t.blocked || 0}</td></tr>`;
       }).join('') || '<tr><td colspan="5">Sin historial</td></tr>';
     }
-    if (tbody) {
+    if (tbody && !tbody.dataset.wired) {
+      tbody.dataset.wired = '1';
       tbody.addEventListener('click', async (e) => {
         const tr = e.target.closest('tr[data-path]');
         if (!tr || !detail) return;
         const path = tr.dataset.path;
-        if (!window.pywebview || !window.pywebview.api || !window.pywebview.api.get_history_run) return;
-        const run = await window.pywebview.api.get_history_run(path);
-        detail.textContent = JSON.stringify(run, null, 2);
+        let run = (idx || []).find((r) => r.path === path) || null;
+        if (window.pywebview && window.pywebview.api && window.pywebview.api.get_history_run) {
+          const live = await window.pywebview.api.get_history_run(path);
+          if (live) run = live;
+        }
+        detail.textContent = run ? JSON.stringify(run, null, 2) : 'Sin detalle disponible.';
       });
     }
   }
@@ -410,6 +643,9 @@
     renderStatic();
     refresh();
     setupTabs();
+    renderVisual();
+    await renderReports();
+    await renderHistory();
     await loadArtifacts();
     const sec = $('#run-section');
     if (sec) sec.disabled = true;

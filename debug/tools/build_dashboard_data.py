@@ -11,6 +11,7 @@ DEBUG = ROOT / "debug"
 LAB = DEBUG / "lab"
 CORPUS = LAB / "corpus.json"
 REPORT = DEBUG / "reports" / "lab" / "latest.json"
+VISUAL_REPORT = DEBUG / "reports" / "visual" / "latest.json"
 OUT = DEBUG / "dashboard" / "dashboard_data.js"
 
 PREFIX = {
@@ -100,6 +101,53 @@ def main() -> int:
             "status": status,
         })
 
+    visual = {}
+    if VISUAL_REPORT.exists():
+        try:
+            visual = json.loads(VISUAL_REPORT.read_text())
+        except Exception:
+            visual = {}
+
+    # Everything the dashboard needs also works when the HTML is opened
+    # directly in a browser (no pywebview bridge).
+    latest = {}
+    if REPORT.exists():
+        try:
+            latest = json.loads(REPORT.read_text())
+        except Exception:
+            latest = {}
+    report_summary = latest.get("summary") or {}
+    report_sections = []
+    for p in sorted((DEBUG / "reports" / "lab").glob("section-*.json")):
+        try:
+            payload = json.loads(p.read_text())
+        except Exception:
+            continue
+        report_sections.append({"file": p.name, "label": payload.get("label", p.stem),
+                                "summary": payload.get("summary", {})})
+
+    history = []
+    index = DEBUG / "history" / "index.json"
+    if index.exists():
+        try:
+            history = json.loads(index.read_text())
+        except Exception:
+            history = []
+
+    artifacts = []
+    image_roots = [DEBUG / "artifacts", DEBUG / "tests" / "goldens"]
+    for root in image_roots:
+        if not root.exists():
+            continue
+        for p in sorted(root.rglob("*")):
+            if not p.is_file() or p.suffix.lower() not in {".png", ".jpg", ".jpeg"}:
+                continue
+            try:
+                artifacts.append({"path": str(p.relative_to(DEBUG)),
+                                  "size": p.stat().st_size, "url": p.as_uri()})
+            except OSError:
+                continue
+
     data = {
         "sections": sections,
         "repos": sorted({c["source"]["repo"] for c in corpus.get("cases", [])}),
@@ -111,7 +159,12 @@ def main() -> int:
             "available": bool(report),
             "generated_at": report.get("generated_at"),
             "label": report.get("label"),
+            "summary": report_summary,
         },
+        "report_sections": report_sections,
+        "history": history,
+        "artifacts": artifacts[:600],
+        "visual": visual,
     }
     OUT.write_text("window.DASHBOARD_DATA = " + json.dumps(data, ensure_ascii=False) + ";\n")
     print(f"wrote {OUT} ({len(cases)} cases, report={'yes' if report else 'no'})")

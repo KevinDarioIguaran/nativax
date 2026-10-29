@@ -1,27 +1,42 @@
-# Proposed 1000-test distribution — support status
+# Test distribution — current status
 
-| # | Category | Tests | Current support |
-|---|----------|------:|-----------------|
-| 1 | HTML y estructura | 80 | Supported (s01, s19) |
-| 2 | Selectores y cascada CSS | 100 | Partial (variables/@media gaps) |
-| 3 | Box model y geometría | 120 | Partial (calc() gap) |
-| 4 | Tipografía y texto | 90 | Supported |
-| 5 | Colores, fondos y decoración | 100 | Partial (gradients partial) |
-| 6 | Flexbox | 70 | Blocked (gap.006/016) |
-| 7 | CSS Grid | 70 | Blocked (gap.006) |
-| 8 | Diseño responsive | 80 | Supported (responsive sweep) |
-| 9 | Formularios y controles | 60 | Partial |
-| 10 | Imágenes y medios | 40 | Partial (img paint wiring gap.010, video gap.031) |
-| 11 | Transformaciones y animaciones | 60 | Partial (animation timing gap.021) |
-| 12 | Pseudoelementos | 35 | Blocked (not implemented) |
-| 13 | Posicionamiento y desbordamiento | 55 | Partial (absolute/fixed/float gaps) |
-| 14 | SVG y gráficos vectoriales | 20 | Blocked (gap.011) |
-| 15 | Comportamiento predeterminado y accesibilidad | 20 | Partial (a11y tree gap.027) |
+The laboratory currently runs **240 real-world cases** in s01–s16 (15 each)
+plus **25 documented capability gaps** in s17. The old 1000-test table referred
+to sections and capabilities that do not exist on this branch; this file now
+reflects the real corpus.
 
-Total: 1000.
+| Section | Area | Cases | Last result (2026-10-29) |
+|---|---|---:|---|
+| s01 | HTML/structure | 15 | 7 pass · 8 fail (responsive overflow) |
+| s02 | CSS selectors/cascade | 15 | 8 pass · 7 fail |
+| s03 | Box model | 15 | 15 pass |
+| s04 | Typography | 15 | 15 pass |
+| s05 | Color/decoration | 15 | 15 pass |
+| s06 | Animation | 15 | 15 pass |
+| s07 | Responsive | 15 | 14 pass · 1 fail |
+| s08 | Flexbox | 15 | 15 pass |
+| s09 | Positioning/overflow | 15 | 15 pass |
+| s10 | JS/DOM | 15 | 10 pass · 5 fail |
+| s11 | Events/forms | 15 | 15 pass |
+| s12 | Forms | 15 | 15 pass |
+| s13 | Accessibility/responsive templates | 15 | 9 pass · 6 fail |
+| s14 | Media/images | 15 | 8 pass · 7 fail |
+| s15 | Performance templates | 15 | 7 pass · 8 fail |
+| s16 | Integration | 15 | 10 pass · 5 fail |
+| s17 | Capability gaps | 25 | 25 blocked |
 
-Notes:
-- Lab sections currently cover ~1700 cases across 19 sections.
-- Blocked capabilities are documented in debug/lab/sections/s17_gaps.py.
-- Graphics engine supports block/inline layout, text, images (decode), scroll (basic), transforms.
-- Missing for full distribution: flexbox, grid, calc(), CSS variables, absolute/fixed/float, pseudoelements, SVG, a11y tree, video.
+**Total:** 265 cases — 193 pass, 47 fail, 25 blocked, 0 error.
+
+## Support status
+
+- Supported: box model, typography, colors, animations, flexbox (with the
+  documented gap.016 caveat), events/forms, DOM/JS bindings.
+- Partial: responsive layout (47 real overflow failures), CSS cascade
+  (`var()`, `@import`, `@layer`, `@supports`), positioning (absolute/fixed and
+  float missing), images (`img` paint wiring missing), text metrics
+  (`font-weight` not applied).
+- Blocked: CSS grid, inline SVG, canvas, WebGL, video, localStorage/IndexedDB,
+  accessibility tree, RTL/bidi text, platform backends (Windows/macOS/iOS).
+
+Every number above comes from `python3 debug/lab/run_lab.py --all`; see
+`debug/reports/lab/latest.json` and `debug/history/` for the raw evidence.

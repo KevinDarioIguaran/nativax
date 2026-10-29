@@ -1,10 +1,13 @@
 
+build
 build/
 build-asan/
+build-new/
 debug/artifacts/
 debug/.venv/
 debug/reports/
 debug/lab/env.json
+__pycache__/
 debug/lab/__pycache__/
 debug/lab/sections/__pycache__/
 debug/history/__pycache__/
