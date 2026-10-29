@@ -100,12 +100,37 @@ class Api:
         return out[:200]
 
 
-def main() -> int:
-    run_build()
+def _system_python() -> str | None:
+    for cand in ("/usr/bin/python3", "/usr/bin/python3.12", "/usr/bin/python3.11"):
+        if Path(cand).exists():
+            return cand
+    return None
+
+
+def _ensure_webview():
     try:
         import webview  # type: ignore
+        return webview
     except Exception:
-        webview = None
+        pass
+    sp = _system_python()
+    if sp and sp != sys.executable:
+        # Re-exec with the system interpreter, which has GTK bindings.
+        os.execv(sp, [sp, str(Path(__file__).resolve())] + sys.argv[1:])
+    # Try to install pywebview into the current interpreter.
+    try:
+        subprocess.run([sys.executable, "-m", "pip", "install", "pywebview",
+                        "--break-system-packages"], check=False,
+                       stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        import webview  # type: ignore
+        return webview
+    except Exception:
+        return None
+
+
+def main() -> int:
+    run_build()
+    webview = _ensure_webview()
 
     if webview is not None:
         api = Api()
