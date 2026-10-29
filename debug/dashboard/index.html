@@ -272,12 +272,23 @@ dialog h3 { margin-top: 0; font-family: var(--mono); }
 <body>
 <div class="app">
   <header class="topbar">
+div>
+
+    <div class="run-state">
+      <span class="dot" id="run-dot"></span>
+      <span class="txt" id="run-text">No run</span>
+      <span class="bar"><i id="run-bar"></i></span>
+    </div>
+    <button class="icon-btn" id="btn-theme" aria-label="Toggle theme">◐</button>
+  </header>
+
+  <aside class="sidebar">
+    <div class="side-title">Run</div>
     <nav class="run-tabs" id="run-tabs" aria-label="Runs">
       <button class="run-tab active" data-mode="tests"><i class="fa-solid fa-vial"></i> Run tests</button>
       <button class="run-tab" data-mode="visual"><i class="fa-solid fa-images"></i> Chrome vs NativaX</button>
       <button class="run-tab" data-mode="responsive"><i class="fa-solid fa-arrows-left-right"></i> Responsive</button>
     </nav>
-
     <div class="run-controls" id="run-controls">
       <label>Scope
         <select id="scope">
@@ -303,15 +314,6 @@ dialog h3 { margin-top: 0; font-family: var(--mono); }
       <button class="btn danger" id="btn-stop" disabled><i class="fa-solid fa-stop"></i> Stop</button>
     </div>
 
-    <div class="run-state">
-      <span class="dot" id="run-dot"></span>
-      <span class="txt" id="run-text">No run</span>
-      <span class="bar"><i id="run-bar"></i></span>
-    </div>
-    <button class="icon-btn" id="btn-theme" aria-label="Toggle theme">◐</button>
-  </header>
-
-  <aside class="sidebar">
     <div class="side-title">Views</div>
     <nav class="nav" id="views">
       <button data-view="resumen" class="active"><i class="fa-solid fa-chart-simple"></i> Summary</button>

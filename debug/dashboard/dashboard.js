@@ -931,12 +931,13 @@
       const t = defaults;
       host.innerHTML = `<div class="judge-meta">The judge evaluates each run. ` +
         `No results yet: these are the standards that will apply.</div>` +
-        `<div class="judge-section"><h3>Lab standards</h3>` +
+        `<div class="judge-section">` +
+
         stdRow('Pass', '—', '', 'assertion holds') +
         stdRow('Fail', '—', '', 'real regression; verdict fails') +
         stdRow('Blocked', '—', '', 'capability not implemented (s17)') +
         stdRow('Error', '—', '', 'harness exception; never a pass') +
-        `</div><div class="judge-section"><h3>Visual standards</h3>` +
+        `</div><div class="judge-section">` +
         stdRow('Max change', `≤ ${num(t.max_changed_percent, 1)} %`, '',
                'changed pixels allowed for pass') +
         stdRow('Warn', `≤ ${num(t.warn_changed_percent, 1)} %`, '', 'above that is fail') +
@@ -985,7 +986,7 @@
       const okSsim = ssim === null ? '' :
         (Number(ssim) >= Number(t.min_ssim ?? 0.9) ? 'ok' : 'bad');
       const mismatch = m.size_mismatch;
-      html += `<div class="judge-section"><h3>Visual standards</h3>` +
+      html += `<div class="judge-section">` +
         stdBar('Change', `${pct(changed)}`, t.max_changed_percent ?? 2,
                okChanged, `≤ ${num(t.max_changed_percent, 1)} %`) +
         stdBar('MAE', `${num(mae, 2)}`, t.max_mae ?? 6, okMae,
@@ -1006,7 +1007,7 @@
         `</div>`;
     } else {
       const resp = src.standards && src.standards.responsive;
-      html += `<div class="judge-section"><h3>Lab standards</h3>` +
+      html += `<div class="judge-section">` +
         stdBar('Cases', num(s.total ?? 0), s.total ?? 1, '', 'really executed') +
         stdBar('Pass', num(s.pass ?? 0), s.total ?? 1, (Number(s.pass) || 0) ? 'ok' : '', '') +
         stdBar('Fail', num(s.fail ?? 0), s.total ?? 1, (Number(s.fail) || 0) ? 'bad' : 'ok', 'must be 0') +
