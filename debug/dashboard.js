@@ -34,7 +34,10 @@
   }
 
   async function loadData() {
-    const fresh = await api('/api/dashboard-data');
+    let fresh = null;
+    if (window.pywebview && window.pywebview.api && window.pywebview.api.reload_data) {
+      fresh = await window.pywebview.api.reload_data();
+    }
     if (fresh && fresh.cases) {
       DATA = fresh;
       SECTIONS = DATA.sections || [];
@@ -209,14 +212,17 @@
 
   async function runTests() {
     const btn = $('#btn-run');
+    if (!window.pywebview || !window.pywebview.api || !window.pywebview.api.run_tests) {
+      toast('Ejecución disponible solo en la app nativa (pywebview)');
+      return;
+    }
     btn.disabled = true;
     const scope = $('#run-scope').value;
     const section = parseInt($('#run-section').value, 10) || 1;
     const responsive = $('#run-responsive').checked;
-    const body = { scope, section, responsive };
-    const res = await api('/api/run', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+    const res = await window.pywebview.api.run_tests(scope, section, responsive);
     if (!res || !res.started) {
-      toast('No se pudo iniciar (¿servidor activo?)');
+      toast('No se pudo iniciar: ' + (res && res.error ? res.error : 'error'));
       btn.disabled = false;
       return;
     }
@@ -229,7 +235,8 @@
     const statusEl = $('#run-status');
     const btn = $('#btn-run');
     const timer = setInterval(async () => {
-      const st = await api('/api/run/status');
+      if (!window.pywebview || !window.pywebview.api) return;
+      const st = await window.pywebview.api.get_status();
       if (!st) return;
       if (statusEl) statusEl.textContent = st.running ? 'Ejecutando…' : `Finalizado (exit ${st.exit_code})`;
       if (logEl) {
@@ -249,14 +256,17 @@
   }
 
   async function loadArtifacts() {
-    const list = await api('/api/artifacts');
+    let list = null;
+    if (window.pywebview && window.pywebview.api && window.pywebview.api.get_artifacts) {
+      list = await window.pywebview.api.get_artifacts();
+    }
     const el = $('#artifacts');
     const count = $('#artifacts-count');
     if (!list || !el) return;
     if (count) count.textContent = `${list.length} archivos`;
     el.innerHTML = list.map((a) => {
       if (a.path.match(/\.(png|jpg|jpeg)$/i)) {
-        return `<div class="artifact"><img src="/${a.path}" alt="${a.path}"><div>${a.path}</div></div>`;
+        return `<div class="artifact"><img src="${a.url}" alt="${a.path}" onerror="this.style.display='none'"><div>${a.path}</div></div>`;
       }
       return `<div class="artifact"><div>${a.path}</div><div>${a.size} bytes</div></div>`;
     }).join('');
@@ -291,7 +301,13 @@
     }
   });
   const runBtn = $('#btn-run');
-  if (runBtn) runBtn.addEventListener('click', runTests);
+  if (runBtn) {
+    runBtn.addEventListener('click', runTests);
+    if (!window.pywebview || !window.pywebview.api) {
+      runBtn.disabled = true;
+      runBtn.title = 'Disponible solo en la app nativa (pywebview)';
+    }
+  }
   const refreshBtn = $('#btn-refresh');
   if (refreshBtn) refreshBtn.addEventListener('click', async () => {
     await loadData();

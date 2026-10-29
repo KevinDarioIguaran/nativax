@@ -1,79 +1,122 @@
 #!/usr/bin/env python3
-"""Open the NativaX dashboard in a dedicated application window."""
+"""Native (pywebview) GUI for the NativaX debug laboratory."""
 from __future__ import annotations
 
-import shutil
+import json
+import os
+import queue
 import subprocess
 import sys
+import threading
+import time
 import webbrowser
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 DEBUG = ROOT / "debug"
-DASHBOARD = DEBUG / "dashboard.html"
+LAB = DEBUG / "lab"
+RUNNER = LAB / "run_lab.py"
 DATA_SCRIPT = DEBUG / "tools" / "build_dashboard_data.py"
-SERVER_SCRIPT = DEBUG / "tools" / "dashboard_server.py"
+DASHBOARD_HTML = DEBUG / "dashboard.html"
 
 
-def ensure_data():
-    if DATA_SCRIPT.exists():
-        subprocess.run([sys.executable, str(DATA_SCRIPT)], cwd=ROOT, stdout=subprocess.DEVNULL)
+def run_build() -> None:
+    subprocess.run([sys.executable, str(DATA_SCRIPT)], cwd=ROOT,
+                   stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
 
-def start_server():
-    sys.path.insert(0, str(DEBUG / "tools"))
-    import dashboard_server  # type: ignore
-    return dashboard_server.start_server()
+def load_data() -> dict:
+    run_build()
+    path = DEBUG / "dashboard_data.js"
+    text = path.read_text(encoding="utf-8")
+    prefix = "window.DASHBOARD_DATA = "
+    return json.loads(text[len(prefix):].rstrip().rstrip(";"))
 
 
-def try_webview(url: str) -> bool:
-    try:
-        import webview  # type: ignore
-    except Exception:
-        return False
-    webview.create_window("NativaX Debug Lab", url, width=1380, height=900)
-    webview.start()
-    return True
+class Api:
+    def __init__(self):
+        self.running = False
+        self.log = []
+        self.exit_code = None
+        self.lock = threading.Lock()
 
+    def run_tests(self, scope="all", section=1, responsive=False):
+        with self.lock:
+            if self.running:
+                return {"started": False, "error": "already running"}
+            self.running = True
+            self.log = []
+            self.exit_code = None
+        cmd = [sys.executable, str(RUNNER)]
+        if scope == "all":
+            cmd.append("--all")
+        else:
+            cmd += ["--section", str(section)]
+        if not responsive:
+            cmd.append("--no-responsive")
 
-def try_app_window(url: str) -> bool:
-    for binary in ("google-chrome", "google-chrome-stable", "chromium",
-                   "chromium-browser", "msedge", "chrome"):
-        path = shutil.which(binary)
-        if path:
-            subprocess.Popen([path, f"--app={url}", "--window-size=1380,900"],
-                             stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-            return True
-    for binary in ("firefox", "firefox-esr"):
-        path = shutil.which(binary)
-        if path:
-            subprocess.Popen([path, "--new-window", url],
-                             stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-            return True
-    return False
+        def worker():
+            try:
+                proc = subprocess.Popen(cmd, cwd=ROOT, stdout=subprocess.PIPE,
+                                       stderr=subprocess.STDOUT, text=True, bufsize=1)
+                for line in proc.stdout:
+                    with self.lock:
+                        self.log.append(line.rstrip("\n"))
+                        if len(self.log) > 2000:
+                            self.log = self.log[-2000:]
+                proc.wait()
+                with self.lock:
+                    self.exit_code = proc.returncode
+                    self.log.append(f"[exit {proc.returncode}]")
+            except Exception as exc:
+                with self.lock:
+                    self.exit_code = -1
+                    self.log.append(f"ERROR: {exc}")
+            finally:
+                with self.lock:
+                    self.running = False
+                run_build()
+
+        threading.Thread(target=worker, daemon=True).start()
+        return {"started": True}
+
+    def get_status(self):
+        with self.lock:
+            return {
+                "running": self.running,
+                "exit_code": self.exit_code,
+                "log": list(self.log[-80:]),
+            }
+
+    def reload_data(self):
+        return load_data()
+
+    def get_artifacts(self):
+        out = []
+        for p in sorted(DEBUG.rglob("*")):
+            if p.is_file() and p.suffix.lower() in {".png", ".jpg", ".jpeg"}:
+                out.append({"path": str(p.relative_to(DEBUG)), "size": p.stat().st_size,
+                            "url": p.as_uri()})
+        return out[:200]
 
 
 def main() -> int:
-    ensure_data()
+    run_build()
     try:
-        httpd, port, url = start_server()
-    except Exception as exc:
-        print(f"server failed: {exc}", file=sys.stderr)
-        url = DASHBOARD.as_uri()
-        httpd = None
-    if try_webview(url):
+        import webview  # type: ignore
+    except Exception:
+        webview = None
+
+    if webview is not None:
+        api = Api()
+        webview.create_window("NativaX Debug Lab", DASHBOARD_HTML.as_uri(),
+                              js_api=api, width=1380, height=900)
+        webview.start()
         return 0
-    if try_app_window(url):
-        return 0
-    webbrowser.open(url)
-    print(f"opened {url}")
-    if httpd is not None:
-        try:
-            while True:
-                import time
-                time.sleep(1)
-        except KeyboardInterrupt:
-            httpd.shutdown()
+
+    # Fallback: open the static dashboard in the default browser.
+    webbrowser.open(DASHBOARD_HTML.as_uri())
+    print(f"opened {DASHBOARD_HTML} (read-only; install pywebview for interactive mode)")
     return 0
 
 
