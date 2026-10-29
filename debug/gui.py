@@ -17,7 +17,7 @@ DEBUG = ROOT / "debug"
 LAB = DEBUG / "lab"
 RUNNER = LAB / "run_lab.py"
 DATA_SCRIPT = DEBUG / "tools" / "build_dashboard_data.py"
-DASHBOARD_HTML = DEBUG / "dashboard.html"
+DASHBOARD_HTML = DEBUG / "dashboard" / "index.html"
 
 
 def run_build() -> None:
@@ -27,7 +27,7 @@ def run_build() -> None:
 
 def load_data() -> dict:
     run_build()
-    path = DEBUG / "dashboard_data.js"
+    path = DEBUG / "dashboard" / "dashboard_data.js"
     text = path.read_text(encoding="utf-8")
     prefix = "window.DASHBOARD_DATA = "
     return json.loads(text[len(prefix):].rstrip().rstrip(";"))

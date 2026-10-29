@@ -11,7 +11,7 @@ DEBUG = ROOT / "debug"
 LAB = DEBUG / "lab"
 CORPUS = LAB / "corpus.json"
 REPORT = DEBUG / "reports" / "lab" / "latest.json"
-OUT = DEBUG / "dashboard_data.js"
+OUT = DEBUG / "dashboard" / "dashboard_data.js"
 
 PREFIX = {
     1: "html", 2: "css", 3: "box", 4: "typo", 5: "color", 6: "anim",
