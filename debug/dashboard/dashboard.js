@@ -395,6 +395,15 @@
     }
   }
 
+  function onApiReady(cb) {
+    if (window.pywebview && window.pywebview.api) { cb(); return; }
+    window.addEventListener('pywebviewready', cb, { once: true });
+    // fallback poll
+    const t = setInterval(() => {
+      if (window.pywebview && window.pywebview.api) { clearInterval(t); cb(); }
+    }, 200);
+  }
+
   // init
   (async () => {
     await loadData();
@@ -402,9 +411,20 @@
     refresh();
     setupTabs();
     await loadArtifacts();
-    await renderReports();
-    await renderHistory();
     const sec = $('#run-section');
     if (sec) sec.disabled = true;
+    const runBtn = $('#btn-run');
+    onApiReady(async () => {
+      if (runBtn) runBtn.disabled = false;
+      await renderReports();
+      await renderHistory();
+    });
+    // if no api after 2s, keep disabled
+    setTimeout(() => {
+      if (!(window.pywebview && window.pywebview.api) && runBtn) {
+        runBtn.disabled = true;
+        runBtn.title = 'Disponible solo en la app nativa (pywebview)';
+      }
+    }, 2000);
   })();
 })();
