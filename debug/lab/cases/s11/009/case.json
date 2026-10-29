@@ -1,0 +1,132 @@
+{
+ "id": "events.009",
+ "section": 11,
+ "name": "keshavgbpecdelhi/Web-Development · projects/snake game",
+ "source": {
+  "repo": "keshavgbpecdelhi/Web-Development",
+  "commit": "c1613b1424c3226ecd09ca0f23cd39bc4e32709b",
+  "license": "Apache-2.0",
+  "path": "projects/snake game",
+  "url": "https://github.com/keshavgbpecdelhi/Web-Development/tree/c1613b1424c3226ecd09ca0f23cd39bc4e32709b/projects/snake game"
+ },
+ "entry": "index.html",
+ "dir": "cases/s11/009",
+ "bytes": 3165,
+ "files": 1,
+ "digest": "ceeb8339072b2a32c598",
+ "facts": {
+  "title": "Snake Game",
+  "elements": 10,
+  "max_depth": 3,
+  "tags": {
+   "html": 1,
+   "head": 1,
+   "meta": 1,
+   "title": 1,
+   "style": 1,
+   "script": 1,
+   "body": 1,
+   "h1": 1,
+   "div": 1,
+   "canvas": 1
+  },
+  "html_tags": [
+   "body",
+   "canvas",
+   "div",
+   "h1",
+   "head",
+   "html",
+   "meta",
+   "script",
+   "style",
+   "title"
+  ],
+  "ids": [
+   "show",
+   "playArea"
+  ],
+  "id_counts": {
+   "show": 1,
+   "playArea": 1
+  },
+  "classes": [],
+  "class_counts": {},
+  "text_samples": [
+   "Play Snake Game",
+   "Sorry your browser does not support HTML5. Try using like Chrome or Firefox."
+  ],
+  "inline_styles": [],
+  "attr_samples": {
+   "show": {
+    "tag": "div",
+    "class": "",
+    "attrs": {
+     "id": "show"
+    }
+   },
+   "playArea": {
+    "tag": "canvas",
+    "class": "",
+    "attrs": {
+     "id": "playArea",
+     "width": "450",
+     "height": "300"
+    }
+   }
+  },
+  "roles": {},
+  "aria": {},
+  "forms": {},
+  "media": {
+   "canvas": 1
+  },
+  "linked_css": [],
+  "linked_js": [],
+  "style_blocks": 1,
+  "inline_js": 1,
+  "images": [],
+  "features": [
+   "media",
+   "typo",
+   "color",
+   "box",
+   "jsdom",
+   "events"
+  ],
+  "css": {
+   "rules": 3,
+   "selectors": [
+    "body",
+    "canvas",
+    "h1"
+   ],
+   "properties": [
+    "text-align",
+    "border",
+    "font-size",
+    "margin",
+    "padding-bottom",
+    "text-decoration",
+    "font-family",
+    "color"
+   ],
+   "property_counts": {
+    "text-align": 2,
+    "border": 1,
+    "font-size": 1,
+    "margin": 1,
+    "padding-bottom": 1,
+    "text-decoration": 1,
+    "font-family": 1,
+    "color": 1
+   },
+   "media": 0,
+   "keyframes": 0,
+   "bytes": 204
+  },
+  "js_bytes": 2565,
+  "html_bytes": 3165,
+  "missing_assets": []
+ }
+}

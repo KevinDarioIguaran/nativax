@@ -1,43 +1,65 @@
-// NativaX Lab · clock, theme, counter and ripple. Everything real, nothing simulated.
-window.__nativaxCase = 'a11y.013';
-(function () {
-  var clock = document.getElementById('clock');
-  function pad(n) { return n < 10 ? '0' + n : String(n); }
-  function tick() {
-    var d = new Date();
-    if (clock) clock.textContent = pad(d.getHours()) + ':' + pad(d.getMinutes()) + ':' + pad(d.getSeconds());
+shownotes();
+let addBtn = document.getElementById("addBtn");
+addBtn.addEventListener("click", function (elemen) {
+  let text = document.getElementById("addTxt");
+  let note = localStorage.getItem("note");
+  if (note == null) {
+    notesObj = [];
+  } else {
+    notesObj = JSON.parse(note);
   }
-  tick();
-  setInterval(tick, 1000);
-
-  var pings = 0;
-  var badge = document.getElementById('pings');
-  window.__nativaxPings = 0;
-  var ping = document.getElementById('ping');
-  if (ping) {
-    ping.addEventListener('click', function (ev) {
-      pings++;
-      window.__nativaxPings = pings;
-      if (badge) badge.textContent = String(pings);
-      var host = ping.parentNode;
-      if (host) {
-        var r = document.createElement('span');
-        r.className = 'ripple';
-        host.appendChild(r);
-      }
-    });
+  notesObj.push(text.value);
+  localStorage.setItem("note", JSON.stringify(notesObj));
+  text.value = "";
+  shownotes();
+});
+function shownotes() {
+  let note = localStorage.getItem("note");
+  if (note == null) {
+    notesObj = [];
+  } else {
+    notesObj = JSON.parse(note);
   }
-
-  var toggle = document.getElementById('theme-toggle');
-  if (toggle) {
-    toggle.addEventListener('click', function () {
-      document.body.classList.toggle('light');
-      toggle.textContent = document.body.classList.contains('light') ? 'Dark' : 'Theme';
-    });
+  let html = "";
+  notesObj.forEach(function (element, index) {
+    html += `
+    <div class="new card mx-2 my-3" style="width: 18rem">
+    <div class="card-body">
+    <h5 class="card-title">note ${index + 1}</h5>
+    <p class="card-text">${element}</p>
+    <button id="${index}" onclick="deleteNode(this.id)" class="btn btn-primary">Delete note</button>
+    </div>
+    </div>
+    </div>`;
+  });
+  let display = document.getElementById("notes");
+  if (notesObj.length != 0) {
+    display.innerHTML = html;
+  } else {
+    display.innerHTML = `<h4>No notes present at this moment</h4>`;
   }
-
-  var cards = document.querySelectorAll('.card');
-  for (var i = 0; i < cards.length; i++) {
-    cards[i].addEventListener('click', function () { this.classList.toggle('is-selected'); });
+}
+function deleteNode(id) {
+  let note = localStorage.getItem("note");
+  if (note == null) {
+    notesObj = [];
+  } else {
+    notesObj = JSON.parse(note);
   }
-})();
+  notesObj.splice(id, 1);
+  localStorage.setItem("note", JSON.stringify(notesObj));
+  shownotes();
+}
+let search = document.getElementById("searchTxt");
+search.addEventListener("input", function () {
+  let inputValue = search.value.toLowerCase();
+  let cards = document.getElementsByClassName("new");
+  Array.from(cards).forEach(function (element) {
+    let textOfCard = element.getElementsByTagName("p")[0];
+    if (textOfCard.innerText.includes(inputValue)) {
+      element.style.display = "block";
+    } else {
+      element.style.display = "none";
+    }
+  });
+});

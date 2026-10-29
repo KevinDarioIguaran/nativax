@@ -1,0 +1,197 @@
+{
+ "id": "pos.002",
+ "section": 9,
+ "name": "keshavgbpecdelhi/Web-Development · projects/CSS-Adjuster",
+ "source": {
+  "repo": "keshavgbpecdelhi/Web-Development",
+  "commit": "c1613b1424c3226ecd09ca0f23cd39bc4e32709b",
+  "license": "Apache-2.0",
+  "path": "projects/CSS-Adjuster",
+  "url": "https://github.com/keshavgbpecdelhi/Web-Development/tree/c1613b1424c3226ecd09ca0f23cd39bc4e32709b/projects/CSS-Adjuster"
+ },
+ "entry": "index.html",
+ "dir": "cases/s09/002",
+ "bytes": 52162,
+ "files": 4,
+ "digest": "1fee4a0e1ecea25ee11b",
+ "facts": {
+  "title": "Scoped CSS Variables and JS",
+  "elements": 17,
+  "max_depth": 5,
+  "tags": {
+   "html": 1,
+   "head": 1,
+   "meta": 1,
+   "title": 1,
+   "link": 1,
+   "body": 1,
+   "div": 2,
+   "h2": 1,
+   "label": 3,
+   "input": 3,
+   "img": 1,
+   "script": 1
+  },
+  "html_tags": [
+   "body",
+   "div",
+   "h2",
+   "head",
+   "html",
+   "img",
+   "input",
+   "label",
+   "link",
+   "meta",
+   "script",
+   "title"
+  ],
+  "ids": [
+   "spacing",
+   "blur",
+   "border"
+  ],
+  "id_counts": {
+   "spacing": 1,
+   "blur": 1,
+   "border": 1
+  },
+  "classes": [
+   "whole",
+   "controler",
+   "controls"
+  ],
+  "class_counts": {
+   "whole": 1,
+   "controler": 1,
+   "controls": 1
+  },
+  "text_samples": [
+   "CSS Adjuster",
+   "Border Color"
+  ],
+  "inline_styles": [],
+  "attr_samples": {
+   "spacing": {
+    "tag": "input",
+    "class": "",
+    "attrs": {
+     "id": "spacing",
+     "type": "range",
+     "name": "size",
+     "value": "450"
+    }
+   },
+   "blur": {
+    "tag": "input",
+    "class": "",
+    "attrs": {
+     "id": "blur",
+     "type": "range",
+     "name": "visibility",
+     "value": "0"
+    }
+   },
+   "border": {
+    "tag": "input",
+    "class": "",
+    "attrs": {
+     "id": "border",
+     "type": "color",
+     "name": "border",
+     "value": "#80b8e0"
+    }
+   }
+  },
+  "roles": {},
+  "aria": {},
+  "forms": {
+   "label": 3,
+   "input": 3
+  },
+  "media": {
+   "img": 1
+  },
+  "linked_css": [
+   "style.css"
+  ],
+  "linked_js": [
+   "script.js"
+  ],
+  "style_blocks": 0,
+  "inline_js": 1,
+  "images": [
+   "download.jpg"
+  ],
+  "features": [
+   "position",
+   "forms",
+   "media",
+   "typo",
+   "color",
+   "box",
+   "jsdom"
+  ],
+  "css": {
+   "rules": 8,
+   "selectors": [
+    ":root",
+    "img",
+    "body",
+    ".whole",
+    ".controls",
+    "input",
+    "#border",
+    ".image"
+   ],
+   "properties": [
+    "margin-top",
+    "width",
+    "height",
+    "background",
+    "--border",
+    "--size",
+    "--visibility",
+    "filter",
+    "padding",
+    "text-align",
+    "color",
+    "font-family",
+    "font-weight",
+    "font-size",
+    "margin-bottom",
+    "min-width",
+    "min-height",
+    "float",
+    "position"
+   ],
+   "property_counts": {
+    "margin-top": 3,
+    "width": 3,
+    "height": 2,
+    "background": 2,
+    "--border": 1,
+    "--size": 1,
+    "--visibility": 1,
+    "filter": 1,
+    "padding": 1,
+    "text-align": 1,
+    "color": 1,
+    "font-family": 1,
+    "font-weight": 1,
+    "font-size": 1,
+    "margin-bottom": 1,
+    "min-width": 1,
+    "min-height": 1,
+    "float": 1,
+    "position": 1
+   },
+   "media": 0,
+   "keyframes": 0,
+   "bytes": 804
+  },
+  "js_bytes": 454,
+  "html_bytes": 965,
+  "missing_assets": []
+ }
+}

@@ -1,0 +1,198 @@
+{
+ "id": "resp.014",
+ "section": 7,
+ "name": "learning-zone/website-templates · theme-changer-template",
+ "source": {
+  "repo": "learning-zone/website-templates",
+  "commit": "7bf31e9646a6b5f51c2e55b2557787310436989f",
+  "license": "not declared upstream",
+  "path": "theme-changer-template",
+  "url": "https://github.com/learning-zone/website-templates/tree/7bf31e9646a6b5f51c2e55b2557787310436989f/theme-changer-template"
+ },
+ "entry": "index.html",
+ "dir": "cases/s07/014",
+ "bytes": 3398,
+ "files": 3,
+ "digest": "75ad3586fa3ae9e3b454",
+ "facts": {
+  "title": "Light/Dark Theme",
+  "elements": 22,
+  "max_depth": 7,
+  "tags": {
+   "html": 1,
+   "head": 1,
+   "meta": 3,
+   "link": 2,
+   "script": 3,
+   "title": 1,
+   "body": 1,
+   "div": 3,
+   "section": 1,
+   "h1": 2,
+   "input": 3,
+   "button": 1
+  },
+  "html_tags": [
+   "body",
+   "button",
+   "div",
+   "h1",
+   "head",
+   "html",
+   "input",
+   "link",
+   "meta",
+   "script",
+   "section",
+   "title"
+  ],
+  "ids": [
+   "bgColor-1",
+   "bgColor-2",
+   "bgColor-3",
+   "bgChange"
+  ],
+  "id_counts": {
+   "bgColor-1": 1,
+   "bgColor-2": 1,
+   "bgColor-3": 1,
+   "bgChange": 1
+  },
+  "classes": [
+   "blur",
+   "main",
+   "container",
+   "text-center"
+  ],
+  "class_counts": {
+   "blur": 1,
+   "main": 1,
+   "container": 1,
+   "text-center": 2
+  },
+  "text_samples": [
+   "Theme Changer",
+   "Select Background-Color",
+   "Save Background-Color"
+  ],
+  "inline_styles": [],
+  "attr_samples": {
+   "bgColor-1": {
+    "tag": "input",
+    "class": "",
+    "attrs": {
+     "id": "bgColor-1",
+     "type": "color",
+     "name": "favcolor",
+     "value": "#ff0000"
+    }
+   },
+   "bgColor-2": {
+    "tag": "input",
+    "class": "",
+    "attrs": {
+     "id": "bgColor-2",
+     "type": "color",
+     "name": "favcolor",
+     "value": "#ff0000"
+    }
+   },
+   "bgColor-3": {
+    "tag": "input",
+    "class": "",
+    "attrs": {
+     "id": "bgColor-3",
+     "type": "color",
+     "name": "favcolor",
+     "value": "#ff0000"
+    }
+   },
+   "bgChange": {
+    "tag": "button",
+    "class": "text-center",
+    "attrs": {
+     "id": "bgChange",
+     "class": "text-center"
+    }
+   }
+  },
+  "roles": {},
+  "aria": {},
+  "forms": {
+   "input": 3,
+   "button": 1
+  },
+  "media": {},
+  "linked_css": [
+   "index.css"
+  ],
+  "linked_js": [
+   "index.js"
+  ],
+  "style_blocks": 0,
+  "inline_js": 3,
+  "images": [],
+  "features": [
+   "flex",
+   "responsive",
+   "forms",
+   "typo",
+   "color",
+   "box",
+   "jsdom",
+   "events"
+  ],
+  "css": {
+   "rules": 12,
+   "selectors": [
+    "body",
+    ".blur",
+    ".main",
+    ".main h1",
+    ".main div",
+    ".main div div h1",
+    ".main div div button"
+   ],
+   "properties": [
+    "background",
+    "font-size",
+    "width",
+    "height",
+    "border-radius",
+    "display",
+    "align-items",
+    "filter",
+    "color",
+    "border",
+    "padding",
+    "font-family",
+    "justify-content",
+    "overflow",
+    "flex-direction"
+   ],
+   "property_counts": {
+    "background": 6,
+    "font-size": 6,
+    "width": 3,
+    "height": 3,
+    "border-radius": 3,
+    "display": 2,
+    "align-items": 2,
+    "filter": 2,
+    "color": 2,
+    "border": 2,
+    "padding": 2,
+    "font-family": 1,
+    "justify-content": 1,
+    "overflow": 1,
+    "flex-direction": 1
+   },
+   "media": 1,
+   "keyframes": 0,
+   "bytes": 1496
+  },
+  "js_bytes": 619,
+  "html_bytes": 1286,
+  "missing_assets": []
+ }
+}

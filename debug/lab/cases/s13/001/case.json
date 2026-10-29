@@ -1,0 +1,509 @@
+{
+ "id": "a11y.001",
+ "section": 13,
+ "name": "keshavgbpecdelhi/Web-Development · projects/Responsive Bootstrap Website",
+ "source": {
+  "repo": "keshavgbpecdelhi/Web-Development",
+  "commit": "c1613b1424c3226ecd09ca0f23cd39bc4e32709b",
+  "license": "Apache-2.0",
+  "path": "projects/Responsive Bootstrap Website",
+  "url": "https://github.com/keshavgbpecdelhi/Web-Development/tree/c1613b1424c3226ecd09ca0f23cd39bc4e32709b/projects/Responsive Bootstrap Website"
+ },
+ "entry": "index.html",
+ "dir": "cases/s13/001",
+ "bytes": 2556862,
+ "files": 2,
+ "digest": "f4e3003877f3c0b622f5",
+ "facts": {
+  "title": "Bootstrap 5",
+  "elements": 217,
+  "max_depth": 12,
+  "tags": {
+   "html": 1,
+   "head": 1,
+   "meta": 3,
+   "title": 1,
+   "link": 2,
+   "body": 1,
+   "nav": 1,
+   "div": 73,
+   "a": 10,
+   "button": 13,
+   "span": 5,
+   "ul": 2,
+   "li": 9,
+   "hr": 5,
+   "header": 1,
+   "img": 16,
+   "h5": 7,
+   "p": 12,
+   "section": 5,
+   "h1": 6,
+   "small": 3,
+   "figure": 9,
+   "svg": 1,
+   "path": 1,
+   "h3": 1,
+   "form": 1,
+   "label": 9,
+   "input": 7,
+   "datalist": 1,
+   "option": 5,
+   "textarea": 1,
+   "footer": 1,
+   "script": 3
+  },
+  "html_tags": [
+   "a",
+   "body",
+   "button",
+   "datalist",
+   "div",
+   "figure",
+   "footer",
+   "form",
+   "h1",
+   "h3",
+   "h5",
+   "head",
+   "header",
+   "hr",
+   "html",
+   "img",
+   "input",
+   "label",
+   "li",
+   "link",
+   "meta",
+   "nav",
+   "option",
+   "p",
+   "script",
+   "section",
+   "small",
+   "span",
+   "textarea",
+   "title",
+   "ul"
+  ],
+  "ids": [
+   "navbarSupportedContent",
+   "navbarDropdown",
+   "carouselExampleCaptions",
+   "exampleModal",
+   "exampleModalLabel",
+   "exampleInputPassword1",
+   "exampleInputEmail1",
+   "emailHelp",
+   "inlineRadio1",
+   "inlineRadio2",
+   "exampleDataList",
+   "datalistOptions",
+   "inputGroupFile02",
+   "exampleFormControlTextarea1",
+   "exampleCheck1"
+  ],
+  "id_counts": {
+   "navbarSupportedContent": 1,
+   "navbarDropdown": 1,
+   "carouselExampleCaptions": 1,
+   "exampleModal": 1,
+   "exampleModalLabel": 1,
+   "exampleInputPassword1": 1,
+   "exampleInputEmail1": 1,
+   "emailHelp": 1,
+   "inlineRadio1": 1,
+   "inlineRadio2": 1,
+   "exampleDataList": 1,
+   "datalistOptions": 1,
+   "inputGroupFile02": 1,
+   "exampleFormControlTextarea1": 1,
+   "exampleCheck1": 1
+  },
+  "classes": [
+   "navbar",
+   "navbar-expand-lg",
+   "navbar-light",
+   "bg-light",
+   "container-fluid",
+   "navbar-brand",
+   "text-capitalize",
+   "navbar-toggler",
+   "navbar-toggler-icon",
+   "collapse",
+   "navbar-collapse",
+   "navbar-nav",
+   "ms-auto",
+   "mb-2",
+   "mb-lg-0",
+   "nav-item",
+   "nav-link",
+   "active",
+   "dropdown",
+   "dropdown-toggle",
+   "dropdown-menu",
+   "dropdown-item",
+   "dropdown-divider",
+   "carousel",
+   "slide",
+   "carousel-indicators",
+   "carousel-inner",
+   "carousel-item",
+   "d-block",
+   "carousel-caption",
+   "d-md-block",
+   "carousel-control-prev",
+   "carousel-control-prev-icon",
+   "visually-hidden",
+   "carousel-control-next",
+   "carousel-control-next-icon",
+   "main_heading",
+   "my-5",
+   "text-center",
+   "w-25",
+   "mx-auto",
+   "container",
+   "row",
+   "col-lg-6",
+   "col-md-6",
+   "col-12",
+   "col-xxl-6",
+   "d-flex",
+   "justify-content-end",
+   "img-fluid",
+   "about_image",
+   "my-3",
+   "justify-content-center",
+   "align-items-start",
+   "flex-column",
+   "btn",
+   "btn-outline-info",
+   "pt-5",
+   "container_services",
+   "mx-2"
+  ],
+  "class_counts": {
+   "navbar": 1,
+   "navbar-expand-lg": 1,
+   "navbar-light": 1,
+   "bg-light": 3,
+   "container-fluid": 3,
+   "navbar-brand": 1,
+   "text-capitalize": 4,
+   "navbar-toggler": 1,
+   "navbar-toggler-icon": 1,
+   "collapse": 1,
+   "navbar-collapse": 1,
+   "navbar-nav": 1,
+   "ms-auto": 1,
+   "mb-2": 1,
+   "mb-lg-0": 1,
+   "nav-item": 5,
+   "nav-link": 5,
+   "active": 3,
+   "dropdown": 1,
+   "dropdown-toggle": 1,
+   "dropdown-menu": 1,
+   "dropdown-item": 3,
+   "dropdown-divider": 1,
+   "carousel": 1,
+   "slide": 1,
+   "carousel-indicators": 1,
+   "carousel-inner": 1,
+   "carousel-item": 3,
+   "d-block": 3,
+   "carousel-caption": 3,
+   "d-md-block": 3,
+   "carousel-control-prev": 1,
+   "carousel-control-prev-icon": 1,
+   "visually-hidden": 2,
+   "carousel-control-next": 1,
+   "carousel-control-next-icon": 1,
+   "main_heading": 5,
+   "my-5": 9,
+   "text-center": 7,
+   "w-25": 4,
+   "mx-auto": 17,
+   "container": 2,
+   "row": 8,
+   "col-lg-6": 2,
+   "col-md-6": 2,
+   "col-12": 3,
+   "col-xxl-6": 2,
+   "d-flex": 2,
+   "justify-content-end": 1,
+   "img-fluid": 10,
+   "about_image": 1,
+   "my-3": 2,
+   "justify-content-center": 1,
+   "align-items-start": 1,
+   "flex-column": 1,
+   "btn": 6,
+   "btn-outline-info": 2,
+   "pt-5": 1,
+   "container_services": 1,
+   "mx-2": 1
+  },
+  "text_samples": [
+   "kishanlal choudhary",
+   "Another action",
+   "Something else here",
+   "First slide label",
+   "Some representative placeholder content for the first slide.",
+   "Second slide label",
+   "Some representative placeholder content for the second slide.",
+   "Third slide label"
+  ],
+  "inline_styles": [
+   "max-width: 540px",
+   "max-width: 540px",
+   "max-width: 540px"
+  ],
+  "attr_samples": {
+   "navbarSupportedContent": {
+    "tag": "div",
+    "class": "collapse navbar-collapse",
+    "attrs": {
+     "id": "navbarSupportedContent",
+     "class": "collapse navbar-collapse"
+    }
+   },
+   "navbarDropdown": {
+    "tag": "a",
+    "class": "nav-link dropdown-toggle",
+    "attrs": {
+     "id": "navbarDropdown",
+     "class": "nav-link dropdown-toggle",
+     "role": "button",
+     "href": "#",
+     "aria-expanded": "false"
+    }
+   },
+   "carouselExampleCaptions": {
+    "tag": "div",
+    "class": "carousel slide",
+    "attrs": {
+     "id": "carouselExampleCaptions",
+     "class": "carousel slide"
+    }
+   },
+   "exampleModal": {
+    "tag": "div",
+    "class": "modal fade",
+    "attrs": {
+     "id": "exampleModal",
+     "class": "modal fade",
+     "aria-hidden": "true"
+    }
+   },
+   "exampleModalLabel": {
+    "tag": "h5",
+    "class": "modal-title",
+    "attrs": {
+     "id": "exampleModalLabel",
+     "class": "modal-title"
+    }
+   },
+   "exampleInputPassword1": {
+    "tag": "input",
+    "class": "form-control",
+    "attrs": {
+     "id": "exampleInputPassword1",
+     "class": "form-control",
+     "type": "text",
+     "placeholder": "Enter your name"
+    }
+   },
+   "exampleInputEmail1": {
+    "tag": "input",
+    "class": "form-control",
+    "attrs": {
+     "id": "exampleInputEmail1",
+     "class": "form-control",
+     "type": "email"
+    }
+   },
+   "emailHelp": {
+    "tag": "div",
+    "class": "form-text",
+    "attrs": {
+     "id": "emailHelp",
+     "class": "form-text"
+    }
+   },
+   "inlineRadio1": {
+    "tag": "input",
+    "class": "form-check-input",
+    "attrs": {
+     "id": "inlineRadio1",
+     "class": "form-check-input",
+     "type": "radio",
+     "name": "inlineRadioOptions",
+     "value": "option1"
+    }
+   },
+   "inlineRadio2": {
+    "tag": "input",
+    "class": "form-check-input",
+    "attrs": {
+     "id": "inlineRadio2",
+     "class": "form-check-input",
+     "type": "radio",
+     "name": "inlineRadioOptions",
+     "value": "option2"
+    }
+   },
+   "exampleDataList": {
+    "tag": "input",
+    "class": "form-control",
+    "attrs": {
+     "id": "exampleDataList",
+     "class": "form-control",
+     "placeholder": "Type to search..."
+    }
+   },
+   "datalistOptions": {
+    "tag": "datalist",
+    "class": "",
+    "attrs": {
+     "id": "datalistOptions"
+    }
+   },
+   "inputGroupFile02": {
+    "tag": "input",
+    "class": "form-control",
+    "attrs": {
+     "id": "inputGroupFile02",
+     "class": "form-control",
+     "type": "file"
+    }
+   },
+   "exampleFormControlTextarea1": {
+    "tag": "textarea",
+    "class": "form-control",
+    "attrs": {
+     "id": "exampleFormControlTextarea1",
+     "class": "form-control"
+    }
+   },
+   "exampleCheck1": {
+    "tag": "input",
+    "class": "form-check-input",
+    "attrs": {
+     "id": "exampleCheck1",
+     "class": "form-check-input",
+     "type": "checkbox"
+    }
+   }
+  },
+  "roles": {
+   "button": 1
+  },
+  "aria": {
+   "aria-controls": 1,
+   "aria-expanded": 2,
+   "aria-label": 5,
+   "aria-current": 2,
+   "aria-labelledby": 2,
+   "aria-hidden": 3,
+   "aria-describedby": 1
+  },
+  "forms": {
+   "button": 13,
+   "form": 1,
+   "label": 9,
+   "input": 7,
+   "datalist": 1,
+   "option": 5,
+   "textarea": 1
+  },
+  "media": {
+   "img": 16,
+   "svg": 1
+  },
+  "linked_css": [
+   "style.css"
+  ],
+  "linked_js": [],
+  "style_blocks": 0,
+  "inline_js": 3,
+  "images": [
+   "Images\\img1.jpg",
+   "Images\\img2.jpg",
+   "Images\\img3.jpg",
+   "Images\\img4.jpg",
+   "Images\\img5.jpg",
+   "Images\\img5.jpg",
+   "Images\\img5.jpg",
+   "Images\\img6.jpg",
+   "Images\\img6.jpg",
+   "Images\\img6.jpg",
+   "Images\\img6.jpg",
+   "Images\\img6.jpg",
+   "Images\\img6.jpg",
+   "Images\\img6.jpg",
+   "Images\\img6.jpg",
+   "Images\\img6.jpg"
+  ],
+  "features": [
+   "responsive",
+   "forms",
+   "a11y",
+   "media",
+   "color",
+   "box",
+   "jsdom",
+   "events"
+  ],
+  "css": {
+   "rules": 6,
+   "selectors": [
+    "*",
+    ".carousel-item",
+    ".about_image",
+    ".service_img",
+    ".container_services .row",
+    ".offer_style"
+   ],
+   "properties": [
+    "margin",
+    "padding",
+    "box-sizing",
+    "width",
+    "height",
+    "min-height",
+    "max-height",
+    "padding-right",
+    "max-width",
+    "--bs-gutter-x",
+    "background-color"
+   ],
+   "property_counts": {
+    "margin": 1,
+    "padding": 1,
+    "box-sizing": 1,
+    "width": 1,
+    "height": 1,
+    "min-height": 1,
+    "max-height": 1,
+    "padding-right": 1,
+    "max-width": 1,
+    "--bs-gutter-x": 1,
+    "background-color": 1
+   },
+   "media": 5,
+   "keyframes": 0,
+   "bytes": 944
+  },
+  "js_bytes": 255,
+  "html_bytes": 17202,
+  "missing_assets": [
+   "Images\\img1.jpg",
+   "Images\\img2.jpg",
+   "Images\\img3.jpg",
+   "Images\\img4.jpg",
+   "Images\\img5.jpg",
+   "Images\\img6.jpg"
+  ]
+ }
+}

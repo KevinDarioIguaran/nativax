@@ -1,0 +1,402 @@
+{
+ "id": "events.001",
+ "section": 11,
+ "name": "keshavgbpecdelhi/Web-Development · projects/Convert",
+ "source": {
+  "repo": "keshavgbpecdelhi/Web-Development",
+  "commit": "c1613b1424c3226ecd09ca0f23cd39bc4e32709b",
+  "license": "Apache-2.0",
+  "path": "projects/Convert",
+  "url": "https://github.com/keshavgbpecdelhi/Web-Development/tree/c1613b1424c3226ecd09ca0f23cd39bc4e32709b/projects/Convert"
+ },
+ "entry": "index.html",
+ "dir": "cases/s11/001",
+ "bytes": 19812,
+ "files": 4,
+ "digest": "b049c2a57c79a6720969",
+ "facts": {
+  "title": "Convert",
+  "elements": 60,
+  "max_depth": 7,
+  "tags": {
+   "html": 1,
+   "head": 1,
+   "title": 1,
+   "link": 2,
+   "meta": 3,
+   "body": 1,
+   "header": 1,
+   "h1": 1,
+   "main": 1,
+   "nav": 1,
+   "ul": 1,
+   "a": 11,
+   "li": 8,
+   "div": 9,
+   "h2": 1,
+   "select": 3,
+   "option": 8,
+   "input": 2,
+   "footer": 1,
+   "p": 2,
+   "script": 1
+  },
+  "html_tags": [
+   "a",
+   "body",
+   "div",
+   "footer",
+   "h1",
+   "h2",
+   "head",
+   "header",
+   "html",
+   "input",
+   "li",
+   "link",
+   "main",
+   "meta",
+   "nav",
+   "option",
+   "p",
+   "script",
+   "select",
+   "title",
+   "ul"
+  ],
+  "ids": [
+   "listQuantity",
+   "item0",
+   "item1",
+   "item2",
+   "item3",
+   "item4",
+   "item5",
+   "item6",
+   "item7",
+   "converterSpace",
+   "quantityTitle",
+   "optionQuantity",
+   "converterTop",
+   "inputTop",
+   "optionTop",
+   "converterBottom",
+   "inputBottom",
+   "optionBottom"
+  ],
+  "id_counts": {
+   "listQuantity": 1,
+   "item0": 1,
+   "item1": 1,
+   "item2": 1,
+   "item3": 1,
+   "item4": 1,
+   "item5": 1,
+   "item6": 1,
+   "item7": 1,
+   "converterSpace": 1,
+   "quantityTitle": 1,
+   "optionQuantity": 1,
+   "converterTop": 1,
+   "inputTop": 1,
+   "optionTop": 1,
+   "converterBottom": 1,
+   "inputBottom": 1,
+   "optionBottom": 1
+  },
+  "classes": [
+   "converter",
+   "input",
+   "option"
+  ],
+  "class_counts": {
+   "converter": 2,
+   "input": 2,
+   "option": 2
+  },
+  "text_samples": [
+   "Digital Storage",
+   "Created by dianyehezkiel"
+  ],
+  "inline_styles": [],
+  "attr_samples": {
+   "listQuantity": {
+    "tag": "ul",
+    "class": "",
+    "attrs": {
+     "id": "listQuantity"
+    }
+   },
+   "item0": {
+    "tag": "li",
+    "class": "",
+    "attrs": {
+     "id": "item0",
+     "value": "length"
+    }
+   },
+   "item1": {
+    "tag": "li",
+    "class": "",
+    "attrs": {
+     "id": "item1",
+     "value": "mass"
+    }
+   },
+   "item2": {
+    "tag": "li",
+    "class": "",
+    "attrs": {
+     "id": "item2",
+     "value": "time"
+    }
+   },
+   "item3": {
+    "tag": "li",
+    "class": "",
+    "attrs": {
+     "id": "item3",
+     "value": "temperature"
+    }
+   },
+   "item4": {
+    "tag": "li",
+    "class": "",
+    "attrs": {
+     "id": "item4",
+     "value": "angle"
+    }
+   },
+   "item5": {
+    "tag": "li",
+    "class": "",
+    "attrs": {
+     "id": "item5",
+     "value": "area"
+    }
+   },
+   "item6": {
+    "tag": "li",
+    "class": "",
+    "attrs": {
+     "id": "item6",
+     "value": "volume"
+    }
+   },
+   "item7": {
+    "tag": "li",
+    "class": "",
+    "attrs": {
+     "id": "item7",
+     "value": "digital-storage"
+    }
+   },
+   "converterSpace": {
+    "tag": "div",
+    "class": "",
+    "attrs": {
+     "id": "converterSpace"
+    }
+   },
+   "quantityTitle": {
+    "tag": "h2",
+    "class": "",
+    "attrs": {
+     "id": "quantityTitle"
+    }
+   },
+   "optionQuantity": {
+    "tag": "select",
+    "class": "",
+    "attrs": {
+     "id": "optionQuantity"
+    }
+   },
+   "converterTop": {
+    "tag": "div",
+    "class": "converter",
+    "attrs": {
+     "id": "converterTop",
+     "class": "converter"
+    }
+   },
+   "inputTop": {
+    "tag": "input",
+    "class": "",
+    "attrs": {
+     "id": "inputTop",
+     "type": "number",
+     "value": "1"
+    }
+   },
+   "optionTop": {
+    "tag": "select",
+    "class": "",
+    "attrs": {
+     "id": "optionTop"
+    }
+   },
+   "converterBottom": {
+    "tag": "div",
+    "class": "converter",
+    "attrs": {
+     "id": "converterBottom",
+     "class": "converter"
+    }
+   },
+   "inputBottom": {
+    "tag": "input",
+    "class": "",
+    "attrs": {
+     "id": "inputBottom",
+     "type": "number"
+    }
+   },
+   "optionBottom": {
+    "tag": "select",
+    "class": "",
+    "attrs": {
+     "id": "optionBottom"
+    }
+   }
+  },
+  "roles": {},
+  "aria": {},
+  "forms": {
+   "select": 3,
+   "option": 8,
+   "input": 2
+  },
+  "media": {},
+  "linked_css": [
+   "./public/style.css"
+  ],
+  "linked_js": [
+   "./public/index.js"
+  ],
+  "style_blocks": 0,
+  "inline_js": 1,
+  "images": [],
+  "features": [
+   "flex",
+   "position",
+   "responsive",
+   "forms",
+   "typo",
+   "color",
+   "box",
+   "jsdom",
+   "events"
+  ],
+  "css": {
+   "rules": 39,
+   "selectors": [
+    "*",
+    "html",
+    "body",
+    "header",
+    "header h1",
+    "main",
+    "nav",
+    "nav ul",
+    "nav li",
+    "nav li:hover",
+    "a",
+    ".selected",
+    "#optionQuantity",
+    "#converterSpace",
+    "#converterSpace h2",
+    ".converter",
+    ".input",
+    "input",
+    ".option",
+    ".converter select",
+    "#formula",
+    "#formula p",
+    "footer",
+    "footer p",
+    ".buttonGroup",
+    "button",
+    ".buttonCollumn",
+    ".buttonCollumn button",
+    "#liffLoginButton",
+    "#liffLogoutButton",
+    "#code-block",
+    "#statusMessage",
+    ".textLeft",
+    ".hidden",
+    "#liffData"
+   ],
+   "properties": [
+    "margin",
+    "width",
+    "padding",
+    "background-color",
+    "display",
+    "font-size",
+    "text-align",
+    "height",
+    "border-radius",
+    "border-width",
+    "position",
+    "float",
+    "top",
+    "flex-basis",
+    "box-sizing",
+    "font-family",
+    "min-width",
+    "list-style-type",
+    "li",
+    "text-decoration",
+    "color",
+    "bottom",
+    "cursor",
+    "border-color",
+    "flex-direction",
+    "border",
+    "margin-left",
+    "margin-right",
+    "overflow-x",
+    "white-space"
+   ],
+   "property_counts": {
+    "margin": 20,
+    "width": 14,
+    "padding": 13,
+    "background-color": 9,
+    "display": 9,
+    "font-size": 5,
+    "text-align": 4,
+    "height": 4,
+    "border-radius": 4,
+    "border-width": 4,
+    "position": 3,
+    "float": 3,
+    "top": 2,
+    "flex-basis": 2,
+    "box-sizing": 1,
+    "font-family": 1,
+    "min-width": 1,
+    "list-style-type": 1,
+    "li": 1,
+    "text-decoration": 1,
+    "color": 1,
+    "bottom": 1,
+    "cursor": 1,
+    "border-color": 1,
+    "flex-direction": 1,
+    "border": 1,
+    "margin-left": 1,
+    "margin-right": 1,
+    "overflow-x": 1,
+    "white-space": 1
+   },
+   "media": 2,
+   "keyframes": 0,
+   "bytes": 2834
+  },
+  "js_bytes": 8084,
+  "html_bytes": 3526,
+  "missing_assets": []
+ }
+}

@@ -1,0 +1,352 @@
+{
+ "id": "jsdom.005",
+ "section": 10,
+ "name": "learning-zone/website-templates · css3-bw",
+ "source": {
+  "repo": "learning-zone/website-templates",
+  "commit": "7bf31e9646a6b5f51c2e55b2557787310436989f",
+  "license": "not declared upstream",
+  "path": "css3-bw",
+  "url": "https://github.com/learning-zone/website-templates/tree/7bf31e9646a6b5f51c2e55b2557787310436989f/css3-bw"
+ },
+ "entry": "index.html",
+ "dir": "cases/s10/005",
+ "bytes": 581793,
+ "files": 15,
+ "digest": "4aae624e0509829bdea4",
+ "facts": {
+  "title": "CSS3_B&W",
+  "elements": 88,
+  "max_depth": 9,
+  "tags": {
+   "html": 1,
+   "head": 1,
+   "title": 1,
+   "meta": 3,
+   "link": 1,
+   "script": 7,
+   "body": 1,
+   "div": 7,
+   "header": 1,
+   "h1": 2,
+   "a": 19,
+   "nav": 1,
+   "ul": 4,
+   "li": 19,
+   "img": 6,
+   "h3": 2,
+   "h4": 1,
+   "h5": 1,
+   "p": 6,
+   "br": 1,
+   "h2": 1,
+   "footer": 1,
+   "span": 1
+  },
+  "html_tags": [
+   "a",
+   "body",
+   "div",
+   "footer",
+   "h1",
+   "h2",
+   "h3",
+   "h4",
+   "h5",
+   "head",
+   "header",
+   "html",
+   "img",
+   "li",
+   "link",
+   "meta",
+   "nav",
+   "p",
+   "script",
+   "span",
+   "title",
+   "ul"
+  ],
+  "ids": [
+   "main",
+   "logo",
+   "lava_menu",
+   "site_content",
+   "images",
+   "sidebar_container",
+   "content",
+   "year"
+  ],
+  "id_counts": {
+   "main": 1,
+   "logo": 1,
+   "lava_menu": 1,
+   "site_content": 1,
+   "images": 1,
+   "sidebar_container": 1,
+   "content": 1,
+   "year": 1
+  },
+  "classes": [
+   "lavaLampWithImage",
+   "current",
+   "sidebar"
+  ],
+  "class_counts": {
+   "lavaLampWithImage": 1,
+   "current": 1,
+   "sidebar": 2
+  },
+  "text_samples": [
+   "another page",
+   "New Website Launched",
+   "January 1st, 2012",
+   "2012 sees the redesign of our website. Take a look around and let us know what you think.",
+   "Useful Links",
+   "Another Link",
+   "Welcome to CSS3_B&W",
+   "This standards compliant, fixed width website template is released as an 'open source' design (under a"
+  ],
+  "inline_styles": [],
+  "attr_samples": {
+   "main": {
+    "tag": "div",
+    "class": "",
+    "attrs": {
+     "id": "main"
+    }
+   },
+   "logo": {
+    "tag": "div",
+    "class": "",
+    "attrs": {
+     "id": "logo"
+    }
+   },
+   "lava_menu": {
+    "tag": "ul",
+    "class": "lavaLampWithImage",
+    "attrs": {
+     "id": "lava_menu",
+     "class": "lavaLampWithImage"
+    }
+   },
+   "site_content": {
+    "tag": "div",
+    "class": "",
+    "attrs": {
+     "id": "site_content"
+    }
+   },
+   "images": {
+    "tag": "ul",
+    "class": "",
+    "attrs": {
+     "id": "images"
+    }
+   },
+   "sidebar_container": {
+    "tag": "div",
+    "class": "",
+    "attrs": {
+     "id": "sidebar_container"
+    }
+   },
+   "content": {
+    "tag": "div",
+    "class": "",
+    "attrs": {
+     "id": "content"
+    }
+   },
+   "year": {
+    "tag": "span",
+    "class": "",
+    "attrs": {
+     "id": "year"
+    }
+   }
+  },
+  "roles": {},
+  "aria": {},
+  "forms": {},
+  "media": {
+   "img": 6
+  },
+  "linked_css": [
+   "css/style.css"
+  ],
+  "linked_js": [
+   "js/modernizr-1.5.min.js",
+   "js/jquery.min.js",
+   "js/jquery.easing.min.js",
+   "js/jquery.lavalamp.min.js",
+   "js/jquery.kwicks-1.5.1.js"
+  ],
+  "style_blocks": 0,
+  "inline_js": 7,
+  "images": [
+   "images/1.jpg",
+   "images/2.jpg",
+   "images/3.jpg",
+   "images/4.jpg",
+   "images/5.jpg",
+   "images/6.jpg"
+  ],
+  "features": [
+   "position",
+   "anim",
+   "responsive",
+   "media",
+   "typo",
+   "color",
+   "box",
+   "jsdom",
+   "events"
+  ],
+  "css": {
+   "rules": 90,
+   "selectors": [
+    "html",
+    "*",
+    "article",
+    "aside",
+    "figure",
+    "footer",
+    "header",
+    "hgroup",
+    "nav",
+    "section",
+    "body",
+    "p",
+    "img",
+    "h1",
+    "h2",
+    "h3",
+    "h4",
+    "h5",
+    "h6",
+    "a",
+    "a:hover",
+    "ul",
+    "ul li",
+    "ol",
+    "ol li",
+    ".left",
+    ".right",
+    ".center",
+    "#main",
+    "#logo",
+    "#site_content",
+    "#logo h1",
+    "#logo h1 a",
+    "#logo h1 a:hover",
+    "#sidebar_container",
+    ".sidebar",
+    ".sidebar h3",
+    ".sidebar_item",
+    ".content_item",
+    "#content",
+    "#content ul",
+    ".sidebar ul",
+    "#content ul li",
+    ".sidebar ul li",
+    "footer p",
+    "footer a",
+    "footer a:hover",
+    ".form_settings",
+    ".form_settings p",
+    ".form_settings span",
+    ".form_settings input",
+    ".form_settings textarea",
+    ".form_settings .submit",
+    ".form_settings select",
+    ".form_settings .checkbox",
+    "table",
+    "table tr th",
+    "table tr td",
+    "ul#images",
+    "ul#images li"
+   ],
+   "properties": [
+    "padding",
+    "margin",
+    "color",
+    "width",
+    "font",
+    "float",
+    "height",
+    "background",
+    "text-decoration",
+    "border",
+    "text-align",
+    "text-shadow",
+    "overflow",
+    "display",
+    "line-height",
+    "position",
+    "border-radius",
+    "-moz-border-radius",
+    "src",
+    "padding-bottom",
+    "outline",
+    "list-style-type",
+    "margin-right",
+    "margin-left",
+    "letter-spacing",
+    "border-top",
+    "border-bottom",
+    "-webkit-border-radius",
+    "list-style",
+    "z-index",
+    "font-family",
+    "cursor",
+    "-webkit-border"
+   ],
+   "property_counts": {
+    "padding": 28,
+    "margin": 24,
+    "color": 19,
+    "width": 18,
+    "font": 13,
+    "float": 12,
+    "height": 11,
+    "background": 10,
+    "text-decoration": 7,
+    "border": 6,
+    "text-align": 6,
+    "text-shadow": 5,
+    "overflow": 5,
+    "display": 4,
+    "line-height": 4,
+    "position": 4,
+    "border-radius": 3,
+    "-moz-border-radius": 3,
+    "src": 2,
+    "padding-bottom": 2,
+    "outline": 2,
+    "list-style-type": 2,
+    "margin-right": 2,
+    "margin-left": 2,
+    "letter-spacing": 2,
+    "border-top": 2,
+    "border-bottom": 2,
+    "-webkit-border-radius": 2,
+    "list-style": 2,
+    "z-index": 2,
+    "font-family": 1,
+    "cursor": 1,
+    "-webkit-border": 1
+   },
+   "media": 0,
+   "keyframes": 0,
+   "bytes": 6364
+  },
+  "js_bytes": 78410,
+  "html_bytes": 4350,
+  "missing_assets": [
+   "fonts/NewsCycle-Regular.eot",
+   "fonts/NewsCycle-Regular.ttf"
+  ]
+ }
+}

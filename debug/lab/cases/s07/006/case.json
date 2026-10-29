@@ -1,0 +1,206 @@
+{
+ "id": "resp.006",
+ "section": 7,
+ "name": "zxuqian/html-css-examples · 25-neumorphism-tabs",
+ "source": {
+  "repo": "zxuqian/html-css-examples",
+  "commit": "2a9fc59f44aeda092cbac07472aaf0f1ead4e1a6",
+  "license": "MIT",
+  "path": "25-neumorphism-tabs",
+  "url": "https://github.com/zxuqian/html-css-examples/tree/2a9fc59f44aeda092cbac07472aaf0f1ead4e1a6/25-neumorphism-tabs"
+ },
+ "entry": "index.html",
+ "dir": "cases/s07/006",
+ "bytes": 5577,
+ "files": 6,
+ "digest": "ff1ab6411c7dc2fc1c97",
+ "facts": {
+  "title": "Tab 选项卡",
+  "elements": 24,
+  "max_depth": 7,
+  "tags": {
+   "html": 1,
+   "head": 1,
+   "meta": 2,
+   "link": 1,
+   "title": 1,
+   "body": 1,
+   "main": 1,
+   "div": 9,
+   "h2": 3,
+   "img": 3,
+   "script": 1
+  },
+  "html_tags": [
+   "body",
+   "div",
+   "h2",
+   "head",
+   "html",
+   "img",
+   "link",
+   "main",
+   "meta",
+   "script",
+   "title"
+  ],
+  "ids": [
+   "tab1",
+   "tab2",
+   "tab3"
+  ],
+  "id_counts": {
+   "tab1": 1,
+   "tab2": 1,
+   "tab3": 1
+  },
+  "classes": [
+   "container",
+   "tab-container",
+   "tabs",
+   "tab",
+   "active",
+   "tab-content"
+  ],
+  "class_counts": {
+   "container": 1,
+   "tab-container": 1,
+   "tabs": 1,
+   "tab": 3,
+   "active": 1,
+   "tab-content": 1
+  },
+  "text_samples": [],
+  "inline_styles": [
+   "display: block",
+   "display: none",
+   "display: none"
+  ],
+  "attr_samples": {
+   "tab1": {
+    "tag": "div",
+    "class": "tab active",
+    "attrs": {
+     "id": "tab1",
+     "class": "tab active"
+    }
+   },
+   "tab2": {
+    "tag": "div",
+    "class": "tab",
+    "attrs": {
+     "id": "tab2",
+     "class": "tab"
+    }
+   },
+   "tab3": {
+    "tag": "div",
+    "class": "tab",
+    "attrs": {
+     "id": "tab3",
+     "class": "tab"
+    }
+   }
+  },
+  "roles": {},
+  "aria": {},
+  "forms": {},
+  "media": {
+   "img": 3
+  },
+  "linked_css": [
+   "style.css"
+  ],
+  "linked_js": [
+   "index.js"
+  ],
+  "style_blocks": 0,
+  "inline_js": 1,
+  "images": [
+   "./icons/icon1.svg",
+   "./icons/icon2.svg",
+   "./icons/icon3.svg"
+  ],
+  "features": [
+   "flex",
+   "anim",
+   "responsive",
+   "media",
+   "typo",
+   "color",
+   "box",
+   "jsdom",
+   "events"
+  ],
+  "css": {
+   "rules": 13,
+   "selectors": [
+    "*",
+    "body",
+    ".container",
+    ".tab-container",
+    ".tabs",
+    ".tab",
+    ".tab.active",
+    ".tab-content",
+    ".tab-content > div > img",
+    ".tab-content > div",
+    ".tab-content h2"
+   ],
+   "properties": [
+    "padding",
+    "background",
+    "width",
+    "border-radius",
+    "box-shadow",
+    "color",
+    "display",
+    "height",
+    "opacity",
+    "box-sizing",
+    "margin",
+    "font-family",
+    "align-items",
+    "justify-content",
+    "min-width",
+    "overflow",
+    "cursor",
+    "transition",
+    "margin-top",
+    "animation",
+    "margin-bottom",
+    "font-weight"
+   ],
+   "property_counts": {
+    "padding": 6,
+    "background": 4,
+    "width": 3,
+    "border-radius": 3,
+    "box-shadow": 3,
+    "color": 2,
+    "display": 2,
+    "height": 2,
+    "opacity": 2,
+    "box-sizing": 1,
+    "margin": 1,
+    "font-family": 1,
+    "align-items": 1,
+    "justify-content": 1,
+    "min-width": 1,
+    "overflow": 1,
+    "cursor": 1,
+    "transition": 1,
+    "margin-top": 1,
+    "animation": 1,
+    "margin-bottom": 1,
+    "font-weight": 1
+   },
+   "media": 2,
+   "keyframes": 1,
+   "bytes": 1435
+  },
+  "js_bytes": 645,
+  "html_bytes": 1150,
+  "missing_assets": []
+ }
+}

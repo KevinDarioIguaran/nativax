@@ -1,0 +1,345 @@
+{
+ "id": "box.006",
+ "section": 3,
+ "name": "learning-zone/website-templates · greenery",
+ "source": {
+  "repo": "learning-zone/website-templates",
+  "commit": "7bf31e9646a6b5f51c2e55b2557787310436989f",
+  "license": "not declared upstream",
+  "path": "greenery",
+  "url": "https://github.com/learning-zone/website-templates/tree/7bf31e9646a6b5f51c2e55b2557787310436989f/greenery"
+ },
+ "entry": "index.html",
+ "dir": "cases/s03/006",
+ "bytes": 41686,
+ "files": 14,
+ "digest": "b72d2d86e4c7888095a7",
+ "facts": {
+  "title": "{ Greenery } Open Web Design",
+  "elements": 87,
+  "max_depth": 8,
+  "tags": {
+   "html": 1,
+   "head": 1,
+   "title": 1,
+   "meta": 6,
+   "link": 1,
+   "body": 1,
+   "div": 9,
+   "ul": 2,
+   "li": 7,
+   "a": 19,
+   "h1": 6,
+   "span": 8,
+   "p": 10,
+   "acronym": 4,
+   "b": 2,
+   "img": 5,
+   "input": 3,
+   "textarea": 1
+  },
+  "html_tags": [
+   "a",
+   "b",
+   "body",
+   "div",
+   "h1",
+   "head",
+   "html",
+   "img",
+   "input",
+   "li",
+   "link",
+   "meta",
+   "p",
+   "span",
+   "textarea",
+   "title",
+   "ul"
+  ],
+  "ids": [
+   "header",
+   "menu",
+   "title",
+   "content",
+   "text",
+   "image",
+   "sideBar",
+   "comments",
+   "footer"
+  ],
+  "id_counts": {
+   "header": 1,
+   "menu": 1,
+   "title": 1,
+   "content": 1,
+   "text": 1,
+   "image": 1,
+   "sideBar": 1,
+   "comments": 1,
+   "footer": 1
+  },
+  "classes": [
+   "active",
+   "author",
+   "button",
+   "fullAhead"
+  ],
+  "class_counts": {
+   "active": 1,
+   "author": 3,
+   "button": 1,
+   "fullAhead": 1
+  },
+  "text_samples": [
+   "Greenish Template",
+   "This template is tableless",
+   "that validates as 1.1 strict. It uses relative widths so that it handles browser font",
+   "without any troubles. The vertical plant image is easy to switch for one of your own, as is the accent colour. To change",
+   "bg_header.jpg",
+   ": the top, tiling, header background.",
+   "menu_tab.gif",
+   ": the menu tab that comes up onmouseover."
+  ],
+  "inline_styles": [
+   "width: 8.7em;",
+   "width: 7em;"
+  ],
+  "attr_samples": {
+   "header": {
+    "tag": "div",
+    "class": "",
+    "attrs": {
+     "id": "header"
+    }
+   },
+   "menu": {
+    "tag": "div",
+    "class": "",
+    "attrs": {
+     "id": "menu"
+    }
+   },
+   "title": {
+    "tag": "div",
+    "class": "",
+    "attrs": {
+     "id": "title"
+    }
+   },
+   "content": {
+    "tag": "div",
+    "class": "",
+    "attrs": {
+     "id": "content"
+    }
+   },
+   "text": {
+    "tag": "div",
+    "class": "",
+    "attrs": {
+     "id": "text"
+    }
+   },
+   "image": {
+    "tag": "div",
+    "class": "",
+    "attrs": {
+     "id": "image"
+    }
+   },
+   "sideBar": {
+    "tag": "div",
+    "class": "",
+    "attrs": {
+     "id": "sideBar"
+    }
+   },
+   "comments": {
+    "tag": "div",
+    "class": "",
+    "attrs": {
+     "id": "comments"
+    }
+   },
+   "footer": {
+    "tag": "div",
+    "class": "",
+    "attrs": {
+     "id": "footer"
+    }
+   }
+  },
+  "roles": {},
+  "aria": {},
+  "forms": {
+   "input": 3,
+   "textarea": 1
+  },
+  "media": {
+   "img": 5
+  },
+  "linked_css": [
+   "css/screen.css"
+  ],
+  "linked_js": [],
+  "style_blocks": 0,
+  "inline_js": 0,
+  "images": [
+   "spacer.gif",
+   "images/plants.jpg",
+   "images/comment_bg.gif",
+   "images/comment_bg.gif",
+   "images/comment_bg.gif"
+  ],
+  "features": [
+   "position",
+   "anim",
+   "forms",
+   "media",
+   "typo",
+   "color",
+   "box",
+   "events"
+  ],
+  "css": {
+   "rules": 62,
+   "selectors": [
+    "body",
+    "p",
+    "a",
+    "a:visited",
+    "a:hover",
+    "acronym",
+    "input",
+    "textarea",
+    "input:hover",
+    "input:focus",
+    "textarea:hover",
+    "textarea:focus",
+    "h1",
+    "h1 span",
+    "#sideBar h1",
+    "#sideBar h1 span",
+    "#content ol li",
+    "#content ol li span",
+    "#content ul",
+    "#content ul li",
+    "blockquote",
+    "blockquote span",
+    "#header",
+    "#menu",
+    "#menu ul",
+    "#menu ul li",
+    "#menu ul li a",
+    "#menu ul li a:hover",
+    "#menu ul li a.active",
+    "#title",
+    "#title h1",
+    "#content",
+    "#text",
+    "#image",
+    "#sideBar",
+    ".sideMenu",
+    ".sideMenu a",
+    ".sideMenu a span",
+    ".sideMenu a:hover",
+    ".sideMenu a:hover span",
+    "#comments p",
+    "#comments p span.author",
+    "#comments img",
+    "#comments a",
+    "#comments a:visited",
+    "#comments a:hover",
+    "#footer",
+    "#footer p",
+    "#footer a",
+    "#footer a:hover",
+    "a.fullAhead",
+    "a:hover.fullAhead",
+    ".center",
+    ".noPad",
+    ".left",
+    ".right",
+    "img.left",
+    "img.right",
+    ".button",
+    ".date"
+   ],
+   "properties": [
+    "color",
+    "padding",
+    "background",
+    "width",
+    "display",
+    "float",
+    "margin",
+    "text-align",
+    "padding-top",
+    "padding-bottom",
+    "font",
+    "background-color",
+    "clear",
+    "font-weight",
+    "line-height",
+    "cursor",
+    "border",
+    "input",
+    "textarea",
+    "text-transform",
+    "height",
+    "text-decoration",
+    "margin-right",
+    "margin-bottom",
+    "margin-top",
+    "border-bottom",
+    "list-style-image",
+    "list-style",
+    "background-image",
+    "vertical-align",
+    "background-position"
+   ],
+   "property_counts": {
+    "color": 18,
+    "padding": 17,
+    "background": 14,
+    "width": 14,
+    "display": 10,
+    "float": 9,
+    "margin": 8,
+    "text-align": 8,
+    "padding-top": 5,
+    "padding-bottom": 4,
+    "font": 3,
+    "background-color": 3,
+    "clear": 3,
+    "font-weight": 3,
+    "line-height": 2,
+    "cursor": 2,
+    "border": 2,
+    "input": 2,
+    "textarea": 2,
+    "text-transform": 2,
+    "height": 2,
+    "text-decoration": 2,
+    "margin-right": 2,
+    "margin-bottom": 2,
+    "margin-top": 2,
+    "border-bottom": 1,
+    "list-style-image": 1,
+    "list-style": 1,
+    "background-image": 1,
+    "vertical-align": 1,
+    "background-position": 1
+   },
+   "media": 0,
+   "keyframes": 0,
+   "bytes": 6458
+  },
+  "js_bytes": 0,
+  "html_bytes": 6035,
+  "missing_assets": [
+   "spacer.gif"
+  ]
+ }
+}

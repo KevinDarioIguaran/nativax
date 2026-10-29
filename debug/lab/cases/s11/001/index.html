@@ -1,42 +1,98 @@
-<!doctype html>
-<html lang="en">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>NativaX Lab · 001 · Events and interaction — click case 001</title>
-<link rel="stylesheet" href="style.css">
-</head>
-<body class="">
-<div class="aurora" aria-hidden="true"><i></i><i></i><i></i></div>
-<header class="topbar">
-  <div class="brand"><span class="logo"></span><span>NativaX <b>Lab</b></span></div>
-  <nav class="nav" aria-label="primary">
-    <a class="nav-link is-active" href="#case">Case</a>
-    <a class="nav-link" href="#cards">Components</a>
-    <a class="nav-link" href="#footer">About</a>
-  </nav>
-  <button id="theme-toggle" class="btn ghost" type="button">Theme</button>
-</header>
-<main class="stage">
-  <section class="hero">
-    <p class="eyebrow">Section 01 · HTML, DOM and parsing</p>
-    <h1 class="title">html.001 <span class="grad">div básico</span></h1>
-    <p class="lede">A real laboratory application: semantic HTML structure, animated styles and verifiable JavaScript behaviour.</p>
-    <div class="hero-actions">
-      <button id="ping" class="btn" type="button">Try interaction <span id="pings" class="badge">0</span></button>
-      <span id="clock" class="clock">--:--:--</span>
-    </div>
-  </section>
-  <section id="case" class="case panel">
-<div id=t class='target'>Section 11 case 001: click.</div>
-  </section>
-  <section id="cards" class="cards" aria-label="components">
-    <article class="card"><span class="tag">HTML</span><h3>Semantics</h3><p>Real elements, attributes and parent-child relations verified by the laboratory.</p></article>
-    <article class="card"><span class="tag">CSS</span><h3>Animation</h3><p>Gradients, keyframes and transitions compared pixel by pixel in the visual sections.</p></article>
-    <article class="card"><span class="tag">JS</span><h3>Interaction</h3><p>JavaScriptCore runs this file: clock, theme, counter and pointer events.</p></article>
-  </section>
-</main>
-<footer id="footer" class="footer"><span>NativaX Lab · C11 + Sokol + JavaScriptCore</span><span>html.001</span></footer>
-<script src="app.js"></script>
-</body>
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Convert</title>
+    <link rel="icon" type="image/png" href="./public/favicon.png" />
+    <link rel="stylesheet" href="./public/style.css" />
+
+    <meta
+      name="viewport"
+      content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"
+    />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+    <meta name="HandheldFriendly" content="true" />
+  </head>
+
+  <body>
+    <header>
+      <h1>Convert</h1>
+    </header>
+    <main>
+      <nav>
+        <ul id="listQuantity">
+          <a href="#" onclick="loadQuantity('length'); return false;">
+            <li id="item0" class="" value="length">Length</li>
+          </a>
+          <a href="#" onclick="loadQuantity('mass'); return false;">
+            <li id="item1" class="" value="mass">Mass</li>
+          </a>
+          <a href="#" onclick="loadQuantity('time'); return false;">
+            <li id="item2" class="" value="time">Time</li>
+          </a>
+          <a href="#" onclick="loadQuantity('temperature'); return false;">
+            <li id="item3" class="" value="temperature">Temperature</li>
+          </a>
+          <a href="#" onclick="loadQuantity('angle'); return false;">
+            <li id="item4" class="" value="angle">Angle</li>
+          </a>
+          <a href="#" onclick="loadQuantity('area'); return false;">
+            <li id="item5" class="" value="area">Area</li>
+          </a>
+          <a href="#" onclick="loadQuantity('volume'); return false;">
+            <li id="item6" class="" value="volume">Volume</li>
+          </a>
+          <a href="#" onclick="loadQuantity('digital-storage'); return false;">
+            <li id="item7" class="" value="digital-storage">Digital Storage</li>
+          </a>
+        </ul>
+      </nav>
+      <div id="converterSpace">
+        <div>
+          <h2 id="quantityTitle"></h2>
+        </div>
+        <div>
+          <select id="optionQuantity" onchange="loadQuantity(this.value)">
+            <option value="length">Length</option>
+            <option value="mass">Mass</option>
+            <option value="time">Time</option>
+            <option value="temperature">Temperature</option>
+            <option value="angle">Angle</option>
+            <option value="area">Area</option>
+            <option value="volume">Volume</option>
+            <option value="digital-storage">Digital Storage</option>
+          </select>
+        </div>
+        <div id="converterTop" class="converter">
+          <div class="input">
+            <input id="inputTop" type="number" value="1" oninput="convert();" />
+          </div>
+          <div class="option">
+            <select id="optionTop" onchange="convert();"></select>
+          </div>
+        </div>
+        <div id="converterBottom" class="converter">
+          <div class="input">
+            <input
+              id="inputBottom"
+              type="number"
+              value
+              oninput="convertBack();"
+            />
+          </div>
+          <div class="option">
+            <select id="optionBottom" onchange="convert();"></select>
+          </div>
+        </div>
+      </div>
+    </main>
+    <footer>
+      <p>Created by dianyehezkiel</p>
+      <p>
+        Find me on <a href="https://www.facebook.com/dianyhzkl">Facebook</a>,
+        <a href="https://www.instagram.com/dianyehezkiel/">Instagram</a>, and
+        <a href="https://twitter.com/dianyehezkiel_">Twitter</a>
+      </p>
+    </footer>
+  </body>
+  <script src="./public/index.js"></script>
 </html>

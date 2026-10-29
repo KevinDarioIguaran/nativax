@@ -1,42 +1,99 @@
-<!doctype html>
-<html lang="en">
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>NativaX Lab · box.002 · 002</title>
-<link rel="stylesheet" href="style.css">
+	<meta http-equiv="content-type" content="text/html;charset=utf-8" />
+	<meta name="author" content="Luka Cvrk (www.solucija.com)" />
+	<meta name="description" content="My Site" />
+	<meta name="keywords" content="key, words" />	
+	<link rel="stylesheet" type="text/css" href="style.css" media="screen" />
+	<title>Internet Broadcast &middot; We share the relevant.</title>
 </head>
-<body class="">
-<div class="aurora" aria-hidden="true"><i></i><i></i><i></i></div>
-<header class="topbar">
-  <div class="brand"><span class="logo"></span><span>NativaX <b>Lab</b></span></div>
-  <nav class="nav" aria-label="primary">
-    <a class="nav-link is-active" href="#case">Case</a>
-    <a class="nav-link" href="#cards">Components</a>
-    <a class="nav-link" href="#footer">About</a>
-  </nav>
-  <button id="theme-toggle" class="btn ghost" type="button">Theme</button>
-</header>
-<main class="stage">
-  <section class="hero">
-    <p class="eyebrow">Section 01 · HTML, DOM and parsing</p>
-    <h1 class="title">html.001 <span class="grad">div básico</span></h1>
-    <p class="lede">A real laboratory application: semantic HTML structure, animated styles and verifiable JavaScript behaviour.</p>
-    <div class="hero-actions">
-      <button id="ping" class="btn" type="button">Try interaction <span id="pings" class="badge">0</span></button>
-      <span id="clock" class="clock">--:--:--</span>
-    </div>
-  </section>
-  <section id="case" class="case panel">
-<div id=t class='target' style='display:inline'>x</div>
-  </section>
-  <section id="cards" class="cards" aria-label="components">
-    <article class="card"><span class="tag">HTML</span><h3>Semantics</h3><p>Real elements, attributes and parent-child relations verified by the laboratory.</p></article>
-    <article class="card"><span class="tag">CSS</span><h3>Animation</h3><p>Gradients, keyframes and transitions compared pixel by pixel in the visual sections.</p></article>
-    <article class="card"><span class="tag">JS</span><h3>Interaction</h3><p>JavaScriptCore runs this file: clock, theme, counter and pointer events.</p></article>
-  </section>
-</main>
-<footer id="footer" class="footer"><span>NativaX Lab · C11 + Sokol + JavaScriptCore</span><span>html.001</span></footer>
-<script src="app.js"></script>
+<body>
+	<div id="content">
+		<div id="top_info">
+			<p>Welcome to <b>Internet Broadcast</b> <span id="loginbutton"><a href="#" title="Log In">&nbsp;</a></span><br />
+			<b>You are not Logged in!</b> <a href="#">Log in</a> to check your messages.</p>
+		</div>
+		
+		<div id="logo">
+			<h1><a href="#" title="We share the relevant.">Internet Broadcast</a></h1>
+			<p id="slogan">We share the relevant.</p>
+		</div>
+				
+		<ul id="tablist">
+			<li><a class="current" href="#" accesskey="n"><span class="key">N</span>ews</a></li><li><a href="#" accesskey="b"><span class="key">B</span>logs</a></li><li><a href="#" accesskey="p"><span class="key">P</span>hotos</a></li><li><a href="#" accesskey="r">P<span class="key">r</span>ofiles</a></li><li><a href="#" accesskey="f"><span class="key">F</span>eeds</a></li><li><a href="#" accesskey="o">Br<span class="key">o</span>adcast News</a></li>
+		</ul>
+		
+		<div id="topics">
+			<div class="thirds">
+				<p><br />Today's Popular Articles and Posts:</p>
+			</div>
+			<div class="thirds">
+				<ul>
+					<li><a href="#">Conducting a CMS Survey</a></li>
+					<li><a href="#">Interests behind politics</a></li>
+					<li><a href="#">Web 2.0 business startup tips</a></li>
+				</ul>
+			</div>
+			<div class="thirds">
+				<ul>
+					<li><a href="#">How stress affects your health</a></li>
+					<li><a href="#">10 ways to buy a used car</a></li>
+					<li><a href="#">Are mobile phones really safe?</a></li>
+				</ul>
+			</div>
+		</div>
+		<div id="search">
+			<form method="post" action="?">
+				<p><input type="text" name="search" class="search" /> <input type="submit" value="Search" class="button" /></p>
+			</form>
+		</div>
+							
+		<div id="left">
+			<div class="subheader">
+				<p><a href="#">Lorem ipsum dolor</a> sit amet, consectetuer adipiscing elit, sed diam nonummy nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat. Ut wisi enim ad minim veniam, quis nostrud exerci tation ullamcorper suscipit lobortis nisl ut aliquip ex.</p>
+			</div>
+			<div class="left_articles">
+				<h2>Today's Featured Article</h2>
+				<p class="date">Posted on 8th September</p>
+				<img class="bigimage" src="images/bigimage.gif" alt="Big Image" />
+				<p><a href="#">Lorem ipsum dolor sit amet</a>, consectetuer adipiscing elit, sed diam nonummy nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat. <a href="#">Ut wisi enim ad minim veniam</a>, quis nostrud exerci tation ullamcorper suscipit lobortis nisl ut aliquip ex.</p>
+				<p><a href="#">Lorem ipsum dolor sit amet</a>, consectetuer adipiscing elit, sed diam nonummy nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat. <a href="#">Ut wisi enim ad minim veniam</a>, quis nostrud exerci tation ullamcorper suscipit lobortis nisl ut aliquip ex.</p>
+			</div>
+			<div class="left_box">
+				<p>Lorem ipsum dolor sit amet, consectetuer adipiscing elit, sed diam nonummy nibh euismod tincidunt ut laoreet dolore.</p>
+			</div>
+			<div class="thirds">
+				<p><b><a href="#" class="title">Web 2.0 business startup tips</a></b><br />Lorem ipsum dolor sit amet esta pa, consectetuer adipiscing elit, sed diam nonummy nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat. Ut wisi enim ad minim veniam, quis nostrud exerci. <a href="#"><img src="images/comment.gif" alt="Comment" /></a></p>
+			</div>
+			<div class="thirds">
+				<p><b><a href="http://andreasviklund.com/templates/" class="title">Visualize your website</a></b><br />Lorem ipsum dolor sit amet esta pa, consectetuer adipiscing elit, sed diam nonummy nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat. Ut wisi enim ad minim veniam, quis nostrud exerci. <a href="#"><img src="images/comment.gif" alt="Comment" /></a></p>
+			</div>
+			<div class="thirds">
+				<p><b><a href="http://snews.solucija.com/" class="title">Manage your content</a></b><br />Lorem ipsum dolor sit amet esta pa, consectetuer adipiscing elit, sed diam nonummy nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat. Ut wisi enim ad minim veniam, quis nostrud exerci. <a href="#"><img src="images/comment.gif" alt="Comment" /></a></p>
+			</div>
+		</div>	
+		
+		<div id="right">
+			<div class="right_articles">
+				<p><img src="images/image.gif" alt="Image" title="Image" class="image" /><b>Lorem ipsum dolor sit amet</b><br />consectetuer adipiscing elit, sed diam nonummy nibh euismod tincidunt ut laoreet dolore magna aliquam <a href="#">erat volutpat</a>. Ut wisi enim ad minim veniam, quis nostrud exerci tation ullamcorper suscipit lobortis <a href="#">nisl ut aliquip ex</a>.</p>
+			</div>
+			<div class="right_articles">
+				<p><img src="images/image.gif" alt="Image" title="Image" class="image" /><b>Lorem ipsum dolor sit amet</b><br />consectetuer adipiscing elit, sed diam nonummy nibh euismod tincidunt ut laoreet dolore magna aliquam <a href="#">erat volutpat</a>. Ut wisi enim ad minim veniam, quis nostrud exerci tation ullamcorper suscipit lobortis <a href="#">nisl ut aliquip ex</a>.</p>
+			</div>
+			<div class="right_articles">
+				<p><img src="images/image.gif" alt="Image" title="Image" class="image" /><b>Lorem ipsum dolor sit amet</b><br />consectetuer adipiscing elit, sed diam nonummy nibh euismod tincidunt ut laoreet dolore magna aliquam <a href="#">erat volutpat</a>. Ut wisi enim ad minim veniam, quis nostrud exerci tation ullamcorper suscipit lobortis <a href="#">nisl ut aliquip ex</a>.</p>
+			</div>
+			<div class="notes">
+				<p>If you liked this template you might like some other <a href="http://templates.solucija.com/">free CSS templates</a> from <a href="http://www.solucija.com/">Solucija</a>.</p>
+			</div>
+		</div>
+		
+		<div id="footer">
+			<p class="right">&copy; 2006 Internet Broadcast, Design: Luka Cvrk - <a href="http://www.solucija.com/" title="Information Architecture and Web Design">Solucija</a></p>
+			<p><a href="#">RSS Feed</a> &middot; <a href="#">Contact</a> &middot; <a href="#">Accessibility</a> &middot; <a href="#">Products</a> &middot; <a href="#">Disclaimer</a> &middot; <a href="http://jigsaw.w3.org/css-validator/check/referer">CSS</a> and <a href="http://validator.w3.org/check?uri=referer">XHTML</a><br /></p>
+			
+		</div>
+	</div>
 </body>
 </html>

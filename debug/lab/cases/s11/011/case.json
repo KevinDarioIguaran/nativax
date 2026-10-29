@@ -1,0 +1,319 @@
+{
+ "id": "events.011",
+ "section": 11,
+ "name": "keshavgbpecdelhi/Web-Development · projects/Random_Joke_Generator",
+ "source": {
+  "repo": "keshavgbpecdelhi/Web-Development",
+  "commit": "c1613b1424c3226ecd09ca0f23cd39bc4e32709b",
+  "license": "Apache-2.0",
+  "path": "projects/Random_Joke_Generator",
+  "url": "https://github.com/keshavgbpecdelhi/Web-Development/tree/c1613b1424c3226ecd09ca0f23cd39bc4e32709b/projects/Random_Joke_Generator"
+ },
+ "entry": "index.html",
+ "dir": "cases/s11/011",
+ "bytes": 173403,
+ "files": 5,
+ "digest": "128c7702e266207bb961",
+ "facts": {
+  "title": "Random Jokes Generator",
+  "elements": 28,
+  "max_depth": 5,
+  "tags": {
+   "html": 1,
+   "head": 1,
+   "meta": 3,
+   "link": 3,
+   "title": 1,
+   "body": 1,
+   "div": 9,
+   "i": 2,
+   "h1": 1,
+   "hr": 1,
+   "b": 2,
+   "button": 2,
+   "script": 1
+  },
+  "html_tags": [
+   "b",
+   "body",
+   "button",
+   "div",
+   "h1",
+   "head",
+   "hr",
+   "html",
+   "i",
+   "link",
+   "meta",
+   "script",
+   "title"
+  ],
+  "ids": [
+   "toggle",
+   "main-joke-heading-in-h1",
+   "joke",
+   "btn",
+   "copy_joke",
+   "loading"
+  ],
+  "id_counts": {
+   "toggle": 1,
+   "main-joke-heading-in-h1": 1,
+   "joke": 1,
+   "btn": 1,
+   "copy_joke": 1,
+   "loading": 1
+  },
+  "classes": [
+   "container",
+   "toggle",
+   "far",
+   "fa-moon",
+   "heading",
+   "joke",
+   "copy-popup",
+   "btn",
+   "copy_btn",
+   "fa-regular",
+   "fa-copy",
+   "lds-ring"
+  ],
+  "class_counts": {
+   "container": 1,
+   "toggle": 1,
+   "far": 1,
+   "fa-moon": 1,
+   "heading": 1,
+   "joke": 1,
+   "copy-popup": 1,
+   "btn": 2,
+   "copy_btn": 1,
+   "fa-regular": 1,
+   "fa-copy": 1,
+   "lds-ring": 1
+  },
+  "text_samples": [
+   "Random Jokes Generator",
+   "Here's the joke for you",
+   "Get another joke"
+  ],
+  "inline_styles": [
+   "width: 50%; color: black"
+  ],
+  "attr_samples": {
+   "toggle": {
+    "tag": "div",
+    "class": "toggle",
+    "attrs": {
+     "id": "toggle",
+     "class": "toggle"
+    }
+   },
+   "main-joke-heading-in-h1": {
+    "tag": "h1",
+    "class": "heading",
+    "attrs": {
+     "id": "main-joke-heading-in-h1",
+     "class": "heading"
+    }
+   },
+   "joke": {
+    "tag": "div",
+    "class": "joke",
+    "attrs": {
+     "id": "joke",
+     "class": "joke"
+    }
+   },
+   "btn": {
+    "tag": "button",
+    "class": "btn",
+    "attrs": {
+     "id": "btn",
+     "class": "btn"
+    }
+   },
+   "copy_joke": {
+    "tag": "button",
+    "class": "copy_btn btn",
+    "attrs": {
+     "id": "copy_joke",
+     "class": "copy_btn btn"
+    }
+   },
+   "loading": {
+    "tag": "div",
+    "class": "lds-ring",
+    "attrs": {
+     "id": "loading",
+     "class": "lds-ring"
+    }
+   }
+  },
+  "roles": {},
+  "aria": {},
+  "forms": {
+   "button": 2
+  },
+  "media": {},
+  "linked_css": [
+   "style.css"
+  ],
+  "linked_js": [
+   "script.js"
+  ],
+  "style_blocks": 0,
+  "inline_js": 1,
+  "images": [],
+  "features": [
+   "grid",
+   "position",
+   "anim",
+   "responsive",
+   "forms",
+   "typo",
+   "color",
+   "box",
+   "jsdom",
+   "events"
+  ],
+  "css": {
+   "rules": 29,
+   "selectors": [
+    "body",
+    ".container",
+    "h3",
+    ".joke",
+    ".btn",
+    ".btn:hover",
+    ".btn:active",
+    ".btn:focus",
+    ".copy_btn",
+    ".fade-in-image",
+    ".toggle",
+    ".toggle i",
+    ".toggle i:hover",
+    "body.dark",
+    "body.dark .container",
+    "body.dark .toggle",
+    "body.dark .toggle i",
+    "body.dark.toggle i:hover",
+    "body.dark .btn",
+    "body.dark .btn:hover",
+    "body.dark .lds-ring div",
+    ".lds-ring",
+    ".lds-ring div",
+    ".lds-ring div:nth-child(1)",
+    ".lds-ring div:nth-child(2)",
+    ".lds-ring div:nth-child(3)",
+    ".heading"
+   ],
+   "properties": [
+    "background-color",
+    "color",
+    "border-radius",
+    "margin",
+    "box-shadow",
+    "position",
+    "height",
+    "width",
+    "font-size",
+    "display",
+    "background",
+    "padding",
+    "max-width",
+    "border-color",
+    "align-items",
+    "background-position",
+    "border",
+    "transition",
+    "font-weight",
+    "cursor",
+    "transform",
+    "div",
+    "animation-delay",
+    "box-sizing",
+    "background-size",
+    "animation",
+    "justify-content",
+    "backdrop-filter",
+    "-webkit-backdrop-filter",
+    "text-align",
+    "line-height",
+    "top",
+    "right",
+    "place-items",
+    "font-family",
+    "align-content",
+    "letter-spacing",
+    "opacity",
+    "-webkit-transition",
+    "-moz-transition",
+    "-ms-transition",
+    "-o-transition",
+    "margin-top",
+    "outline",
+    "margin-left",
+    "z-index",
+    "left",
+    "visibility"
+   ],
+   "property_counts": {
+    "background-color": 9,
+    "color": 9,
+    "border-radius": 8,
+    "margin": 7,
+    "box-shadow": 7,
+    "position": 6,
+    "height": 6,
+    "width": 6,
+    "font-size": 6,
+    "display": 5,
+    "background": 4,
+    "padding": 4,
+    "max-width": 4,
+    "border-color": 4,
+    "align-items": 3,
+    "background-position": 3,
+    "border": 3,
+    "transition": 3,
+    "font-weight": 3,
+    "cursor": 3,
+    "transform": 3,
+    "div": 3,
+    "animation-delay": 3,
+    "box-sizing": 2,
+    "background-size": 2,
+    "animation": 2,
+    "justify-content": 2,
+    "backdrop-filter": 2,
+    "-webkit-backdrop-filter": 2,
+    "text-align": 2,
+    "line-height": 2,
+    "top": 2,
+    "right": 2,
+    "place-items": 2,
+    "font-family": 1,
+    "align-content": 1,
+    "letter-spacing": 1,
+    "opacity": 1,
+    "-webkit-transition": 1,
+    "-moz-transition": 1,
+    "-ms-transition": 1,
+    "-o-transition": 1,
+    "margin-top": 1,
+    "outline": 1,
+    "margin-left": 1,
+    "z-index": 1,
+    "left": 1,
+    "visibility": 1
+   },
+   "media": 1,
+   "keyframes": 2,
+   "bytes": 5273
+  },
+  "js_bytes": 2279,
+  "html_bytes": 1254,
+  "missing_assets": []
+ }
+}

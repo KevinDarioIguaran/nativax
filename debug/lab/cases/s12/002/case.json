@@ -1,0 +1,174 @@
+{
+ "id": "forms.002",
+ "section": 12,
+ "name": "keshavgbpecdelhi/Web-Development · projects/drum-kit",
+ "source": {
+  "repo": "keshavgbpecdelhi/Web-Development",
+  "commit": "c1613b1424c3226ecd09ca0f23cd39bc4e32709b",
+  "license": "Apache-2.0",
+  "path": "projects/drum-kit",
+  "url": "https://github.com/keshavgbpecdelhi/Web-Development/tree/c1613b1424c3226ecd09ca0f23cd39bc4e32709b/projects/drum-kit"
+ },
+ "entry": "index.html",
+ "dir": "cases/s12/002",
+ "bytes": 377647,
+ "files": 10,
+ "digest": "36f6dbb819194ffb3153",
+ "facts": {
+  "title": "Drum Kit",
+  "elements": 18,
+  "max_depth": 4,
+  "tags": {
+   "html": 1,
+   "head": 1,
+   "meta": 1,
+   "title": 1,
+   "link": 2,
+   "body": 1,
+   "h1": 1,
+   "div": 1,
+   "button": 7,
+   "script": 1,
+   "footer": 1
+  },
+  "html_tags": [
+   "body",
+   "button",
+   "div",
+   "footer",
+   "h1",
+   "head",
+   "html",
+   "link",
+   "meta",
+   "script",
+   "title"
+  ],
+  "ids": [
+   "title"
+  ],
+  "id_counts": {
+   "title": 1
+  },
+  "classes": [
+   "set",
+   "b",
+   "drum",
+   "i",
+   "n",
+   "l",
+   "t",
+   "j"
+  ],
+  "class_counts": {
+   "set": 1,
+   "b": 1,
+   "drum": 7,
+   "i": 2,
+   "n": 1,
+   "l": 1,
+   "t": 1,
+   "j": 1
+  },
+  "text_samples": [
+   "~~~~~~~~~~~~BinilTomJose1278❤️~~~~~~~~~~~"
+  ],
+  "inline_styles": [],
+  "attr_samples": {
+   "title": {
+    "tag": "h1",
+    "class": "",
+    "attrs": {
+     "id": "title"
+    }
+   }
+  },
+  "roles": {},
+  "aria": {},
+  "forms": {
+   "button": 7
+  },
+  "media": {},
+  "linked_css": [
+   "styles.css"
+  ],
+  "linked_js": [
+   "index.js"
+  ],
+  "style_blocks": 0,
+  "inline_js": 1,
+  "images": [],
+  "features": [
+   "forms",
+   "typo",
+   "color",
+   "box",
+   "jsdom",
+   "events"
+  ],
+  "css": {
+   "rules": 14,
+   "selectors": [
+    "body",
+    "h1",
+    "footer",
+    ".b",
+    ".i",
+    ".n",
+    ".l",
+    ".t",
+    ".j",
+    ".set",
+    ".pressed",
+    ".red",
+    ".drum"
+   ],
+   "properties": [
+    "background-image",
+    "color",
+    "font-family",
+    "text-align",
+    "background-color",
+    "font-size",
+    "text-shadow",
+    "margin",
+    "box-shadow",
+    "opacity",
+    "outline",
+    "border",
+    "line-height",
+    "font-weight",
+    "border-radius",
+    "display",
+    "width",
+    "height"
+   ],
+   "property_counts": {
+    "background-image": 7,
+    "color": 4,
+    "font-family": 3,
+    "text-align": 2,
+    "background-color": 2,
+    "font-size": 2,
+    "text-shadow": 2,
+    "margin": 2,
+    "box-shadow": 1,
+    "opacity": 1,
+    "outline": 1,
+    "border": 1,
+    "line-height": 1,
+    "font-weight": 1,
+    "border-radius": 1,
+    "display": 1,
+    "width": 1,
+    "height": 1
+   },
+   "media": 0,
+   "keyframes": 0,
+   "bytes": 1050
+  },
+  "js_bytes": 1434,
+  "html_bytes": 706,
+  "missing_assets": []
+ }
+}

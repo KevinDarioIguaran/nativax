@@ -1,0 +1,97 @@
+{
+ "id": "typo.006",
+ "section": 4,
+ "name": "zxuqian/html-css-examples · 51-css-scroll-based-animation",
+ "source": {
+  "repo": "zxuqian/html-css-examples",
+  "commit": "2a9fc59f44aeda092cbac07472aaf0f1ead4e1a6",
+  "license": "MIT",
+  "path": "51-css-scroll-based-animation",
+  "url": "https://github.com/zxuqian/html-css-examples/tree/2a9fc59f44aeda092cbac07472aaf0f1ead4e1a6/51-css-scroll-based-animation"
+ },
+ "entry": "index.html",
+ "dir": "cases/s04/006",
+ "bytes": 248060,
+ "files": 1,
+ "digest": "024b6ff1d4173567ddf3",
+ "facts": {
+  "title": "Document",
+  "elements": 10,
+  "max_depth": 4,
+  "tags": {
+   "html": 1,
+   "head": 1,
+   "meta": 2,
+   "title": 1,
+   "style": 1,
+   "body": 1,
+   "main": 1,
+   "a": 2
+  },
+  "html_tags": [
+   "a",
+   "body",
+   "head",
+   "html",
+   "main",
+   "meta",
+   "style",
+   "title"
+  ],
+  "ids": [],
+  "id_counts": {},
+  "classes": [],
+  "class_counts": {},
+  "text_samples": [
+   "Scroll Showcase",
+   "View Showcase"
+  ],
+  "inline_styles": [],
+  "attr_samples": {},
+  "roles": {},
+  "aria": {},
+  "forms": {},
+  "media": {},
+  "linked_css": [],
+  "linked_js": [],
+  "style_blocks": 1,
+  "inline_js": 0,
+  "images": [],
+  "features": [
+   "grid",
+   "typo",
+   "box"
+  ],
+  "css": {
+   "rules": 2,
+   "selectors": [
+    "main",
+    "a"
+   ],
+   "properties": [
+    "display",
+    "place-content",
+    "width",
+    "height",
+    "gap",
+    "font-size",
+    "text-decoration"
+   ],
+   "property_counts": {
+    "display": 1,
+    "place-content": 1,
+    "width": 1,
+    "height": 1,
+    "gap": 1,
+    "font-size": 1,
+    "text-decoration": 1
+   },
+   "media": 0,
+   "keyframes": 0,
+   "bytes": 218
+  },
+  "js_bytes": 0,
+  "html_bytes": 566,
+  "missing_assets": []
+ }
+}

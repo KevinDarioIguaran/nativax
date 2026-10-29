@@ -1,0 +1,112 @@
+{
+ "id": "box.014",
+ "section": 3,
+ "name": "learning-zone/website-templates · super-simple-site",
+ "source": {
+  "repo": "learning-zone/website-templates",
+  "commit": "7bf31e9646a6b5f51c2e55b2557787310436989f",
+  "license": "not declared upstream",
+  "path": "super-simple-site",
+  "url": "https://github.com/learning-zone/website-templates/tree/7bf31e9646a6b5f51c2e55b2557787310436989f/super-simple-site"
+ },
+ "entry": "index.html",
+ "dir": "cases/s03/014",
+ "bytes": 3552,
+ "files": 2,
+ "digest": "3f92533613259a876288",
+ "facts": {
+  "title": "",
+  "elements": 44,
+  "max_depth": 7,
+  "tags": {
+   "html": 1,
+   "head": 1,
+   "link": 1,
+   "body": 1,
+   "div": 17,
+   "h1": 1,
+   "p": 10,
+   "a": 4,
+   "h2": 4,
+   "h5": 2,
+   "h3": 2
+  },
+  "html_tags": [
+   "a",
+   "body",
+   "div",
+   "h1",
+   "h2",
+   "h3",
+   "h5",
+   "head",
+   "html",
+   "link",
+   "p"
+  ],
+  "ids": [],
+  "id_counts": {},
+  "classes": [
+   "header",
+   "topnav",
+   "row",
+   "leftcolumn",
+   "card",
+   "fakeimg",
+   "rightcolumn",
+   "footer"
+  ],
+  "class_counts": {
+   "header": 1,
+   "topnav": 1,
+   "row": 1,
+   "leftcolumn": 1,
+   "card": 5,
+   "fakeimg": 6,
+   "rightcolumn": 1,
+   "footer": 1
+  },
+  "text_samples": [
+   "Resize the browser window to see the effect.",
+   "TITLE HEADING",
+   "Title description, Dec 7, 2017",
+   "Sunt in culpa qui officia deserunt mollit anim id est laborum consectetur adipiscing elit, sed do eiusmod tempor incidid",
+   "Title description, Sep 2, 2017",
+   "Sunt in culpa qui officia deserunt mollit anim id est laborum consectetur adipiscing elit, sed do eiusmod tempor incidid",
+   "Some text about me in culpa qui officia deserunt mollit anim..",
+   "Popular Post"
+  ],
+  "inline_styles": [
+   "float:right",
+   "height:200px;",
+   "height:200px;",
+   "height:100px;"
+  ],
+  "attr_samples": {},
+  "roles": {},
+  "aria": {},
+  "forms": {},
+  "media": {},
+  "linked_css": [],
+  "linked_js": [],
+  "style_blocks": 0,
+  "inline_js": 0,
+  "images": [],
+  "features": [
+   "position",
+   "box"
+  ],
+  "css": {
+   "rules": 0,
+   "selectors": [],
+   "properties": [],
+   "property_counts": {},
+   "media": 0,
+   "keyframes": 0,
+   "bytes": 0
+  },
+  "js_bytes": 0,
+  "html_bytes": 1810,
+  "missing_assets": []
+ }
+}

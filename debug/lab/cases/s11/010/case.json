@@ -1,0 +1,192 @@
+{
+ "id": "events.010",
+ "section": 11,
+ "name": "keshavgbpecdelhi/Web-Development · projects/Timer App",
+ "source": {
+  "repo": "keshavgbpecdelhi/Web-Development",
+  "commit": "c1613b1424c3226ecd09ca0f23cd39bc4e32709b",
+  "license": "Apache-2.0",
+  "path": "projects/Timer App",
+  "url": "https://github.com/keshavgbpecdelhi/Web-Development/tree/c1613b1424c3226ecd09ca0f23cd39bc4e32709b/projects/Timer App"
+ },
+ "entry": "index.html",
+ "dir": "cases/s11/010",
+ "bytes": 4174,
+ "files": 4,
+ "digest": "42db18871b2aec8aae03",
+ "facts": {
+  "title": "",
+  "elements": 17,
+  "max_depth": 7,
+  "tags": {
+   "html": 1,
+   "head": 1,
+   "link": 2,
+   "body": 1,
+   "div": 3,
+   "input": 1,
+   "button": 2,
+   "i": 2,
+   "svg": 1,
+   "circle": 1,
+   "script": 2
+  },
+  "html_tags": [
+   "body",
+   "button",
+   "div",
+   "head",
+   "html",
+   "i",
+   "input",
+   "link",
+   "script"
+  ],
+  "ids": [
+   "duration",
+   "start",
+   "pause"
+  ],
+  "id_counts": {
+   "duration": 1,
+   "start": 1,
+   "pause": 1
+  },
+  "classes": [
+   "timer",
+   "controls",
+   "fas",
+   "fa-play",
+   "fa-pause",
+   "dial"
+  ],
+  "class_counts": {
+   "timer": 1,
+   "controls": 1,
+   "fas": 2,
+   "fa-play": 1,
+   "fa-pause": 1,
+   "dial": 1
+  },
+  "text_samples": [],
+  "inline_styles": [],
+  "attr_samples": {
+   "duration": {
+    "tag": "input",
+    "class": "",
+    "attrs": {
+     "id": "duration",
+     "value": "3"
+    }
+   },
+   "start": {
+    "tag": "button",
+    "class": "",
+    "attrs": {
+     "id": "start"
+    }
+   },
+   "pause": {
+    "tag": "button",
+    "class": "",
+    "attrs": {
+     "id": "pause"
+    }
+   }
+  },
+  "roles": {},
+  "aria": {},
+  "forms": {
+   "input": 1,
+   "button": 2
+  },
+  "media": {
+   "svg": 1
+  },
+  "linked_css": [
+   "style.css"
+  ],
+  "linked_js": [
+   "timer.js",
+   "index.js"
+  ],
+  "style_blocks": 0,
+  "inline_js": 2,
+  "images": [],
+  "features": [
+   "flex",
+   "position",
+   "anim",
+   "forms",
+   "media",
+   "typo",
+   "box",
+   "jsdom",
+   "events"
+  ],
+  "css": {
+   "rules": 9,
+   "selectors": [
+    ".dial",
+    ".timer",
+    "*",
+    "body",
+    ".timer input",
+    ".timer button",
+    ".timer button:focus",
+    ".timer input:focus",
+    ".controls"
+   ],
+   "properties": [
+    "display",
+    "width",
+    "position",
+    "border",
+    "font-size",
+    "outline",
+    "height",
+    "font",
+    "font-family",
+    "text-align",
+    "cursor",
+    "button",
+    "input",
+    "top",
+    "left",
+    "right",
+    "bottom",
+    "justify-content",
+    "align-items",
+    "flex-direction"
+   ],
+   "property_counts": {
+    "display": 3,
+    "width": 2,
+    "position": 2,
+    "border": 2,
+    "font-size": 2,
+    "outline": 2,
+    "height": 1,
+    "font": 1,
+    "font-family": 1,
+    "text-align": 1,
+    "cursor": 1,
+    "button": 1,
+    "input": 1,
+    "top": 1,
+    "left": 1,
+    "right": 1,
+    "bottom": 1,
+    "justify-content": 1,
+    "align-items": 1,
+    "flex-direction": 1
+   },
+   "media": 0,
+   "keyframes": 0,
+   "bytes": 822
+  },
+  "js_bytes": 2512,
+  "html_bytes": 843,
+  "missing_assets": []
+ }
+}

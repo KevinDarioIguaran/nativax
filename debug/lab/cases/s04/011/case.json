@@ -1,0 +1,294 @@
+{
+ "id": "typo.011",
+ "section": 4,
+ "name": "learning-zone/website-templates · drifting",
+ "source": {
+  "repo": "learning-zone/website-templates",
+  "commit": "7bf31e9646a6b5f51c2e55b2557787310436989f",
+  "license": "not declared upstream",
+  "path": "drifting",
+  "url": "https://github.com/learning-zone/website-templates/tree/7bf31e9646a6b5f51c2e55b2557787310436989f/drifting"
+ },
+ "entry": "index.html",
+ "dir": "cases/s04/011",
+ "bytes": 39147,
+ "files": 10,
+ "digest": "13e8fd05059ba642d038",
+ "facts": {
+  "title": "drifting v1.0",
+  "elements": 111,
+  "max_depth": 9,
+  "tags": {
+   "html": 1,
+   "head": 1,
+   "meta": 4,
+   "title": 1,
+   "link": 2,
+   "body": 1,
+   "div": 12,
+   "span": 11,
+   "br": 6,
+   "h1": 6,
+   "a": 28,
+   "img": 11,
+   "h2": 5,
+   "p": 7,
+   "acronym": 8,
+   "ul": 1,
+   "li": 4,
+   "font": 2
+  },
+  "html_tags": [
+   "a",
+   "body",
+   "div",
+   "h1",
+   "h2",
+   "head",
+   "html",
+   "img",
+   "li",
+   "link",
+   "meta",
+   "p",
+   "span",
+   "title",
+   "ul"
+  ],
+  "ids": [
+   "layoutBox",
+   "headerBox",
+   "headerLeftBox",
+   "headerRightBox",
+   "menuBox",
+   "mainContent"
+  ],
+  "id_counts": {
+   "layoutBox": 1,
+   "headerBox": 1,
+   "headerLeftBox": 1,
+   "headerRightBox": 1,
+   "menuBox": 1,
+   "mainContent": 1
+  },
+  "classes": [
+   "title",
+   "subTitle",
+   "menuGroup",
+   "noDisplay",
+   "newsGroup",
+   "menuFooter",
+   "imgRight",
+   "footer",
+   "spacer"
+  ],
+  "class_counts": {
+   "title": 1,
+   "subTitle": 1,
+   "menuGroup": 2,
+   "noDisplay": 9,
+   "newsGroup": 1,
+   "menuFooter": 1,
+   "imgRight": 1,
+   "footer": 1,
+   "spacer": 1
+  },
+  "text_samples": [
+   "drifting v1.0",
+   "because shovelling hurts",
+   "Done and done.",
+   "Internet Explorer is going to give me an",
+   "The look is coming together. Now onto the header images.",
+   "My first shot at a pure",
+   "design layout. It made me really appreciate Flash and only doing things once. The layout is pretty traditional; news and",
+   ". This template also includes a layout for print media that looks like"
+  ],
+  "inline_styles": [],
+  "attr_samples": {
+   "layoutBox": {
+    "tag": "div",
+    "class": "",
+    "attrs": {
+     "id": "layoutBox"
+    }
+   },
+   "headerBox": {
+    "tag": "div",
+    "class": "",
+    "attrs": {
+     "id": "headerBox"
+    }
+   },
+   "headerLeftBox": {
+    "tag": "div",
+    "class": "",
+    "attrs": {
+     "id": "headerLeftBox"
+    }
+   },
+   "headerRightBox": {
+    "tag": "div",
+    "class": "",
+    "attrs": {
+     "id": "headerRightBox"
+    }
+   },
+   "menuBox": {
+    "tag": "div",
+    "class": "",
+    "attrs": {
+     "id": "menuBox"
+    }
+   },
+   "mainContent": {
+    "tag": "div",
+    "class": "",
+    "attrs": {
+     "id": "mainContent"
+    }
+   }
+  },
+  "roles": {},
+  "aria": {},
+  "forms": {},
+  "media": {
+   "img": 11
+  },
+  "linked_css": [
+   "css/drifting_screen.css",
+   "css/drifting_print.css"
+  ],
+  "linked_js": [],
+  "style_blocks": 0,
+  "inline_js": 0,
+  "images": [
+   "images/menu_icon.gif",
+   "images/menu_icon.gif",
+   "images/menu_icon.gif",
+   "images/menu_icon.gif",
+   "images/menu_icon.gif",
+   "images/menu_icon.gif",
+   "images/menu_icon.gif",
+   "images/menu_icon.gif",
+   "images/menu_icon.gif",
+   "images/stadium.jpg",
+   "spacer.gif"
+  ],
+  "features": [
+   "position",
+   "media",
+   "typo",
+   "color",
+   "box"
+  ],
+  "css": {
+   "rules": 83,
+   "selectors": [
+    "body",
+    "a",
+    "a:hover",
+    "acronym",
+    "img",
+    "ul",
+    "#layoutBox",
+    "#headerBox",
+    "#headerLeftBox",
+    "#headerRightBox",
+    ".title",
+    ".subTitle",
+    "#menuBox",
+    "#menuBox p",
+    "#menuBox br",
+    "#mainContent",
+    "#mainContent br",
+    "#mainContent p",
+    ".spacer",
+    ".noDisplay",
+    "#mainContent h1",
+    "#menuBox h1",
+    ".menuFooter",
+    ".footer",
+    "#mainContent h2",
+    "#menuBox h2",
+    ".footer a:hover",
+    ".footer br",
+    ".newsGroup",
+    ".menuGroup",
+    ".menuGroup a",
+    ".menuGroup a:hover",
+    ".imgRight",
+    ".imgLeft"
+   ],
+   "properties": [
+    "font-size",
+    "color",
+    "padding",
+    "background-color",
+    "float",
+    "border",
+    "margin",
+    "font-family",
+    "height",
+    "background",
+    "font-weight",
+    "display",
+    "margin-bottom",
+    "width",
+    "border-right",
+    "margin-top",
+    "border-left",
+    "clear",
+    "text-decoration",
+    "text-align",
+    "cursor",
+    "border-bottom",
+    "list-style-image",
+    "font-style",
+    "line-height",
+    "letter-spacing",
+    "margin-left",
+    "border-top",
+    "text-indent"
+   ],
+   "property_counts": {
+    "font-size": 12,
+    "color": 12,
+    "padding": 12,
+    "background-color": 11,
+    "float": 11,
+    "border": 10,
+    "margin": 9,
+    "font-family": 8,
+    "height": 8,
+    "background": 8,
+    "font-weight": 8,
+    "display": 7,
+    "margin-bottom": 6,
+    "width": 5,
+    "border-right": 4,
+    "margin-top": 4,
+    "border-left": 4,
+    "clear": 4,
+    "text-decoration": 3,
+    "text-align": 3,
+    "cursor": 2,
+    "border-bottom": 2,
+    "list-style-image": 2,
+    "font-style": 2,
+    "line-height": 2,
+    "letter-spacing": 2,
+    "margin-left": 2,
+    "border-top": 1,
+    "text-indent": 1
+   },
+   "media": 0,
+   "keyframes": 0,
+   "bytes": 6548
+  },
+  "js_bytes": 0,
+  "html_bytes": 8273,
+  "missing_assets": [
+   "spacer.gif"
+  ]
+ }
+}

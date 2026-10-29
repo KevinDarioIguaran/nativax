@@ -1,0 +1,189 @@
+{
+ "id": "forms.010",
+ "section": 12,
+ "name": "keshavgbpecdelhi/Web-Development · projects/palindrome site",
+ "source": {
+  "repo": "keshavgbpecdelhi/Web-Development",
+  "commit": "c1613b1424c3226ecd09ca0f23cd39bc4e32709b",
+  "license": "Apache-2.0",
+  "path": "projects/palindrome site",
+  "url": "https://github.com/keshavgbpecdelhi/Web-Development/tree/c1613b1424c3226ecd09ca0f23cd39bc4e32709b/projects/palindrome site"
+ },
+ "entry": "index.html",
+ "dir": "cases/s12/010",
+ "bytes": 3328,
+ "files": 3,
+ "digest": "3b61e86d5d548a1c05c8",
+ "facts": {
+  "title": "Palindrome Checker",
+  "elements": 18,
+  "max_depth": 5,
+  "tags": {
+   "html": 1,
+   "head": 1,
+   "meta": 3,
+   "title": 1,
+   "link": 1,
+   "script": 2,
+   "body": 1,
+   "div": 1,
+   "h1": 1,
+   "p": 2,
+   "input": 1,
+   "br": 1,
+   "button": 1,
+   "span": 1
+  },
+  "html_tags": [
+   "body",
+   "button",
+   "div",
+   "h1",
+   "head",
+   "html",
+   "input",
+   "link",
+   "meta",
+   "p",
+   "script",
+   "span",
+   "title"
+  ],
+  "ids": [
+   "about",
+   "infield"
+  ],
+  "id_counts": {
+   "about": 1,
+   "infield": 1
+  },
+  "classes": [
+   "container",
+   "btn",
+   "text-info"
+  ],
+  "class_counts": {
+   "container": 1,
+   "btn": 1,
+   "text-info": 1
+  },
+  "text_samples": [
+   "Palindrome checker",
+   "A Palindrome is a word or phrase that reads same backwards as forwards, eg. level, refer.",
+   "Check Palindrome",
+   "is not a Palindrome !"
+  ],
+  "inline_styles": [],
+  "attr_samples": {
+   "about": {
+    "tag": "p",
+    "class": "",
+    "attrs": {
+     "id": "about"
+    }
+   },
+   "infield": {
+    "tag": "input",
+    "class": "",
+    "attrs": {
+     "id": "infield",
+     "type": "text",
+     "placeholder": "Enter text or number"
+    }
+   }
+  },
+  "roles": {},
+  "aria": {},
+  "forms": {
+   "input": 1,
+   "button": 1
+  },
+  "media": {},
+  "linked_css": [
+   "style.css"
+  ],
+  "linked_js": [
+   "index.js"
+  ],
+  "style_blocks": 0,
+  "inline_js": 2,
+  "images": [],
+  "features": [
+   "flex",
+   "forms",
+   "typo",
+   "color",
+   "box",
+   "jsdom",
+   "events"
+  ],
+  "css": {
+   "rules": 9,
+   "selectors": [
+    "body",
+    ".container",
+    "h1",
+    "p",
+    "#infield",
+    ".btn",
+    ".btn.active",
+    ".text-info",
+    "span"
+   ],
+   "properties": [
+    "font-size",
+    "font-weight",
+    "text-align",
+    "height",
+    "background",
+    "border-radius",
+    "margin",
+    "padding",
+    "display",
+    "line-height",
+    "margin-top",
+    "width",
+    "outline",
+    "color",
+    "opacity",
+    "pointer-events",
+    "font-family",
+    "align-items",
+    "justify-content",
+    "background-color",
+    "max-width",
+    "cursor"
+   ],
+   "property_counts": {
+    "font-size": 6,
+    "font-weight": 4,
+    "text-align": 4,
+    "height": 3,
+    "background": 3,
+    "border-radius": 3,
+    "margin": 2,
+    "padding": 2,
+    "display": 2,
+    "line-height": 2,
+    "margin-top": 2,
+    "width": 2,
+    "outline": 2,
+    "color": 2,
+    "opacity": 2,
+    "pointer-events": 2,
+    "font-family": 1,
+    "align-items": 1,
+    "justify-content": 1,
+    "background-color": 1,
+    "max-width": 1,
+    "cursor": 1
+   },
+   "media": 0,
+   "keyframes": 0,
+   "bytes": 1474
+  },
+  "js_bytes": 870,
+  "html_bytes": 986,
+  "missing_assets": []
+ }
+}

@@ -1,0 +1,185 @@
+{
+ "id": "flex.015",
+ "section": 8,
+ "name": "zxuqian/html-css-examples · 16-svg-animation-truck",
+ "source": {
+  "repo": "zxuqian/html-css-examples",
+  "commit": "2a9fc59f44aeda092cbac07472aaf0f1ead4e1a6",
+  "license": "MIT",
+  "path": "16-svg-animation-truck",
+  "url": "https://github.com/zxuqian/html-css-examples/tree/2a9fc59f44aeda092cbac07472aaf0f1ead4e1a6/16-svg-animation-truck"
+ },
+ "entry": "index.html",
+ "dir": "cases/s08/015",
+ "bytes": 41549,
+ "files": 2,
+ "digest": "83c367724344f62a0ae0",
+ "facts": {
+  "title": "Documentfactory",
+  "elements": 82,
+  "max_depth": 7,
+  "tags": {
+   "html": 1,
+   "head": 1,
+   "meta": 3,
+   "link": 1,
+   "title": 2,
+   "body": 1,
+   "main": 1,
+   "svg": 1,
+   "path": 17,
+   "g": 7,
+   "rect": 38,
+   "polygon": 4,
+   "circle": 5
+  },
+  "html_tags": [
+   "body",
+   "head",
+   "html",
+   "link",
+   "main",
+   "meta",
+   "title"
+  ],
+  "ids": [
+   "b6c881ec-80a2-4aeb-a87c-bea63cd39014",
+   "truck",
+   "boards",
+   "string",
+   "cloud",
+   "building-smoke"
+  ],
+  "id_counts": {
+   "b6c881ec-80a2-4aeb-a87c-bea63cd39014": 1,
+   "truck": 1,
+   "boards": 1,
+   "string": 1,
+   "cloud": 1,
+   "building-smoke": 1
+  },
+  "classes": [
+   "smoke",
+   "smoke2"
+  ],
+  "class_counts": {
+   "smoke": 2,
+   "smoke2": 1
+  },
+  "text_samples": [],
+  "inline_styles": [],
+  "attr_samples": {
+   "b6c881ec-80a2-4aeb-a87c-bea63cd39014": {
+    "tag": "svg",
+    "class": "",
+    "attrs": {
+     "id": "b6c881ec-80a2-4aeb-a87c-bea63cd39014",
+     "width": "888",
+     "height": "460.52563"
+    }
+   },
+   "truck": {
+    "tag": "g",
+    "class": "",
+    "attrs": {
+     "id": "truck"
+    }
+   },
+   "boards": {
+    "tag": "g",
+    "class": "",
+    "attrs": {
+     "id": "boards"
+    }
+   },
+   "string": {
+    "tag": "g",
+    "class": "",
+    "attrs": {
+     "id": "string"
+    }
+   },
+   "cloud": {
+    "tag": "g",
+    "class": "",
+    "attrs": {
+     "id": "cloud"
+    }
+   },
+   "building-smoke": {
+    "tag": "g",
+    "class": "",
+    "attrs": {
+     "id": "building-smoke"
+    }
+   }
+  },
+  "roles": {},
+  "aria": {},
+  "forms": {},
+  "media": {
+   "svg": 1
+  },
+  "linked_css": [
+   "style.css"
+  ],
+  "linked_js": [],
+  "style_blocks": 0,
+  "inline_js": 0,
+  "images": [],
+  "features": [
+   "flex",
+   "anim",
+   "media",
+   "box"
+  ],
+  "css": {
+   "rules": 9,
+   "selectors": [
+    "*",
+    "main",
+    "#boards",
+    "#string",
+    "#truck",
+    ".smoke",
+    ".smoke2",
+    "#building-smoke",
+    "#cloud"
+   ],
+   "properties": [
+    "transform",
+    "animation",
+    "opacity",
+    "transform-box",
+    "transform-origin",
+    "padding",
+    "margin",
+    "box-sizing",
+    "display",
+    "justify-content",
+    "align-items",
+    "height"
+   ],
+   "property_counts": {
+    "transform": 11,
+    "animation": 7,
+    "opacity": 5,
+    "transform-box": 4,
+    "transform-origin": 4,
+    "padding": 1,
+    "margin": 1,
+    "box-sizing": 1,
+    "display": 1,
+    "justify-content": 1,
+    "align-items": 1,
+    "height": 1
+   },
+   "media": 0,
+   "keyframes": 6,
+   "bytes": 1605
+  },
+  "js_bytes": 0,
+  "html_bytes": 17888,
+  "missing_assets": []
+ }
+}

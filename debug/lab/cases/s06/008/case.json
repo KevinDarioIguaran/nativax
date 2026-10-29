@@ -1,0 +1,123 @@
+{
+ "id": "anim.008",
+ "section": 6,
+ "name": "keshavgbpecdelhi/Web-Development · projects/Loading Screen",
+ "source": {
+  "repo": "keshavgbpecdelhi/Web-Development",
+  "commit": "c1613b1424c3226ecd09ca0f23cd39bc4e32709b",
+  "license": "Apache-2.0",
+  "path": "projects/Loading Screen",
+  "url": "https://github.com/keshavgbpecdelhi/Web-Development/tree/c1613b1424c3226ecd09ca0f23cd39bc4e32709b/projects/Loading Screen"
+ },
+ "entry": "index.html",
+ "dir": "cases/s06/008",
+ "bytes": 1400,
+ "files": 2,
+ "digest": "c5059e88288d4c636c4a",
+ "facts": {
+  "title": "Loading Screen",
+  "elements": 17,
+  "max_depth": 4,
+  "tags": {
+   "html": 1,
+   "head": 1,
+   "meta": 3,
+   "title": 1,
+   "link": 1,
+   "body": 1,
+   "div": 9
+  },
+  "html_tags": [
+   "body",
+   "div",
+   "head",
+   "html",
+   "link",
+   "meta",
+   "title"
+  ],
+  "ids": [],
+  "id_counts": {},
+  "classes": [
+   "loading",
+   "obj"
+  ],
+  "class_counts": {
+   "loading": 1,
+   "obj": 8
+  },
+  "text_samples": [],
+  "inline_styles": [],
+  "attr_samples": {},
+  "roles": {},
+  "aria": {},
+  "forms": {},
+  "media": {},
+  "linked_css": [
+   "style.css"
+  ],
+  "linked_js": [],
+  "style_blocks": 0,
+  "inline_js": 0,
+  "images": [],
+  "features": [
+   "flex",
+   "position",
+   "anim",
+   "color",
+   "box"
+  ],
+  "css": {
+   "rules": 9,
+   "selectors": [
+    "body",
+    ".loading",
+    ".obj",
+    ".obj:nth-child(2)",
+    ".obj:nth-child(3)",
+    ".obj:nth-child(4)",
+    ".obj:nth-child(6)",
+    ".obj:nth-child(7)",
+    ".obj:nth-child(8)"
+   ],
+   "properties": [
+    "animation-delay",
+    "height",
+    "margin",
+    "background",
+    "padding",
+    "position",
+    "top",
+    "left",
+    "transform",
+    "display",
+    "align-items",
+    "width",
+    "border-radius",
+    "animation"
+   ],
+   "property_counts": {
+    "animation-delay": 6,
+    "height": 5,
+    "margin": 2,
+    "background": 2,
+    "padding": 1,
+    "position": 1,
+    "top": 1,
+    "left": 1,
+    "transform": 1,
+    "display": 1,
+    "align-items": 1,
+    "width": 1,
+    "border-radius": 1,
+    "animation": 1
+   },
+   "media": 0,
+   "keyframes": 1,
+   "bytes": 789
+  },
+  "js_bytes": 0,
+  "html_bytes": 611,
+  "missing_assets": []
+ }
+}

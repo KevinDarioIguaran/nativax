@@ -1,42 +1,189 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>NativaX Lab · 005 · Transforms and animations — transform translate case 005</title>
-<link rel="stylesheet" href="style.css">
-</head>
-<body class="">
-<div class="aurora" aria-hidden="true"><i></i><i></i><i></i></div>
-<header class="topbar">
-  <div class="brand"><span class="logo"></span><span>NativaX <b>Lab</b></span></div>
-  <nav class="nav" aria-label="primary">
-    <a class="nav-link is-active" href="#case">Case</a>
-    <a class="nav-link" href="#cards">Components</a>
-    <a class="nav-link" href="#footer">About</a>
-  </nav>
-  <button id="theme-toggle" class="btn ghost" type="button">Theme</button>
-</header>
-<main class="stage">
-  <section class="hero">
-    <p class="eyebrow">Section 01 · HTML, DOM and parsing</p>
-    <h1 class="title">html.001 <span class="grad">div básico</span></h1>
-    <p class="lede">A real laboratory application: semantic HTML structure, animated styles and verifiable JavaScript behaviour.</p>
-    <div class="hero-actions">
-      <button id="ping" class="btn" type="button">Try interaction <span id="pings" class="badge">0</span></button>
-      <span id="clock" class="clock">--:--:--</span>
-    </div>
-  </section>
-  <section id="case" class="case panel">
-<div id=t class='target'>Section 6 case 005: transform translate.</div>
-  </section>
-  <section id="cards" class="cards" aria-label="components">
-    <article class="card"><span class="tag">HTML</span><h3>Semantics</h3><p>Real elements, attributes and parent-child relations verified by the laboratory.</p></article>
-    <article class="card"><span class="tag">CSS</span><h3>Animation</h3><p>Gradients, keyframes and transitions compared pixel by pixel in the visual sections.</p></article>
-    <article class="card"><span class="tag">JS</span><h3>Interaction</h3><p>JavaScriptCore runs this file: clock, theme, counter and pointer events.</p></article>
-  </section>
-</main>
-<footer id="footer" class="footer"><span>NativaX Lab · C11 + Sokol + JavaScriptCore</span><span>html.001</span></footer>
-<script src="app.js"></script>
-</body>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+    <style>
+      * {
+        box-sizing: border-box;
+        padding: 0;
+        margin: 0;
+        font-family: BlenderProBold, "PingFang SC", "Microsoft Yahei",
+          sans-serif;
+      }
+
+      main {
+        background: hsl(55, 100%, 65%);
+        width: 100vw;
+        height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .button {
+        width: 300px;
+        height: 80px;
+        background: none;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+        cursor: pointer;
+      }
+
+      .button::after,
+      .button::before,
+      .glitch {
+        content: "";
+        display: block;
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        clip-path: polygon(
+          0 0,
+          100% 0,
+          100% 100%,
+          calc(100% - 25px) 100%,
+          calc(100% - 25px) calc(100% - 10px),
+          calc(100% - 55px) calc(100% - 10px),
+          calc(100% - 55px) 100%,
+          20px 100%,
+          0 calc(100% - 20px)
+        );
+      }
+
+      .button::before {
+        left: 2px;
+        background: hsl(180, 100%, 50%, 50%);
+      }
+      .button::after {
+        background: hsl(0deg, 100%, 60%);
+      }
+
+      .glitch {
+        background: hsl(0deg, 100%, 60%);
+        box-shadow: 0 0 0 1px hsl(180, 100%, 50%) inset;
+        z-index: 10;
+        opacity: 0;
+      }
+
+      .text {
+        font-size: 24px;
+        font-weight: 800;
+        color: white;
+        position: relative;
+        z-index: 15;
+      }
+      .text::before {
+        content: attr(data-text);
+        position: absolute;
+        display: block;
+        top: 0;
+        left: 0;
+        text-shadow: 1px 1px hsl(180, 100%, 50%),
+          -1px -2px hsl(50deg, 100%, 60%);
+        opacity: 0;
+      }
+
+      .button:hover .glitch,
+      .button:hover .text::before {
+        animation: glitch-effect 2s infinite;
+        opacity: 1;
+      }
+
+      .platform {
+        position: absolute;
+        right: 28px;
+        bottom: -4px;
+        font-size: 10px;
+        letter-spacing: 1px;
+        font-weight: 500;
+      }
+
+      @keyframes glitch-effect {
+        0% {
+          clip-path: polygon(0 0, 100% 0, 100% 2%, 0 2%);
+        }
+        5% {
+          clip-path: polygon(0 8%, 100% 8%, 100% 16%, 0 16%);
+        }
+        10% {
+          clip-path: polygon(0 80%, 100% 80%, 100% 88%, 0 88%);
+          transform: translate3d(-5px, 0, 0);
+        }
+        15% {
+          clip-path: polygon(0 80%, 100% 80%, 100% 88%, 0 88%);
+          transform: translate3d(5px, 0, 0);
+        }
+        16% {
+          clip-path: polygon(0 80%, 100% 80%, 100% 88%, 0 88%);
+          transform: translate3d(5px, 0, 0);
+        }
+        17% {
+          clip-path: polygon(0 90%, 100% 90%, 100% 100%, 0 100%);
+          transform: translate3d(5px, 0, 0);
+        }
+        18% {
+          clip-path: polygon(0 0, 0 0, 0 0, 0 0);
+        }
+        20% {
+          clip-path: polygon(0 30%, 100% 30%, 100% 65%, 0 65%);
+        }
+        25% {
+          clip-path: polygon(0 30%, 100% 30%, 100% 65%, 0 65%);
+          transform: translate3d(-5px, 0, 0);
+        }
+        28% {
+          clip-path: polygon(0 30%, 100% 30%, 100% 65%, 0 65%);
+          transform: translate3d(-5px, 0, 0);
+        }
+        29% {
+          clip-path: polygon(0 30%, 100% 30%, 100% 65%, 0 65%);
+          transform: translate3d(5px, 0, 0);
+        }
+        30% {
+          clip-path: polygon(0 75%, 100% 75%, 100% 100%, 0 100%);
+        }
+
+        40% {
+          clip-path: polygon(0 45%, 100% 45%, 100% 60%, 0 60%);
+        }
+        42% {
+          clip-path: polygon(0 45%, 100% 45%, 100% 60%, 0 60%);
+          transform: translate3d(-5px, 0, 0);
+        }
+        45% {
+          clip-path: polygon(0 45%, 100% 45%, 100% 60%, 0 60%);
+          transform: translate3d(5px, 0, 0);
+        }
+        48% {
+          clip-path: polygon(0 45%, 100% 45%, 100% 60%, 0 60%);
+          transform: translate3d(-5px, 0, 0);
+        }
+        50% {
+          clip-path: polygon(0 0, 0 0, 0 0, 0 0);
+        }
+        60% {
+          clip-path: polygon(0 100%, 100% 100%, 100% 100%, 0 100%);
+        }
+        100% {
+          clip-path: polygon(0 100%, 100% 100%, 100% 100%, 0 100%);
+          transform: translate3d(0, 0, 0);
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <div class="button">
+        <div class="glitch"></div>
+        <div class="text" data-text="开始游戏">开始游戏</div>
+        <span class="platform">R25</span>
+      </div>
+    </main>
+  </body>
 </html>

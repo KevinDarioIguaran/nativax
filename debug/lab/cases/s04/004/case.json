@@ -1,0 +1,168 @@
+{
+ "id": "typo.004",
+ "section": 4,
+ "name": "zxuqian/html-css-examples · 49-html-buit-in-dialog",
+ "source": {
+  "repo": "zxuqian/html-css-examples",
+  "commit": "2a9fc59f44aeda092cbac07472aaf0f1ead4e1a6",
+  "license": "MIT",
+  "path": "49-html-buit-in-dialog",
+  "url": "https://github.com/zxuqian/html-css-examples/tree/2a9fc59f44aeda092cbac07472aaf0f1ead4e1a6/49-html-buit-in-dialog"
+ },
+ "entry": "index.html",
+ "dir": "cases/s04/004",
+ "bytes": 2159,
+ "files": 3,
+ "digest": "0447eb672fb051d83142",
+ "facts": {
+  "title": "HTML Built-in Dialog Element",
+  "elements": 19,
+  "max_depth": 7,
+  "tags": {
+   "html": 1,
+   "head": 1,
+   "meta": 3,
+   "title": 1,
+   "link": 1,
+   "body": 1,
+   "main": 1,
+   "dialog": 1,
+   "h1": 1,
+   "form": 1,
+   "input": 2,
+   "div": 1,
+   "button": 3,
+   "script": 1
+  },
+  "html_tags": [
+   "body",
+   "button",
+   "dialog",
+   "div",
+   "form",
+   "h1",
+   "head",
+   "html",
+   "input",
+   "link",
+   "main",
+   "meta",
+   "script",
+   "title"
+  ],
+  "ids": [
+   "dialog",
+   "showDialog"
+  ],
+  "id_counts": {
+   "dialog": 1,
+   "showDialog": 1
+  },
+  "classes": [],
+  "class_counts": {},
+  "text_samples": [],
+  "inline_styles": [],
+  "attr_samples": {
+   "dialog": {
+    "tag": "dialog",
+    "class": "",
+    "attrs": {
+     "id": "dialog"
+    }
+   },
+   "showDialog": {
+    "tag": "button",
+    "class": "",
+    "attrs": {
+     "id": "showDialog"
+    }
+   }
+  },
+  "roles": {},
+  "aria": {},
+  "forms": {
+   "form": 1,
+   "input": 2,
+   "button": 3
+  },
+  "media": {},
+  "linked_css": [
+   "style.css"
+  ],
+  "linked_js": [
+   "./index.js"
+  ],
+  "style_blocks": 0,
+  "inline_js": 1,
+  "images": [],
+  "features": [
+   "grid",
+   "forms",
+   "typo",
+   "color",
+   "box",
+   "jsdom",
+   "events"
+  ],
+  "css": {
+   "rules": 7,
+   "selectors": [
+    "body",
+    "main",
+    "input",
+    "dialog",
+    "dialog::backdrop",
+    "form",
+    "button"
+   ],
+   "properties": [
+    "padding",
+    "display",
+    "background-color",
+    "border",
+    "border-radius",
+    "box-sizing",
+    "margin",
+    "font-family",
+    "place-items",
+    "height",
+    "font-size",
+    "outline",
+    "box-shadow",
+    "dialog",
+    "gap",
+    "justify-content",
+    "color",
+    "font-weight",
+    "background"
+   ],
+   "property_counts": {
+    "padding": 4,
+    "display": 2,
+    "background-color": 2,
+    "border": 2,
+    "border-radius": 2,
+    "box-sizing": 1,
+    "margin": 1,
+    "font-family": 1,
+    "place-items": 1,
+    "height": 1,
+    "font-size": 1,
+    "outline": 1,
+    "box-shadow": 1,
+    "dialog": 1,
+    "gap": 1,
+    "justify-content": 1,
+    "color": 1,
+    "font-weight": 1,
+    "background": 1
+   },
+   "media": 0,
+   "keyframes": 0,
+   "bytes": 761
+  },
+  "js_bytes": 268,
+  "html_bytes": 1131,
+  "missing_assets": []
+ }
+}

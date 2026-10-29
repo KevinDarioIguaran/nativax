@@ -1,0 +1,332 @@
+{
+ "id": "jsdom.006",
+ "section": 10,
+ "name": "learning-zone/website-templates · my-portfolio-two",
+ "source": {
+  "repo": "learning-zone/website-templates",
+  "commit": "7bf31e9646a6b5f51c2e55b2557787310436989f",
+  "license": "not declared upstream",
+  "path": "my-portfolio-two",
+  "url": "https://github.com/learning-zone/website-templates/tree/7bf31e9646a6b5f51c2e55b2557787310436989f/my-portfolio-two"
+ },
+ "entry": "index.html",
+ "dir": "cases/s10/006",
+ "bytes": 788403,
+ "files": 15,
+ "digest": "8e68889b79d9963a5731",
+ "facts": {
+  "title": "my portfolio two",
+  "elements": 67,
+  "max_depth": 9,
+  "tags": {
+   "html": 1,
+   "head": 1,
+   "title": 1,
+   "meta": 3,
+   "link": 1,
+   "script": 6,
+   "body": 1,
+   "div": 6,
+   "header": 1,
+   "h1": 2,
+   "a": 14,
+   "nav": 1,
+   "ul": 3,
+   "li": 14,
+   "img": 5,
+   "p": 5,
+   "h2": 1,
+   "footer": 1
+  },
+  "html_tags": [
+   "a",
+   "body",
+   "div",
+   "footer",
+   "h1",
+   "h2",
+   "head",
+   "header",
+   "html",
+   "img",
+   "li",
+   "link",
+   "meta",
+   "nav",
+   "p",
+   "script",
+   "title",
+   "ul"
+  ],
+  "ids": [
+   "main",
+   "logo",
+   "lava_menu",
+   "site_content",
+   "sidebar_container",
+   "content"
+  ],
+  "id_counts": {
+   "main": 1,
+   "logo": 1,
+   "lava_menu": 1,
+   "site_content": 1,
+   "sidebar_container": 1,
+   "content": 1
+  },
+  "classes": [
+   "lavaLampWithImage",
+   "current",
+   "gallery",
+   "images",
+   "show"
+  ],
+  "class_counts": {
+   "lavaLampWithImage": 1,
+   "current": 1,
+   "gallery": 1,
+   "images": 1,
+   "show": 1
+  },
+  "text_samples": [
+   "my portfolio",
+   "Welcome to My Portfolio Two",
+   "This standards compliant, fixed width website template is released as an 'open source' design (under a",
+   "Creative Commons Attribution 3.0 Licence",
+   "), which means that you are free to use it for anything you want (including modifying and amending it). All I ask is tha",
+   "The template uses a lavalamp menu (based on jQuery) from",
+   ". All of the images were shot by me - use as you wish.",
+   "Browser Compatibility"
+  ],
+  "inline_styles": [],
+  "attr_samples": {
+   "main": {
+    "tag": "div",
+    "class": "",
+    "attrs": {
+     "id": "main"
+    }
+   },
+   "logo": {
+    "tag": "div",
+    "class": "",
+    "attrs": {
+     "id": "logo"
+    }
+   },
+   "lava_menu": {
+    "tag": "ul",
+    "class": "lavaLampWithImage",
+    "attrs": {
+     "id": "lava_menu",
+     "class": "lavaLampWithImage"
+    }
+   },
+   "site_content": {
+    "tag": "div",
+    "class": "",
+    "attrs": {
+     "id": "site_content"
+    }
+   },
+   "sidebar_container": {
+    "tag": "div",
+    "class": "",
+    "attrs": {
+     "id": "sidebar_container"
+    }
+   },
+   "content": {
+    "tag": "div",
+    "class": "",
+    "attrs": {
+     "id": "content"
+    }
+   }
+  },
+  "roles": {},
+  "aria": {},
+  "forms": {},
+  "media": {
+   "img": 5
+  },
+  "linked_css": [
+   "css/style.css"
+  ],
+  "linked_js": [
+   "js/modernizr-1.5.min.js",
+   "js/jquery.min.js",
+   "js/jquery.easing.min.js",
+   "js/jquery.lavalamp.min.js",
+   "js/image_fade.js"
+  ],
+  "style_blocks": 0,
+  "inline_js": 6,
+  "images": [
+   "images/1.jpg",
+   "images/2.jpg",
+   "images/3.jpg",
+   "images/4.jpg",
+   "images/5.jpg"
+  ],
+  "features": [
+   "position",
+   "anim",
+   "responsive",
+   "media",
+   "typo",
+   "color",
+   "box",
+   "jsdom",
+   "events"
+  ],
+  "css": {
+   "rules": 84,
+   "selectors": [
+    "html",
+    "*",
+    "article",
+    "aside",
+    "figure",
+    "footer",
+    "header",
+    "hgroup",
+    "nav",
+    "section",
+    "body",
+    "p",
+    "img",
+    "h1",
+    "h2",
+    "h3",
+    "h4",
+    "h5",
+    "h6",
+    "a",
+    "a:hover",
+    "ul",
+    "ul li",
+    "ol",
+    "ol li",
+    "#main",
+    "#logo",
+    "#site_content",
+    "#logo h1",
+    "#logo h1 a",
+    "#logo h1 a:hover",
+    "#sidebar_container",
+    "#content",
+    "#content ul",
+    "#content ul li",
+    "#blog_container h4",
+    "#blog_container h4.select",
+    ".blog",
+    ".blog h2",
+    ".blog h3",
+    "footer p",
+    "footer a",
+    "footer a:hover",
+    ".form_settings",
+    ".form_settings p",
+    ".form_settings span",
+    ".form_settings input",
+    ".form_settings textarea",
+    ".form_settings .submit",
+    ".form_settings select",
+    ".form_settings .checkbox",
+    "ul.images",
+    "ul.images li",
+    "ul.images li.show",
+    "ul img",
+    ".lavaLampWithImage",
+    ".lavaLampWithImage li",
+    ".lavaLampWithImage li.back",
+    ".lavaLampWithImage li a",
+    ".lavaLampWithImage li a:hover"
+   ],
+   "properties": [
+    "padding",
+    "margin",
+    "color",
+    "width",
+    "font",
+    "height",
+    "background",
+    "float",
+    "border",
+    "text-decoration",
+    "text-align",
+    "text-shadow",
+    "overflow",
+    "position",
+    "line-height",
+    "border-radius",
+    "-moz-border-radius",
+    "z-index",
+    "src",
+    "display",
+    "padding-bottom",
+    "outline",
+    "list-style-type",
+    "letter-spacing",
+    "border-bottom",
+    "-webkit-border-radius",
+    "list-style",
+    "font-family",
+    "margin-left",
+    "margin-right",
+    "border-top",
+    "cursor",
+    "left",
+    "right",
+    "-webkit-border"
+   ],
+   "property_counts": {
+    "padding": 26,
+    "margin": 25,
+    "color": 18,
+    "width": 17,
+    "font": 15,
+    "height": 12,
+    "background": 10,
+    "float": 9,
+    "border": 7,
+    "text-decoration": 7,
+    "text-align": 6,
+    "text-shadow": 5,
+    "overflow": 5,
+    "position": 5,
+    "line-height": 4,
+    "border-radius": 3,
+    "-moz-border-radius": 3,
+    "z-index": 3,
+    "src": 2,
+    "display": 2,
+    "padding-bottom": 2,
+    "outline": 2,
+    "list-style-type": 2,
+    "letter-spacing": 2,
+    "border-bottom": 2,
+    "-webkit-border-radius": 2,
+    "list-style": 2,
+    "font-family": 1,
+    "margin-left": 1,
+    "margin-right": 1,
+    "border-top": 1,
+    "cursor": 1,
+    "left": 1,
+    "right": 1,
+    "-webkit-border": 1
+   },
+   "media": 0,
+   "keyframes": 0,
+   "bytes": 6202
+  },
+  "js_bytes": 74052,
+  "html_bytes": 3492,
+  "missing_assets": [
+   "fonts/NewsCycle-Regular.eot",
+   "fonts/NewsCycle-Regular.ttf"
+  ]
+ }
+}

@@ -1,42 +1,76 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>NativaX Lab · 008 · Typography and text — font family case 008</title>
-<link rel="stylesheet" href="style.css">
-</head>
-<body class="">
-<div class="aurora" aria-hidden="true"><i></i><i></i><i></i></div>
-<header class="topbar">
-  <div class="brand"><span class="logo"></span><span>NativaX <b>Lab</b></span></div>
-  <nav class="nav" aria-label="primary">
-    <a class="nav-link is-active" href="#case">Case</a>
-    <a class="nav-link" href="#cards">Components</a>
-    <a class="nav-link" href="#footer">About</a>
-  </nav>
-  <button id="theme-toggle" class="btn ghost" type="button">Theme</button>
-</header>
-<main class="stage">
-  <section class="hero">
-    <p class="eyebrow">Section 01 · HTML, DOM and parsing</p>
-    <h1 class="title">html.001 <span class="grad">div básico</span></h1>
-    <p class="lede">A real laboratory application: semantic HTML structure, animated styles and verifiable JavaScript behaviour.</p>
-    <div class="hero-actions">
-      <button id="ping" class="btn" type="button">Try interaction <span id="pings" class="badge">0</span></button>
-      <span id="clock" class="clock">--:--:--</span>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Colorful Glowing Button</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        background-color: #000000;
+        color: #ffffff;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        margin: 0;
+      }
+
+      .glowing-button {
+        border: none;
+        background-color: #1f1f1f;
+        color: white;
+        padding: 15px 30px;
+        font-size: 16px;
+        font-weight: bold;
+        border-radius: 50px;
+        cursor: pointer;
+        position: relative;
+        text-transform: uppercase;
+        transition: all 0.3s ease;
+      }
+
+      .glowing-button::after {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        border-radius: 50px;
+        background: conic-gradient(
+          from 0deg,
+          #ff0000,
+          #ff7300,
+          #ffeb00,
+          #47ff00,
+          #00ffee,
+          #2b65ff,
+          #8000ff,
+          #ff0000
+        );
+        opacity: 0;
+        transition: all 0.3s ease;
+        /* z-index 创建了一个新的 stacking context，这样它就能放在 button 的下边。
+        因为 ::before 和 ::after 是在原元素本身内部创建新的元素。
+        如果想把伪元素的背景覆盖到父元素上边，需要给 button 设置 z-index: 1 */
+        z-index: -1;
+        filter: blur(12px);
+      }
+
+      .glowing-button:hover::after {
+        opacity: 1;
+        scale: 1.2;
+      }
+
+      /* .glowing-button:hover {
+        box-shadow: 0 0 30px #ff0000, 0 0 40px #47ff00, 0 0 50px #2b65ff;
+      } */
+    </style>
+  </head>
+  <body>
+    <div style="text-align: center">
+      <button class="glowing-button">Button</button>
     </div>
-  </section>
-  <section id="case" class="case panel">
-<div id=t class='target'>Section 4 case 008: font family.</div>
-  </section>
-  <section id="cards" class="cards" aria-label="components">
-    <article class="card"><span class="tag">HTML</span><h3>Semantics</h3><p>Real elements, attributes and parent-child relations verified by the laboratory.</p></article>
-    <article class="card"><span class="tag">CSS</span><h3>Animation</h3><p>Gradients, keyframes and transitions compared pixel by pixel in the visual sections.</p></article>
-    <article class="card"><span class="tag">JS</span><h3>Interaction</h3><p>JavaScriptCore runs this file: clock, theme, counter and pointer events.</p></article>
-  </section>
-</main>
-<footer id="footer" class="footer"><span>NativaX Lab · C11 + Sokol + JavaScriptCore</span><span>html.001</span></footer>
-<script src="app.js"></script>
-</body>
+  </body>
 </html>

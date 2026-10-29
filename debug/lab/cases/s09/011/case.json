@@ -1,0 +1,141 @@
+{
+ "id": "pos.011",
+ "section": 9,
+ "name": "keshavgbpecdelhi/Web-Development · projects/Countdown-Timer",
+ "source": {
+  "repo": "keshavgbpecdelhi/Web-Development",
+  "commit": "c1613b1424c3226ecd09ca0f23cd39bc4e32709b",
+  "license": "Apache-2.0",
+  "path": "projects/Countdown-Timer",
+  "url": "https://github.com/keshavgbpecdelhi/Web-Development/tree/c1613b1424c3226ecd09ca0f23cd39bc4e32709b/projects/Countdown-Timer"
+ },
+ "entry": "index.html",
+ "dir": "cases/s09/011",
+ "bytes": 762087,
+ "files": 3,
+ "digest": "ffaa66e9c321ac647f71",
+ "facts": {
+  "title": "Countdown Clock",
+  "elements": 24,
+  "max_depth": 5,
+  "tags": {
+   "html": 1,
+   "head": 1,
+   "meta": 4,
+   "link": 1,
+   "title": 1,
+   "body": 1,
+   "h1": 1,
+   "div": 9,
+   "span": 4,
+   "script": 1
+  },
+  "html_tags": [
+   "body",
+   "div",
+   "h1",
+   "head",
+   "html",
+   "link",
+   "meta",
+   "script",
+   "span",
+   "title"
+  ],
+  "ids": [
+   "clockdiv"
+  ],
+  "id_counts": {
+   "clockdiv": 1
+  },
+  "classes": [
+   "days",
+   "smalltext",
+   "hours",
+   "minutes",
+   "seconds"
+  ],
+  "class_counts": {
+   "days": 1,
+   "smalltext": 4,
+   "hours": 1,
+   "minutes": 1,
+   "seconds": 1
+  },
+  "text_samples": [
+   "Countdown Clock"
+  ],
+  "inline_styles": [],
+  "attr_samples": {
+   "clockdiv": {
+    "tag": "div",
+    "class": "",
+    "attrs": {
+     "id": "clockdiv"
+    }
+   }
+  },
+  "roles": {},
+  "aria": {},
+  "forms": {},
+  "media": {},
+  "linked_css": [
+   "style.css"
+  ],
+  "linked_js": [
+   "app.js"
+  ],
+  "style_blocks": 0,
+  "inline_js": 1,
+  "images": [],
+  "features": [
+   "typo",
+   "color",
+   "box",
+   "jsdom"
+  ],
+  "css": {
+   "rules": 6,
+   "selectors": [
+    "body",
+    "h1",
+    "#clockdiv",
+    "#clockdiv > div",
+    "#clockdiv div > span",
+    ".smalltext"
+   ],
+   "properties": [
+    "background",
+    "font-weight",
+    "font-size",
+    "display",
+    "text-align",
+    "font-family",
+    "color",
+    "padding",
+    "border-radius",
+    "margin",
+    "padding-top"
+   ],
+   "property_counts": {
+    "background": 3,
+    "font-weight": 3,
+    "font-size": 3,
+    "display": 3,
+    "text-align": 2,
+    "font-family": 2,
+    "color": 2,
+    "padding": 2,
+    "border-radius": 2,
+    "margin": 1,
+    "padding-top": 1
+   },
+   "media": 0,
+   "keyframes": 0,
+   "bytes": 652
+  },
+  "js_bytes": 2720,
+  "html_bytes": 949,
+  "missing_assets": []
+ }
+}

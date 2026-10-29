@@ -1,0 +1,136 @@
+{
+ "id": "forms.013",
+ "section": 12,
+ "name": "keshavgbpecdelhi/Web-Development · projects/Roll-the-Dice",
+ "source": {
+  "repo": "keshavgbpecdelhi/Web-Development",
+  "commit": "c1613b1424c3226ecd09ca0f23cd39bc4e32709b",
+  "license": "Apache-2.0",
+  "path": "projects/Roll-the-Dice",
+  "url": "https://github.com/keshavgbpecdelhi/Web-Development/tree/c1613b1424c3226ecd09ca0f23cd39bc4e32709b/projects/Roll-the-Dice"
+ },
+ "entry": "index.html",
+ "dir": "cases/s12/013",
+ "bytes": 83410,
+ "files": 4,
+ "digest": "7e107c5f8f393f51b90e",
+ "facts": {
+  "title": "Dicee",
+  "elements": 18,
+  "max_depth": 6,
+  "tags": {
+   "html": 1,
+   "head": 1,
+   "meta": 1,
+   "title": 1,
+   "link": 2,
+   "body": 1,
+   "div": 4,
+   "h1": 1,
+   "p": 2,
+   "img": 2,
+   "footer": 1,
+   "script": 1
+  },
+  "html_tags": [
+   "body",
+   "div",
+   "footer",
+   "h1",
+   "head",
+   "html",
+   "img",
+   "link",
+   "meta",
+   "p",
+   "script",
+   "title"
+  ],
+  "ids": [],
+  "id_counts": {},
+  "classes": [
+   "container1",
+   "container",
+   "dice",
+   "img1",
+   "img2"
+  ],
+  "class_counts": {
+   "container1": 1,
+   "container": 1,
+   "dice": 2,
+   "img1": 1,
+   "img2": 1
+  },
+  "text_samples": [],
+  "inline_styles": [],
+  "attr_samples": {},
+  "roles": {},
+  "aria": {},
+  "forms": {},
+  "media": {
+   "img": 2
+  },
+  "linked_css": [
+   "styles.css"
+  ],
+  "linked_js": [
+   "dicee.js"
+  ],
+  "style_blocks": 0,
+  "inline_js": 1,
+  "images": [
+   "images/dice6.png",
+   "images/dice6.png"
+  ],
+  "features": [
+   "media",
+   "typo",
+   "color",
+   "box",
+   "jsdom"
+  ],
+  "css": {
+   "rules": 7,
+   "selectors": [
+    ".container",
+    ".dice",
+    "body",
+    "h1",
+    "p",
+    "img",
+    "footer"
+   ],
+   "properties": [
+    "text-align",
+    "color",
+    "width",
+    "margin",
+    "font-family",
+    "font-size",
+    "display",
+    "background-color",
+    "text-shadow",
+    "margin-top"
+   ],
+   "property_counts": {
+    "text-align": 3,
+    "color": 3,
+    "width": 2,
+    "margin": 2,
+    "font-family": 2,
+    "font-size": 2,
+    "display": 1,
+    "background-color": 1,
+    "text-shadow": 1,
+    "margin-top": 1
+   },
+   "media": 0,
+   "keyframes": 0,
+   "bytes": 464
+  },
+  "js_bytes": 885,
+  "html_bytes": 686,
+  "missing_assets": []
+ }
+}

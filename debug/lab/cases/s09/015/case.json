@@ -1,0 +1,107 @@
+{
+ "id": "pos.015",
+ "section": 9,
+ "name": "keshavgbpecdelhi/Web-Development · projects/Profile Cards",
+ "source": {
+  "repo": "keshavgbpecdelhi/Web-Development",
+  "commit": "c1613b1424c3226ecd09ca0f23cd39bc4e32709b",
+  "license": "Apache-2.0",
+  "path": "projects/Profile Cards",
+  "url": "https://github.com/keshavgbpecdelhi/Web-Development/tree/c1613b1424c3226ecd09ca0f23cd39bc4e32709b/projects/Profile Cards"
+ },
+ "entry": "index.html",
+ "dir": "cases/s09/015",
+ "bytes": 6308,
+ "files": 1,
+ "digest": "466725c4e35f25d906fd",
+ "facts": {
+  "title": "",
+  "elements": 22,
+  "max_depth": 6,
+  "tags": {
+   "aside": 1,
+   "header": 1,
+   "a": 5,
+   "img": 1,
+   "h1": 1,
+   "h2": 1,
+   "div": 1,
+   "p": 1,
+   "strong": 1,
+   "ul": 1,
+   "li": 4,
+   "i": 4
+  },
+  "html_tags": [
+   "a",
+   "aside",
+   "div",
+   "h1",
+   "h2",
+   "header",
+   "i",
+   "img",
+   "li",
+   "p",
+   "strong",
+   "ul"
+  ],
+  "ids": [],
+  "id_counts": {},
+  "classes": [
+   "profile-card",
+   "profile-bio",
+   "social-icons",
+   "list-unstyled",
+   "list-inline",
+   "fa",
+   "fa-behance",
+   "fa-codepen",
+   "fa-github",
+   "fa-twitter"
+  ],
+  "class_counts": {
+   "profile-card": 1,
+   "profile-bio": 1,
+   "social-icons": 1,
+   "list-unstyled": 1,
+   "list-inline": 1,
+   "fa": 4,
+   "fa-behance": 1,
+   "fa-codepen": 1,
+   "fa-github": 1,
+   "fa-twitter": 1
+  },
+  "text_samples": [],
+  "inline_styles": [],
+  "attr_samples": {},
+  "roles": {},
+  "aria": {},
+  "forms": {},
+  "media": {
+   "img": 1
+  },
+  "linked_css": [],
+  "linked_js": [],
+  "style_blocks": 0,
+  "inline_js": 0,
+  "images": [
+   "https://images.unsplash.com/photo-1456271390536-693558280c8f?dpr=1&auto=format&crop=entropy&fit=crop&w=1500&h=996&q=80&cs=tinysrgb"
+  ],
+  "features": [
+   "media"
+  ],
+  "css": {
+   "rules": 0,
+   "selectors": [],
+   "properties": [],
+   "property_counts": {},
+   "media": 0,
+   "keyframes": 0,
+   "bytes": 0
+  },
+  "js_bytes": 0,
+  "html_bytes": 938,
+  "missing_assets": []
+ }
+}

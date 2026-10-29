@@ -1,0 +1,415 @@
+{
+ "id": "box.004",
+ "section": 3,
+ "name": "learning-zone/website-templates · zenlike",
+ "source": {
+  "repo": "learning-zone/website-templates",
+  "commit": "7bf31e9646a6b5f51c2e55b2557787310436989f",
+  "license": "not declared upstream",
+  "path": "zenlike",
+  "url": "https://github.com/learning-zone/website-templates/tree/7bf31e9646a6b5f51c2e55b2557787310436989f/zenlike"
+ },
+ "entry": "index.html",
+ "dir": "cases/s03/004",
+ "bytes": 94554,
+ "files": 20,
+ "digest": "35e10db2f0658465e1e0",
+ "facts": {
+  "title": "zenlike1.0 by nodethirtythree",
+  "elements": 134,
+  "max_depth": 11,
+  "tags": {
+   "html": 1,
+   "head": 1,
+   "meta": 3,
+   "title": 1,
+   "link": 1,
+   "body": 1,
+   "div": 33,
+   "h1": 1,
+   "sup": 3,
+   "h2": 1,
+   "form": 1,
+   "input": 2,
+   "ul": 5,
+   "li": 26,
+   "a": 37,
+   "h3": 1,
+   "strong": 1,
+   "span": 1,
+   "img": 3,
+   "p": 6,
+   "h4": 5
+  },
+  "html_tags": [
+   "a",
+   "body",
+   "div",
+   "form",
+   "h1",
+   "h2",
+   "h3",
+   "h4",
+   "head",
+   "html",
+   "img",
+   "input",
+   "li",
+   "link",
+   "meta",
+   "p",
+   "span",
+   "strong",
+   "sup",
+   "title",
+   "ul"
+  ],
+  "ids": [
+   "upbg",
+   "outer",
+   "header",
+   "headercontent",
+   "search",
+   "headerpic",
+   "menu",
+   "menubottom",
+   "content",
+   "normalcontent",
+   "primarycontainer",
+   "primarycontent",
+   "secondarycontent",
+   "footer"
+  ],
+  "id_counts": {
+   "upbg": 1,
+   "outer": 1,
+   "header": 1,
+   "headercontent": 1,
+   "search": 1,
+   "headerpic": 1,
+   "menu": 1,
+   "menubottom": 1,
+   "content": 1,
+   "normalcontent": 1,
+   "primarycontainer": 1,
+   "primarycontent": 1,
+   "secondarycontent": 1,
+   "footer": 1
+  },
+  "classes": [
+   "text",
+   "submit",
+   "active",
+   "contentarea",
+   "left",
+   "divider1",
+   "post",
+   "details",
+   "controls",
+   "printerfriendly",
+   "comments",
+   "more",
+   "divider2",
+   "box",
+   "linklist",
+   "right"
+  ],
+  "class_counts": {
+   "text": 1,
+   "submit": 1,
+   "active": 1,
+   "contentarea": 6,
+   "left": 4,
+   "divider1": 1,
+   "post": 3,
+   "details": 3,
+   "controls": 3,
+   "printerfriendly": 3,
+   "comments": 3,
+   "more": 3,
+   "divider2": 2,
+   "box": 1,
+   "linklist": 1,
+   "right": 1
+  },
+  "text_samples": [
+   "A free design by NodeThirtyThree",
+   "by NodeThirtyThree",
+   "is a free, lightweight, tableless, fluid W3C-compliant website design by",
+   "NodeThirtyThree Design",
+   ". All photos came from",
+   "and the background texture is from",
+   "Mayang's texture site",
+   ". You're free to dissect, manipulate and use it to your heart's content. We only ask that you link back to"
+  ],
+  "inline_styles": [],
+  "attr_samples": {
+   "upbg": {
+    "tag": "div",
+    "class": "",
+    "attrs": {
+     "id": "upbg"
+    }
+   },
+   "outer": {
+    "tag": "div",
+    "class": "",
+    "attrs": {
+     "id": "outer"
+    }
+   },
+   "header": {
+    "tag": "div",
+    "class": "",
+    "attrs": {
+     "id": "header"
+    }
+   },
+   "headercontent": {
+    "tag": "div",
+    "class": "",
+    "attrs": {
+     "id": "headercontent"
+    }
+   },
+   "search": {
+    "tag": "div",
+    "class": "",
+    "attrs": {
+     "id": "search"
+    }
+   },
+   "headerpic": {
+    "tag": "div",
+    "class": "",
+    "attrs": {
+     "id": "headerpic"
+    }
+   },
+   "menu": {
+    "tag": "div",
+    "class": "",
+    "attrs": {
+     "id": "menu"
+    }
+   },
+   "menubottom": {
+    "tag": "div",
+    "class": "",
+    "attrs": {
+     "id": "menubottom"
+    }
+   },
+   "content": {
+    "tag": "div",
+    "class": "",
+    "attrs": {
+     "id": "content"
+    }
+   },
+   "normalcontent": {
+    "tag": "div",
+    "class": "",
+    "attrs": {
+     "id": "normalcontent"
+    }
+   },
+   "primarycontainer": {
+    "tag": "div",
+    "class": "",
+    "attrs": {
+     "id": "primarycontainer"
+    }
+   },
+   "primarycontent": {
+    "tag": "div",
+    "class": "",
+    "attrs": {
+     "id": "primarycontent"
+    }
+   },
+   "secondarycontent": {
+    "tag": "div",
+    "class": "",
+    "attrs": {
+     "id": "secondarycontent"
+    }
+   },
+   "footer": {
+    "tag": "div",
+    "class": "",
+    "attrs": {
+     "id": "footer"
+    }
+   }
+  },
+  "roles": {},
+  "aria": {},
+  "forms": {
+   "form": 1,
+   "input": 2
+  },
+  "media": {
+   "img": 3
+  },
+  "linked_css": [
+   "default.css"
+  ],
+  "linked_js": [],
+  "style_blocks": 0,
+  "inline_js": 0,
+  "images": [
+   "images/pic1.jpg",
+   "images/pic3.jpg",
+   "images/pic2.jpg"
+  ],
+  "features": [
+   "position",
+   "forms",
+   "media",
+   "typo",
+   "color",
+   "box",
+   "events"
+  ],
+  "css": {
+   "rules": 53,
+   "selectors": [
+    "*",
+    "body",
+    "input",
+    "p",
+    "a",
+    "a:hover",
+    "h3 span",
+    "h3",
+    "h4",
+    ".contentarea",
+    "img",
+    "img.left",
+    "img.right",
+    ".divider1",
+    ".divider2",
+    ".post .details",
+    ".post ul.controls",
+    ".post ul.controls li",
+    ".post ul.controls li a",
+    ".post ul.controls li a.printerfriendly",
+    ".post ul.controls li a.comments",
+    ".post ul.controls li a.more",
+    ".box",
+    "ul.linklist",
+    "ul.linklist li",
+    "#upbg",
+    "#outer",
+    "#header",
+    "#headercontent",
+    "#headercontent h1",
+    "#headercontent h1 sup",
+    "#headercontent h2",
+    "#search",
+    "#search input.text",
+    "#search input.submit",
+    "#headerpic",
+    "#menu",
+    "#menu ul",
+    "#menu ul li",
+    "#menu ul li a",
+    "#menu ul li a:hover",
+    "#menu ul li a.active",
+    "#menubottom",
+    "#content",
+    "#primarycontainer",
+    "#primarycontent",
+    "#secondarycontent",
+    "#footer",
+    "#footer .left",
+    "#footer .right"
+   ],
+   "properties": [
+    "position",
+    "background",
+    "padding",
+    "font-size",
+    "color",
+    "height",
+    "margin",
+    "margin-bottom",
+    "width",
+    "font-weight",
+    "background-image",
+    "top",
+    "text-decoration",
+    "float",
+    "display",
+    "padding-right",
+    "border",
+    "clear",
+    "border-bottom",
+    "left",
+    "bottom",
+    "line-height",
+    "background-repeat",
+    "background-position",
+    "padding-top",
+    "z-index",
+    "right",
+    "margin-right",
+    "vertical-align",
+    "font-family",
+    "text-align",
+    "list-style",
+    "background-color",
+    "border-top",
+    "border-right",
+    "border-left",
+    "margin-top"
+   ],
+   "property_counts": {
+    "position": 18,
+    "background": 11,
+    "padding": 10,
+    "font-size": 9,
+    "color": 8,
+    "height": 8,
+    "margin": 7,
+    "margin-bottom": 6,
+    "width": 6,
+    "font-weight": 5,
+    "background-image": 5,
+    "top": 5,
+    "text-decoration": 4,
+    "float": 4,
+    "display": 3,
+    "padding-right": 3,
+    "border": 3,
+    "clear": 3,
+    "border-bottom": 3,
+    "left": 3,
+    "bottom": 3,
+    "line-height": 2,
+    "background-repeat": 2,
+    "background-position": 2,
+    "padding-top": 2,
+    "z-index": 2,
+    "right": 2,
+    "margin-right": 2,
+    "vertical-align": 2,
+    "font-family": 1,
+    "text-align": 1,
+    "list-style": 1,
+    "background-color": 1,
+    "border-top": 1,
+    "border-right": 1,
+    "border-left": 1,
+    "margin-top": 1
+   },
+   "media": 0,
+   "keyframes": 0,
+   "bytes": 4791
+  },
+  "js_bytes": 0,
+  "html_bytes": 6928,
+  "missing_assets": []
+ }
+}

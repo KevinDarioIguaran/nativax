@@ -1,0 +1,186 @@
+{
+ "id": "events.014",
+ "section": 11,
+ "name": "keshavgbpecdelhi/Web-Development · projects/search",
+ "source": {
+  "repo": "keshavgbpecdelhi/Web-Development",
+  "commit": "c1613b1424c3226ecd09ca0f23cd39bc4e32709b",
+  "license": "Apache-2.0",
+  "path": "projects/search",
+  "url": "https://github.com/keshavgbpecdelhi/Web-Development/tree/c1613b1424c3226ecd09ca0f23cd39bc4e32709b/projects/search"
+ },
+ "entry": "index.html",
+ "dir": "cases/s11/014",
+ "bytes": 3701,
+ "files": 3,
+ "digest": "32ff861aa91105a12873",
+ "facts": {
+  "title": "Github Search",
+  "elements": 15,
+  "max_depth": 5,
+  "tags": {
+   "html": 1,
+   "head": 1,
+   "meta": 3,
+   "link": 1,
+   "title": 1,
+   "body": 1,
+   "div": 3,
+   "input": 1,
+   "button": 1,
+   "ul": 1,
+   "script": 1
+  },
+  "html_tags": [
+   "body",
+   "button",
+   "div",
+   "head",
+   "html",
+   "input",
+   "link",
+   "meta",
+   "script",
+   "title",
+   "ul"
+  ],
+  "ids": [
+   "search",
+   "submit",
+   "unordered"
+  ],
+  "id_counts": {
+   "search": 1,
+   "submit": 1,
+   "unordered": 1
+  },
+  "classes": [
+   "container",
+   "List",
+   "card"
+  ],
+  "class_counts": {
+   "container": 1,
+   "List": 1,
+   "card": 1
+  },
+  "text_samples": [],
+  "inline_styles": [],
+  "attr_samples": {
+   "search": {
+    "tag": "input",
+    "class": "",
+    "attrs": {
+     "id": "search",
+     "type": "text",
+     "name": "text",
+     "placeholder": "Enter Username"
+    }
+   },
+   "submit": {
+    "tag": "button",
+    "class": "",
+    "attrs": {
+     "id": "submit",
+     "type": "submit"
+    }
+   },
+   "unordered": {
+    "tag": "ul",
+    "class": "",
+    "attrs": {
+     "id": "unordered"
+    }
+   }
+  },
+  "roles": {},
+  "aria": {},
+  "forms": {
+   "input": 1,
+   "button": 1
+  },
+  "media": {},
+  "linked_css": [
+   "style.css"
+  ],
+  "linked_js": [
+   "script.js"
+  ],
+  "style_blocks": 0,
+  "inline_js": 1,
+  "images": [],
+  "features": [
+   "flex",
+   "forms",
+   "typo",
+   "color",
+   "box",
+   "jsdom",
+   "events"
+  ],
+  "css": {
+   "rules": 13,
+   "selectors": [
+    "*",
+    "body",
+    ".container",
+    "input",
+    "::placeholder",
+    "button",
+    "#recent",
+    ".card",
+    ".git_data",
+    ".List",
+    "ul",
+    "li",
+    "li:hover"
+   ],
+   "properties": [
+    "padding",
+    "margin-top",
+    "text-align",
+    "border",
+    "margin",
+    "color",
+    "height",
+    "border-radius",
+    "cursor",
+    "display",
+    "justify-content",
+    "z-index",
+    "box-sizing",
+    "background-color",
+    "width",
+    "font-size",
+    "list-style",
+    "li"
+   ],
+   "property_counts": {
+    "padding": 4,
+    "margin-top": 4,
+    "text-align": 3,
+    "border": 3,
+    "margin": 2,
+    "color": 2,
+    "height": 2,
+    "border-radius": 2,
+    "cursor": 2,
+    "display": 2,
+    "justify-content": 2,
+    "z-index": 2,
+    "box-sizing": 1,
+    "background-color": 1,
+    "width": 1,
+    "font-size": 1,
+    "list-style": 1,
+    "li": 1
+   },
+   "media": 0,
+   "keyframes": 0,
+   "bytes": 921
+  },
+  "js_bytes": 2128,
+  "html_bytes": 653,
+  "missing_assets": []
+ }
+}

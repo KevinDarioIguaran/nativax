@@ -520,7 +520,8 @@ static bool parse_color(const CsTok* t, int ntoks, float* r, float* g, float* b,
             bool is_pct[4] = {false, false, false, false};
             double vals[4] = {0, 0, 0, 1};
             for (int i = 1; i < ntoks && n < 4; i++) {
-                if (t[i].kind == CS_NUMBER || t[i].kind == CS_PERCENTAGE) {
+                if (t[i].kind == CS_NUMBER || t[i].kind == CS_PERCENTAGE ||
+                    t[i].kind == CS_DIMENSION) {
                     vals[n] = t[i].num;
                     is_pct[n] = (t[i].kind == CS_PERCENTAGE);
                     n++;

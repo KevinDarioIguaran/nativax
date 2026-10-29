@@ -1,0 +1,396 @@
+{
+ "id": "typo.013",
+ "section": 4,
+ "name": "learning-zone/website-templates · funky-cool-blue",
+ "source": {
+  "repo": "learning-zone/website-templates",
+  "commit": "7bf31e9646a6b5f51c2e55b2557787310436989f",
+  "license": "not declared upstream",
+  "path": "funky-cool-blue",
+  "url": "https://github.com/learning-zone/website-templates/tree/7bf31e9646a6b5f51c2e55b2557787310436989f/funky-cool-blue"
+ },
+ "entry": "index.html",
+ "dir": "cases/s04/013",
+ "bytes": 1671416,
+ "files": 16,
+ "digest": "00a0815ea6a0d996e9c3",
+ "facts": {
+  "title": "-=[ Your Company ™ :: Home Page ]=-",
+  "elements": 129,
+  "max_depth": 10,
+  "tags": {
+   "html": 1,
+   "head": 1,
+   "title": 1,
+   "meta": 1,
+   "link": 1,
+   "style": 1,
+   "body": 1,
+   "div": 41,
+   "h1": 2,
+   "a": 35,
+   "h2": 2,
+   "p": 7,
+   "img": 5,
+   "span": 5,
+   "ul": 2,
+   "li": 16,
+   "select": 1,
+   "option": 4,
+   "input": 1,
+   "h3": 1
+  },
+  "html_tags": [
+   "a",
+   "body",
+   "div",
+   "h1",
+   "h2",
+   "h3",
+   "head",
+   "html",
+   "img",
+   "input",
+   "li",
+   "link",
+   "meta",
+   "option",
+   "p",
+   "select",
+   "span",
+   "style",
+   "title",
+   "ul"
+  ],
+  "ids": [
+   "bodyWrap",
+   "header",
+   "logo",
+   "heading",
+   "main",
+   "mainOuter",
+   "mainInner",
+   "nsFooterClear",
+   "footer"
+  ],
+  "id_counts": {
+   "bodyWrap": 1,
+   "header": 1,
+   "logo": 1,
+   "heading": 1,
+   "main": 1,
+   "mainOuter": 1,
+   "mainInner": 1,
+   "nsFooterClear": 1,
+   "footer": 1
+  },
+  "classes": [
+   "pageWrapper",
+   "head",
+   "top",
+   "sub",
+   "subTitleOuter",
+   "subTitleInner",
+   "right",
+   "content",
+   "clear",
+   "mozclear",
+   "gap",
+   "subBarOuter",
+   "subBarInner",
+   "product",
+   "wide3",
+   "left",
+   "titleSide",
+   "active",
+   "dotted",
+   "button1",
+   "button2",
+   "titleMain",
+   "hide"
+  ],
+  "class_counts": {
+   "pageWrapper": 2,
+   "head": 1,
+   "top": 1,
+   "sub": 1,
+   "subTitleOuter": 1,
+   "subTitleInner": 1,
+   "right": 3,
+   "content": 3,
+   "clear": 3,
+   "mozclear": 3,
+   "gap": 3,
+   "subBarOuter": 1,
+   "subBarInner": 1,
+   "product": 5,
+   "wide3": 3,
+   "left": 1,
+   "titleSide": 3,
+   "active": 1,
+   "dotted": 1,
+   "button1": 1,
+   "button2": 1,
+   "titleMain": 1,
+   "hide": 1
+  },
+  "text_samples": [
+   "Special Offers",
+   "Featured Product",
+   "New Products",
+   "ZX81 Spectrum - Gold Plated Edition",
+   "MSI nForce 3 FH45T XXXtreme",
+   "Intel 875P VoodooX Series",
+   "AMD Z Hammer HY9001_C",
+   "Bespoke Websites"
+  ],
+  "inline_styles": [
+   "text-align: center;"
+  ],
+  "attr_samples": {
+   "bodyWrap": {
+    "tag": "div",
+    "class": "",
+    "attrs": {
+     "id": "bodyWrap"
+    }
+   },
+   "header": {
+    "tag": "div",
+    "class": "",
+    "attrs": {
+     "id": "header"
+    }
+   },
+   "logo": {
+    "tag": "div",
+    "class": "",
+    "attrs": {
+     "id": "logo"
+    }
+   },
+   "heading": {
+    "tag": "div",
+    "class": "",
+    "attrs": {
+     "id": "heading"
+    }
+   },
+   "main": {
+    "tag": "div",
+    "class": "pageWrapper",
+    "attrs": {
+     "id": "main",
+     "class": "pageWrapper"
+    }
+   },
+   "mainOuter": {
+    "tag": "div",
+    "class": "",
+    "attrs": {
+     "id": "mainOuter"
+    }
+   },
+   "mainInner": {
+    "tag": "div",
+    "class": "",
+    "attrs": {
+     "id": "mainInner"
+    }
+   },
+   "nsFooterClear": {
+    "tag": "div",
+    "class": "hide",
+    "attrs": {
+     "id": "nsFooterClear",
+     "class": "hide"
+    }
+   },
+   "footer": {
+    "tag": "div",
+    "class": "gap",
+    "attrs": {
+     "id": "footer",
+     "class": "gap"
+    }
+   }
+  },
+  "roles": {},
+  "aria": {},
+  "forms": {
+   "select": 1,
+   "option": 4,
+   "input": 1
+  },
+  "media": {
+   "img": 5
+  },
+  "linked_css": [
+   "style.css"
+  ],
+  "linked_js": [],
+  "style_blocks": 1,
+  "inline_js": 0,
+  "images": [
+   "products/1.jpg",
+   "products/2.jpg",
+   "products/3.jpg",
+   "products/1.jpg",
+   "products/prod1.jpg"
+  ],
+  "features": [
+   "position",
+   "forms",
+   "media",
+   "typo",
+   "color",
+   "box",
+   "events"
+  ],
+  "css": {
+   "rules": 109,
+   "selectors": [
+    "body",
+    "a:link",
+    "a:visited",
+    "a:hover",
+    ".pageWrapper",
+    "#main",
+    "div#bodyWrap",
+    "img.product",
+    ".product img",
+    ".content .product",
+    ".subBarInner p",
+    ".product",
+    "div.wide3",
+    "input[type=text]",
+    "input[type=button]",
+    "input[type=submit]",
+    "select",
+    "textarea",
+    "h1",
+    "h2",
+    "h3",
+    "h4",
+    "h5",
+    "h6",
+    "h1 span",
+    ".clear",
+    ".hide",
+    "#oldBrowserNotice",
+    ".ieSixCharDupBug",
+    "#header",
+    "#header #logo",
+    "#header #logo h1",
+    "#heading .head",
+    "* html #heading .head",
+    "#heading .top",
+    "#heading .sub",
+    "#heading a:link",
+    "#heading a:visited",
+    "#heading a:hover",
+    "#footer",
+    "#mainInner",
+    "div.subBarInner",
+    "div.subTitleInner",
+    "div.content",
+    "#mainOuter div.left",
+    "#mainOuter div.right",
+    "#mainOuter div.content",
+    "div.subBarInner div.content",
+    "div.subBarInner div.right",
+    "div.subTitleInner div.content",
+    "div.subTitleInner div.right",
+    "div.subBarOuter",
+    "div.subTitleOuter",
+    "#mainOuter",
+    "#mainOuter .content",
+    "#mainOuter .right",
+    "#mainOuter .left",
+    "div.gap",
+    "html>body .mozclear",
+    "* html #mainInner"
+   ],
+   "properties": [
+    "margin",
+    "background",
+    "color",
+    "width",
+    "padding",
+    "float",
+    "font-size",
+    "border-bottom",
+    "height",
+    "position",
+    "border-right",
+    "margin-right",
+    "z-index",
+    "text-align",
+    "font-weight",
+    "list-style-type",
+    "min-width",
+    "border-left",
+    "border",
+    "letter-spacing",
+    "display",
+    "margin-left",
+    "padding-bottom",
+    "clear",
+    "border-width",
+    "border-color",
+    "border-top",
+    "margin-bottom",
+    "font-family",
+    "text-decoration",
+    "overflow",
+    "border-style",
+    "border-right-width",
+    "padding-left",
+    "line-height"
+   ],
+   "property_counts": {
+    "margin": 16,
+    "background": 15,
+    "color": 15,
+    "width": 13,
+    "padding": 7,
+    "float": 7,
+    "font-size": 6,
+    "border-bottom": 6,
+    "height": 6,
+    "position": 6,
+    "border-right": 5,
+    "margin-right": 5,
+    "z-index": 5,
+    "text-align": 4,
+    "font-weight": 4,
+    "list-style-type": 4,
+    "min-width": 3,
+    "border-left": 3,
+    "border": 3,
+    "letter-spacing": 3,
+    "display": 3,
+    "margin-left": 3,
+    "padding-bottom": 2,
+    "clear": 2,
+    "border-width": 2,
+    "border-color": 2,
+    "border-top": 2,
+    "margin-bottom": 2,
+    "font-family": 1,
+    "text-decoration": 1,
+    "overflow": 1,
+    "border-style": 1,
+    "border-right-width": 1,
+    "padding-left": 1,
+    "line-height": 1
+   },
+   "media": 0,
+   "keyframes": 0,
+   "bytes": 8204
+  },
+  "js_bytes": 0,
+  "html_bytes": 6544,
+  "missing_assets": []
+ }
+}

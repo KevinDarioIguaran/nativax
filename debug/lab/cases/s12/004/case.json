@@ -1,0 +1,243 @@
+{
+ "id": "forms.004",
+ "section": 12,
+ "name": "keshavgbpecdelhi/Web-Development · projects/Speed Typing Game",
+ "source": {
+  "repo": "keshavgbpecdelhi/Web-Development",
+  "commit": "c1613b1424c3226ecd09ca0f23cd39bc4e32709b",
+  "license": "Apache-2.0",
+  "path": "projects/Speed Typing Game",
+  "url": "https://github.com/keshavgbpecdelhi/Web-Development/tree/c1613b1424c3226ecd09ca0f23cd39bc4e32709b/projects/Speed Typing Game"
+ },
+ "entry": "index.html",
+ "dir": "cases/s12/004",
+ "bytes": 6174,
+ "files": 2,
+ "digest": "8b63be04a68b68a6fc8d",
+ "facts": {
+  "title": "Speed Typing",
+  "elements": 40,
+  "max_depth": 9,
+  "tags": {
+   "html": 1,
+   "head": 1,
+   "meta": 3,
+   "link": 1,
+   "title": 1,
+   "body": 1,
+   "header": 1,
+   "h1": 1,
+   "section": 1,
+   "div": 9,
+   "p": 3,
+   "span": 3,
+   "h2": 1,
+   "label": 1,
+   "select": 1,
+   "option": 3,
+   "input": 1,
+   "h4": 1,
+   "h3": 2,
+   "h5": 1,
+   "footer": 1,
+   "a": 1,
+   "script": 1
+  },
+  "html_tags": [
+   "a",
+   "body",
+   "div",
+   "footer",
+   "h1",
+   "h2",
+   "h3",
+   "h4",
+   "h5",
+   "head",
+   "header",
+   "html",
+   "input",
+   "label",
+   "link",
+   "meta",
+   "option",
+   "p",
+   "script",
+   "section",
+   "select",
+   "span",
+   "title"
+  ],
+  "ids": [
+   "seconds",
+   "current-word",
+   "difficulty",
+   "input-word",
+   "message",
+   "time-left",
+   "score"
+  ],
+  "id_counts": {
+   "seconds": 1,
+   "current-word": 1,
+   "difficulty": 1,
+   "input-word": 1,
+   "message": 1,
+   "time-left": 1,
+   "score": 1
+  },
+  "classes": [
+   "bg-dark",
+   "text-white",
+   "bg-info",
+   "p-3",
+   "mb-5",
+   "text-center",
+   "container",
+   "row",
+   "col-md-6",
+   "mx-auto",
+   "text-warning",
+   "display-2",
+   "mb-4",
+   "form-group",
+   "col-md-4",
+   "form-control",
+   "form-control-lg",
+   "mt-3",
+   "mt-4",
+   "col-md-10",
+   "card",
+   "card-body",
+   "bg-secondary",
+   "small",
+   "text-muted"
+  ],
+  "class_counts": {
+   "bg-dark": 1,
+   "text-white": 1,
+   "bg-info": 1,
+   "p-3": 1,
+   "mb-5": 1,
+   "text-center": 3,
+   "container": 1,
+   "row": 3,
+   "col-md-6": 3,
+   "mx-auto": 3,
+   "text-warning": 2,
+   "display-2": 1,
+   "mb-4": 1,
+   "form-group": 1,
+   "col-md-4": 1,
+   "form-control": 2,
+   "form-control-lg": 1,
+   "mt-3": 3,
+   "mt-4": 1,
+   "col-md-10": 1,
+   "card": 1,
+   "card-body": 1,
+   "bg-secondary": 1,
+   "small": 1,
+   "text-muted": 1
+  },
+  "text_samples": [
+   "Speed Typing Lite",
+   "Type the following word in",
+   "Instructions",
+   "Type each word in the given amount of time to score. To play again, just type the current word. Your score will reset.",
+   "Aman Maharshi"
+  ],
+  "inline_styles": [],
+  "attr_samples": {
+   "seconds": {
+    "tag": "span",
+    "class": "text-warning",
+    "attrs": {
+     "id": "seconds",
+     "class": "text-warning"
+    }
+   },
+   "current-word": {
+    "tag": "h2",
+    "class": "display-2 mb-4",
+    "attrs": {
+     "id": "current-word",
+     "class": "display-2 mb-4"
+    }
+   },
+   "difficulty": {
+    "tag": "select",
+    "class": "form-control",
+    "attrs": {
+     "id": "difficulty",
+     "class": "form-control"
+    }
+   },
+   "input-word": {
+    "tag": "input",
+    "class": "form-control form-control-lg",
+    "attrs": {
+     "id": "input-word",
+     "class": "form-control form-control-lg",
+     "type": "text",
+     "placeholder": "Start typing ..."
+    }
+   },
+   "message": {
+    "tag": "h4",
+    "class": "mt-3 text-warning",
+    "attrs": {
+     "id": "message",
+     "class": "mt-3 text-warning"
+    }
+   },
+   "time-left": {
+    "tag": "span",
+    "class": "",
+    "attrs": {
+     "id": "time-left"
+    }
+   },
+   "score": {
+    "tag": "span",
+    "class": "",
+    "attrs": {
+     "id": "score"
+    }
+   }
+  },
+  "roles": {},
+  "aria": {},
+  "forms": {
+   "label": 1,
+   "select": 1,
+   "option": 3,
+   "input": 1
+  },
+  "media": {},
+  "linked_css": [],
+  "linked_js": [
+   "script.js"
+  ],
+  "style_blocks": 0,
+  "inline_js": 1,
+  "images": [],
+  "features": [
+   "forms",
+   "box",
+   "jsdom"
+  ],
+  "css": {
+   "rules": 0,
+   "selectors": [],
+   "properties": [],
+   "property_counts": {},
+   "media": 0,
+   "keyframes": 0,
+   "bytes": 0
+  },
+  "js_bytes": 3374,
+  "html_bytes": 2801,
+  "missing_assets": []
+ }
+}

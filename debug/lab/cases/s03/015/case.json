@@ -1,0 +1,235 @@
+{
+ "id": "box.015",
+ "section": 3,
+ "name": "learning-zone/website-templates · metropolis",
+ "source": {
+  "repo": "learning-zone/website-templates",
+  "commit": "7bf31e9646a6b5f51c2e55b2557787310436989f",
+  "license": "not declared upstream",
+  "path": "metropolis",
+  "url": "https://github.com/learning-zone/website-templates/tree/7bf31e9646a6b5f51c2e55b2557787310436989f/metropolis"
+ },
+ "entry": "index.html",
+ "dir": "cases/s03/015",
+ "bytes": 55632,
+ "files": 4,
+ "digest": "8f9afafc0529c9d18595",
+ "facts": {
+  "title": "Metropolis",
+  "elements": 41,
+  "max_depth": 8,
+  "tags": {
+   "html": 1,
+   "head": 1,
+   "title": 1,
+   "meta": 3,
+   "link": 1,
+   "body": 1,
+   "div": 6,
+   "ul": 1,
+   "li": 6,
+   "a": 8,
+   "p": 7,
+   "b": 2,
+   "h3": 3
+  },
+  "html_tags": [
+   "a",
+   "b",
+   "body",
+   "div",
+   "h3",
+   "head",
+   "html",
+   "li",
+   "link",
+   "meta",
+   "p",
+   "title",
+   "ul"
+  ],
+  "ids": [
+   "wrap",
+   "title",
+   "navcontainer",
+   "navlist",
+   "container",
+   "content"
+  ],
+  "id_counts": {
+   "wrap": 1,
+   "title": 1,
+   "navcontainer": 1,
+   "navlist": 1,
+   "container": 1,
+   "content": 1
+  },
+  "classes": [
+   "pullquote",
+   "footer"
+  ],
+  "class_counts": {
+   "pullquote": 1,
+   "footer": 1
+  },
+  "text_samples": [
+   "...Sed felis. Phasellus enim.",
+   "Aliquam malesuada",
+   "Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Aliquam at libero. Suspendisse non risus a diam convallis lobo",
+   "Aliquam erat volutpat. Etiam tellus magna, ultrices quis, porttitor non, bibendum quis, lacus. Vestibulum ante ipsum pri",
+   "About the Designer",
+   "dreamLogic has been creating custom web designs and applications for over 9 years. For more templates, web applications,",
+   "dreamLogic Web Design",
+   "Vivamus rhoncus tellus non mi. Ut nisl dolor, nonummy sed, volutpat vel, pulvinar at, urna. Curabitur ut velit ut mauris"
+  ],
+  "inline_styles": [],
+  "attr_samples": {
+   "wrap": {
+    "tag": "div",
+    "class": "",
+    "attrs": {
+     "id": "wrap"
+    }
+   },
+   "title": {
+    "tag": "div",
+    "class": "",
+    "attrs": {
+     "id": "title"
+    }
+   },
+   "navcontainer": {
+    "tag": "div",
+    "class": "",
+    "attrs": {
+     "id": "navcontainer"
+    }
+   },
+   "navlist": {
+    "tag": "ul",
+    "class": "",
+    "attrs": {
+     "id": "navlist"
+    }
+   },
+   "container": {
+    "tag": "div",
+    "class": "",
+    "attrs": {
+     "id": "container"
+    }
+   },
+   "content": {
+    "tag": "div",
+    "class": "",
+    "attrs": {
+     "id": "content"
+    }
+   }
+  },
+  "roles": {},
+  "aria": {},
+  "forms": {},
+  "media": {},
+  "linked_css": [
+   "style.css"
+  ],
+  "linked_js": [],
+  "style_blocks": 0,
+  "inline_js": 0,
+  "images": [],
+  "features": [
+   "position",
+   "anim",
+   "typo",
+   "color",
+   "box"
+  ],
+  "css": {
+   "rules": 19,
+   "selectors": [
+    "body",
+    "A:link",
+    "A:hover",
+    "A:active",
+    "A:active:hover",
+    "A:visited",
+    "A:visited:hover",
+    "#wrap",
+    "#navcontainer",
+    "#navlist li",
+    "#navlist li a:link",
+    "#navlist li a:visited",
+    "#navlist li a:hover",
+    "h3",
+    "#container",
+    "#content",
+    ".footer",
+    "#title",
+    ".pullquote"
+   ],
+   "properties": [
+    "color",
+    "text-decoration",
+    "width",
+    "background",
+    "text-align",
+    "font-size",
+    "font",
+    "margin-left",
+    "margin-top",
+    "font-family",
+    "letter-spacing",
+    "padding",
+    "padding-bottom",
+    "text-transform",
+    "margin",
+    "margin-right",
+    "border",
+    "height",
+    "position",
+    "list-style-type",
+    "font-weight",
+    "font-style",
+    "filter",
+    "float",
+    "margin-bottom",
+    "line-height"
+   ],
+   "property_counts": {
+    "color": 16,
+    "text-decoration": 9,
+    "width": 7,
+    "background": 6,
+    "text-align": 5,
+    "font-size": 4,
+    "font": 3,
+    "margin-left": 3,
+    "margin-top": 3,
+    "font-family": 3,
+    "letter-spacing": 3,
+    "padding": 3,
+    "padding-bottom": 2,
+    "text-transform": 2,
+    "margin": 1,
+    "margin-right": 1,
+    "border": 1,
+    "height": 1,
+    "position": 1,
+    "list-style-type": 1,
+    "font-weight": 1,
+    "font-style": 1,
+    "filter": 1,
+    "float": 1,
+    "margin-bottom": 1,
+    "line-height": 1
+   },
+   "media": 0,
+   "keyframes": 0,
+   "bytes": 2233
+  },
+  "js_bytes": 0,
+  "html_bytes": 2990,
+  "missing_assets": []
+ }
+}

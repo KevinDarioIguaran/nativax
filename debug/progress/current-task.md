@@ -1,22 +1,23 @@
 # Current task
 
-Debug laboratory audit completed (see debug/reports/debug-audit.md).
-Branch: `native-c-sokol`. Next: conformance harness (html5lib adapter) and
-visual pixel-diff gate.
+Debug laboratory corpus replaced with 240 self-contained real-world examples.
 
-## Verified (2026-10-28)
+## Verified (2026-10-29)
 
-- Debug CLI generates DOM/CSS/layout/displaylist/summary/render artifacts.
-- Crash reporter installed (backtrace).
-- Benchmarks and history present.
-- Dependency inventory exists.
+- Imported examples from:
+  - zxuqian/html-css-examples (MIT)
+  - keshavgbpecdelhi/Web-Development (Apache-2.0)
+  - learning-zone/website-templates (license not declared upstream)
+- Pinned commits recorded in `debug/lab/corpus.json` and `debug/lab/ATTRIBUTION.md`.
+- Every case keeps its original HTML, CSS, JS and assets; no shared design template.
+- Laboratory sections s01-s16 now register 15 cases each (240 total).
+- Section s17 keeps 26 documented capability gaps.
+- `debug/lab/run_lab.py --all` passes (blocked cases allowed unless --strict).
 
-## Debug workflow update (2026-10-28)
+## Commands
 
-- Added `.agents/AGENTS.md` and `.agents/skills/debug-lab-workflow/SKILL.md`
-  describing the step-by-step visual debugging protocol.
-- Fixed `innerHTML` getter in `src/js_dom.c` via `nx_node_serialize_inner`.
-- Added `hsl()`/`hsla()` colour parsing in `src/style.c`.
-- Section 2: 99/100 pass (1 blocked: var()).
-- Section 17: 1/30 pass (hsl unblocked), 29 blocked (documented gaps).
-- Quality gate: PASS.
+```sh
+python3 debug/tools/import_real_examples.py --force
+python3 debug/lab/run_lab.py --list
+python3 debug/lab/run_lab.py --all
+```

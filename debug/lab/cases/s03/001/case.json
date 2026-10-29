@@ -1,0 +1,107 @@
+{
+ "id": "box.001",
+ "section": 3,
+ "name": "learning-zone/website-templates · extent",
+ "source": {
+  "repo": "learning-zone/website-templates",
+  "commit": "7bf31e9646a6b5f51c2e55b2557787310436989f",
+  "license": "not declared upstream",
+  "path": "extent",
+  "url": "https://github.com/learning-zone/website-templates/tree/7bf31e9646a6b5f51c2e55b2557787310436989f/extent"
+ },
+ "entry": "index.html",
+ "dir": "cases/s03/001",
+ "bytes": 6761,
+ "files": 1,
+ "digest": "2069819f7a9404f7829a",
+ "facts": {
+  "title": "Slashhack - News for 31337 Kiddies",
+  "elements": 154,
+  "max_depth": 12,
+  "tags": {
+   "html": 1,
+   "head": 1,
+   "title": 1,
+   "body": 1,
+   "table": 8,
+   "tr": 14,
+   "td": 16,
+   "br": 35,
+   "font": 22,
+   "b": 12,
+   "a": 17,
+   "center": 3,
+   "small": 6,
+   "div": 4,
+   "i": 2,
+   "hr": 2,
+   "li": 8,
+   "img": 1
+  },
+  "html_tags": [
+   "a",
+   "b",
+   "body",
+   "div",
+   "head",
+   "hr",
+   "html",
+   "i",
+   "img",
+   "li",
+   "small",
+   "table",
+   "td",
+   "title",
+   "tr"
+  ],
+  "ids": [],
+  "id_counts": {},
+  "classes": [],
+  "class_counts": {},
+  "text_samples": [
+   "message boards",
+   "freshmeat.net",
+   "slashdot.org",
+   "slackware.com",
+   "Slashhack - News for 31337 kiddies",
+   "Mitnick sneezes, breaks into Pentagon",
+   "Story posted by CmdrAntipop on Oct. 20, 2000.",
+   "z3r0-c00l submitted this one:"
+  ],
+  "inline_styles": [],
+  "attr_samples": {},
+  "roles": {},
+  "aria": {},
+  "forms": {},
+  "media": {
+   "img": 1
+  },
+  "linked_css": [],
+  "linked_js": [],
+  "style_blocks": 0,
+  "inline_js": 0,
+  "images": [
+   "spacer.gif"
+  ],
+  "features": [
+   "media",
+   "box",
+   "events"
+  ],
+  "css": {
+   "rules": 0,
+   "selectors": [],
+   "properties": [],
+   "property_counts": {},
+   "media": 0,
+   "keyframes": 0,
+   "bytes": 0
+  },
+  "js_bytes": 0,
+  "html_bytes": 6557,
+  "missing_assets": [
+   "spacer.gif"
+  ]
+ }
+}

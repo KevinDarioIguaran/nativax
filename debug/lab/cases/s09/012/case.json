@@ -1,0 +1,85 @@
+{
+ "id": "pos.012",
+ "section": 9,
+ "name": "keshavgbpecdelhi/Web-Development · projects/GERICHT/public",
+ "source": {
+  "repo": "keshavgbpecdelhi/Web-Development",
+  "commit": "c1613b1424c3226ecd09ca0f23cd39bc4e32709b",
+  "license": "Apache-2.0",
+  "path": "projects/GERICHT/public",
+  "url": "https://github.com/keshavgbpecdelhi/Web-Development/tree/c1613b1424c3226ecd09ca0f23cd39bc4e32709b/projects/GERICHT/public"
+ },
+ "entry": "index.html",
+ "dir": "cases/s09/012",
+ "bytes": 14217,
+ "files": 1,
+ "digest": "30d6d26ea96d8c7aafc2",
+ "facts": {
+  "title": "Gericht",
+  "elements": 12,
+  "max_depth": 3,
+  "tags": {
+   "html": 1,
+   "head": 1,
+   "meta": 4,
+   "link": 3,
+   "title": 1,
+   "body": 1,
+   "div": 1
+  },
+  "html_tags": [
+   "body",
+   "div",
+   "head",
+   "html",
+   "link",
+   "meta",
+   "title"
+  ],
+  "ids": [
+   "root"
+  ],
+  "id_counts": {
+   "root": 1
+  },
+  "classes": [],
+  "class_counts": {},
+  "text_samples": [],
+  "inline_styles": [],
+  "attr_samples": {
+   "root": {
+    "tag": "div",
+    "class": "",
+    "attrs": {
+     "id": "root"
+    }
+   }
+  },
+  "roles": {},
+  "aria": {},
+  "forms": {},
+  "media": {},
+  "linked_css": [],
+  "linked_js": [],
+  "style_blocks": 0,
+  "inline_js": 0,
+  "images": [],
+  "features": [],
+  "css": {
+   "rules": 0,
+   "selectors": [],
+   "properties": [],
+   "property_counts": {},
+   "media": 0,
+   "keyframes": 0,
+   "bytes": 0
+  },
+  "js_bytes": 0,
+  "html_bytes": 592,
+  "missing_assets": [
+   "%PUBLIC_URL%/favicon.ico",
+   "%PUBLIC_URL%/logo.png",
+   "%PUBLIC_URL%/manifest.json"
+  ]
+ }
+}

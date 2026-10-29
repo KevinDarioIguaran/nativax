@@ -1,0 +1,364 @@
+{
+ "id": "box.003",
+ "section": 3,
+ "name": "learning-zone/website-templates · sinorca",
+ "source": {
+  "repo": "learning-zone/website-templates",
+  "commit": "7bf31e9646a6b5f51c2e55b2557787310436989f",
+  "license": "not declared upstream",
+  "path": "sinorca",
+  "url": "https://github.com/learning-zone/website-templates/tree/7bf31e9646a6b5f51c2e55b2557787310436989f/sinorca"
+ },
+ "entry": "index.html",
+ "dir": "cases/s03/003",
+ "bytes": 21820,
+ "files": 4,
+ "digest": "5355b6ef3eb6b4d341d9",
+ "facts": {
+  "title": "Sinorca 2.0",
+  "elements": 134,
+  "max_depth": 7,
+  "tags": {
+   "html": 1,
+   "head": 1,
+   "meta": 3,
+   "link": 11,
+   "title": 1,
+   "style": 1,
+   "body": 1,
+   "div": 16,
+   "a": 41,
+   "span": 11,
+   "h1": 5,
+   "p": 11,
+   "ul": 2,
+   "li": 9,
+   "em": 3,
+   "acronym": 5,
+   "dl": 1,
+   "dt": 3,
+   "dd": 3,
+   "br": 4,
+   "img": 1
+  },
+  "html_tags": [
+   "a",
+   "body",
+   "dd",
+   "div",
+   "dl",
+   "dt",
+   "em",
+   "h1",
+   "head",
+   "html",
+   "img",
+   "li",
+   "link",
+   "meta",
+   "p",
+   "span",
+   "style",
+   "title",
+   "ul"
+  ],
+  "ids": [
+   "top",
+   "header",
+   "side-bar",
+   "main-copy",
+   "introduction",
+   "cross-browser",
+   "stylesheets",
+   "accessibility",
+   "footer"
+  ],
+  "id_counts": {
+   "top": 1,
+   "header": 1,
+   "side-bar": 1,
+   "main-copy": 1,
+   "introduction": 1,
+   "cross-browser": 1,
+   "stylesheets": 1,
+   "accessibility": 1,
+   "footer": 1
+  },
+  "classes": [
+   "doNotDisplay",
+   "doNotPrint",
+   "superHeader",
+   "left",
+   "right",
+   "midHeader",
+   "headerTitle",
+   "subHeader",
+   "highlight",
+   "sideBarTitle",
+   "thisPage",
+   "lighterBackground",
+   "sideBarText",
+   "titleTip",
+   "topOfPage",
+   "smallCaps"
+  ],
+  "class_counts": {
+   "doNotDisplay": 5,
+   "doNotPrint": 4,
+   "superHeader": 1,
+   "left": 2,
+   "right": 2,
+   "midHeader": 1,
+   "headerTitle": 1,
+   "subHeader": 1,
+   "highlight": 1,
+   "sideBarTitle": 4,
+   "thisPage": 1,
+   "lighterBackground": 1,
+   "sideBarText": 3,
+   "titleTip": 2,
+   "topOfPage": 3,
+   "smallCaps": 2
+  },
+  "text_samples": [
+   "Skip to main content.",
+   "Related sites:",
+   "More related sites:",
+   "Navigate this page",
+   "› Introduction",
+   "› Cross-browser",
+   "› Stylesheets",
+   "› Accessibility"
+  ],
+  "inline_styles": [],
+  "attr_samples": {
+   "top": {
+    "tag": "div",
+    "class": "",
+    "attrs": {
+     "id": "top"
+    }
+   },
+   "header": {
+    "tag": "div",
+    "class": "",
+    "attrs": {
+     "id": "header"
+    }
+   },
+   "side-bar": {
+    "tag": "div",
+    "class": "",
+    "attrs": {
+     "id": "side-bar"
+    }
+   },
+   "main-copy": {
+    "tag": "div",
+    "class": "",
+    "attrs": {
+     "id": "main-copy"
+    }
+   },
+   "introduction": {
+    "tag": "h1",
+    "class": "",
+    "attrs": {
+     "id": "introduction"
+    }
+   },
+   "cross-browser": {
+    "tag": "h1",
+    "class": "",
+    "attrs": {
+     "id": "cross-browser"
+    }
+   },
+   "stylesheets": {
+    "tag": "h1",
+    "class": "",
+    "attrs": {
+     "id": "stylesheets"
+    }
+   },
+   "accessibility": {
+    "tag": "h1",
+    "class": "",
+    "attrs": {
+     "id": "accessibility"
+    }
+   },
+   "footer": {
+    "tag": "div",
+    "class": "",
+    "attrs": {
+     "id": "footer"
+    }
+   }
+  },
+  "roles": {},
+  "aria": {},
+  "forms": {},
+  "media": {
+   "img": 1
+  },
+  "linked_css": [
+   "sinorca-screen.css",
+   "sinorca-screen-alt.css",
+   "sinorca-print.css"
+  ],
+  "linked_js": [],
+  "style_blocks": 1,
+  "inline_js": 0,
+  "images": [
+   "spacer.gif"
+  ],
+  "features": [
+   "position",
+   "anim",
+   "media",
+   "typo",
+   "color",
+   "box",
+   "events"
+  ],
+  "css": {
+   "rules": 114,
+   "selectors": [
+    "body",
+    "html > body",
+    "acronym",
+    ".titleTip",
+    ".doNotDisplay",
+    ".smallCaps",
+    ".superHeader",
+    ".superHeader a",
+    ".superHeader a:hover",
+    ".superHeader .left",
+    ".superHeader .right",
+    ".midHeader",
+    ".headerTitle",
+    ".subHeader",
+    ".subHeader a",
+    ".subHeader a:hover",
+    ".superHeader .highlight",
+    ".subHeader .highlight",
+    "#side-bar",
+    "#side-bar div",
+    ".sideBarTitle",
+    "#side-bar ul",
+    "#side-bar li",
+    "#side-bar a",
+    ".thisPage",
+    "#side-bar a:hover",
+    ".sideBarText",
+    "#side-bar .sideBarText a",
+    "#side-bar .sideBarText a:hover",
+    ".lighterBackground",
+    "#main-copy",
+    "#main-copy p",
+    "#main-copy a",
+    "#main-copy a:hover",
+    "#main-copy h1",
+    "#main-copy .topOfPage",
+    "#main-copy > .topOfPage",
+    "dl",
+    "dt",
+    "dd",
+    "#footer",
+    "#footer .left",
+    "#footer .right",
+    "#footer a",
+    "#footer a:hover",
+    "body > #side-bar",
+    ".sideBarText + .sideBarText",
+    "#bodyText",
+    "acronym:after",
+    ".titleTip:after",
+    ".doNotPrint",
+    "#header",
+    "#main-copy a:after",
+    "p",
+    ".topOfPage"
+   ],
+   "properties": [
+    "margin",
+    "padding",
+    "color",
+    "background-color",
+    "text-decoration",
+    "font-size",
+    "font-weight",
+    "display",
+    "line-height",
+    "border-bottom",
+    "float",
+    "clear",
+    "text-align",
+    "font-family",
+    "position",
+    "top",
+    "padding-left",
+    "cursor",
+    "font-variant",
+    "height",
+    "left",
+    "right",
+    "width",
+    "list-style-type",
+    "list-style-position",
+    "border-top",
+    "font-style",
+    "content",
+    "border-right",
+    "border-left",
+    "margin-left",
+    "margin-top",
+    "acronym"
+   ],
+   "property_counts": {
+    "margin": 53,
+    "padding": 51,
+    "color": 41,
+    "background-color": 40,
+    "text-decoration": 29,
+    "font-size": 21,
+    "font-weight": 16,
+    "display": 13,
+    "line-height": 8,
+    "border-bottom": 7,
+    "float": 6,
+    "clear": 6,
+    "text-align": 6,
+    "font-family": 5,
+    "position": 4,
+    "top": 4,
+    "padding-left": 3,
+    "cursor": 2,
+    "font-variant": 2,
+    "height": 2,
+    "left": 2,
+    "right": 2,
+    "width": 2,
+    "list-style-type": 2,
+    "list-style-position": 2,
+    "border-top": 2,
+    "font-style": 2,
+    "content": 2,
+    "border-right": 1,
+    "border-left": 1,
+    "margin-left": 1,
+    "margin-top": 1,
+    "acronym": 1
+   },
+   "media": 0,
+   "keyframes": 0,
+   "bytes": 11500
+  },
+  "js_bytes": 0,
+  "html_bytes": 10155,
+  "missing_assets": [
+   "spacer.gif"
+  ]
+ }
+}

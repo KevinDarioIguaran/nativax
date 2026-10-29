@@ -1,0 +1,225 @@
+{
+ "id": "resp.003",
+ "section": 7,
+ "name": "keshavgbpecdelhi/Web-Development · projects/Name_Project",
+ "source": {
+  "repo": "keshavgbpecdelhi/Web-Development",
+  "commit": "c1613b1424c3226ecd09ca0f23cd39bc4e32709b",
+  "license": "Apache-2.0",
+  "path": "projects/Name_Project",
+  "url": "https://github.com/keshavgbpecdelhi/Web-Development/tree/c1613b1424c3226ecd09ca0f23cd39bc4e32709b/projects/Name_Project"
+ },
+ "entry": "index.html",
+ "dir": "cases/s07/003",
+ "bytes": 3809,
+ "files": 3,
+ "digest": "aa1f86a5d44c88e1d0ce",
+ "facts": {
+  "title": "GAURAV",
+  "elements": 19,
+  "max_depth": 5,
+  "tags": {
+   "html": 1,
+   "head": 1,
+   "meta": 3,
+   "title": 1,
+   "link": 1,
+   "body": 1,
+   "div": 1,
+   "input": 1,
+   "button": 1,
+   "svg": 1,
+   "text": 1,
+   "use": 5,
+   "script": 1
+  },
+  "html_tags": [
+   "body",
+   "button",
+   "div",
+   "head",
+   "html",
+   "input",
+   "link",
+   "meta",
+   "script",
+   "title"
+  ],
+  "ids": [
+   "textName",
+   "btn",
+   "mytext"
+  ],
+  "id_counts": {
+   "textName": 1,
+   "btn": 1,
+   "mytext": 1
+  },
+  "classes": [
+   "container",
+   "yourName",
+   "btn",
+   "copy",
+   "copy1",
+   "copy2",
+   "copy3",
+   "copy4",
+   "copy5"
+  ],
+  "class_counts": {
+   "container": 1,
+   "yourName": 1,
+   "btn": 1,
+   "copy": 5,
+   "copy1": 1,
+   "copy2": 1,
+   "copy3": 1,
+   "copy4": 1,
+   "copy5": 1
+  },
+  "text_samples": [],
+  "inline_styles": [],
+  "attr_samples": {
+   "textName": {
+    "tag": "input",
+    "class": "yourName",
+    "attrs": {
+     "id": "textName",
+     "class": "yourName",
+     "type": "text",
+     "placeholder": "Name Here"
+    }
+   },
+   "btn": {
+    "tag": "button",
+    "class": "btn",
+    "attrs": {
+     "id": "btn",
+     "class": "btn",
+     "type": "submit"
+    }
+   },
+   "mytext": {
+    "tag": "text",
+    "class": "",
+    "attrs": {
+     "id": "mytext"
+    }
+   }
+  },
+  "roles": {},
+  "aria": {},
+  "forms": {
+   "input": 1,
+   "button": 1
+  },
+  "media": {
+   "svg": 1
+  },
+  "linked_css": [
+   "style.css"
+  ],
+  "linked_js": [
+   "index.js"
+  ],
+  "style_blocks": 0,
+  "inline_js": 1,
+  "images": [],
+  "features": [
+   "position",
+   "anim",
+   "responsive",
+   "forms",
+   "media",
+   "typo",
+   "color",
+   "box",
+   "jsdom",
+   "events"
+  ],
+  "css": {
+   "rules": 19,
+   "selectors": [
+    "*",
+    "body",
+    ".yourName",
+    ".yourName:focus",
+    ".btn",
+    ".btn:focus",
+    ".btn:hover",
+    ".container",
+    "svg",
+    ".copy",
+    ".copy1",
+    ".copy2",
+    ".copy3",
+    ".copy4",
+    ".copy5"
+   ],
+   "properties": [
+    "font-size",
+    "stroke",
+    "padding-top",
+    "animation-delay",
+    "padding",
+    "position",
+    "background-color",
+    "color",
+    "top",
+    "left",
+    "border-radius",
+    "border",
+    "width",
+    "height",
+    "outline",
+    "stroke-dashoffset",
+    "margin",
+    "box-sizing",
+    "font-family",
+    "overflow",
+    "font-weight",
+    "cursor",
+    "background",
+    "fill",
+    "stroke-width",
+    "stroke-dasharray",
+    "animation"
+   ],
+   "property_counts": {
+    "font-size": 7,
+    "stroke": 6,
+    "padding-top": 5,
+    "animation-delay": 5,
+    "padding": 3,
+    "position": 3,
+    "background-color": 3,
+    "color": 3,
+    "top": 2,
+    "left": 2,
+    "border-radius": 2,
+    "border": 2,
+    "width": 2,
+    "height": 2,
+    "outline": 2,
+    "stroke-dashoffset": 2,
+    "margin": 1,
+    "box-sizing": 1,
+    "font-family": 1,
+    "overflow": 1,
+    "font-weight": 1,
+    "cursor": 1,
+    "background": 1,
+    "fill": 1,
+    "stroke-width": 1,
+    "stroke-dasharray": 1,
+    "animation": 1
+   },
+   "media": 4,
+   "keyframes": 1,
+   "bytes": 1905
+  },
+  "js_bytes": 736,
+  "html_bytes": 981,
+  "missing_assets": []
+ }
+}

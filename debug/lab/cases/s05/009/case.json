@@ -1,0 +1,129 @@
+{
+ "id": "color.009",
+ "section": 5,
+ "name": "zxuqian/html-css-examples · 39-web-animations",
+ "source": {
+  "repo": "zxuqian/html-css-examples",
+  "commit": "2a9fc59f44aeda092cbac07472aaf0f1ead4e1a6",
+  "license": "MIT",
+  "path": "39-web-animations",
+  "url": "https://github.com/zxuqian/html-css-examples/tree/2a9fc59f44aeda092cbac07472aaf0f1ead4e1a6/39-web-animations"
+ },
+ "entry": "index.html",
+ "dir": "cases/s05/009",
+ "bytes": 2114,
+ "files": 1,
+ "digest": "261653e09da54f338067",
+ "facts": {
+  "title": "Web Animations",
+  "elements": 13,
+  "max_depth": 5,
+  "tags": {
+   "html": 1,
+   "head": 1,
+   "meta": 3,
+   "title": 1,
+   "style": 1,
+   "body": 1,
+   "main": 1,
+   "div": 1,
+   "h1": 1,
+   "h2": 1,
+   "script": 1
+  },
+  "html_tags": [
+   "body",
+   "div",
+   "h1",
+   "h2",
+   "head",
+   "html",
+   "main",
+   "meta",
+   "script",
+   "style",
+   "title"
+  ],
+  "ids": [],
+  "id_counts": {},
+  "classes": [
+   "container",
+   "title",
+   "subtitle"
+  ],
+  "class_counts": {
+   "container": 1,
+   "title": 1,
+   "subtitle": 1
+  },
+  "text_samples": [
+   "JavaScript Web Animations API"
+  ],
+  "inline_styles": [],
+  "attr_samples": {},
+  "roles": {},
+  "aria": {},
+  "forms": {},
+  "media": {},
+  "linked_css": [],
+  "linked_js": [],
+  "style_blocks": 1,
+  "inline_js": 1,
+  "images": [],
+  "features": [
+   "grid",
+   "anim",
+   "typo",
+   "color",
+   "box",
+   "jsdom",
+   "events"
+  ],
+  "css": {
+   "rules": 5,
+   "selectors": [
+    "*",
+    "main",
+    ".container",
+    "h1",
+    "h2"
+   ],
+   "properties": [
+    "font-size",
+    "color",
+    "box-sizing",
+    "margin",
+    "padding",
+    "font-family",
+    "background",
+    "width",
+    "height",
+    "display",
+    "place-items",
+    "text-align",
+    "margin-top"
+   ],
+   "property_counts": {
+    "font-size": 2,
+    "color": 2,
+    "box-sizing": 1,
+    "margin": 1,
+    "padding": 1,
+    "font-family": 1,
+    "background": 1,
+    "width": 1,
+    "height": 1,
+    "display": 1,
+    "place-items": 1,
+    "text-align": 1,
+    "margin-top": 1
+   },
+   "media": 0,
+   "keyframes": 0,
+   "bytes": 515
+  },
+  "js_bytes": 1109,
+  "html_bytes": 2114,
+  "missing_assets": []
+ }
+}

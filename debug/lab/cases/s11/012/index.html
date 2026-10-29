@@ -1,42 +1,66 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>NativaX Lab · 012 · Events and interaction — double click case 012</title>
-<link rel="stylesheet" href="style.css">
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Github User Search</title>
+    <script src="./script.js"></script>
+    <link rel="stylesheet" href="style.css">
+    <link rel="shortcut icon" href="./images/favicon.ico" type="image/x-icon">
 </head>
-<body class="">
-<div class="aurora" aria-hidden="true"><i></i><i></i><i></i></div>
-<header class="topbar">
-  <div class="brand"><span class="logo"></span><span>NativaX <b>Lab</b></span></div>
-  <nav class="nav" aria-label="primary">
-    <a class="nav-link is-active" href="#case">Case</a>
-    <a class="nav-link" href="#cards">Components</a>
-    <a class="nav-link" href="#footer">About</a>
-  </nav>
-  <button id="theme-toggle" class="btn ghost" type="button">Theme</button>
-</header>
-<main class="stage">
-  <section class="hero">
-    <p class="eyebrow">Section 01 · HTML, DOM and parsing</p>
-    <h1 class="title">html.001 <span class="grad">div básico</span></h1>
-    <p class="lede">A real laboratory application: semantic HTML structure, animated styles and verifiable JavaScript behaviour.</p>
-    <div class="hero-actions">
-      <button id="ping" class="btn" type="button">Try interaction <span id="pings" class="badge">0</span></button>
-      <span id="clock" class="clock">--:--:--</span>
+<body>
+    <div class="main">
+        <div id="header" class="container">
+            <h1>DevFinder</h1>
+        </div>
+        <div id="search-bar" class="form container" >
+            <img class="icon" src="./images/icon-search.svg" alt="search">
+            <input type="text" name="username" id="username">
+            <button id="submit" onclick="submitHandler()">Search</button>
+        </div>
+        <div id="content" class="container">
+            <div class="profile">
+                <img src="" alt="Avatar" id="avatar">
+                <div class="profile-details">
+                    <h1 class="name">No User</h1>
+                    <h3 class="username"></h3>
+                    <h3 class="doj"></h3>
+                </div>
+            </div>
+            <div class="stats statistics">
+                <div>
+                    <h1>Repos</h1>
+                    <h3 class="repos"></h3>
+                </div>
+                <div>
+                    <h1>Followers</h1>
+                    <h3 class="followers"></h3>
+                </div>
+                <div>
+                    <h1>Following</h1>
+                    <h3 class="following"></h3>
+                </div>
+            </div>
+            <div class="links">
+                <div class="link">
+                    <img src="./images/icon-location.svg" alt="Location">
+                    <h3 class="location"></h3>
+                </div>
+                <div class="link">
+                    <img src="./images/icon-twitter.svg" alt="Twitter">
+                    <h3 class="twitter"></h3>
+                </div>
+                <div class="link">
+                    <img src="./images/icon-website.svg" alt="Website">
+                    <h3 class="website"></h3>
+                </div>
+                <div class="link">
+                    <img src="./images/icon-company.svg" alt="Company">
+                    <h3 class="company"></h3>
+                </div>
+            </div>
+        </div>
     </div>
-  </section>
-  <section id="case" class="case panel">
-<div id=t class='target'>Section 11 case 012: double click.</div>
-  </section>
-  <section id="cards" class="cards" aria-label="components">
-    <article class="card"><span class="tag">HTML</span><h3>Semantics</h3><p>Real elements, attributes and parent-child relations verified by the laboratory.</p></article>
-    <article class="card"><span class="tag">CSS</span><h3>Animation</h3><p>Gradients, keyframes and transitions compared pixel by pixel in the visual sections.</p></article>
-    <article class="card"><span class="tag">JS</span><h3>Interaction</h3><p>JavaScriptCore runs this file: clock, theme, counter and pointer events.</p></article>
-  </section>
-</main>
-<footer id="footer" class="footer"><span>NativaX Lab · C11 + Sokol + JavaScriptCore</span><span>html.001</span></footer>
-<script src="app.js"></script>
 </body>
 </html>

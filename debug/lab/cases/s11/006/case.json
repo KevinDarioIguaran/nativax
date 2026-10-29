@@ -1,0 +1,256 @@
+{
+ "id": "events.006",
+ "section": 11,
+ "name": "keshavgbpecdelhi/Web-Development · projects/simple-todo",
+ "source": {
+  "repo": "keshavgbpecdelhi/Web-Development",
+  "commit": "c1613b1424c3226ecd09ca0f23cd39bc4e32709b",
+  "license": "Apache-2.0",
+  "path": "projects/simple-todo",
+  "url": "https://github.com/keshavgbpecdelhi/Web-Development/tree/c1613b1424c3226ecd09ca0f23cd39bc4e32709b/projects/simple-todo"
+ },
+ "entry": "index.html",
+ "dir": "cases/s11/006",
+ "bytes": 7736,
+ "files": 1,
+ "digest": "dc262a110cf5b1694fd4",
+ "facts": {
+  "title": "Todo",
+  "elements": 19,
+  "max_depth": 5,
+  "tags": {
+   "html": 1,
+   "head": 1,
+   "meta": 2,
+   "title": 1,
+   "link": 2,
+   "style": 1,
+   "body": 1,
+   "header": 1,
+   "div": 3,
+   "input": 2,
+   "i": 2,
+   "ul": 1,
+   "script": 1
+  },
+  "html_tags": [
+   "body",
+   "div",
+   "head",
+   "header",
+   "html",
+   "i",
+   "input",
+   "link",
+   "meta",
+   "script",
+   "style",
+   "title",
+   "ul"
+  ],
+  "ids": [
+   "list-title",
+   "content",
+   "list",
+   "add",
+   "input"
+  ],
+  "id_counts": {
+   "list-title": 1,
+   "content": 1,
+   "list": 1,
+   "add": 1,
+   "input": 1
+  },
+  "classes": [
+   "heading",
+   "clear",
+   "fas",
+   "fa-times",
+   "fa-plus-circle"
+  ],
+  "class_counts": {
+   "heading": 1,
+   "clear": 1,
+   "fas": 2,
+   "fa-times": 1,
+   "fa-plus-circle": 1
+  },
+  "text_samples": [],
+  "inline_styles": [],
+  "attr_samples": {
+   "list-title": {
+    "tag": "input",
+    "class": "",
+    "attrs": {
+     "id": "list-title",
+     "type": "text",
+     "name": "listname",
+     "placeholder": "Things to do"
+    }
+   },
+   "content": {
+    "tag": "div",
+    "class": "",
+    "attrs": {
+     "id": "content"
+    }
+   },
+   "list": {
+    "tag": "ul",
+    "class": "",
+    "attrs": {
+     "id": "list"
+    }
+   },
+   "add": {
+    "tag": "div",
+    "class": "",
+    "attrs": {
+     "id": "add"
+    }
+   },
+   "input": {
+    "tag": "input",
+    "class": "",
+    "attrs": {
+     "id": "input",
+     "type": "text",
+     "placeholder": "Add a to-do"
+    }
+   }
+  },
+  "roles": {},
+  "aria": {},
+  "forms": {
+   "input": 2
+  },
+  "media": {},
+  "linked_css": [],
+  "linked_js": [],
+  "style_blocks": 1,
+  "inline_js": 1,
+  "images": [],
+  "features": [
+   "flex",
+   "position",
+   "anim",
+   "responsive",
+   "forms",
+   "typo",
+   "color",
+   "box",
+   "jsdom",
+   "events"
+  ],
+  "css": {
+   "rules": 20,
+   "selectors": [
+    "body",
+    "header",
+    "#list-title",
+    "input::placeholder",
+    "input:focus::placeholder",
+    "input:focus",
+    "header i",
+    ".heading i:hover",
+    "#content",
+    "#list",
+    "#list i:hover",
+    ".item",
+    ".item:hover",
+    ".item p",
+    ".line-through",
+    "#input",
+    "#add",
+    "#add i"
+   ],
+   "properties": [
+    "font-size",
+    "color",
+    "position",
+    "padding",
+    "background",
+    "width",
+    "height",
+    "left",
+    "input",
+    "animation",
+    "display",
+    "justify-content",
+    "margin",
+    "text-transform",
+    "box-shadow",
+    "border",
+    "transform",
+    "align-items",
+    "opacity",
+    "font-weight",
+    "overflow-x",
+    "word-wrap",
+    "font-family",
+    "background-position",
+    "background-size",
+    "bottom",
+    "outline-color",
+    "top",
+    "right",
+    "flex-direction",
+    "margin-top",
+    "flex-grow",
+    "padding-left",
+    "text-decoration",
+    "outline",
+    "border-radius",
+    "margin-right"
+   ],
+   "property_counts": {
+    "font-size": 7,
+    "color": 7,
+    "position": 7,
+    "padding": 5,
+    "background": 5,
+    "width": 3,
+    "height": 3,
+    "left": 3,
+    "input": 3,
+    "animation": 3,
+    "display": 3,
+    "justify-content": 3,
+    "margin": 2,
+    "text-transform": 2,
+    "box-shadow": 2,
+    "border": 2,
+    "transform": 2,
+    "align-items": 2,
+    "opacity": 2,
+    "font-weight": 1,
+    "overflow-x": 1,
+    "word-wrap": 1,
+    "font-family": 1,
+    "background-position": 1,
+    "background-size": 1,
+    "bottom": 1,
+    "outline-color": 1,
+    "top": 1,
+    "right": 1,
+    "flex-direction": 1,
+    "margin-top": 1,
+    "flex-grow": 1,
+    "padding-left": 1,
+    "text-decoration": 1,
+    "outline": 1,
+    "border-radius": 1,
+    "margin-right": 1
+   },
+   "media": 1,
+   "keyframes": 2,
+   "bytes": 3531
+  },
+  "js_bytes": 3328,
+  "html_bytes": 7736,
+  "missing_assets": [
+   "images/flag-hackclub.png"
+  ]
+ }
+}

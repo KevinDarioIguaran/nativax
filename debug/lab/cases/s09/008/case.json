@@ -1,0 +1,148 @@
+{
+ "id": "pos.008",
+ "section": 9,
+ "name": "keshavgbpecdelhi/Web-Development · projects/mdown-editor",
+ "source": {
+  "repo": "keshavgbpecdelhi/Web-Development",
+  "commit": "c1613b1424c3226ecd09ca0f23cd39bc4e32709b",
+  "license": "Apache-2.0",
+  "path": "projects/mdown-editor",
+  "url": "https://github.com/keshavgbpecdelhi/Web-Development/tree/c1613b1424c3226ecd09ca0f23cd39bc4e32709b/projects/mdown-editor"
+ },
+ "entry": "index.html",
+ "dir": "cases/s09/008",
+ "bytes": 16749,
+ "files": 4,
+ "digest": "6eb84d38906885e40e53",
+ "facts": {
+  "title": "MDown Editor - A markdown editor playground made in Anhular with html5, css3 and javascript.",
+  "elements": 20,
+  "max_depth": 5,
+  "tags": {
+   "html": 1,
+   "head": 1,
+   "meta": 1,
+   "link": 5,
+   "title": 1,
+   "body": 2,
+   "div": 3,
+   "textarea": 1,
+   "script": 5
+  },
+  "html_tags": [
+   "body",
+   "div",
+   "head",
+   "html",
+   "link",
+   "meta",
+   "script",
+   "textarea",
+   "title"
+  ],
+  "ids": [
+   "txt"
+  ],
+  "id_counts": {
+   "txt": 1
+  },
+  "classes": [
+   "left",
+   "right",
+   "markdown-body"
+  ],
+  "class_counts": {
+   "left": 1,
+   "right": 1,
+   "markdown-body": 1
+  },
+  "text_samples": [],
+  "inline_styles": [],
+  "attr_samples": {
+   "txt": {
+    "tag": "textarea",
+    "class": "",
+    "attrs": {
+     "id": "txt"
+    }
+   }
+  },
+  "roles": {},
+  "aria": {},
+  "forms": {
+   "textarea": 1
+  },
+  "media": {},
+  "linked_css": [
+   "./style.css"
+  ],
+  "linked_js": [
+   "./script.js"
+  ],
+  "style_blocks": 0,
+  "inline_js": 5,
+  "images": [],
+  "features": [
+   "position",
+   "forms",
+   "typo",
+   "color",
+   "box",
+   "jsdom",
+   "events"
+  ],
+  "css": {
+   "rules": 4,
+   "selectors": [
+    ".left",
+    ".left textarea",
+    ".left textarea:focus",
+    ".right"
+   ],
+   "properties": [
+    "position",
+    "top",
+    "left",
+    "bottom",
+    "width",
+    "overflow",
+    "padding",
+    "box-shadow",
+    "font-family",
+    "background",
+    "resize",
+    "border",
+    "height",
+    "box-sizing",
+    "textarea",
+    "outline",
+    "right"
+   ],
+   "property_counts": {
+    "position": 2,
+    "top": 2,
+    "left": 2,
+    "bottom": 2,
+    "width": 2,
+    "overflow": 2,
+    "padding": 2,
+    "box-shadow": 1,
+    "font-family": 1,
+    "background": 1,
+    "resize": 1,
+    "border": 1,
+    "height": 1,
+    "box-sizing": 1,
+    "textarea": 1,
+    "outline": 1,
+    "right": 1
+   },
+   "media": 0,
+   "keyframes": 0,
+   "bytes": 478
+  },
+  "js_bytes": 1752,
+  "html_bytes": 1352,
+  "missing_assets": []
+ }
+}

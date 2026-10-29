@@ -1,0 +1,134 @@
+{
+ "id": "forms.006",
+ "section": 12,
+ "name": "keshavgbpecdelhi/Web-Development · projects/TV-show Search app",
+ "source": {
+  "repo": "keshavgbpecdelhi/Web-Development",
+  "commit": "c1613b1424c3226ecd09ca0f23cd39bc4e32709b",
+  "license": "Apache-2.0",
+  "path": "projects/TV-show Search app",
+  "url": "https://github.com/keshavgbpecdelhi/Web-Development/tree/c1613b1424c3226ecd09ca0f23cd39bc4e32709b/projects/TV-show Search app"
+ },
+ "entry": "index.html",
+ "dir": "cases/s12/006",
+ "bytes": 1451,
+ "files": 2,
+ "digest": "0e15e9be8768e225fc67",
+ "facts": {
+  "title": "TV SHOWS SEARCH",
+  "elements": 18,
+  "max_depth": 4,
+  "tags": {
+   "html": 1,
+   "head": 1,
+   "meta": 3,
+   "title": 1,
+   "script": 2,
+   "body": 1,
+   "h1": 1,
+   "form": 1,
+   "input": 1,
+   "button": 2,
+   "br": 2,
+   "hr": 1,
+   "span": 1
+  },
+  "html_tags": [
+   "body",
+   "button",
+   "form",
+   "h1",
+   "head",
+   "hr",
+   "html",
+   "input",
+   "meta",
+   "script",
+   "span",
+   "title"
+  ],
+  "ids": [
+   "searchform",
+   "search",
+   "reset",
+   "span"
+  ],
+  "id_counts": {
+   "searchform": 1,
+   "search": 1,
+   "reset": 1,
+   "span": 1
+  },
+  "classes": [],
+  "class_counts": {},
+  "text_samples": [
+   "TV Show Search"
+  ],
+  "inline_styles": [],
+  "attr_samples": {
+   "searchform": {
+    "tag": "form",
+    "class": "",
+    "attrs": {
+     "id": "searchform"
+    }
+   },
+   "search": {
+    "tag": "input",
+    "class": "",
+    "attrs": {
+     "id": "search",
+     "type": "text",
+     "placeholder": "Enter title"
+    }
+   },
+   "reset": {
+    "tag": "button",
+    "class": "",
+    "attrs": {
+     "id": "reset"
+    }
+   },
+   "span": {
+    "tag": "span",
+    "class": "",
+    "attrs": {
+     "id": "span"
+    }
+   }
+  },
+  "roles": {},
+  "aria": {},
+  "forms": {
+   "form": 1,
+   "input": 1,
+   "button": 2
+  },
+  "media": {},
+  "linked_css": [],
+  "linked_js": [
+   "script.js"
+  ],
+  "style_blocks": 0,
+  "inline_js": 2,
+  "images": [],
+  "features": [
+   "forms",
+   "box",
+   "jsdom",
+   "events"
+  ],
+  "css": {
+   "rules": 0,
+   "selectors": [],
+   "properties": [],
+   "property_counts": {},
+   "media": 0,
+   "keyframes": 0,
+   "bytes": 0
+  },
+  "js_bytes": 794,
+  "html_bytes": 659,
+  "missing_assets": []
+ }
+}

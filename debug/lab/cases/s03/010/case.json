@@ -1,0 +1,283 @@
+{
+ "id": "box.010",
+ "section": 3,
+ "name": "learning-zone/website-templates · street-life",
+ "source": {
+  "repo": "learning-zone/website-templates",
+  "commit": "7bf31e9646a6b5f51c2e55b2557787310436989f",
+  "license": "not declared upstream",
+  "path": "street-life",
+  "url": "https://github.com/learning-zone/website-templates/tree/7bf31e9646a6b5f51c2e55b2557787310436989f/street-life"
+ },
+ "entry": "index.html",
+ "dir": "cases/s03/010",
+ "bytes": 52454,
+ "files": 6,
+ "digest": "f24a7682247f198cabb8",
+ "facts": {
+  "title": "Street Life",
+  "elements": 61,
+  "max_depth": 9,
+  "tags": {
+   "html": 1,
+   "head": 1,
+   "title": 1,
+   "meta": 1,
+   "link": 1,
+   "body": 1,
+   "div": 13,
+   "h1": 1,
+   "span": 1,
+   "h2": 3,
+   "p": 4,
+   "a": 11,
+   "b": 2,
+   "ul": 3,
+   "li": 11,
+   "img": 6
+  },
+  "html_tags": [
+   "a",
+   "b",
+   "body",
+   "div",
+   "h1",
+   "h2",
+   "head",
+   "html",
+   "img",
+   "li",
+   "link",
+   "meta",
+   "p",
+   "span",
+   "title",
+   "ul"
+  ],
+  "ids": [
+   "header",
+   "container",
+   "content",
+   "left_box",
+   "navigation",
+   "right_box",
+   "thumbnails",
+   "footer"
+  ],
+  "id_counts": {
+   "header": 1,
+   "container": 1,
+   "content": 1,
+   "left_box": 1,
+   "navigation": 1,
+   "right_box": 1,
+   "thumbnails": 1,
+   "footer": 1
+  },
+  "classes": [
+   "photocontainer",
+   "photo"
+  ],
+  "class_counts": {
+   "photocontainer": 6,
+   "photo": 6
+  },
+  "text_samples": [
+   "This design is good for anyone who wishes to display images or photos on the homepage of there site. I have provided the",
+   "in the footer. Images are from",
+   "a great site for free imagery.",
+   "My names Callum Rimmer and I run a web software company in Bath, England. We have created a simple content management sy",
+   ". iFrame is made to as easy to use as possible whilst giving you the flexibilty to design your site how you like. You ca",
+   "If you would like to contact me for some help using this template (and to get the associated PSD files) or if you would ",
+   "Portfolio of Photos:",
+   "Photos 1 - 6"
+  ],
+  "inline_styles": [
+   "color:#FFEA00",
+   "background-image: url(go.gif);",
+   "background-image: url(go.gif);",
+   "background-image: url(go.gif);"
+  ],
+  "attr_samples": {
+   "header": {
+    "tag": "div",
+    "class": "",
+    "attrs": {
+     "id": "header"
+    }
+   },
+   "container": {
+    "tag": "div",
+    "class": "",
+    "attrs": {
+     "id": "container"
+    }
+   },
+   "content": {
+    "tag": "div",
+    "class": "",
+    "attrs": {
+     "id": "content"
+    }
+   },
+   "left_box": {
+    "tag": "div",
+    "class": "",
+    "attrs": {
+     "id": "left_box"
+    }
+   },
+   "navigation": {
+    "tag": "div",
+    "class": "",
+    "attrs": {
+     "id": "navigation"
+    }
+   },
+   "right_box": {
+    "tag": "div",
+    "class": "",
+    "attrs": {
+     "id": "right_box"
+    }
+   },
+   "thumbnails": {
+    "tag": "ul",
+    "class": "",
+    "attrs": {
+     "id": "thumbnails"
+    }
+   },
+   "footer": {
+    "tag": "div",
+    "class": "",
+    "attrs": {
+     "id": "footer"
+    }
+   }
+  },
+  "roles": {},
+  "aria": {},
+  "forms": {},
+  "media": {
+   "img": 6
+  },
+  "linked_css": [
+   "stylesheet.css"
+  ],
+  "linked_js": [],
+  "style_blocks": 0,
+  "inline_js": 0,
+  "images": [
+   "photo.jpg",
+   "photo.jpg",
+   "photo.jpg",
+   "photo.jpg",
+   "photo.jpg",
+   "photo.jpg"
+  ],
+  "features": [
+   "position",
+   "media",
+   "typo",
+   "color",
+   "box",
+   "events"
+  ],
+  "css": {
+   "rules": 20,
+   "selectors": [
+    "html",
+    "body",
+    "#header",
+    "a",
+    "h1",
+    "h2",
+    "#container",
+    "#content",
+    "#left_box",
+    "#navigation",
+    "#navigation p",
+    "#navigation ul",
+    "#navigation li",
+    "#right_box",
+    "#thumbnails",
+    "#thumbnails li",
+    ".photocontainer",
+    ".photo",
+    "#footer",
+    "#footer a"
+   ],
+   "properties": [
+    "width",
+    "margin",
+    "padding",
+    "float",
+    "color",
+    "font",
+    "height",
+    "font-weight",
+    "background",
+    "text-align",
+    "margin-left",
+    "margin-top",
+    "padding-top",
+    "border",
+    "margin-bottom",
+    "text-decoration",
+    "margin-right",
+    "padding-bottom",
+    "list-style",
+    "background-image",
+    "background-repeat",
+    "background-position",
+    "list-style-type",
+    "background-color",
+    "position",
+    "top",
+    "left",
+    "clear",
+    "border-top",
+    "border-bottom"
+   ],
+   "property_counts": {
+    "width": 9,
+    "margin": 6,
+    "padding": 6,
+    "float": 6,
+    "color": 5,
+    "font": 4,
+    "height": 4,
+    "font-weight": 4,
+    "background": 2,
+    "text-align": 2,
+    "margin-left": 2,
+    "margin-top": 2,
+    "padding-top": 2,
+    "border": 2,
+    "margin-bottom": 1,
+    "text-decoration": 1,
+    "margin-right": 1,
+    "padding-bottom": 1,
+    "list-style": 1,
+    "background-image": 1,
+    "background-repeat": 1,
+    "background-position": 1,
+    "list-style-type": 1,
+    "background-color": 1,
+    "position": 1,
+    "top": 1,
+    "left": 1,
+    "clear": 1,
+    "border-top": 1,
+    "border-bottom": 1
+   },
+   "media": 0,
+   "keyframes": 0,
+   "bytes": 1737
+  },
+  "js_bytes": 0,
+  "html_bytes": 2915,
+  "missing_assets": []
+ }
+}

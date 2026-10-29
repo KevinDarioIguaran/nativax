@@ -1,0 +1,213 @@
+{
+ "id": "resp.008",
+ "section": 7,
+ "name": "zxuqian/html-css-examples · 14-image-slider",
+ "source": {
+  "repo": "zxuqian/html-css-examples",
+  "commit": "2a9fc59f44aeda092cbac07472aaf0f1ead4e1a6",
+  "license": "MIT",
+  "path": "14-image-slider",
+  "url": "https://github.com/zxuqian/html-css-examples/tree/2a9fc59f44aeda092cbac07472aaf0f1ead4e1a6/14-image-slider"
+ },
+ "entry": "index.html",
+ "dir": "cases/s07/008",
+ "bytes": 7712,
+ "files": 3,
+ "digest": "928b4ddd568464bc9a96",
+ "facts": {
+  "title": "图片轮播组件",
+  "elements": 31,
+  "max_depth": 7,
+  "tags": {
+   "html": 1,
+   "head": 1,
+   "meta": 3,
+   "link": 2,
+   "title": 1,
+   "body": 1,
+   "header": 1,
+   "div": 9,
+   "img": 3,
+   "h1": 3,
+   "p": 3,
+   "i": 2,
+   "script": 1
+  },
+  "html_tags": [
+   "body",
+   "div",
+   "h1",
+   "head",
+   "header",
+   "html",
+   "i",
+   "img",
+   "link",
+   "meta",
+   "p",
+   "script",
+   "title"
+  ],
+  "ids": [
+   "prev",
+   "next"
+  ],
+  "id_counts": {
+   "prev": 1,
+   "next": 1
+  },
+  "classes": [
+   "image-slider",
+   "slide",
+   "current",
+   "image",
+   "content",
+   "title",
+   "description",
+   "fas",
+   "fa-chevron-left",
+   "fa-chevron-right"
+  ],
+  "class_counts": {
+   "image-slider": 1,
+   "slide": 3,
+   "current": 1,
+   "image": 3,
+   "content": 3,
+   "title": 3,
+   "description": 3,
+   "fas": 2,
+   "fa-chevron-left": 1,
+   "fa-chevron-right": 1
+  },
+  "text_samples": [
+   "北京市，简称“京”，是中华人民共和国首都、也是中国4个直辖市之一；北京是国家中心城市、超大城市，全国政治中心、文化中心、国际交往中心、科技创新中心，是世界著名古都和现代化国际城市，也是中国共产党中央委员会、中华人民共和国中央人民政府和全国人",
+   "东京（とうきょう、Tōkyō），日本首都，位于日本关东平原中部，是面向东京湾的国际大都市，日本三大都市圈之一东京都市圈的中心城市。“东京”狭义上指东京都、旧东京府或东京都区部（旧东京市），亦可泛指东京都市圈 。东京是江户幕府的所在地，江户在",
+   "纽约市（New York City，简称NYC），位于美国纽约州东南部大西洋沿岸，是美国第一大城市及第一大港口，纽约都市圈为世界上最大的城市圈之一，与英国伦敦、中国香港并称为“纽伦港”（Nylonkong）。纽约与伦敦并列为全世界最顶级的国"
+  ],
+  "inline_styles": [],
+  "attr_samples": {
+   "prev": {
+    "tag": "div",
+    "class": "",
+    "attrs": {
+     "id": "prev"
+    }
+   },
+   "next": {
+    "tag": "div",
+    "class": "",
+    "attrs": {
+     "id": "next"
+    }
+   }
+  },
+  "roles": {},
+  "aria": {},
+  "forms": {},
+  "media": {
+   "img": 3
+  },
+  "linked_css": [
+   "style.css"
+  ],
+  "linked_js": [
+   "index.js"
+  ],
+  "style_blocks": 0,
+  "inline_js": 1,
+  "images": [
+   "https://images.pexels.com/photos/1434580/pexels-photo-1434580.jpeg?cs=srgb&dl=high-rise-buildings-1434580.jpg&fm=jpg",
+   "https://images.pexels.com/photos/2614818/pexels-photo-2614818.jpeg?cs=srgb&dl=illuminated-tower-2614818.jpg&fm=jpg",
+   "https://images.pexels.com/photos/597909/pexels-photo-597909.jpeg?cs=srgb&dl=buildings-city-city-view-cityscape-597909.jpg&fm=jpg"
+  ],
+  "features": [
+   "position",
+   "anim",
+   "responsive",
+   "media",
+   "typo",
+   "color",
+   "box",
+   "jsdom",
+   "events"
+  ],
+  "css": {
+   "rules": 19,
+   "selectors": [
+    "*",
+    ".image-slider",
+    ".image-slider .slide",
+    ".image-slider .image",
+    ".image-slider .slide .content",
+    ".image-slider .slide .content h1",
+    "#prev",
+    "#next",
+    "#prev:hover",
+    "#next:hover",
+    ".image-slider .slide.current",
+    ".image-slider .slide.current .content"
+   ],
+   "properties": [
+    "width",
+    "height",
+    "position",
+    "left",
+    "opacity",
+    "transition",
+    "z-index",
+    "color",
+    "background-color",
+    "padding",
+    "font-size",
+    "line-height",
+    "top",
+    "right",
+    "transform",
+    "margin",
+    "box-sizing",
+    "font-family",
+    "overflow",
+    "object-fit",
+    "bottom",
+    "margin-bottom",
+    "text-align",
+    "border-radius",
+    "cursor"
+   ],
+   "property_counts": {
+    "width": 7,
+    "height": 5,
+    "position": 4,
+    "left": 4,
+    "opacity": 4,
+    "transition": 3,
+    "z-index": 3,
+    "color": 3,
+    "background-color": 3,
+    "padding": 2,
+    "font-size": 2,
+    "line-height": 2,
+    "top": 2,
+    "right": 2,
+    "transform": 2,
+    "margin": 1,
+    "box-sizing": 1,
+    "font-family": 1,
+    "overflow": 1,
+    "object-fit": 1,
+    "bottom": 1,
+    "margin-bottom": 1,
+    "text-align": 1,
+    "border-radius": 1,
+    "cursor": 1
+   },
+   "media": 1,
+   "keyframes": 0,
+   "bytes": 2529
+  },
+  "js_bytes": 1556,
+  "html_bytes": 3628,
+  "missing_assets": []
+ }
+}

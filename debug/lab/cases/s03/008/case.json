@@ -1,0 +1,314 @@
+{
+ "id": "box.008",
+ "section": 3,
+ "name": "learning-zone/website-templates · thin-green-line",
+ "source": {
+  "repo": "learning-zone/website-templates",
+  "commit": "7bf31e9646a6b5f51c2e55b2557787310436989f",
+  "license": "not declared upstream",
+  "path": "thin-green-line",
+  "url": "https://github.com/learning-zone/website-templates/tree/7bf31e9646a6b5f51c2e55b2557787310436989f/thin-green-line"
+ },
+ "entry": "index.html",
+ "dir": "cases/s03/008",
+ "bytes": 14084,
+ "files": 8,
+ "digest": "cb3093234da677e18257",
+ "facts": {
+  "title": "Thin Green Line",
+  "elements": 83,
+  "max_depth": 7,
+  "tags": {
+   "html": 1,
+   "head": 1,
+   "title": 1,
+   "meta": 1,
+   "link": 1,
+   "body": 1,
+   "div": 7,
+   "h1": 8,
+   "a": 28,
+   "h3": 1,
+   "ul": 3,
+   "li": 12,
+   "br": 3,
+   "p": 12,
+   "h2": 2,
+   "blockquote": 1
+  },
+  "html_tags": [
+   "a",
+   "blockquote",
+   "body",
+   "div",
+   "h1",
+   "h2",
+   "h3",
+   "head",
+   "html",
+   "li",
+   "link",
+   "meta",
+   "p",
+   "title",
+   "ul"
+  ],
+  "ids": [
+   "container",
+   "header",
+   "nav",
+   "sidebar",
+   "sidebar_bottom",
+   "content",
+   "intro",
+   "css",
+   "author",
+   "contact",
+   "footer"
+  ],
+  "id_counts": {
+   "container": 1,
+   "header": 1,
+   "nav": 1,
+   "sidebar": 1,
+   "sidebar_bottom": 1,
+   "content": 1,
+   "intro": 1,
+   "css": 1,
+   "author": 1,
+   "contact": 1,
+   "footer": 1
+  },
+  "classes": [
+   "active",
+   "clear",
+   "sidebarfooter"
+  ],
+  "class_counts": {
+   "active": 1,
+   "clear": 1,
+   "sidebarfooter": 1
+  },
+  "text_samples": [
+   "Thin Green Line",
+   "Because blue and red are boring.",
+   "Introduction",
+   "And so we have the (almost) obligatory side bar column thing. Here you can put absolutely any thing you want! Great huh?",
+   "Animated Gifs",
+   "animated gifs",
+   "great!!! Often considered to be one of the biggest design no-no's out there. But, if you know me then you know I like to",
+   "Hello and welcome to \"Thin Green Line\" another template by me! Anyone who knows me by now will know that I love plain te"
+  ],
+  "inline_styles": [],
+  "attr_samples": {
+   "container": {
+    "tag": "div",
+    "class": "",
+    "attrs": {
+     "id": "container"
+    }
+   },
+   "header": {
+    "tag": "div",
+    "class": "",
+    "attrs": {
+     "id": "header"
+    }
+   },
+   "nav": {
+    "tag": "ul",
+    "class": "",
+    "attrs": {
+     "id": "nav"
+    }
+   },
+   "sidebar": {
+    "tag": "div",
+    "class": "",
+    "attrs": {
+     "id": "sidebar"
+    }
+   },
+   "sidebar_bottom": {
+    "tag": "div",
+    "class": "",
+    "attrs": {
+     "id": "sidebar_bottom"
+    }
+   },
+   "content": {
+    "tag": "div",
+    "class": "",
+    "attrs": {
+     "id": "content"
+    }
+   },
+   "intro": {
+    "tag": "a",
+    "class": "",
+    "attrs": {
+     "id": "intro",
+     "href": "#"
+    }
+   },
+   "css": {
+    "tag": "a",
+    "class": "",
+    "attrs": {
+     "id": "css",
+     "href": "#"
+    }
+   },
+   "author": {
+    "tag": "a",
+    "class": "",
+    "attrs": {
+     "id": "author",
+     "href": "#"
+    }
+   },
+   "contact": {
+    "tag": "a",
+    "class": "",
+    "attrs": {
+     "id": "contact",
+     "href": "#contact"
+    }
+   },
+   "footer": {
+    "tag": "div",
+    "class": "",
+    "attrs": {
+     "id": "footer"
+    }
+   }
+  },
+  "roles": {},
+  "aria": {},
+  "forms": {},
+  "media": {},
+  "linked_css": [
+   "css/1.css"
+  ],
+  "linked_js": [],
+  "style_blocks": 0,
+  "inline_js": 0,
+  "images": [],
+  "features": [
+   "position",
+   "anim",
+   "typo",
+   "color",
+   "box"
+  ],
+  "css": {
+   "rules": 40,
+   "selectors": [
+    "body",
+    "*",
+    "#container",
+    "#header",
+    "#header h1",
+    "#header h1 a",
+    "#header h3",
+    "#sidebar_bottom",
+    "#nav",
+    "#nav li",
+    "#nav li a",
+    "#nav li a:hover",
+    ".active",
+    ".clear",
+    "#sidebar",
+    "#content",
+    "#content h1",
+    "#content h2",
+    "#content p",
+    "#content ul",
+    "#content li",
+    "#content #sideblock",
+    ".sidebarfooter",
+    ".sidebarfooter a",
+    ".sidebarfooter a:hover",
+    "#content #sideblock h1",
+    "#sideblock p",
+    "#sideblock ul",
+    "#sideblock li",
+    "#sideblock li a",
+    "#sideblock li a:hover",
+    "blockquote",
+    "#content a",
+    "#content a:hover",
+    "a:hover",
+    "#sidebar a",
+    "#sidebar h1",
+    "#sidebar p",
+    "#footer",
+    "#footer a"
+   ],
+   "properties": [
+    "margin",
+    "padding",
+    "color",
+    "font-size",
+    "background-color",
+    "background-image",
+    "font-family",
+    "text-decoration",
+    "background-position",
+    "background-repeat",
+    "float",
+    "letter-spacing",
+    "width",
+    "font-weight",
+    "line-height",
+    "border",
+    "height",
+    "border-right",
+    "list-style",
+    "display",
+    "text-transform",
+    "text-indent",
+    "border-top",
+    "text-align",
+    "clear",
+    "word-spacing",
+    "border-bottom"
+   ],
+   "property_counts": {
+    "margin": 21,
+    "padding": 20,
+    "color": 19,
+    "font-size": 10,
+    "background-color": 9,
+    "background-image": 7,
+    "font-family": 6,
+    "text-decoration": 6,
+    "background-position": 5,
+    "background-repeat": 5,
+    "float": 5,
+    "letter-spacing": 4,
+    "width": 3,
+    "font-weight": 3,
+    "line-height": 3,
+    "border": 3,
+    "height": 2,
+    "border-right": 2,
+    "list-style": 2,
+    "display": 2,
+    "text-transform": 2,
+    "text-indent": 2,
+    "border-top": 2,
+    "text-align": 2,
+    "clear": 1,
+    "word-spacing": 1,
+    "border-bottom": 1
+   },
+   "media": 0,
+   "keyframes": 0,
+   "bytes": 4087
+  },
+  "js_bytes": 0,
+  "html_bytes": 6620,
+  "missing_assets": []
+ }
+}

@@ -1,0 +1,232 @@
+{
+ "id": "a11y.013",
+ "section": 13,
+ "name": "keshavgbpecdelhi/Web-Development · projects/Note_Pad",
+ "source": {
+  "repo": "keshavgbpecdelhi/Web-Development",
+  "commit": "c1613b1424c3226ecd09ca0f23cd39bc4e32709b",
+  "license": "Apache-2.0",
+  "path": "projects/Note_Pad",
+  "url": "https://github.com/keshavgbpecdelhi/Web-Development/tree/c1613b1424c3226ecd09ca0f23cd39bc4e32709b/projects/Note_Pad"
+ },
+ "entry": "index.html",
+ "dir": "cases/s13/013",
+ "bytes": 4806,
+ "files": 2,
+ "digest": "7a7f0e14bfe013773682",
+ "facts": {
+  "title": "Notes App",
+  "elements": 34,
+  "max_depth": 7,
+  "tags": {
+   "html": 1,
+   "head": 1,
+   "meta": 3,
+   "title": 1,
+   "link": 1,
+   "body": 1,
+   "nav": 1,
+   "div": 7,
+   "a": 1,
+   "button": 2,
+   "span": 1,
+   "ul": 1,
+   "form": 1,
+   "input": 1,
+   "h2": 1,
+   "h5": 1,
+   "textarea": 1,
+   "br": 1,
+   "hr": 2,
+   "h3": 1,
+   "script": 4
+  },
+  "html_tags": [
+   "a",
+   "body",
+   "button",
+   "div",
+   "form",
+   "h2",
+   "h3",
+   "h5",
+   "head",
+   "hr",
+   "html",
+   "input",
+   "link",
+   "meta",
+   "nav",
+   "script",
+   "span",
+   "textarea",
+   "title",
+   "ul"
+  ],
+  "ids": [
+   "navbarScroll",
+   "searchTxt",
+   "addTxt",
+   "addBtn",
+   "notes"
+  ],
+  "id_counts": {
+   "navbarScroll": 1,
+   "searchTxt": 1,
+   "addTxt": 1,
+   "addBtn": 1,
+   "notes": 1
+  },
+  "classes": [
+   "navbar",
+   "navbar-expand-lg",
+   "navbar-dark",
+   "bg-dark",
+   "container-fluid",
+   "navbar-brand",
+   "navbar-toggler",
+   "navbar-toggler-icon",
+   "collapse",
+   "navbar-collapse",
+   "navbar-nav",
+   "me-auto",
+   "my-2",
+   "my-lg-0",
+   "navbar-nav-scroll",
+   "d-flex",
+   "form-control",
+   "me-2",
+   "container",
+   "my-3",
+   "card",
+   "card-body",
+   "card-title",
+   "form-group",
+   "btn",
+   "btn-primary",
+   "row"
+  ],
+  "class_counts": {
+   "navbar": 1,
+   "navbar-expand-lg": 1,
+   "navbar-dark": 1,
+   "bg-dark": 1,
+   "container-fluid": 2,
+   "navbar-brand": 1,
+   "navbar-toggler": 1,
+   "navbar-toggler-icon": 1,
+   "collapse": 1,
+   "navbar-collapse": 1,
+   "navbar-nav": 1,
+   "me-auto": 1,
+   "my-2": 1,
+   "my-lg-0": 1,
+   "navbar-nav-scroll": 1,
+   "d-flex": 1,
+   "form-control": 2,
+   "me-2": 1,
+   "container": 1,
+   "my-3": 1,
+   "card": 1,
+   "card-body": 1,
+   "card-title": 1,
+   "form-group": 1,
+   "btn": 1,
+   "btn-primary": 1,
+   "row": 1
+  },
+  "text_samples": [
+   "Welcome to Note Pad",
+   "Write Your Notes Here"
+  ],
+  "inline_styles": [
+   "--bs-scroll-height: 100px"
+  ],
+  "attr_samples": {
+   "navbarScroll": {
+    "tag": "div",
+    "class": "collapse navbar-collapse",
+    "attrs": {
+     "id": "navbarScroll",
+     "class": "collapse navbar-collapse"
+    }
+   },
+   "searchTxt": {
+    "tag": "input",
+    "class": "form-control me-2",
+    "attrs": {
+     "id": "searchTxt",
+     "class": "form-control me-2",
+     "type": "search",
+     "placeholder": "Search by keyword",
+     "aria-label": "Search"
+    }
+   },
+   "addTxt": {
+    "tag": "textarea",
+    "class": "form-control",
+    "attrs": {
+     "id": "addTxt",
+     "class": "form-control",
+     "aria-label": "With textarea"
+    }
+   },
+   "addBtn": {
+    "tag": "button",
+    "class": "btn btn-primary",
+    "attrs": {
+     "id": "addBtn",
+     "class": "btn btn-primary",
+     "href": "#"
+    }
+   },
+   "notes": {
+    "tag": "div",
+    "class": "row container-fluid",
+    "attrs": {
+     "id": "notes",
+     "class": "row container-fluid"
+    }
+   }
+  },
+  "roles": {},
+  "aria": {
+   "aria-controls": 1,
+   "aria-expanded": 1,
+   "aria-label": 3
+  },
+  "forms": {
+   "button": 2,
+   "form": 1,
+   "input": 1,
+   "textarea": 1
+  },
+  "media": {},
+  "linked_css": [],
+  "linked_js": [
+   "app.js"
+  ],
+  "style_blocks": 0,
+  "inline_js": 4,
+  "images": [],
+  "features": [
+   "forms",
+   "a11y",
+   "box",
+   "jsdom",
+   "events"
+  ],
+  "css": {
+   "rules": 0,
+   "selectors": [],
+   "properties": [],
+   "property_counts": {},
+   "media": 0,
+   "keyframes": 0,
+   "bytes": 0
+  },
+  "js_bytes": 1894,
+  "html_bytes": 2916,
+  "missing_assets": []
+ }
+}

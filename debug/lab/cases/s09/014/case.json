@@ -1,0 +1,196 @@
+{
+ "id": "pos.014",
+ "section": 9,
+ "name": "keshavgbpecdelhi/Web-Development · projects/Math4Kids",
+ "source": {
+  "repo": "keshavgbpecdelhi/Web-Development",
+  "commit": "c1613b1424c3226ecd09ca0f23cd39bc4e32709b",
+  "license": "Apache-2.0",
+  "path": "projects/Math4Kids",
+  "url": "https://github.com/keshavgbpecdelhi/Web-Development/tree/c1613b1424c3226ecd09ca0f23cd39bc4e32709b/projects/Math4Kids"
+ },
+ "entry": "index.html",
+ "dir": "cases/s09/014",
+ "bytes": 19923,
+ "files": 1,
+ "digest": "7ac926e5cd7fb0a5c20b",
+ "facts": {
+  "title": "Add",
+  "elements": 41,
+  "max_depth": 9,
+  "tags": {
+   "html": 1,
+   "head": 1,
+   "meta": 2,
+   "link": 2,
+   "title": 1,
+   "body": 1,
+   "audio": 1,
+   "source": 1,
+   "header": 1,
+   "div": 8,
+   "h2": 1,
+   "span": 1,
+   "i": 1,
+   "nav": 1,
+   "ul": 1,
+   "li": 4,
+   "a": 4,
+   "h1": 8,
+   "script": 1
+  },
+  "html_tags": [
+   "a",
+   "audio",
+   "body",
+   "div",
+   "h1",
+   "h2",
+   "head",
+   "header",
+   "html",
+   "i",
+   "li",
+   "link",
+   "meta",
+   "nav",
+   "script",
+   "source",
+   "span",
+   "title",
+   "ul"
+  ],
+  "ids": [
+   "myAudio",
+   "num1",
+   "num2",
+   "option1",
+   "option2",
+   "option3"
+  ],
+  "id_counts": {
+   "myAudio": 1,
+   "num1": 1,
+   "num2": 1,
+   "option1": 1,
+   "option2": 1,
+   "option3": 1
+  },
+  "classes": [
+   "container",
+   "nav",
+   "fa",
+   "fa-trophy",
+   "current",
+   "wrapper",
+   "equation",
+   "answer-options",
+   "options"
+  ],
+  "class_counts": {
+   "container": 1,
+   "nav": 1,
+   "fa": 1,
+   "fa-trophy": 1,
+   "current": 1,
+   "wrapper": 1,
+   "equation": 1,
+   "answer-options": 1,
+   "options": 3
+  },
+  "text_samples": [],
+  "inline_styles": [
+   "color:#FE4A49",
+   "color: #2AB7CA;",
+   "color: #FED766",
+   "color: #F86624",
+   "color: gray",
+   "background-color: #FE4A49;",
+   "background-color: #2AB7CA;",
+   "background-color: #FED766;"
+  ],
+  "attr_samples": {
+   "myAudio": {
+    "tag": "audio",
+    "class": "",
+    "attrs": {
+     "id": "myAudio"
+    }
+   },
+   "num1": {
+    "tag": "h1",
+    "class": "",
+    "attrs": {
+     "id": "num1",
+     "style": "color:#FE4A49"
+    }
+   },
+   "num2": {
+    "tag": "h1",
+    "class": "",
+    "attrs": {
+     "id": "num2",
+     "style": "color: #FED766"
+    }
+   },
+   "option1": {
+    "tag": "h1",
+    "class": "",
+    "attrs": {
+     "id": "option1"
+    }
+   },
+   "option2": {
+    "tag": "h1",
+    "class": "",
+    "attrs": {
+     "id": "option2"
+    }
+   },
+   "option3": {
+    "tag": "h1",
+    "class": "",
+    "attrs": {
+     "id": "option3"
+    }
+   }
+  },
+  "roles": {},
+  "aria": {
+   "aria-hidden": 1
+  },
+  "forms": {},
+  "media": {
+   "audio": 1,
+   "source": 1
+  },
+  "linked_css": [
+   "/styles/style.css"
+  ],
+  "linked_js": [
+   "/scripts/add.js"
+  ],
+  "style_blocks": 0,
+  "inline_js": 1,
+  "images": [
+   "/audio/wrong.mp3"
+  ],
+  "features": [
+   "a11y",
+   "media",
+   "color"
+  ],
+  "css": {
+   "rules": 0,
+   "selectors": [],
+   "properties": [],
+   "property_counts": {},
+   "media": 0,
+   "keyframes": 0,
+   "bytes": 0
+  },
+  "js_bytes": 0,
+  "html_bytes": 1684,
+  "missing_assets": []
+ }
+}

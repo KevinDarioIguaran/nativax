@@ -1,0 +1,264 @@
+{
+ "id": "forms.009",
+ "section": 12,
+ "name": "keshavgbpecdelhi/Web-Development · projects/Weather App",
+ "source": {
+  "repo": "keshavgbpecdelhi/Web-Development",
+  "commit": "c1613b1424c3226ecd09ca0f23cd39bc4e32709b",
+  "license": "Apache-2.0",
+  "path": "projects/Weather App",
+  "url": "https://github.com/keshavgbpecdelhi/Web-Development/tree/c1613b1424c3226ecd09ca0f23cd39bc4e32709b/projects/Weather App"
+ },
+ "entry": "index.html",
+ "dir": "cases/s12/009",
+ "bytes": 744667,
+ "files": 3,
+ "digest": "52f0f39ad5091017f67e",
+ "facts": {
+  "title": "Weather App",
+  "elements": 24,
+  "max_depth": 10,
+  "tags": {
+   "html": 1,
+   "head": 1,
+   "title": 1,
+   "link": 1,
+   "script": 1,
+   "body": 1,
+   "div": 11,
+   "input": 1,
+   "button": 1,
+   "h4": 1,
+   "h1": 1,
+   "span": 3
+  },
+  "html_tags": [
+   "body",
+   "button",
+   "div",
+   "h1",
+   "h4",
+   "head",
+   "html",
+   "input",
+   "link",
+   "script",
+   "span",
+   "title"
+  ],
+  "ids": [
+   "city-input",
+   "weather-output",
+   "city-name",
+   "weather-type",
+   "temp",
+   "min-temp",
+   "max-temp"
+  ],
+  "id_counts": {
+   "city-input": 1,
+   "weather-output": 1,
+   "city-name": 1,
+   "weather-type": 1,
+   "temp": 1,
+   "min-temp": 1,
+   "max-temp": 1
+  },
+  "classes": [
+   "mainheader",
+   "weatherbox",
+   "inputform",
+   "citysearch",
+   "btncity",
+   "weatheroutput",
+   "weathercard",
+   "weathercardheader",
+   "cardnature",
+   "weathercardbody",
+   "cardtitle",
+   "weather-temp",
+   "tempbox",
+   "tempa"
+  ],
+  "class_counts": {
+   "mainheader": 1,
+   "weatherbox": 1,
+   "inputform": 1,
+   "citysearch": 1,
+   "btncity": 1,
+   "weatheroutput": 1,
+   "weathercard": 1,
+   "weathercardheader": 1,
+   "cardnature": 1,
+   "weathercardbody": 1,
+   "cardtitle": 1,
+   "weather-temp": 1,
+   "tempbox": 3,
+   "tempa": 3
+  },
+  "text_samples": [],
+  "inline_styles": [],
+  "attr_samples": {
+   "city-input": {
+    "tag": "input",
+    "class": "citysearch",
+    "attrs": {
+     "id": "city-input",
+     "class": "citysearch",
+     "type": "text",
+     "placeholder": "Enter City"
+    }
+   },
+   "weather-output": {
+    "tag": "div",
+    "class": "weatheroutput",
+    "attrs": {
+     "id": "weather-output",
+     "class": "weatheroutput"
+    }
+   },
+   "city-name": {
+    "tag": "h4",
+    "class": "cardnature",
+    "attrs": {
+     "id": "city-name",
+     "class": "cardnature"
+    }
+   },
+   "weather-type": {
+    "tag": "h1",
+    "class": "cardtitle",
+    "attrs": {
+     "id": "weather-type",
+     "class": "cardtitle"
+    }
+   },
+   "temp": {
+    "tag": "span",
+    "class": "tempa",
+    "attrs": {
+     "id": "temp",
+     "class": "tempa"
+    }
+   },
+   "min-temp": {
+    "tag": "span",
+    "class": "tempa",
+    "attrs": {
+     "id": "min-temp",
+     "class": "tempa"
+    }
+   },
+   "max-temp": {
+    "tag": "span",
+    "class": "tempa",
+    "attrs": {
+     "id": "max-temp",
+     "class": "tempa"
+    }
+   }
+  },
+  "roles": {},
+  "aria": {},
+  "forms": {
+   "input": 1,
+   "button": 1
+  },
+  "media": {},
+  "linked_css": [
+   "style.css"
+  ],
+  "linked_js": [
+   "script.js"
+  ],
+  "style_blocks": 0,
+  "inline_js": 1,
+  "images": [],
+  "features": [
+   "flex",
+   "grid",
+   "forms",
+   "typo",
+   "color",
+   "box",
+   "jsdom",
+   "events"
+  ],
+  "css": {
+   "rules": 9,
+   "selectors": [
+    ".inputform",
+    ".citysearch",
+    ".btncity",
+    ".mainheader",
+    ".weatheroutput",
+    ".weathercardheader",
+    ".weathercardbody",
+    ".tempbox",
+    ".tempa"
+   ],
+   "properties": [
+    "padding",
+    "font-size",
+    "display",
+    "justify-content",
+    "align-items",
+    "margin",
+    "width",
+    "border",
+    "flex-direction",
+    "text-align",
+    "background",
+    "border-radius",
+    "color",
+    "font-weight",
+    "font-family",
+    "background-image",
+    "background-size",
+    "background-repeat",
+    "background-position",
+    "gap",
+    "outline",
+    "border-bottom",
+    "cursor",
+    "height",
+    "margin-top",
+    "background-color"
+   ],
+   "property_counts": {
+    "padding": 5,
+    "font-size": 5,
+    "display": 4,
+    "justify-content": 4,
+    "align-items": 4,
+    "margin": 3,
+    "width": 3,
+    "border": 3,
+    "flex-direction": 2,
+    "text-align": 2,
+    "background": 2,
+    "border-radius": 2,
+    "color": 2,
+    "font-weight": 2,
+    "font-family": 2,
+    "background-image": 1,
+    "background-size": 1,
+    "background-repeat": 1,
+    "background-position": 1,
+    "gap": 1,
+    "outline": 1,
+    "border-bottom": 1,
+    "cursor": 1,
+    "height": 1,
+    "margin-top": 1,
+    "background-color": 1
+   },
+   "media": 0,
+   "keyframes": 0,
+   "bytes": 1731
+  },
+  "js_bytes": 1029,
+  "html_bytes": 2286,
+  "missing_assets": []
+ }
+}

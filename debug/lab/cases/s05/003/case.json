@@ -1,0 +1,136 @@
+{
+ "id": "color.003",
+ "section": 5,
+ "name": "zxuqian/html-css-examples · 32-place-item-center",
+ "source": {
+  "repo": "zxuqian/html-css-examples",
+  "commit": "2a9fc59f44aeda092cbac07472aaf0f1ead4e1a6",
+  "license": "MIT",
+  "path": "32-place-item-center",
+  "url": "https://github.com/zxuqian/html-css-examples/tree/2a9fc59f44aeda092cbac07472aaf0f1ead4e1a6/32-place-item-center"
+ },
+ "entry": "index.html",
+ "dir": "cases/s05/003",
+ "bytes": 1848,
+ "files": 1,
+ "digest": "bb7104304154d5ee9752",
+ "facts": {
+  "title": "Grid 布局简化居中方式",
+  "elements": 11,
+  "max_depth": 4,
+  "tags": {
+   "html": 1,
+   "head": 1,
+   "meta": 3,
+   "style": 1,
+   "title": 1,
+   "body": 1,
+   "div": 3
+  },
+  "html_tags": [
+   "body",
+   "div",
+   "head",
+   "html",
+   "meta",
+   "style",
+   "title"
+  ],
+  "ids": [],
+  "id_counts": {},
+  "classes": [
+   "grid",
+   "content",
+   "desc"
+  ],
+  "class_counts": {
+   "grid": 1,
+   "content": 1,
+   "desc": 1
+  },
+  "text_samples": [
+   "place-items: center"
+  ],
+  "inline_styles": [],
+  "attr_samples": {},
+  "roles": {},
+  "aria": {},
+  "forms": {},
+  "media": {},
+  "linked_css": [],
+  "linked_js": [],
+  "style_blocks": 1,
+  "inline_js": 0,
+  "images": [],
+  "features": [
+   "grid",
+   "position",
+   "typo",
+   "color",
+   "box"
+  ],
+  "css": {
+   "rules": 8,
+   "selectors": [
+    "*",
+    ".grid",
+    ".content",
+    ".desc",
+    ".grid::before",
+    ".grid::after"
+   ],
+   "properties": [
+    "padding",
+    "width",
+    "height",
+    "display",
+    "background-color",
+    "position",
+    "z-index",
+    "grid-area",
+    "background",
+    "left",
+    "top",
+    "box-sizing",
+    "margin",
+    "place-items",
+    "font-size",
+    "border",
+    "border-radius",
+    "box-shadow",
+    "color",
+    "font-family",
+    "content"
+   ],
+   "property_counts": {
+    "padding": 3,
+    "width": 3,
+    "height": 3,
+    "display": 2,
+    "background-color": 2,
+    "position": 2,
+    "z-index": 2,
+    "grid-area": 2,
+    "background": 2,
+    "left": 2,
+    "top": 2,
+    "box-sizing": 1,
+    "margin": 1,
+    "place-items": 1,
+    "font-size": 1,
+    "border": 1,
+    "border-radius": 1,
+    "box-shadow": 1,
+    "color": 1,
+    "font-family": 1,
+    "content": 1
+   },
+   "media": 0,
+   "keyframes": 0,
+   "bytes": 1410
+  },
+  "js_bytes": 0,
+  "html_bytes": 1848,
+  "missing_assets": []
+ }
+}

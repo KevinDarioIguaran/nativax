@@ -1,0 +1,144 @@
+{
+ "id": "flex.005",
+ "section": 8,
+ "name": "zxuqian/html-css-examples · 05-button-hover-border-drawing-effect",
+ "source": {
+  "repo": "zxuqian/html-css-examples",
+  "commit": "2a9fc59f44aeda092cbac07472aaf0f1ead4e1a6",
+  "license": "MIT",
+  "path": "05-button-hover-border-drawing-effect",
+  "url": "https://github.com/zxuqian/html-css-examples/tree/2a9fc59f44aeda092cbac07472aaf0f1ead4e1a6/05-button-hover-border-drawing-effect"
+ },
+ "entry": "index.html",
+ "dir": "cases/s08/005",
+ "bytes": 2365,
+ "files": 2,
+ "digest": "31643658e362c944da19",
+ "facts": {
+  "title": "Static Template",
+  "elements": 13,
+  "max_depth": 6,
+  "tags": {
+   "html": 1,
+   "head": 1,
+   "meta": 3,
+   "link": 1,
+   "title": 1,
+   "body": 1,
+   "div": 3,
+   "svg": 1,
+   "rect": 1
+  },
+  "html_tags": [
+   "body",
+   "div",
+   "head",
+   "html",
+   "link",
+   "meta",
+   "title"
+  ],
+  "ids": [],
+  "id_counts": {},
+  "classes": [
+   "container",
+   "button-wrapper",
+   "rectangle",
+   "btn"
+  ],
+  "class_counts": {
+   "container": 1,
+   "button-wrapper": 1,
+   "rectangle": 1,
+   "btn": 1
+  },
+  "text_samples": [],
+  "inline_styles": [],
+  "attr_samples": {},
+  "roles": {},
+  "aria": {},
+  "forms": {},
+  "media": {
+   "svg": 1
+  },
+  "linked_css": [
+   "style.css"
+  ],
+  "linked_js": [],
+  "style_blocks": 0,
+  "inline_js": 0,
+  "images": [],
+  "features": [
+   "flex",
+   "anim",
+   "media",
+   "typo",
+   "color",
+   "box"
+  ],
+  "css": {
+   "rules": 7,
+   "selectors": [
+    "html",
+    "body",
+    ".container",
+    ".button-wrapper",
+    ".rectangle",
+    ".btn",
+    ".button-wrapper:hover .rectangle"
+   ],
+   "properties": [
+    "width",
+    "height",
+    "position",
+    "stroke-width",
+    "stroke-dasharray",
+    "stroke-dashoffset",
+    "padding",
+    "margin",
+    "font-family",
+    "display",
+    "align-items",
+    "justify-content",
+    "background",
+    "text-align",
+    "stroke",
+    "fill",
+    "color",
+    "font-size",
+    "letter-spacing",
+    "top",
+    "animation"
+   ],
+   "property_counts": {
+    "width": 2,
+    "height": 2,
+    "position": 2,
+    "stroke-width": 2,
+    "stroke-dasharray": 2,
+    "stroke-dashoffset": 2,
+    "padding": 1,
+    "margin": 1,
+    "font-family": 1,
+    "display": 1,
+    "align-items": 1,
+    "justify-content": 1,
+    "background": 1,
+    "text-align": 1,
+    "stroke": 1,
+    "fill": 1,
+    "color": 1,
+    "font-size": 1,
+    "letter-spacing": 1,
+    "top": 1,
+    "animation": 1
+   },
+   "media": 0,
+   "keyframes": 1,
+   "bytes": 1152
+  },
+  "js_bytes": 0,
+  "html_bytes": 680,
+  "missing_assets": []
+ }
+}

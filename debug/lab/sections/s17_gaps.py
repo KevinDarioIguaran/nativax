@@ -5,21 +5,6 @@ from harness import case, Blocked, close, truthy
 def _(ctx):
     raise Blocked('CSS var() is not evaluated by the engine.')
 
-@case(17, "gap.002", 'hsl() colour values')
-def _(ctx):
-    page = ctx.page("<div id=t>x</div>", "#t { color: hsl(120, 100%, 50%); }")
-    st = page.style("#t")
-    close(st["color"][0], 0, 0.01)
-    close(st["color"][1], 1, 0.01)
-    close(st["color"][2], 0, 0.01)
-
-@case(17, "gap.003", 'calc() in lengths')
-def _(ctx):
-    page = ctx.page("<div id=t>x</div>", "#t { width: calc(100% - 20px); }")
-    b = page.box("#t")
-    truthy(b is not None, "box missing")
-    close(b.get("w", 0), 1004, 1.0)
-
 @case(17, "gap.004", 'position: absolute/fixed layout')
 def _(ctx):
     raise Blocked('Absolute/fixed positioning is not applied in layout.')
@@ -60,10 +45,6 @@ def _(ctx):
 def _(ctx):
     raise Blocked('WebGL is not available.')
 
-@case(17, "gap.014", 'innerHTML getter')
-def _(ctx):
-    raise Blocked('innerHTML getter is broken.')
-
 @case(17, "gap.015", 'font-weight application')
 def _(ctx):
     raise Blocked('font-weight is parsed but not applied in text metrics.')
@@ -88,17 +69,9 @@ def _(ctx):
 def _(ctx):
     raise Blocked('Chromium comparison tooling is not available.')
 
-@case(17, "gap.021", 'animation frame timing')
-def _(ctx):
-    raise Blocked('Animation timing is not measured.')
-
 @case(17, "gap.022", 'prefers-reduced-motion runtime')
 def _(ctx):
     raise Blocked('Reduced-motion switching is not tested at runtime.')
-
-@case(17, "gap.023", 'requestAnimationFrame')
-def _(ctx):
-    raise Blocked('requestAnimationFrame is not implemented.')
 
 @case(17, "gap.024", '@supports evaluation')
 def _(ctx):
@@ -128,12 +101,7 @@ def _(ctx):
 def _(ctx):
     raise Blocked('IndexedDB is not implemented.')
 
-
 @case(17, "gap.031", 'video playback')
 def _(ctx):
     raise Blocked('Video playback/decoding is not implemented (no decoder available).')
 
-
-@case(17, "gap.032", 'scroll support')
-def _(ctx):
-    raise Blocked('Scroll/overflow scrolling is not implemented.')

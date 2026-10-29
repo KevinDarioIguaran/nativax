@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+    <style>
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+        background-color: transparent;
+      }
+
+      main {
+        /* background-color: hsl(209, 100%, 50%); */
+        width: 100vw;
+        height: calc(100vh * 3);
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        justify-items: center;
+
+        /* perspective: 1000px; */
+      }
+
+      img {
+        width: 300px;
+        height: 300px;
+        object-fit: cover;
+        margin-top: 50vh;
+      }
+
+      img:nth-of-type(1) {
+        animation: move200 linear;
+        animation-timeline: scroll(root block);
+      }
+
+      @keyframes move200 {
+        0% {
+          translate: 0 0;
+        }
+        100% {
+          translate: 0 -200px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <img src="images/image1.jpg" alt="" />
+      <img src="images/image2.jpg" alt="" />
+    </main>
+  </body>
+</html>

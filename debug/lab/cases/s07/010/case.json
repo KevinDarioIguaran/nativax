@@ -1,0 +1,266 @@
+{
+ "id": "resp.010",
+ "section": 7,
+ "name": "keshavgbpecdelhi/Web-Development · projects/Random Number Gen_using local storage",
+ "source": {
+  "repo": "keshavgbpecdelhi/Web-Development",
+  "commit": "c1613b1424c3226ecd09ca0f23cd39bc4e32709b",
+  "license": "Apache-2.0",
+  "path": "projects/Random Number Gen_using local storage",
+  "url": "https://github.com/keshavgbpecdelhi/Web-Development/tree/c1613b1424c3226ecd09ca0f23cd39bc4e32709b/projects/Random Number Gen_using local storage"
+ },
+ "entry": "index.html",
+ "dir": "cases/s07/010",
+ "bytes": 1920121,
+ "files": 4,
+ "digest": "94d5bb9268080768c50e",
+ "facts": {
+  "title": "",
+  "elements": 17,
+  "max_depth": 4,
+  "tags": {
+   "html": 1,
+   "head": 1,
+   "meta": 2,
+   "link": 1,
+   "body": 1,
+   "div": 4,
+   "h2": 1,
+   "br": 3,
+   "button": 1,
+   "a": 1,
+   "script": 1
+  },
+  "html_tags": [
+   "a",
+   "body",
+   "button",
+   "div",
+   "h2",
+   "head",
+   "html",
+   "link",
+   "meta",
+   "script"
+  ],
+  "ids": [
+   "navbar",
+   "heading",
+   "numcontainer",
+   "button",
+   "btn",
+   "footer"
+  ],
+  "id_counts": {
+   "navbar": 1,
+   "heading": 1,
+   "numcontainer": 1,
+   "button": 1,
+   "btn": 1,
+   "footer": 1
+  },
+  "classes": [
+   "button-50"
+  ],
+  "class_counts": {
+   "button-50": 1
+  },
+  "text_samples": [],
+  "inline_styles": [],
+  "attr_samples": {
+   "navbar": {
+    "tag": "div",
+    "class": "",
+    "attrs": {
+     "id": "navbar"
+    }
+   },
+   "heading": {
+    "tag": "h2",
+    "class": "",
+    "attrs": {
+     "id": "heading"
+    }
+   },
+   "numcontainer": {
+    "tag": "div",
+    "class": "",
+    "attrs": {
+     "id": "numcontainer"
+    }
+   },
+   "button": {
+    "tag": "div",
+    "class": "",
+    "attrs": {
+     "id": "button"
+    }
+   },
+   "btn": {
+    "tag": "button",
+    "class": "button-50",
+    "attrs": {
+     "id": "btn",
+     "class": "button-50"
+    }
+   },
+   "footer": {
+    "tag": "div",
+    "class": "",
+    "attrs": {
+     "id": "footer"
+    }
+   }
+  },
+  "roles": {},
+  "aria": {},
+  "forms": {
+   "button": 1
+  },
+  "media": {},
+  "linked_css": [
+   "ieterandom.css"
+  ],
+  "linked_js": [
+   "ieterandom.js"
+  ],
+  "style_blocks": 0,
+  "inline_js": 1,
+  "images": [],
+  "features": [
+   "flex",
+   "position",
+   "anim",
+   "responsive",
+   "forms",
+   "typo",
+   "color",
+   "box",
+   "jsdom",
+   "events"
+  ],
+  "css": {
+   "rules": 15,
+   "selectors": [
+    "html",
+    "#navbar",
+    "#navbar h2",
+    "#numcontainer",
+    "#footer",
+    "#footer a",
+    "#button",
+    ".button-50",
+    ".button-50:focus",
+    ".button-50:hover",
+    ".button-50:active",
+    ".button-50:not([disabled]):active"
+   ],
+   "properties": [
+    "transform",
+    "color",
+    "font-size",
+    "border",
+    "display",
+    "font-family",
+    "font-weight",
+    "animation",
+    "justify-content",
+    "box-shadow",
+    "margin",
+    "padding",
+    "line-height",
+    "height",
+    "background-color",
+    "visibility",
+    "animation-delay",
+    "align-items",
+    "text-decoration",
+    "background",
+    "letter-spacing",
+    "border-radius",
+    "width",
+    "opacity",
+    "-webkit-background-size",
+    "-moz-background-size",
+    "-o-background-size",
+    "background-size",
+    "border-bottom",
+    "margin-top",
+    "position",
+    "bottom",
+    "border-top",
+    "appearance",
+    "background-image",
+    "box-sizing",
+    "cursor",
+    "overflow",
+    "text-align",
+    "text-transform",
+    "touch-action",
+    "user-select",
+    "-webkit-user-select",
+    "vertical-align",
+    "white-space",
+    "outline",
+    "top",
+    "left"
+   ],
+   "property_counts": {
+    "transform": 11,
+    "color": 9,
+    "font-size": 6,
+    "border": 5,
+    "display": 5,
+    "font-family": 4,
+    "font-weight": 4,
+    "animation": 4,
+    "justify-content": 4,
+    "box-shadow": 4,
+    "margin": 3,
+    "padding": 3,
+    "line-height": 3,
+    "height": 3,
+    "background-color": 3,
+    "visibility": 3,
+    "animation-delay": 3,
+    "align-items": 3,
+    "text-decoration": 3,
+    "background": 2,
+    "letter-spacing": 2,
+    "border-radius": 2,
+    "width": 2,
+    "opacity": 2,
+    "-webkit-background-size": 1,
+    "-moz-background-size": 1,
+    "-o-background-size": 1,
+    "background-size": 1,
+    "border-bottom": 1,
+    "margin-top": 1,
+    "position": 1,
+    "bottom": 1,
+    "border-top": 1,
+    "appearance": 1,
+    "background-image": 1,
+    "box-sizing": 1,
+    "cursor": 1,
+    "overflow": 1,
+    "text-align": 1,
+    "text-transform": 1,
+    "touch-action": 1,
+    "user-select": 1,
+    "-webkit-user-select": 1,
+    "vertical-align": 1,
+    "white-space": 1,
+    "outline": 1,
+    "top": 1,
+    "left": 1
+   },
+   "media": 1,
+   "keyframes": 4,
+   "bytes": 3905
+  },
+  "js_bytes": 915,
+  "html_bytes": 586,
+  "missing_assets": []
+ }
+}

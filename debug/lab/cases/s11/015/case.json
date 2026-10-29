@@ -1,0 +1,191 @@
+{
+ "id": "events.015",
+ "section": 11,
+ "name": "keshavgbpecdelhi/Web-Development · projects/github_profile",
+ "source": {
+  "repo": "keshavgbpecdelhi/Web-Development",
+  "commit": "c1613b1424c3226ecd09ca0f23cd39bc4e32709b",
+  "license": "Apache-2.0",
+  "path": "projects/github_profile",
+  "url": "https://github.com/keshavgbpecdelhi/Web-Development/tree/c1613b1424c3226ecd09ca0f23cd39bc4e32709b/projects/github_profile"
+ },
+ "entry": "index.html",
+ "dir": "cases/s11/015",
+ "bytes": 4190,
+ "files": 3,
+ "digest": "e4b8748c3ce32346f3fc",
+ "facts": {
+  "title": "Github",
+  "elements": 12,
+  "max_depth": 4,
+  "tags": {
+   "html": 1,
+   "head": 1,
+   "meta": 3,
+   "title": 1,
+   "link": 1,
+   "body": 1,
+   "form": 1,
+   "input": 1,
+   "main": 1,
+   "script": 1
+  },
+  "html_tags": [
+   "body",
+   "form",
+   "head",
+   "html",
+   "input",
+   "link",
+   "main",
+   "meta",
+   "script",
+   "title"
+  ],
+  "ids": [
+   "form",
+   "search",
+   "main"
+  ],
+  "id_counts": {
+   "form": 1,
+   "search": 1,
+   "main": 1
+  },
+  "classes": [],
+  "class_counts": {},
+  "text_samples": [],
+  "inline_styles": [],
+  "attr_samples": {
+   "form": {
+    "tag": "form",
+    "class": "",
+    "attrs": {
+     "id": "form"
+    }
+   },
+   "search": {
+    "tag": "input",
+    "class": "",
+    "attrs": {
+     "id": "search",
+     "type": "text",
+     "placeholder": "Search a Github User"
+    }
+   },
+   "main": {
+    "tag": "main",
+    "class": "",
+    "attrs": {
+     "id": "main"
+    }
+   }
+  },
+  "roles": {},
+  "aria": {},
+  "forms": {
+   "form": 1,
+   "input": 1
+  },
+  "media": {},
+  "linked_css": [
+   "style.css"
+  ],
+  "linked_js": [
+   "script.js"
+  ],
+  "style_blocks": 0,
+  "inline_js": 1,
+  "images": [],
+  "features": [
+   "flex",
+   "forms",
+   "typo",
+   "color",
+   "box",
+   "jsdom",
+   "events"
+  ],
+  "css": {
+   "rules": 12,
+   "selectors": [
+    "body",
+    "input",
+    "input::placeholder",
+    "input:focus",
+    ".card",
+    ".avatar",
+    ".user-info",
+    ".user-info h2",
+    ".user-info ul",
+    ".user-info ul li",
+    ".user-info ul li strong",
+    ".repo"
+   ],
+   "properties": [
+    "display",
+    "background-color",
+    "border-radius",
+    "color",
+    "padding",
+    "font-size",
+    "background-image",
+    "align-items",
+    "justify-content",
+    "font-family",
+    "border",
+    "margin-bottom",
+    "input",
+    "max-width",
+    "margin-left",
+    "box-sizing",
+    "flex-direction",
+    "margin",
+    "min-height",
+    "outline",
+    "box-shadow",
+    "height",
+    "width",
+    "margin-top",
+    "list-style-type",
+    "margin-right",
+    "text-decoration"
+   ],
+   "property_counts": {
+    "display": 5,
+    "background-color": 4,
+    "border-radius": 4,
+    "color": 4,
+    "padding": 4,
+    "font-size": 3,
+    "background-image": 2,
+    "align-items": 2,
+    "justify-content": 2,
+    "font-family": 2,
+    "border": 2,
+    "margin-bottom": 2,
+    "input": 2,
+    "max-width": 2,
+    "margin-left": 2,
+    "box-sizing": 1,
+    "flex-direction": 1,
+    "margin": 1,
+    "min-height": 1,
+    "outline": 1,
+    "box-shadow": 1,
+    "height": 1,
+    "width": 1,
+    "margin-top": 1,
+    "list-style-type": 1,
+    "margin-right": 1,
+    "text-decoration": 1
+   },
+   "media": 0,
+   "keyframes": 0,
+   "bytes": 1681
+  },
+  "js_bytes": 1872,
+  "html_bytes": 481,
+  "missing_assets": []
+ }
+}

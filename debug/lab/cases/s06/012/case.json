@@ -1,0 +1,189 @@
+{
+ "id": "anim.012",
+ "section": 6,
+ "name": "keshavgbpecdelhi/Web-Development · projects/joke-generator",
+ "source": {
+  "repo": "keshavgbpecdelhi/Web-Development",
+  "commit": "c1613b1424c3226ecd09ca0f23cd39bc4e32709b",
+  "license": "Apache-2.0",
+  "path": "projects/joke-generator",
+  "url": "https://github.com/keshavgbpecdelhi/Web-Development/tree/c1613b1424c3226ecd09ca0f23cd39bc4e32709b/projects/joke-generator"
+ },
+ "entry": "index.html",
+ "dir": "cases/s06/012",
+ "bytes": 2714,
+ "files": 3,
+ "digest": "28cf440db45e229821b7",
+ "facts": {
+  "title": "Random Joke Generator",
+  "elements": 13,
+  "max_depth": 4,
+  "tags": {
+   "html": 1,
+   "head": 1,
+   "meta": 3,
+   "title": 1,
+   "link": 1,
+   "script": 1,
+   "body": 1,
+   "div": 2,
+   "h1": 1,
+   "button": 1
+  },
+  "html_tags": [
+   "body",
+   "button",
+   "div",
+   "h1",
+   "head",
+   "html",
+   "link",
+   "meta",
+   "script",
+   "title"
+  ],
+  "ids": [
+   "container",
+   "joke-area",
+   "joke-button"
+  ],
+  "id_counts": {
+   "container": 1,
+   "joke-area": 1,
+   "joke-button": 1
+  },
+  "classes": [],
+  "class_counts": {},
+  "text_samples": [
+   "Random Joke Generator",
+   "Click the below button to generate random jokes!!!",
+   "Make me happy"
+  ],
+  "inline_styles": [],
+  "attr_samples": {
+   "container": {
+    "tag": "div",
+    "class": "",
+    "attrs": {
+     "id": "container"
+    }
+   },
+   "joke-area": {
+    "tag": "div",
+    "class": "",
+    "attrs": {
+     "id": "joke-area"
+    }
+   },
+   "joke-button": {
+    "tag": "button",
+    "class": "",
+    "attrs": {
+     "id": "joke-button"
+    }
+   }
+  },
+  "roles": {},
+  "aria": {},
+  "forms": {
+   "button": 1
+  },
+  "media": {},
+  "linked_css": [
+   "styles.css"
+  ],
+  "linked_js": [
+   "script.js"
+  ],
+  "style_blocks": 0,
+  "inline_js": 1,
+  "images": [],
+  "features": [
+   "flex",
+   "anim",
+   "forms",
+   "typo",
+   "color",
+   "box",
+   "jsdom",
+   "events"
+  ],
+  "css": {
+   "rules": 8,
+   "selectors": [
+    "*",
+    "body",
+    "#container",
+    "#container h1",
+    "#joke-area",
+    "#joke-button",
+    "#joke-button:active",
+    ".loading"
+   ],
+   "properties": [
+    "margin",
+    "background",
+    "color",
+    "padding",
+    "display",
+    "justify-content",
+    "align-items",
+    "border-radius",
+    "font-size",
+    "font-weight",
+    "background-position",
+    "box-sizing",
+    "font-family",
+    "height",
+    "max-width",
+    "min-width",
+    "min-height",
+    "max-height",
+    "text-align",
+    "box-shadow",
+    "width",
+    "outline",
+    "border",
+    "cursor",
+    "transform",
+    "background-size",
+    "animation"
+   ],
+   "property_counts": {
+    "margin": 4,
+    "background": 4,
+    "color": 3,
+    "padding": 2,
+    "display": 2,
+    "justify-content": 2,
+    "align-items": 2,
+    "border-radius": 2,
+    "font-size": 2,
+    "font-weight": 2,
+    "background-position": 2,
+    "box-sizing": 1,
+    "font-family": 1,
+    "height": 1,
+    "max-width": 1,
+    "min-width": 1,
+    "min-height": 1,
+    "max-height": 1,
+    "text-align": 1,
+    "box-shadow": 1,
+    "width": 1,
+    "outline": 1,
+    "border": 1,
+    "cursor": 1,
+    "transform": 1,
+    "background-size": 1,
+    "animation": 1
+   },
+   "media": 0,
+   "keyframes": 1,
+   "bytes": 1227
+  },
+  "js_bytes": 810,
+  "html_bytes": 588,
+  "missing_assets": []
+ }
+}

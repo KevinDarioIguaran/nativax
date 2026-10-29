@@ -1,0 +1,139 @@
+{
+ "id": "color.001",
+ "section": 5,
+ "name": "zxuqian/html-css-examples · 26-glassmorphism",
+ "source": {
+  "repo": "zxuqian/html-css-examples",
+  "commit": "2a9fc59f44aeda092cbac07472aaf0f1ead4e1a6",
+  "license": "MIT",
+  "path": "26-glassmorphism",
+  "url": "https://github.com/zxuqian/html-css-examples/tree/2a9fc59f44aeda092cbac07472aaf0f1ead4e1a6/26-glassmorphism"
+ },
+ "entry": "index.html",
+ "dir": "cases/s05/001",
+ "bytes": 1039314,
+ "files": 2,
+ "digest": "33e394cb776652bc667d",
+ "facts": {
+  "title": "CSS 玻璃特效",
+  "elements": 11,
+  "max_depth": 5,
+  "tags": {
+   "html": 1,
+   "head": 1,
+   "meta": 2,
+   "title": 1,
+   "style": 1,
+   "body": 1,
+   "div": 2,
+   "h1": 2
+  },
+  "html_tags": [
+   "body",
+   "div",
+   "h1",
+   "head",
+   "html",
+   "meta",
+   "style",
+   "title"
+  ],
+  "ids": [],
+  "id_counts": {},
+  "classes": [
+   "background",
+   "glass"
+  ],
+  "class_counts": {
+   "background": 1,
+   "glass": 1
+  },
+  "text_samples": [
+   "CSS Glassmporphsim"
+  ],
+  "inline_styles": [],
+  "attr_samples": {},
+  "roles": {},
+  "aria": {},
+  "forms": {},
+  "media": {},
+  "linked_css": [],
+  "linked_js": [],
+  "style_blocks": 1,
+  "inline_js": 0,
+  "images": [],
+  "features": [
+   "flex",
+   "position",
+   "typo",
+   "color",
+   "box"
+  ],
+  "css": {
+   "rules": 5,
+   "selectors": [
+    "*",
+    ".background",
+    ".glass",
+    ".background > h1",
+    ".glass h1"
+   ],
+   "properties": [
+    "width",
+    "height",
+    "font-size",
+    "color",
+    "box-sizing",
+    "margin",
+    "padding",
+    "font-family",
+    "max-width",
+    "background",
+    "background-size",
+    "display",
+    "align-items",
+    "justify-content",
+    "backdrop-filter",
+    "-webkit-backdrop-filter",
+    "background-color",
+    "box-shadow",
+    "border-radius",
+    "position",
+    "text-align",
+    "padding-top",
+    "text-shadow"
+   ],
+   "property_counts": {
+    "width": 2,
+    "height": 2,
+    "font-size": 2,
+    "color": 2,
+    "box-sizing": 1,
+    "margin": 1,
+    "padding": 1,
+    "font-family": 1,
+    "max-width": 1,
+    "background": 1,
+    "background-size": 1,
+    "display": 1,
+    "align-items": 1,
+    "justify-content": 1,
+    "backdrop-filter": 1,
+    "-webkit-backdrop-filter": 1,
+    "background-color": 1,
+    "box-shadow": 1,
+    "border-radius": 1,
+    "position": 1,
+    "text-align": 1,
+    "padding-top": 1,
+    "text-shadow": 1
+   },
+   "media": 0,
+   "keyframes": 0,
+   "bytes": 995
+  },
+  "js_bytes": 0,
+  "html_bytes": 1422,
+  "missing_assets": []
+ }
+}

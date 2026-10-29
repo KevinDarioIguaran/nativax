@@ -1,0 +1,277 @@
+{
+ "id": "typo.015",
+ "section": 4,
+ "name": "learning-zone/website-templates · grass-stains",
+ "source": {
+  "repo": "learning-zone/website-templates",
+  "commit": "7bf31e9646a6b5f51c2e55b2557787310436989f",
+  "license": "not declared upstream",
+  "path": "grass-stains",
+  "url": "https://github.com/learning-zone/website-templates/tree/7bf31e9646a6b5f51c2e55b2557787310436989f/grass-stains"
+ },
+ "entry": "index.html",
+ "dir": "cases/s04/015",
+ "bytes": 34486,
+ "files": 12,
+ "digest": "0706bf9ab90a4ac9f3c9",
+ "facts": {
+  "title": "culture shock:grass stains",
+  "elements": 69,
+  "max_depth": 7,
+  "tags": {
+   "html": 1,
+   "head": 1,
+   "meta": 4,
+   "link": 2,
+   "title": 1,
+   "body": 1,
+   "div": 9,
+   "h1": 1,
+   "ul": 2,
+   "li": 11,
+   "a": 14,
+   "img": 4,
+   "h3": 1,
+   "p": 9,
+   "h2": 4,
+   "em": 3,
+   "br": 1
+  },
+  "html_tags": [
+   "a",
+   "body",
+   "div",
+   "em",
+   "h1",
+   "h2",
+   "h3",
+   "head",
+   "html",
+   "img",
+   "li",
+   "link",
+   "meta",
+   "p",
+   "title",
+   "ul"
+  ],
+  "ids": [
+   "nav",
+   "box_right",
+   "list",
+   "footer"
+  ],
+  "id_counts": {
+   "nav": 1,
+   "box_right": 1,
+   "list": 1,
+   "footer": 1
+  },
+  "classes": [
+   "page_wrap",
+   "clearfix",
+   "header_text",
+   "topnav",
+   "container",
+   "box_right",
+   "box_cnr_top",
+   "cnr",
+   "left",
+   "box_cnr_bottom",
+   "grey",
+   "footer"
+  ],
+  "class_counts": {
+   "page_wrap": 1,
+   "clearfix": 3,
+   "header_text": 1,
+   "topnav": 1,
+   "container": 1,
+   "box_right": 1,
+   "box_cnr_top": 1,
+   "cnr": 2,
+   "left": 1,
+   "box_cnr_bottom": 1,
+   "grey": 1,
+   "footer": 1
+  },
+  "text_samples": [
+   "culture shock",
+   "A Floated Text Box",
+   "A handy right-side text box for news, updates or maybe a profile. The choices are practically limitless for this blue bo",
+   "The rounded corners on this text box is done with CSS that was developed by",
+   "Grass Stains (v1.2)",
+   "Update: You're looking at an updated version of this design. Thanks to everyone who provided feedback for the update, es",
+   "If you're thinking to yourself that this one looks a lot like",
+   "Prozac Afternoon (v1.2)"
+  ],
+  "inline_styles": [
+   "display: none",
+   "display: none"
+  ],
+  "attr_samples": {
+   "nav": {
+    "tag": "div",
+    "class": "topnav",
+    "attrs": {
+     "id": "nav",
+     "class": "topnav"
+    }
+   },
+   "box_right": {
+    "tag": "div",
+    "class": "box_right clearfix",
+    "attrs": {
+     "id": "box_right",
+     "class": "box_right clearfix"
+    }
+   },
+   "list": {
+    "tag": "ul",
+    "class": "",
+    "attrs": {
+     "id": "list"
+    }
+   },
+   "footer": {
+    "tag": "div",
+    "class": "footer",
+    "attrs": {
+     "id": "footer",
+     "class": "footer"
+    }
+   }
+  },
+  "roles": {},
+  "aria": {},
+  "forms": {},
+  "media": {
+   "img": 4
+  },
+  "linked_css": [
+   "grass_stains.css",
+   "print.css"
+  ],
+  "linked_js": [],
+  "style_blocks": 0,
+  "inline_js": 0,
+  "images": [
+   "images/cnr_tl.gif",
+   "images/sample.jpg",
+   "images/cnr_bl.gif",
+   "spacer.gif"
+  ],
+  "features": [
+   "position",
+   "anim",
+   "media",
+   "typo",
+   "color",
+   "box"
+  ],
+  "css": {
+   "rules": 55,
+   "selectors": [
+    "body",
+    ".page_wrap",
+    ".header_text",
+    ".topnav",
+    ".container",
+    ".container p",
+    ".box_right",
+    ".box_right p",
+    ".box_cnr_top",
+    ".box_cnr_bottom",
+    "img.cnr",
+    ".footer",
+    "#nav ul",
+    "#nav ul li",
+    "#nav ul li a",
+    "#nav ul li a:hover",
+    "a",
+    "a:hover",
+    "#box_right a",
+    "#box_right a:hover",
+    "#footer a",
+    "#footer a:hover",
+    "h1",
+    "h2",
+    "h3",
+    ".box_right h3",
+    ".grey",
+    "img",
+    ".right img",
+    ".left img",
+    ".clearfix:after",
+    ".clearfix",
+    "* html .clearfix",
+    ".box p",
+    ".maroon"
+   ],
+   "properties": [
+    "margin",
+    "color",
+    "padding",
+    "background",
+    "font-size",
+    "position",
+    "width",
+    "clear",
+    "font-family",
+    "text-align",
+    "text-decoration",
+    "display",
+    "height",
+    "float",
+    "border",
+    "text-transform",
+    "font-weight",
+    "border-right",
+    "border-top",
+    "list-style",
+    "letter-spacing",
+    "border-left",
+    "border-bottom",
+    "white-space",
+    "content",
+    "visibility"
+   ],
+   "property_counts": {
+    "margin": 31,
+    "color": 27,
+    "padding": 26,
+    "background": 18,
+    "font-size": 16,
+    "position": 15,
+    "width": 14,
+    "clear": 11,
+    "font-family": 10,
+    "text-align": 10,
+    "text-decoration": 10,
+    "display": 9,
+    "height": 8,
+    "float": 8,
+    "border": 7,
+    "text-transform": 6,
+    "font-weight": 4,
+    "border-right": 3,
+    "border-top": 2,
+    "list-style": 2,
+    "letter-spacing": 2,
+    "border-left": 1,
+    "border-bottom": 1,
+    "white-space": 1,
+    "content": 1,
+    "visibility": 1
+   },
+   "media": 0,
+   "keyframes": 0,
+   "bytes": 6238
+  },
+  "js_bytes": 0,
+  "html_bytes": 4370,
+  "missing_assets": [
+   "spacer.gif"
+  ]
+ }
+}

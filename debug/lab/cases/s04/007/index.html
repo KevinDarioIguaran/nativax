@@ -1,42 +1,181 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>NativaX Lab · 007 · Typography and text — font family case 007</title>
-<link rel="stylesheet" href="style.css">
-</head>
-<body class="">
-<div class="aurora" aria-hidden="true"><i></i><i></i><i></i></div>
-<header class="topbar">
-  <div class="brand"><span class="logo"></span><span>NativaX <b>Lab</b></span></div>
-  <nav class="nav" aria-label="primary">
-    <a class="nav-link is-active" href="#case">Case</a>
-    <a class="nav-link" href="#cards">Components</a>
-    <a class="nav-link" href="#footer">About</a>
-  </nav>
-  <button id="theme-toggle" class="btn ghost" type="button">Theme</button>
-</header>
-<main class="stage">
-  <section class="hero">
-    <p class="eyebrow">Section 01 · HTML, DOM and parsing</p>
-    <h1 class="title">html.001 <span class="grad">div básico</span></h1>
-    <p class="lede">A real laboratory application: semantic HTML structure, animated styles and verifiable JavaScript behaviour.</p>
-    <div class="hero-actions">
-      <button id="ping" class="btn" type="button">Try interaction <span id="pings" class="badge">0</span></button>
-      <span id="clock" class="clock">--:--:--</span>
-    </div>
-  </section>
-  <section id="case" class="case panel">
-<div id=t class='target'>Section 4 case 007: font family.</div>
-  </section>
-  <section id="cards" class="cards" aria-label="components">
-    <article class="card"><span class="tag">HTML</span><h3>Semantics</h3><p>Real elements, attributes and parent-child relations verified by the laboratory.</p></article>
-    <article class="card"><span class="tag">CSS</span><h3>Animation</h3><p>Gradients, keyframes and transitions compared pixel by pixel in the visual sections.</p></article>
-    <article class="card"><span class="tag">JS</span><h3>Interaction</h3><p>JavaScriptCore runs this file: clock, theme, counter and pointer events.</p></article>
-  </section>
-</main>
-<footer id="footer" class="footer"><span>NativaX Lab · C11 + Sokol + JavaScriptCore</span><span>html.001</span></footer>
-<script src="app.js"></script>
-</body>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>HTML Table 样式</title>
+    <style>
+      * {
+        font-family: Arial, "PingFang SC", "Microsoft Yahei", sans-serif;
+        padding: 0;
+        margin: 0;
+        box-sizing: border-box;
+      }
+
+      main {
+        background-color: #f5f5f5;
+        color: #333;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        margin: 0;
+      }
+
+      .activity-table {
+        background-color: #ffffff;
+        border-radius: 12px;
+        padding: 20px;
+        box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.1);
+        width: 80%;
+        max-width: 800px;
+      }
+
+      .activity-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+      }
+
+      .activity-header h2 {
+        margin: 0;
+        font-size: 24px;
+      }
+
+      .activity-header .filter-button {
+        background-color: rgba(224, 224, 224, 0.8);
+        border: none;
+        border-radius: 8px;
+        padding: 8px 16px;
+        cursor: pointer;
+        font-size: 14px;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+
+      th,
+      td {
+        padding: 15px;
+        text-align: left;
+      }
+
+      th {
+        color: #888;
+        font-weight: 600;
+        font-size: 14px;
+      }
+
+      tr {
+        border-bottom: 1px solid #e0e0e0;
+      }
+
+      tr:last-child {
+        border-bottom: none;
+      }
+
+      .customer-info {
+        display: flex;
+        align-items: center;
+      }
+
+      .customer-info img {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        margin-right: 10px;
+      }
+
+      .status {
+        font-size: 14px;
+        font-weight: 600;
+        padding: 5px 12px;
+        border-radius: 12px;
+      }
+
+      .status.member {
+        background-color: rgb(224, 224, 224);
+        color: #555;
+      }
+
+      .status.signed-up {
+        background-color: rgb(255, 208, 0);
+        color: #ffffff;
+      }
+
+      .status.new-customer {
+        background-color: rgb(1, 187, 45);
+        color: #ffffff;
+      }
+
+      .amount {
+        font-weight: 600;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <div class="activity-table">
+        <div class="activity-header">
+          <h2>最新动态</h2>
+          <button class="filter-button">最近24小时</button>
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th>客户</th>
+              <th>状态</th>
+              <th>客户编号</th>
+              <th>保留时间</th>
+              <th>金额</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="customer-info">
+                <img src="https://placehold.co/40" alt="Customer Image" />
+                <div>
+                  <strong>王伟</strong>
+                  <p>wangwei@mail.com</p>
+                </div>
+              </td>
+              <td><span class="status member">会员</span></td>
+              <td>#74568320</td>
+              <td>5分钟前</td>
+              <td class="amount">￥12,408.20</td>
+            </tr>
+            <tr>
+              <td class="customer-info">
+                <img src="https://placehold.co/40" alt="Customer Image" />
+                <div>
+                  <strong>李娜</strong>
+                  <p>lina@mail.com</p>
+                </div>
+              </td>
+              <td><span class="status signed-up">已注册</span></td>
+              <td>#23134855</td>
+              <td>10分钟前</td>
+              <td class="amount">￥201.50</td>
+            </tr>
+            <tr>
+              <td class="customer-info">
+                <img src="https://placehold.co/40" alt="Customer Image" />
+                <div>
+                  <strong>张强</strong>
+                  <p>zhangqiang@mail.com</p>
+                </div>
+              </td>
+              <td><span class="status new-customer">新客户</span></td>
+              <td>#54394837</td>
+              <td>15分钟前</td>
+              <td class="amount">￥2,856.03</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </main>
+  </body>
 </html>

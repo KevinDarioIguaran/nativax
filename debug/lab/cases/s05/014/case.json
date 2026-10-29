@@ -1,0 +1,132 @@
+{
+ "id": "color.014",
+ "section": 5,
+ "name": "zxuqian/html-css-examples · 44-css-pointer-events",
+ "source": {
+  "repo": "zxuqian/html-css-examples",
+  "commit": "2a9fc59f44aeda092cbac07472aaf0f1ead4e1a6",
+  "license": "MIT",
+  "path": "44-css-pointer-events",
+  "url": "https://github.com/zxuqian/html-css-examples/tree/2a9fc59f44aeda092cbac07472aaf0f1ead4e1a6/44-css-pointer-events"
+ },
+ "entry": "index.html",
+ "dir": "cases/s05/014",
+ "bytes": 3512574,
+ "files": 2,
+ "digest": "a9ef25e40295a2784367",
+ "facts": {
+  "title": "CSS Pointer Events",
+  "elements": 13,
+  "max_depth": 6,
+  "tags": {
+   "html": 1,
+   "head": 1,
+   "meta": 3,
+   "title": 1,
+   "style": 1,
+   "body": 1,
+   "main": 1,
+   "div": 2,
+   "a": 1,
+   "img": 1
+  },
+  "html_tags": [
+   "a",
+   "body",
+   "div",
+   "head",
+   "html",
+   "img",
+   "main",
+   "meta",
+   "style",
+   "title"
+  ],
+  "ids": [],
+  "id_counts": {},
+  "classes": [
+   "imageContainer",
+   "overlay"
+  ],
+  "class_counts": {
+   "imageContainer": 1,
+   "overlay": 1
+  },
+  "text_samples": [],
+  "inline_styles": [],
+  "attr_samples": {},
+  "roles": {},
+  "aria": {},
+  "forms": {},
+  "media": {
+   "img": 1
+  },
+  "linked_css": [],
+  "linked_js": [],
+  "style_blocks": 1,
+  "inline_js": 0,
+  "images": [
+   "./2021-12-20-19-52-11.png"
+  ],
+  "features": [
+   "grid",
+   "position",
+   "media",
+   "typo",
+   "color",
+   "box",
+   "events"
+  ],
+  "css": {
+   "rules": 6,
+   "selectors": [
+    "*",
+    "body",
+    "main",
+    ".imageContainer",
+    "img",
+    ".overlay"
+   ],
+   "properties": [
+    "width",
+    "padding",
+    "height",
+    "position",
+    "margin",
+    "font-family",
+    "box-sizing",
+    "background",
+    "max-width",
+    "display",
+    "place-items",
+    "bottom",
+    "background-color",
+    "color",
+    "pointer-events"
+   ],
+   "property_counts": {
+    "width": 3,
+    "padding": 2,
+    "height": 2,
+    "position": 2,
+    "margin": 1,
+    "font-family": 1,
+    "box-sizing": 1,
+    "background": 1,
+    "max-width": 1,
+    "display": 1,
+    "place-items": 1,
+    "bottom": 1,
+    "background-color": 1,
+    "color": 1,
+    "pointer-events": 1
+   },
+   "media": 0,
+   "keyframes": 0,
+   "bytes": 718
+  },
+  "js_bytes": 0,
+  "html_bytes": 1264,
+  "missing_assets": []
+ }
+}

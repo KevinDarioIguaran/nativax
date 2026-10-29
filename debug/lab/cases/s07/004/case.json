@@ -1,0 +1,216 @@
+{
+ "id": "resp.004",
+ "section": 7,
+ "name": "keshavgbpecdelhi/Web-Development · projects/gallery-website",
+ "source": {
+  "repo": "keshavgbpecdelhi/Web-Development",
+  "commit": "c1613b1424c3226ecd09ca0f23cd39bc4e32709b",
+  "license": "Apache-2.0",
+  "path": "projects/gallery-website",
+  "url": "https://github.com/keshavgbpecdelhi/Web-Development/tree/c1613b1424c3226ecd09ca0f23cd39bc4e32709b/projects/gallery-website"
+ },
+ "entry": "index.html",
+ "dir": "cases/s07/004",
+ "bytes": 293409,
+ "files": 15,
+ "digest": "dab973b153aceff86443",
+ "facts": {
+  "title": "Document",
+  "elements": 48,
+  "max_depth": 6,
+  "tags": {
+   "html": 1,
+   "head": 1,
+   "meta": 3,
+   "title": 1,
+   "link": 1,
+   "body": 1,
+   "div": 13,
+   "a": 12,
+   "img": 12,
+   "script": 3
+  },
+  "html_tags": [
+   "a",
+   "body",
+   "div",
+   "head",
+   "html",
+   "img",
+   "link",
+   "meta",
+   "script",
+   "title"
+  ],
+  "ids": [
+   "Gallery"
+  ],
+  "id_counts": {
+   "Gallery": 1
+  },
+  "classes": [
+   "gallery-item"
+  ],
+  "class_counts": {
+   "gallery-item": 12
+  },
+  "text_samples": [],
+  "inline_styles": [],
+  "attr_samples": {
+   "Gallery": {
+    "tag": "div",
+    "class": "",
+    "attrs": {
+     "id": "Gallery"
+    }
+   }
+  },
+  "roles": {},
+  "aria": {},
+  "forms": {},
+  "media": {
+   "img": 12
+  },
+  "linked_css": [
+   "style.css"
+  ],
+  "linked_js": [
+   "./script.js"
+  ],
+  "style_blocks": 0,
+  "inline_js": 3,
+  "images": [
+   "./assets/images/01.jpg",
+   "./assets/images/02.jpg",
+   "./assets/images/03.jpg",
+   "./assets/images/04.jpg",
+   "./assets/images/05.jpg",
+   "./assets/images/06.jpg",
+   "./assets/images/07.jpg",
+   "./assets/images/08.jpg",
+   "./assets/images/09.jpg",
+   "./assets/images/10.jpg",
+   "./assets/images/11.jpg",
+   "./assets/images/12.jpg"
+  ],
+  "features": [
+   "position",
+   "responsive",
+   "media",
+   "typo",
+   "color",
+   "box",
+   "jsdom",
+   "events"
+  ],
+  "css": {
+   "rules": 32,
+   "selectors": [
+    "*",
+    "#Gallery",
+    ".gallery-item",
+    ".gallery-item a",
+    ".gallery-item a img",
+    "body.ps-active",
+    "body.ps-active *",
+    "body.ps-active *:focus",
+    "div.ps-document-overlay",
+    "div.ps-viewport",
+    "div.ps-zoom-pan-rotate",
+    "div.ps-slider-item-loading",
+    "div.ps-caption",
+    "div.ps-caption-bottom",
+    "div.ps-caption-content",
+    "div.ps-toolbar",
+    "div.ps-toolbar-top",
+    "div.ps-toolbar-close",
+    "div.ps-toolbar-previous",
+    "div.ps-toolbar-next",
+    "div.ps-toolbar-play",
+    "div.ps-toolbar div div.ps-toolbar-content",
+    "div.ps-toolbar-close div.ps-toolbar-content",
+    "div.ps-toolbar-previous div.ps-toolbar-content",
+    "div.ps-toolbar-previous-disabled div.ps-toolbar-content",
+    "div.ps-toolbar-next div.ps-toolbar-content",
+    "div.ps-toolbar-next-disabled div.ps-toolbar-content",
+    "div.ps-toolbar-play div.ps-toolbar-content"
+   ],
+   "properties": [
+    "background",
+    "width",
+    "background-position",
+    "padding-bottom",
+    "border-bottom",
+    "border-top",
+    "margin",
+    "padding",
+    "position",
+    "cursor",
+    "color",
+    "font-size",
+    "font-family",
+    "text-align",
+    "height",
+    "display",
+    "box-sizing",
+    "margin-top",
+    "max-width",
+    "margin-left",
+    "margin-right",
+    "float",
+    "left",
+    "right",
+    "top",
+    "bottom",
+    "overflow",
+    "-webkit-text-size-adjust",
+    "-webkit-tap-highlight-color",
+    "outline",
+    "table-layout",
+    "background-image",
+    "background-repeat"
+   ],
+   "property_counts": {
+    "background": 10,
+    "width": 7,
+    "background-position": 6,
+    "padding-bottom": 5,
+    "border-bottom": 3,
+    "border-top": 3,
+    "margin": 2,
+    "padding": 2,
+    "position": 2,
+    "cursor": 2,
+    "color": 2,
+    "font-size": 2,
+    "font-family": 2,
+    "text-align": 2,
+    "height": 2,
+    "display": 2,
+    "box-sizing": 1,
+    "margin-top": 1,
+    "max-width": 1,
+    "margin-left": 1,
+    "margin-right": 1,
+    "float": 1,
+    "left": 1,
+    "right": 1,
+    "top": 1,
+    "bottom": 1,
+    "overflow": 1,
+    "-webkit-text-size-adjust": 1,
+    "-webkit-tap-highlight-color": 1,
+    "outline": 1,
+    "table-layout": 1,
+    "background-image": 1,
+    "background-repeat": 1
+   },
+   "media": 4,
+   "keyframes": 0,
+   "bytes": 3657
+  },
+  "js_bytes": 153,
+  "html_bytes": 2228,
+  "missing_assets": []
+ }
+}

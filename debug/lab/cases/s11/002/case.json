@@ -1,0 +1,216 @@
+{
+ "id": "events.002",
+ "section": 11,
+ "name": "keshavgbpecdelhi/Web-Development · projects/digitalClock",
+ "source": {
+  "repo": "keshavgbpecdelhi/Web-Development",
+  "commit": "c1613b1424c3226ecd09ca0f23cd39bc4e32709b",
+  "license": "Apache-2.0",
+  "path": "projects/digitalClock",
+  "url": "https://github.com/keshavgbpecdelhi/Web-Development/tree/c1613b1424c3226ecd09ca0f23cd39bc4e32709b/projects/digitalClock"
+ },
+ "entry": "index.html",
+ "dir": "cases/s11/002",
+ "bytes": 6619,
+ "files": 3,
+ "digest": "78dd2c2fcb2315de590e",
+ "facts": {
+  "title": "Digital Clock",
+  "elements": 16,
+  "max_depth": 7,
+  "tags": {
+   "html": 1,
+   "head": 1,
+   "meta": 1,
+   "title": 1,
+   "link": 1,
+   "body": 1,
+   "canvas": 1,
+   "div": 5,
+   "button": 1,
+   "select": 1,
+   "script": 2
+  },
+  "html_tags": [
+   "body",
+   "button",
+   "canvas",
+   "div",
+   "head",
+   "html",
+   "link",
+   "meta",
+   "script",
+   "select",
+   "title"
+  ],
+  "ids": [
+   "canvas",
+   "TimeZone",
+   "time"
+  ],
+  "id_counts": {
+   "canvas": 1,
+   "TimeZone": 1,
+   "time": 1
+  },
+  "classes": [
+   "dark-theme",
+   "light-theme",
+   "center",
+   "btn-toggle",
+   "wrapper",
+   "display",
+   "timezone"
+  ],
+  "class_counts": {
+   "dark-theme": 1,
+   "light-theme": 1,
+   "center": 1,
+   "btn-toggle": 1,
+   "wrapper": 1,
+   "display": 1,
+   "timezone": 1
+  },
+  "text_samples": [
+   "Toggle Dark Mode"
+  ],
+  "inline_styles": [],
+  "attr_samples": {
+   "canvas": {
+    "tag": "canvas",
+    "class": "",
+    "attrs": {
+     "id": "canvas"
+    }
+   },
+   "TimeZone": {
+    "tag": "select",
+    "class": "",
+    "attrs": {
+     "id": "TimeZone",
+     "name": "TimeZone"
+    }
+   },
+   "time": {
+    "tag": "div",
+    "class": "",
+    "attrs": {
+     "id": "time"
+    }
+   }
+  },
+  "roles": {},
+  "aria": {},
+  "forms": {
+   "button": 1,
+   "select": 1
+  },
+  "media": {
+   "canvas": 1
+  },
+  "linked_css": [
+   "css/style.css"
+  ],
+  "linked_js": [
+   "script.js"
+  ],
+  "style_blocks": 0,
+  "inline_js": 2,
+  "images": [],
+  "features": [
+   "position",
+   "anim",
+   "forms",
+   "media",
+   "typo",
+   "color",
+   "box",
+   "jsdom",
+   "events"
+  ],
+  "css": {
+   "rules": 12,
+   "selectors": [
+    "*",
+    "html",
+    "body",
+    "body.dark-theme",
+    "body.dark-theme a",
+    ".wrapper",
+    ".wrapper .display",
+    ".display #time",
+    ".center",
+    "#TimeZone",
+    "button",
+    "button:hover"
+   ],
+   "properties": [
+    "color",
+    "background",
+    "margin",
+    "position",
+    "border-radius",
+    "padding",
+    "height",
+    "width",
+    "animation",
+    "top",
+    "left",
+    "transform",
+    "font-size",
+    "font-family",
+    "overflow",
+    "border",
+    "cursor",
+    "z-index",
+    "text-align",
+    "line-height",
+    "font-weight",
+    "letter-spacing",
+    "-webkit-background-clip",
+    "-webkit-text-fill-color",
+    "filter",
+    "border-color",
+    "background-color",
+    "button"
+   ],
+   "property_counts": {
+    "color": 6,
+    "background": 6,
+    "margin": 3,
+    "position": 3,
+    "border-radius": 3,
+    "padding": 2,
+    "height": 2,
+    "width": 2,
+    "animation": 2,
+    "top": 2,
+    "left": 2,
+    "transform": 2,
+    "font-size": 2,
+    "font-family": 1,
+    "overflow": 1,
+    "border": 1,
+    "cursor": 1,
+    "z-index": 1,
+    "text-align": 1,
+    "line-height": 1,
+    "font-weight": 1,
+    "letter-spacing": 1,
+    "-webkit-background-clip": 1,
+    "-webkit-text-fill-color": 1,
+    "filter": 1,
+    "border-color": 1,
+    "background-color": 1,
+    "button": 1
+   },
+   "media": 0,
+   "keyframes": 1,
+   "bytes": 1423
+  },
+  "js_bytes": 4546,
+  "html_bytes": 3527,
+  "missing_assets": []
+ }
+}

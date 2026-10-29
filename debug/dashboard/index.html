@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Debug Lab · Dashboard</title>
+  <link rel="stylesheet" href="dashboard.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <span class="logo">⌁</span>
+      <div>
+        <h1>Debug Lab</h1>
+        <p>nativax-debug · nativax-runtime</p>
+      </div>
+    </div>
+    <div class="actions">
+      <button id="btn-run-all" class="btn primary">▶ Ejecutar todo (--all)</button>
+      <button id="btn-theme" class="btn" aria-label="Cambiar tema">◐</button>
+    </div>
+  </header>
+
+  <main>
+    <section class="kpis" id="kpis" aria-label="Resumen"></section>
+
+    <section class="panel">
+      <div class="panel-head">
+        <h2>Secciones</h2>
+        <span class="hint">Cada sección registra 15 casos reales (s01–s16)</span>
+      </div>
+      <div class="sections" id="sections"></div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head">
+        <h2>Casos</h2>
+        <div class="filters">
+          <input id="q" type="search" placeholder="Buscar caso, repo o fact…">
+          <select id="f-section"></select>
+          <select id="f-status">
+            <option value="">Todos los estados</option>
+            <option value="pass">Pass</option>
+            <option value="fail">Fail</option>
+            <option value="skip">Skip</option>
+          </select>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table id="cases">
+          <thead>
+            <tr><th>ID</th><th>Sección</th><th>Procedencia</th><th>Facts</th><th>ms</th><th>Estado</th></tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <div class="pager">
+        <span id="count"></span>
+        <div>
+          <button class="btn" id="prev">←</button>
+          <button class="btn" id="next">→</button>
+        </div>
+      </div>
+    </section>
+
+    <div class="grid-2">
+      <section class="panel">
+        <div class="panel-head">
+          <h2>s17 · Capacidades bloqueadas</h2>
+          <span class="hint" id="gaps-count"></span>
+        </div>
+        <ul class="gaps" id="gaps"></ul>
+      </section>
+
+      <section class="panel">
+        <div class="panel-head"><h2>Estructura</h2></div>
+        <pre class="tree" id="tree"></pre>
+        <h3>CLI</h3>
+        <div class="cli" id="cli"></div>
+      </section>
+    </div>
+  </main>
+
+  <dialog id="dlg">
+    <form method="dialog">
+      <h3 id="dlg-title"></h3>
+      <dl id="dlg-body"></dl>
+      <button class="btn primary">Cerrar</button>
+    </form>
+  </dialog>
+
+  <div class="toast" id="toast" role="status"></div>
+
+  <script src="dashboard.js"></script>
+</body>
+</html>

@@ -1,42 +1,134 @@
-<!doctype html>
-<html lang="en">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>NativaX Lab · 010 · Positioning and stacking — static case 010</title>
-<link rel="stylesheet" href="style.css">
-</head>
-<body class="">
-<div class="aurora" aria-hidden="true"><i></i><i></i><i></i></div>
-<header class="topbar">
-  <div class="brand"><span class="logo"></span><span>NativaX <b>Lab</b></span></div>
-  <nav class="nav" aria-label="primary">
-    <a class="nav-link is-active" href="#case">Case</a>
-    <a class="nav-link" href="#cards">Components</a>
-    <a class="nav-link" href="#footer">About</a>
-  </nav>
-  <button id="theme-toggle" class="btn ghost" type="button">Theme</button>
-</header>
-<main class="stage">
-  <section class="hero">
-    <p class="eyebrow">Section 01 · HTML, DOM and parsing</p>
-    <h1 class="title">html.001 <span class="grad">div básico</span></h1>
-    <p class="lede">A real laboratory application: semantic HTML structure, animated styles and verifiable JavaScript behaviour.</p>
-    <div class="hero-actions">
-      <button id="ping" class="btn" type="button">Try interaction <span id="pings" class="badge">0</span></button>
-      <span id="clock" class="clock">--:--:--</span>
+
+  <!DOCTYPE html>
+  <html lang="en">
+  <head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>New Document</title>
+  </head>
+<body>
+  
+
+
+<style>
+  *{
+  box-sizing: border-box;
+ }
+body{
+  margin: 0;
+  background-color: #222;
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+}
+.logo{
+  width: 400px;
+  height: 400px;
+  background-color: #00acee;
+  border-radius: 50%;
+  position: relative;
+}
+
+.twtr{
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  top: 55%;
+  left: 50%;
+  transform: translate(-50%,-50%);
+ }
+ .head{
+    width: 25%;
+    height: 25%;
+    background-color: white;
+    border-radius: 50%;
+    position: absolute;
+    left: 55%;
+    top: 20%;
+ }
+ .head::after{
+   content: "";
+   width: 85%;
+   height: 35%;
+   border-radius: 50%;
+   top: 10%;
+   left: 40%;
+   position: absolute;
+   border-bottom: 22px solid #fff;
+   transform: rotate(-5deg);
+ }
+ .head::before{
+   content: "";
+   width: 85%;
+   height: 35%;
+   border-radius: 50%;
+   top: -7%;
+   left: 38%;
+   position: absolute;
+   border-bottom: 20px solid #fff;
+   transform: rotate(-15deg);
+}
+.wing1{
+  width: 50%;
+  height: 40%;
+  border-radius: 50%;
+  border-bottom: 60px solid white;
+  position: absolute;
+  top: 9%;
+  left: 22%;
+  transform: rotate(15deg);
+}
+.wing1::after{
+  content: "";
+  width: 90%;
+  height: 70%;
+  border-radius: 50%;
+  border-bottom: 50px solid #fff;
+  position: absolute;
+  top: 75%;
+  left: 5%;
+  transform: rotate(-5deg);
+}
+.wing1::before{
+  content: "";
+  width: 70%;
+  height: 60%;
+  border-radius: 50%;
+  border-bottom: 45px solid #fff;
+  position: absolute;
+  top: 120%;
+  left: 20%;
+  transform: rotate(-20deg);
+ }
+ .tail{
+  width: 70%;
+  height: 60%;
+  border-radius: 50%;
+  border-bottom: 60px solid #fff;
+  position: absolute;
+  top: 15%;
+  left: 14%;
+  transform: rotate(-30deg);
+}
+.filler{
+  width: 30%;
+  height: 15%;
+  background-color: white;
+  position: absolute;
+  top: 40%;
+  left: 45%;
+  transform: rotate(-40deg);
+}
+ </style>
+<div class="logo">
+        <div class="twtr">
+            <div class="head"></div>
+            <div class="wing1"></div>
+            <div class="tail"></div>
+            <div class="filler"></div>
+        </div>
     </div>
-  </section>
-  <section id="case" class="case panel">
-<div id=t class='target'>Section 9 case 010: static.</div>
-  </section>
-  <section id="cards" class="cards" aria-label="components">
-    <article class="card"><span class="tag">HTML</span><h3>Semantics</h3><p>Real elements, attributes and parent-child relations verified by the laboratory.</p></article>
-    <article class="card"><span class="tag">CSS</span><h3>Animation</h3><p>Gradients, keyframes and transitions compared pixel by pixel in the visual sections.</p></article>
-    <article class="card"><span class="tag">JS</span><h3>Interaction</h3><p>JavaScriptCore runs this file: clock, theme, counter and pointer events.</p></article>
-  </section>
-</main>
-<footer id="footer" class="footer"><span>NativaX Lab · C11 + Sokol + JavaScriptCore</span><span>html.001</span></footer>
-<script src="app.js"></script>
 </body>
 </html>
+

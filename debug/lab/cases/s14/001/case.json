@@ -1,0 +1,190 @@
+{
+ "id": "media.001",
+ "section": 14,
+ "name": "keshavgbpecdelhi/Web-Development · projects/Memory-game",
+ "source": {
+  "repo": "keshavgbpecdelhi/Web-Development",
+  "commit": "c1613b1424c3226ecd09ca0f23cd39bc4e32709b",
+  "license": "Apache-2.0",
+  "path": "projects/Memory-game",
+  "url": "https://github.com/keshavgbpecdelhi/Web-Development/tree/c1613b1424c3226ecd09ca0f23cd39bc4e32709b/projects/Memory-game"
+ },
+ "entry": "index.html",
+ "dir": "cases/s14/001",
+ "bytes": 892622,
+ "files": 12,
+ "digest": "b332ad9cea91e6aaedb9",
+ "facts": {
+  "title": "Memory game",
+  "elements": 60,
+  "max_depth": 5,
+  "tags": {
+   "html": 1,
+   "head": 1,
+   "meta": 1,
+   "title": 1,
+   "link": 3,
+   "body": 1,
+   "div": 18,
+   "h1": 1,
+   "img": 32,
+   "script": 1
+  },
+  "html_tags": [
+   "body",
+   "div",
+   "h1",
+   "head",
+   "html",
+   "img",
+   "link",
+   "meta",
+   "script",
+   "title"
+  ],
+  "ids": [],
+  "id_counts": {},
+  "classes": [
+   "gameContainer",
+   "container",
+   "text-center",
+   "text-white",
+   "display-4",
+   "card",
+   "front",
+   "flip",
+   "back"
+  ],
+  "class_counts": {
+   "gameContainer": 1,
+   "container": 1,
+   "text-center": 1,
+   "text-white": 1,
+   "display-4": 1,
+   "card": 16,
+   "front": 16,
+   "flip": 1,
+   "back": 16
+  },
+  "text_samples": [
+   "How is your memory"
+  ],
+  "inline_styles": [],
+  "attr_samples": {},
+  "roles": {},
+  "aria": {},
+  "forms": {},
+  "media": {
+   "img": 32
+  },
+  "linked_css": [
+   "styles.css"
+  ],
+  "linked_js": [
+   "index.js"
+  ],
+  "style_blocks": 0,
+  "inline_js": 1,
+  "images": [
+   "./image/evilface.png",
+   "./image/allemo.png",
+   "./image/evilface.png",
+   "./image/allemo.png",
+   "./image/angryface.png",
+   "./image/allemo.png",
+   "./image/angryface.png",
+   "./image/allemo.png",
+   "./image/coolface.png",
+   "./image/allemo.png",
+   "./image/coolface.png",
+   "./image/allemo.png",
+   "./image/feverface.png",
+   "./image/allemo.png",
+   "./image/feverface.png",
+   "./image/allemo.png",
+   "./image/vomitface.png",
+   "./image/allemo.png",
+   "./image/vomitface.png",
+   "./image/allemo.png",
+   "./image/sneezeface.png",
+   "./image/allemo.png",
+   "./image/sneezeface.png",
+   "./image/allemo.png",
+   "./image/mindblownface.png",
+   "./image/allemo.png",
+   "./image/mindblownface.png",
+   "./image/allemo.png",
+   "./image/thinkingface.png",
+   "./image/allemo.png",
+   "./image/thinkingface.png",
+   "./image/allemo.png"
+  ],
+  "features": [
+   "flex",
+   "position",
+   "anim",
+   "media",
+   "color",
+   "box",
+   "jsdom",
+   "events"
+  ],
+  "css": {
+   "rules": 9,
+   "selectors": [
+    "*",
+    "body",
+    ".gameContainer",
+    ".card",
+    ".card:active",
+    ".card.flip",
+    ".front",
+    ".back"
+   ],
+   "properties": [
+    "height",
+    "margin",
+    "background-color",
+    "width",
+    "transform",
+    "padding",
+    "display",
+    "position",
+    "transition",
+    "cursor",
+    "box-sizing",
+    "flex-wrap",
+    "perspective",
+    "transform-style",
+    "border-radius",
+    "backface-visibility"
+   ],
+   "property_counts": {
+    "height": 4,
+    "margin": 3,
+    "background-color": 3,
+    "width": 3,
+    "transform": 3,
+    "padding": 2,
+    "display": 2,
+    "position": 2,
+    "transition": 2,
+    "cursor": 2,
+    "box-sizing": 1,
+    "flex-wrap": 1,
+    "perspective": 1,
+    "transform-style": 1,
+    "border-radius": 1,
+    "backface-visibility": 1
+   },
+   "media": 0,
+   "keyframes": 0,
+   "bytes": 815
+  },
+  "js_bytes": 1103,
+  "html_bytes": 3821,
+  "missing_assets": [
+   "allemo.png"
+  ]
+ }
+}

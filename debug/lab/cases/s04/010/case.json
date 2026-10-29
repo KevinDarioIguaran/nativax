@@ -1,0 +1,298 @@
+{
+ "id": "typo.010",
+ "section": 4,
+ "name": "learning-zone/website-templates · dreamy",
+ "source": {
+  "repo": "learning-zone/website-templates",
+  "commit": "7bf31e9646a6b5f51c2e55b2557787310436989f",
+  "license": "not declared upstream",
+  "path": "dreamy",
+  "url": "https://github.com/learning-zone/website-templates/tree/7bf31e9646a6b5f51c2e55b2557787310436989f/dreamy"
+ },
+ "entry": "index.html",
+ "dir": "cases/s04/010",
+ "bytes": 2219918,
+ "files": 12,
+ "digest": "a1afbfc2cab388269431",
+ "facts": {
+  "title": "Dreamy - A Ginger Ninja! template",
+  "elements": 50,
+  "max_depth": 7,
+  "tags": {
+   "html": 1,
+   "head": 1,
+   "meta": 1,
+   "title": 1,
+   "link": 1,
+   "body": 1,
+   "div": 14,
+   "h1": 1,
+   "ul": 2,
+   "li": 10,
+   "a": 15,
+   "p": 2
+  },
+  "html_tags": [
+   "a",
+   "body",
+   "div",
+   "h1",
+   "head",
+   "html",
+   "li",
+   "link",
+   "meta",
+   "p",
+   "title",
+   "ul"
+  ],
+  "ids": [
+   "wrapper",
+   "header",
+   "menu",
+   "sidebar",
+   "feed",
+   "sidebar-bottom",
+   "content",
+   "ad-top",
+   "footer",
+   "footer-valid"
+  ],
+  "id_counts": {
+   "wrapper": 1,
+   "header": 1,
+   "menu": 1,
+   "sidebar": 1,
+   "feed": 1,
+   "sidebar-bottom": 1,
+   "content": 1,
+   "ad-top": 1,
+   "footer": 1,
+   "footer-valid": 1
+  },
+  "classes": [
+   "feed-button",
+   "entry",
+   "entry-title",
+   "date",
+   "comments"
+  ],
+  "class_counts": {
+   "feed-button": 1,
+   "entry": 1,
+   "entry-title": 1,
+   "date": 1,
+   "comments": 1
+  },
+  "text_samples": [
+   "Posted on 30 November 2006",
+   "Lorem ipsum dolor sit amet, consectetuer adipiscing elit, sed diam nonummy nibh euismod tincidunt ut laoreet dolore magn",
+   "Duis autem vel eum iriure dolor in hendrerit in vulputate velit esse molestie consequat, vel illum dolore eu feugiat nul",
+   "ginger ninja!"
+  ],
+  "inline_styles": [],
+  "attr_samples": {
+   "wrapper": {
+    "tag": "div",
+    "class": "",
+    "attrs": {
+     "id": "wrapper"
+    }
+   },
+   "header": {
+    "tag": "div",
+    "class": "",
+    "attrs": {
+     "id": "header"
+    }
+   },
+   "menu": {
+    "tag": "div",
+    "class": "",
+    "attrs": {
+     "id": "menu"
+    }
+   },
+   "sidebar": {
+    "tag": "div",
+    "class": "",
+    "attrs": {
+     "id": "sidebar"
+    }
+   },
+   "feed": {
+    "tag": "div",
+    "class": "",
+    "attrs": {
+     "id": "feed"
+    }
+   },
+   "sidebar-bottom": {
+    "tag": "div",
+    "class": "",
+    "attrs": {
+     "id": "sidebar-bottom"
+    }
+   },
+   "content": {
+    "tag": "div",
+    "class": "",
+    "attrs": {
+     "id": "content"
+    }
+   },
+   "ad-top": {
+    "tag": "div",
+    "class": "",
+    "attrs": {
+     "id": "ad-top"
+    }
+   },
+   "footer": {
+    "tag": "div",
+    "class": "",
+    "attrs": {
+     "id": "footer"
+    }
+   },
+   "footer-valid": {
+    "tag": "div",
+    "class": "",
+    "attrs": {
+     "id": "footer-valid"
+    }
+   }
+  },
+  "roles": {},
+  "aria": {},
+  "forms": {},
+  "media": {},
+  "linked_css": [
+   "style.css"
+  ],
+  "linked_js": [],
+  "style_blocks": 0,
+  "inline_js": 0,
+  "images": [],
+  "features": [
+   "position",
+   "typo",
+   "color",
+   "box"
+  ],
+  "css": {
+   "rules": 35,
+   "selectors": [
+    "body",
+    "*",
+    "img",
+    "p",
+    "a",
+    "a:hover",
+    "#wrapper",
+    "#header",
+    "#menu",
+    "#sidebar",
+    "#content",
+    "#footer",
+    ".entry",
+    ".entry-title",
+    ".date",
+    ".comments",
+    ".comments a",
+    ".comments a:hover",
+    "#menu ul",
+    "#menu li",
+    "#menu li a",
+    "#menu li a:hover",
+    "#sidebar ul",
+    "#sidebar li",
+    "#sidebar li a",
+    "#sidebar li a:hover",
+    "#sidebar-bottom",
+    "#footer-valid",
+    "#footer-valid a",
+    "#footer-valid a:hover",
+    "h1",
+    "#feed",
+    "a.feed-button",
+    "a:hover.feed-button",
+    "#ad-top"
+   ],
+   "properties": [
+    "background",
+    "color",
+    "height",
+    "width",
+    "font-size",
+    "padding",
+    "text-decoration",
+    "float",
+    "padding-left",
+    "margin",
+    "line-height",
+    "letter-spacing",
+    "cursor",
+    "display",
+    "margin-right",
+    "font-weight",
+    "margin-top",
+    "list-style-type",
+    "font-family",
+    "border",
+    "margin-bottom",
+    "min-height",
+    "clear",
+    "text-align",
+    "padding-right",
+    "border-bottom",
+    "padding-top",
+    "position",
+    "top",
+    "left",
+    "font-style",
+    "background-position"
+   ],
+   "property_counts": {
+    "background": 13,
+    "color": 13,
+    "height": 8,
+    "width": 6,
+    "font-size": 5,
+    "padding": 5,
+    "text-decoration": 5,
+    "float": 4,
+    "padding-left": 4,
+    "margin": 3,
+    "line-height": 3,
+    "letter-spacing": 3,
+    "cursor": 3,
+    "display": 3,
+    "margin-right": 2,
+    "font-weight": 2,
+    "margin-top": 2,
+    "list-style-type": 2,
+    "font-family": 1,
+    "border": 1,
+    "margin-bottom": 1,
+    "min-height": 1,
+    "clear": 1,
+    "text-align": 1,
+    "padding-right": 1,
+    "border-bottom": 1,
+    "padding-top": 1,
+    "position": 1,
+    "top": 1,
+    "left": 1,
+    "font-style": 1,
+    "background-position": 1
+   },
+   "media": 0,
+   "keyframes": 0,
+   "bytes": 3081
+  },
+  "js_bytes": 0,
+  "html_bytes": 2115,
+  "missing_assets": []
+ }
+}

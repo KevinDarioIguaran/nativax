@@ -1,0 +1,164 @@
+{
+ "id": "pos.001",
+ "section": 9,
+ "name": "keshavgbpecdelhi/Web-Development · projects/Animated Search Form",
+ "source": {
+  "repo": "keshavgbpecdelhi/Web-Development",
+  "commit": "c1613b1424c3226ecd09ca0f23cd39bc4e32709b",
+  "license": "Apache-2.0",
+  "path": "projects/Animated Search Form",
+  "url": "https://github.com/keshavgbpecdelhi/Web-Development/tree/c1613b1424c3226ecd09ca0f23cd39bc4e32709b/projects/Animated Search Form"
+ },
+ "entry": "index.html",
+ "dir": "cases/s09/001",
+ "bytes": 2227,
+ "files": 3,
+ "digest": "4dbbb5d42abe75817c35",
+ "facts": {
+  "title": "Document",
+  "elements": 15,
+  "max_depth": 6,
+  "tags": {
+   "html": 1,
+   "head": 1,
+   "meta": 3,
+   "script": 1,
+   "link": 2,
+   "title": 1,
+   "body": 1,
+   "div": 1,
+   "form": 1,
+   "input": 1,
+   "button": 1,
+   "i": 1
+  },
+  "html_tags": [
+   "body",
+   "button",
+   "div",
+   "form",
+   "head",
+   "html",
+   "i",
+   "input",
+   "link",
+   "meta",
+   "script",
+   "title"
+  ],
+  "ids": [],
+  "id_counts": {},
+  "classes": [
+   "search",
+   "fa",
+   "fa-search",
+   "icon"
+  ],
+  "class_counts": {
+   "search": 1,
+   "fa": 1,
+   "fa-search": 1,
+   "icon": 1
+  },
+  "text_samples": [],
+  "inline_styles": [
+   "display: flex;"
+  ],
+  "attr_samples": {},
+  "roles": {},
+  "aria": {},
+  "forms": {
+   "form": 1,
+   "input": 1,
+   "button": 1
+  },
+  "media": {},
+  "linked_css": [
+   "style.css"
+  ],
+  "linked_js": [
+   "script.js"
+  ],
+  "style_blocks": 0,
+  "inline_js": 1,
+  "images": [],
+  "features": [
+   "flex",
+   "position",
+   "anim",
+   "forms",
+   "typo",
+   "color",
+   "box",
+   "jsdom",
+   "events"
+  ],
+  "css": {
+   "rules": 10,
+   "selectors": [
+    "body",
+    "*",
+    "input[type=text]",
+    ".active",
+    "input[type=text]:active",
+    "input[type=text]:focus-visible",
+    "form",
+    "button",
+    "button:hover",
+    "button:focus"
+   ],
+   "properties": [
+    "border",
+    "width",
+    "padding",
+    "height",
+    "border-radius",
+    "-webkit-transition",
+    "-moz-transition",
+    "-o-transition",
+    "-ms-transition",
+    "transition",
+    "position",
+    "button",
+    "box-sizing",
+    "margin",
+    "font-family",
+    "font-size",
+    "line-height",
+    "display",
+    "top",
+    "right",
+    "background"
+   ],
+   "property_counts": {
+    "border": 4,
+    "width": 3,
+    "padding": 2,
+    "height": 2,
+    "border-radius": 2,
+    "-webkit-transition": 2,
+    "-moz-transition": 2,
+    "-o-transition": 2,
+    "-ms-transition": 2,
+    "transition": 2,
+    "position": 2,
+    "button": 2,
+    "box-sizing": 1,
+    "margin": 1,
+    "font-family": 1,
+    "font-size": 1,
+    "line-height": 1,
+    "display": 1,
+    "top": 1,
+    "right": 1,
+    "background": 1
+   },
+   "media": 0,
+   "keyframes": 0,
+   "bytes": 997
+  },
+  "js_bytes": 467,
+  "html_bytes": 764,
+  "missing_assets": []
+ }
+}

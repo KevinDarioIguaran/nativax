@@ -1,0 +1,120 @@
+{
+ "id": "flex.011",
+ "section": 8,
+ "name": "zxuqian/html-css-examples · 11-canvas-bar-chart",
+ "source": {
+  "repo": "zxuqian/html-css-examples",
+  "commit": "2a9fc59f44aeda092cbac07472aaf0f1ead4e1a6",
+  "license": "MIT",
+  "path": "11-canvas-bar-chart",
+  "url": "https://github.com/zxuqian/html-css-examples/tree/2a9fc59f44aeda092cbac07472aaf0f1ead4e1a6/11-canvas-bar-chart"
+ },
+ "entry": "index.html",
+ "dir": "cases/s08/011",
+ "bytes": 4063,
+ "files": 1,
+ "digest": "8a9502537b274c18547f",
+ "facts": {
+  "title": "Canvs 实现柱状图",
+  "elements": 11,
+  "max_depth": 4,
+  "tags": {
+   "html": 1,
+   "head": 1,
+   "meta": 3,
+   "style": 1,
+   "title": 1,
+   "body": 1,
+   "main": 1,
+   "canvas": 1,
+   "script": 1
+  },
+  "html_tags": [
+   "body",
+   "canvas",
+   "head",
+   "html",
+   "main",
+   "meta",
+   "script",
+   "style",
+   "title"
+  ],
+  "ids": [
+   "bar-chart"
+  ],
+  "id_counts": {
+   "bar-chart": 1
+  },
+  "classes": [],
+  "class_counts": {},
+  "text_samples": [],
+  "inline_styles": [],
+  "attr_samples": {
+   "bar-chart": {
+    "tag": "canvas",
+    "class": "",
+    "attrs": {
+     "id": "bar-chart",
+     "width": "600",
+     "height": "300"
+    }
+   }
+  },
+  "roles": {},
+  "aria": {},
+  "forms": {},
+  "media": {
+   "canvas": 1
+  },
+  "linked_css": [],
+  "linked_js": [],
+  "style_blocks": 1,
+  "inline_js": 1,
+  "images": [],
+  "features": [
+   "flex",
+   "media",
+   "color",
+   "box",
+   "jsdom"
+  ],
+  "css": {
+   "rules": 4,
+   "selectors": [
+    "html",
+    "body",
+    "main",
+    "canvas"
+   ],
+   "properties": [
+    "margin",
+    "padding",
+    "display",
+    "align-items",
+    "justify-content",
+    "height",
+    "background-color",
+    "border-radius",
+    "box-shadow"
+   ],
+   "property_counts": {
+    "margin": 1,
+    "padding": 1,
+    "display": 1,
+    "align-items": 1,
+    "justify-content": 1,
+    "height": 1,
+    "background-color": 1,
+    "border-radius": 1,
+    "box-shadow": 1
+   },
+   "media": 0,
+   "keyframes": 0,
+   "bytes": 341
+  },
+  "js_bytes": 3250,
+  "html_bytes": 4063,
+  "missing_assets": []
+ }
+}

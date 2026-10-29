@@ -1,0 +1,135 @@
+{
+ "id": "events.005",
+ "section": 11,
+ "name": "keshavgbpecdelhi/Web-Development · projects/ball game",
+ "source": {
+  "repo": "keshavgbpecdelhi/Web-Development",
+  "commit": "c1613b1424c3226ecd09ca0f23cd39bc4e32709b",
+  "license": "Apache-2.0",
+  "path": "projects/ball game",
+  "url": "https://github.com/keshavgbpecdelhi/Web-Development/tree/c1613b1424c3226ecd09ca0f23cd39bc4e32709b/projects/ball game"
+ },
+ "entry": "index.html",
+ "dir": "cases/s11/005",
+ "bytes": 12038,
+ "files": 3,
+ "digest": "6b190b29a10f0912a86d",
+ "facts": {
+  "title": "Fall game",
+  "elements": 9,
+  "max_depth": 4,
+  "tags": {
+   "html": 1,
+   "head": 1,
+   "meta": 1,
+   "title": 1,
+   "link": 1,
+   "body": 1,
+   "div": 2,
+   "script": 1
+  },
+  "html_tags": [
+   "body",
+   "div",
+   "head",
+   "html",
+   "link",
+   "meta",
+   "script",
+   "title"
+  ],
+  "ids": [
+   "game",
+   "character"
+  ],
+  "id_counts": {
+   "game": 1,
+   "character": 1
+  },
+  "classes": [],
+  "class_counts": {},
+  "text_samples": [],
+  "inline_styles": [],
+  "attr_samples": {
+   "game": {
+    "tag": "div",
+    "class": "",
+    "attrs": {
+     "id": "game"
+    }
+   },
+   "character": {
+    "tag": "div",
+    "class": "",
+    "attrs": {
+     "id": "character"
+    }
+   }
+  },
+  "roles": {},
+  "aria": {},
+  "forms": {},
+  "media": {},
+  "linked_css": [
+   "style.css"
+  ],
+  "linked_js": [
+   "script.js"
+  ],
+  "style_blocks": 0,
+  "inline_js": 1,
+  "images": [],
+  "features": [
+   "color",
+   "box",
+   "jsdom",
+   "events"
+  ],
+  "css": {
+   "rules": 5,
+   "selectors": [
+    "*",
+    "#game",
+    "#character",
+    ".block",
+    ".hole"
+   ],
+   "properties": [
+    "width",
+    "height",
+    "background-color",
+    "position",
+    "top",
+    "margin",
+    "margin-top",
+    "padding",
+    "border",
+    "overflow",
+    "border-radius",
+    "left",
+    "z-index"
+   ],
+   "property_counts": {
+    "width": 4,
+    "height": 4,
+    "background-color": 3,
+    "position": 3,
+    "top": 3,
+    "margin": 2,
+    "margin-top": 2,
+    "padding": 1,
+    "border": 1,
+    "overflow": 1,
+    "border-radius": 1,
+    "left": 1,
+    "z-index": 1
+   },
+   "media": 0,
+   "keyframes": 0,
+   "bytes": 603
+  },
+  "js_bytes": 3336,
+  "html_bytes": 264,
+  "missing_assets": []
+ }
+}

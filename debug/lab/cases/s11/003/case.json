@@ -1,0 +1,78 @@
+{
+ "id": "events.003",
+ "section": 11,
+ "name": "zxuqian/html-css-examples · 31-webcomponent-get-started",
+ "source": {
+  "repo": "zxuqian/html-css-examples",
+  "commit": "2a9fc59f44aeda092cbac07472aaf0f1ead4e1a6",
+  "license": "MIT",
+  "path": "31-webcomponent-get-started",
+  "url": "https://github.com/zxuqian/html-css-examples/tree/2a9fc59f44aeda092cbac07472aaf0f1ead4e1a6/31-webcomponent-get-started"
+ },
+ "entry": "index.html",
+ "dir": "cases/s11/003",
+ "bytes": 4581,
+ "files": 3,
+ "digest": "4443d640a2fe1d454704",
+ "facts": {
+  "title": "Document",
+  "elements": 10,
+  "max_depth": 3,
+  "tags": {
+   "html": 1,
+   "head": 1,
+   "meta": 3,
+   "title": 1,
+   "body": 1,
+   "post-list": 1,
+   "script": 2
+  },
+  "html_tags": [
+   "body",
+   "head",
+   "html",
+   "meta",
+   "script",
+   "title"
+  ],
+  "ids": [],
+  "id_counts": {},
+  "classes": [],
+  "class_counts": {},
+  "text_samples": [],
+  "inline_styles": [],
+  "attr_samples": {},
+  "roles": {},
+  "aria": {},
+  "forms": {},
+  "media": {},
+  "linked_css": [],
+  "linked_js": [
+   "BlogPost.js",
+   "PostList.js"
+  ],
+  "style_blocks": 0,
+  "inline_js": 2,
+  "images": [],
+  "features": [
+   "grid",
+   "typo",
+   "color",
+   "box",
+   "jsdom",
+   "events"
+  ],
+  "css": {
+   "rules": 0,
+   "selectors": [],
+   "properties": [],
+   "property_counts": {},
+   "media": 0,
+   "keyframes": 0,
+   "bytes": 0
+  },
+  "js_bytes": 4122,
+  "html_bytes": 462,
+  "missing_assets": []
+ }
+}

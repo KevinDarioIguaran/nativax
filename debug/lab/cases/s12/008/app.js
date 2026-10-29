@@ -1,43 +1,40 @@
-// NativaX Lab · clock, theme, counter and ripple. Everything real, nothing simulated.
-window.__nativaxCase = 'forms.008';
-(function () {
-  var clock = document.getElementById('clock');
-  function pad(n) { return n < 10 ? '0' + n : String(n); }
-  function tick() {
-    var d = new Date();
-    if (clock) clock.textContent = pad(d.getHours()) + ':' + pad(d.getMinutes()) + ':' + pad(d.getSeconds());
-  }
-  tick();
-  setInterval(tick, 1000);
+var btn=document.getElementById("btn")
+var resetbtn=document.getElementById("btn-reset")
+var hexu=document.getElementById("hex")
+var bgc=document.getElementById("bgc")
+var bgcol, fgcol
+const colors = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, "A", "B", "C", "D", "E", "F"]
 
-  var pings = 0;
-  var badge = document.getElementById('pings');
-  window.__nativaxPings = 0;
-  var ping = document.getElementById('ping');
-  if (ping) {
-    ping.addEventListener('click', function (ev) {
-      pings++;
-      window.__nativaxPings = pings;
-      if (badge) badge.textContent = String(pings);
-      var host = ping.parentNode;
-      if (host) {
-        var r = document.createElement('span');
-        r.className = 'ripple';
-        host.appendChild(r);
-      }
-    });
-  }
+btn.addEventListener('click', function(){
+    let hexcol = "#"
+    for(var hue=0; hue<6;++hue)
+        hexcol+=colors[randomize()]
+    
+    document.body.style.backgroundColor=hexcol
+    console.log(hexcol)
+    hexu.textContent=hexcol
+    bgcol="rgb(49, 49, 49)"
+    fgcol="#f7f7f7"
+    swithcol(bgcol, fgcol)
+})
 
-  var toggle = document.getElementById('theme-toggle');
-  if (toggle) {
-    toggle.addEventListener('click', function () {
-      document.body.classList.toggle('light');
-      toggle.textContent = document.body.classList.contains('light') ? 'Dark' : 'Theme';
-    });
-  }
+resetbtn.addEventListener("click", function(){
+    bgcol="#f7f7f7"
+    fgcol="rgb(49, 49, 49)"
+    swithcol(bgcol, fgcol)
+    document.body.style.backgroundColor="#1a2941"
+    hexu.textContent="#1a2941"
+})
 
-  var cards = document.querySelectorAll('.card');
-  for (var i = 0; i < cards.length; i++) {
-    cards[i].addEventListener('click', function () { this.classList.toggle('is-selected'); });
-  }
-})();
+function randomize(){
+    return Math.floor(Math.random()*colors.length)
+}
+
+function swithcol(bgcol, fgcol){
+    bgc.style.backgroundColor=bgcol
+    bgc.style.color=fgcol
+    btn.style.backgroundColor=bgcol
+    btn.style.color=fgcol
+    resetbtn.style.backgroundColor=bgcol
+    resetbtn.style.color=fgcol
+}

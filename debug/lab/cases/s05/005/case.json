@@ -1,0 +1,162 @@
+{
+ "id": "color.005",
+ "section": 5,
+ "name": "zxuqian/html-css-examples · 34-drag-drop-api",
+ "source": {
+  "repo": "zxuqian/html-css-examples",
+  "commit": "2a9fc59f44aeda092cbac07472aaf0f1ead4e1a6",
+  "license": "MIT",
+  "path": "34-drag-drop-api",
+  "url": "https://github.com/zxuqian/html-css-examples/tree/2a9fc59f44aeda092cbac07472aaf0f1ead4e1a6/34-drag-drop-api"
+ },
+ "entry": "index.html",
+ "dir": "cases/s05/005",
+ "bytes": 3624,
+ "files": 1,
+ "digest": "72a2ab0faf843213a3f1",
+ "facts": {
+  "title": "原生拖拽",
+  "elements": 13,
+  "max_depth": 5,
+  "tags": {
+   "html": 1,
+   "head": 1,
+   "meta": 3,
+   "style": 1,
+   "title": 1,
+   "body": 1,
+   "main": 1,
+   "div": 3,
+   "script": 1
+  },
+  "html_tags": [
+   "body",
+   "div",
+   "head",
+   "html",
+   "main",
+   "meta",
+   "script",
+   "style",
+   "title"
+  ],
+  "ids": [
+   "draggable",
+   "droppable"
+  ],
+  "id_counts": {
+   "draggable": 1,
+   "droppable": 1
+  },
+  "classes": [
+   "draggable-container",
+   "draggable",
+   "droppable"
+  ],
+  "class_counts": {
+   "draggable-container": 1,
+   "draggable": 1,
+   "droppable": 1
+  },
+  "text_samples": [],
+  "inline_styles": [],
+  "attr_samples": {
+   "draggable": {
+    "tag": "div",
+    "class": "draggable",
+    "attrs": {
+     "id": "draggable",
+     "class": "draggable"
+    }
+   },
+   "droppable": {
+    "tag": "div",
+    "class": "droppable",
+    "attrs": {
+     "id": "droppable",
+     "class": "droppable"
+    }
+   }
+  },
+  "roles": {},
+  "aria": {},
+  "forms": {},
+  "media": {},
+  "linked_css": [],
+  "linked_js": [],
+  "style_blocks": 1,
+  "inline_js": 1,
+  "images": [],
+  "features": [
+   "grid",
+   "position",
+   "typo",
+   "color",
+   "box",
+   "jsdom"
+  ],
+  "css": {
+   "rules": 12,
+   "selectors": [
+    "*",
+    "main",
+    ".draggable-container",
+    ".draggable",
+    ".droppable",
+    ".droppable::before",
+    ".droppable img",
+    ".dragover",
+    ".dropped",
+    ".dropped::before"
+   ],
+   "properties": [
+    "width",
+    "height",
+    "display",
+    "place-items",
+    "border",
+    "position",
+    "color",
+    "box-sizing",
+    "padding",
+    "margin",
+    "grid-template-columns",
+    "background-color",
+    "border-radius",
+    "background",
+    "content",
+    "font-family",
+    "font-size",
+    "object-fit",
+    "z-index"
+   ],
+   "property_counts": {
+    "width": 5,
+    "height": 5,
+    "display": 4,
+    "place-items": 3,
+    "border": 3,
+    "position": 2,
+    "color": 2,
+    "box-sizing": 1,
+    "padding": 1,
+    "margin": 1,
+    "grid-template-columns": 1,
+    "background-color": 1,
+    "border-radius": 1,
+    "background": 1,
+    "content": 1,
+    "font-family": 1,
+    "font-size": 1,
+    "object-fit": 1,
+    "z-index": 1
+   },
+   "media": 0,
+   "keyframes": 0,
+   "bytes": 1315
+  },
+  "js_bytes": 1793,
+  "html_bytes": 3624,
+  "missing_assets": []
+ }
+}

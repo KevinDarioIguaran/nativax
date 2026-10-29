@@ -1,0 +1,228 @@
+{
+ "id": "a11y.011",
+ "section": 13,
+ "name": "keshavgbpecdelhi/Web-Development · projects/FAQ_Section",
+ "source": {
+  "repo": "keshavgbpecdelhi/Web-Development",
+  "commit": "c1613b1424c3226ecd09ca0f23cd39bc4e32709b",
+  "license": "Apache-2.0",
+  "path": "projects/FAQ_Section",
+  "url": "https://github.com/keshavgbpecdelhi/Web-Development/tree/c1613b1424c3226ecd09ca0f23cd39bc4e32709b/projects/FAQ_Section"
+ },
+ "entry": "index.html",
+ "dir": "cases/s13/011",
+ "bytes": 3981,
+ "files": 2,
+ "digest": "69d8d97367d8a8736bdd",
+ "facts": {
+  "title": "FAQ",
+  "elements": 35,
+  "max_depth": 8,
+  "tags": {
+   "html": 1,
+   "head": 1,
+   "meta": 3,
+   "title": 1,
+   "link": 2,
+   "script": 2,
+   "body": 1,
+   "div": 13,
+   "h1": 1,
+   "b": 4,
+   "h2": 3,
+   "button": 3
+  },
+  "html_tags": [
+   "b",
+   "body",
+   "button",
+   "div",
+   "h1",
+   "h2",
+   "head",
+   "html",
+   "link",
+   "meta",
+   "script",
+   "title"
+  ],
+  "ids": [
+   "accordionExample",
+   "headingOne",
+   "collapseOne",
+   "headingTwo",
+   "collapseTwo",
+   "headingThree",
+   "collapseThree"
+  ],
+  "id_counts": {
+   "accordionExample": 1,
+   "headingOne": 1,
+   "collapseOne": 1,
+   "headingTwo": 1,
+   "collapseTwo": 1,
+   "headingThree": 1,
+   "collapseThree": 1
+  },
+  "classes": [
+   "accordion",
+   "card",
+   "card-header",
+   "mb-0",
+   "btn",
+   "btn-link",
+   "btn-block",
+   "text-left",
+   "yun",
+   "collapse",
+   "show",
+   "card-body",
+   "collapsed"
+  ],
+  "class_counts": {
+   "accordion": 1,
+   "card": 3,
+   "card-header": 3,
+   "mb-0": 3,
+   "btn": 3,
+   "btn-link": 3,
+   "btn-block": 3,
+   "text-left": 3,
+   "yun": 3,
+   "collapse": 3,
+   "show": 1,
+   "card-body": 3,
+   "collapsed": 2
+  },
+  "text_samples": [
+   "Frequently Asked Questions",
+   "First FAQ Question",
+   "Lorem ipsum, dolor sit amet consectetur adipisicing elit. Mollitia deleniti cupiditate doloremque laborum molestias dese",
+   "Second FAQ Question",
+   "Lorem ipsum dolor, sit amet consectetur adipisicing elit. Reprehenderit sapiente ipsum tempore nulla, sit, quibusdam cor",
+   "Third FAQ Question",
+   "Lorem ipsum dolor sit amet, consectetur adipisicing elit. Corporis quasi iste fugit libero aspernatur dolorem illum in c"
+  ],
+  "inline_styles": [],
+  "attr_samples": {
+   "accordionExample": {
+    "tag": "div",
+    "class": "accordion",
+    "attrs": {
+     "id": "accordionExample",
+     "class": "accordion"
+    }
+   },
+   "headingOne": {
+    "tag": "div",
+    "class": "card-header",
+    "attrs": {
+     "id": "headingOne",
+     "class": "card-header"
+    }
+   },
+   "collapseOne": {
+    "tag": "div",
+    "class": "collapse show",
+    "attrs": {
+     "id": "collapseOne",
+     "class": "collapse show"
+    }
+   },
+   "headingTwo": {
+    "tag": "div",
+    "class": "card-header",
+    "attrs": {
+     "id": "headingTwo",
+     "class": "card-header"
+    }
+   },
+   "collapseTwo": {
+    "tag": "div",
+    "class": "collapse",
+    "attrs": {
+     "id": "collapseTwo",
+     "class": "collapse"
+    }
+   },
+   "headingThree": {
+    "tag": "div",
+    "class": "card-header",
+    "attrs": {
+     "id": "headingThree",
+     "class": "card-header"
+    }
+   },
+   "collapseThree": {
+    "tag": "div",
+    "class": "collapse",
+    "attrs": {
+     "id": "collapseThree",
+     "class": "collapse"
+    }
+   }
+  },
+  "roles": {},
+  "aria": {
+   "aria-expanded": 3,
+   "aria-controls": 3,
+   "aria-labelledby": 3
+  },
+  "forms": {
+   "button": 3
+  },
+  "media": {},
+  "linked_css": [
+   "style.css"
+  ],
+  "linked_js": [],
+  "style_blocks": 0,
+  "inline_js": 2,
+  "images": [],
+  "features": [
+   "forms",
+   "a11y",
+   "typo",
+   "color",
+   "box"
+  ],
+  "css": {
+   "rules": 7,
+   "selectors": [
+    "*",
+    "body",
+    ".accordion",
+    "h1",
+    ".mb-0",
+    ".collapse",
+    ".yun"
+   ],
+   "properties": [
+    "padding",
+    "color",
+    "background-color",
+    "box-sizing",
+    "display",
+    "border-radius",
+    "text-align",
+    "font-family"
+   ],
+   "property_counts": {
+    "padding": 4,
+    "color": 3,
+    "background-color": 1,
+    "box-sizing": 1,
+    "display": 1,
+    "border-radius": 1,
+    "text-align": 1,
+    "font-family": 1
+   },
+   "media": 0,
+   "keyframes": 0,
+   "bytes": 359
+  },
+  "js_bytes": 1,
+  "html_bytes": 3622,
+  "missing_assets": []
+ }
+}

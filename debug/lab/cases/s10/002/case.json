@@ -1,0 +1,160 @@
+{
+ "id": "jsdom.002",
+ "section": 10,
+ "name": "zxuqian/html-css-examples · 53-screenshot-html2-canvas",
+ "source": {
+  "repo": "zxuqian/html-css-examples",
+  "commit": "2a9fc59f44aeda092cbac07472aaf0f1ead4e1a6",
+  "license": "MIT",
+  "path": "53-screenshot-html2-canvas",
+  "url": "https://github.com/zxuqian/html-css-examples/tree/2a9fc59f44aeda092cbac07472aaf0f1ead4e1a6/53-screenshot-html2-canvas"
+ },
+ "entry": "index.html",
+ "dir": "cases/s10/002",
+ "bytes": 255637,
+ "files": 3,
+ "digest": "dd8c7fc6ad003e086b6d",
+ "facts": {
+  "title": "Document",
+  "elements": 15,
+  "max_depth": 5,
+  "tags": {
+   "html": 1,
+   "head": 1,
+   "meta": 2,
+   "title": 1,
+   "script": 2,
+   "style": 1,
+   "body": 1,
+   "div": 2,
+   "h1": 1,
+   "p": 1,
+   "img": 1,
+   "button": 1
+  },
+  "html_tags": [
+   "body",
+   "button",
+   "div",
+   "h1",
+   "head",
+   "html",
+   "img",
+   "meta",
+   "p",
+   "script",
+   "style",
+   "title"
+  ],
+  "ids": [
+   "container",
+   "capture",
+   "screenshotButton"
+  ],
+  "id_counts": {
+   "container": 1,
+   "capture": 1,
+   "screenshotButton": 1
+  },
+  "classes": [],
+  "class_counts": {},
+  "text_samples": [],
+  "inline_styles": [],
+  "attr_samples": {
+   "container": {
+    "tag": "div",
+    "class": "",
+    "attrs": {
+     "id": "container"
+    }
+   },
+   "capture": {
+    "tag": "div",
+    "class": "",
+    "attrs": {
+     "id": "capture"
+    }
+   },
+   "screenshotButton": {
+    "tag": "button",
+    "class": "",
+    "attrs": {
+     "id": "screenshotButton"
+    }
+   }
+  },
+  "roles": {},
+  "aria": {},
+  "forms": {
+   "button": 1
+  },
+  "media": {
+   "img": 1
+  },
+  "linked_css": [],
+  "linked_js": [
+   "html2canvas.min.js"
+  ],
+  "style_blocks": 1,
+  "inline_js": 2,
+  "images": [
+   "cafe.jpg"
+  ],
+  "features": [
+   "flex",
+   "anim",
+   "forms",
+   "media",
+   "typo",
+   "color",
+   "box",
+   "jsdom",
+   "events"
+  ],
+  "css": {
+   "rules": 6,
+   "selectors": [
+    "*",
+    "body",
+    "button",
+    "img",
+    "#container",
+    "#capture"
+   ],
+   "properties": [
+    "margin",
+    "padding",
+    "background",
+    "font-family",
+    "font-size",
+    "border",
+    "border-radius",
+    "cursor",
+    "max-width",
+    "height",
+    "display",
+    "width"
+   ],
+   "property_counts": {
+    "margin": 3,
+    "padding": 2,
+    "background": 2,
+    "font-family": 1,
+    "font-size": 1,
+    "border": 1,
+    "border-radius": 1,
+    "cursor": 1,
+    "max-width": 1,
+    "height": 1,
+    "display": 1,
+    "width": 1
+   },
+   "media": 0,
+   "keyframes": 0,
+   "bytes": 574
+  },
+  "js_bytes": 199409,
+  "html_bytes": 1848,
+  "missing_assets": []
+ }
+}

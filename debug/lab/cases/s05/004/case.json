@@ -1,0 +1,121 @@
+{
+ "id": "color.004",
+ "section": 5,
+ "name": "zxuqian/html-css-examples · 33-text-image-layout",
+ "source": {
+  "repo": "zxuqian/html-css-examples",
+  "commit": "2a9fc59f44aeda092cbac07472aaf0f1ead4e1a6",
+  "license": "MIT",
+  "path": "33-text-image-layout",
+  "url": "https://github.com/zxuqian/html-css-examples/tree/2a9fc59f44aeda092cbac07472aaf0f1ead4e1a6/33-text-image-layout"
+ },
+ "entry": "index.html",
+ "dir": "cases/s05/004",
+ "bytes": 38997,
+ "files": 2,
+ "digest": "25a2e64399aa53ef3691",
+ "facts": {
+  "title": "图片文字环绕",
+  "elements": 13,
+  "max_depth": 5,
+  "tags": {
+   "html": 1,
+   "head": 1,
+   "meta": 3,
+   "style": 1,
+   "title": 1,
+   "body": 1,
+   "main": 1,
+   "h1": 1,
+   "article": 1,
+   "img": 1,
+   "p": 1
+  },
+  "html_tags": [
+   "article",
+   "body",
+   "h1",
+   "head",
+   "html",
+   "img",
+   "main",
+   "meta",
+   "p",
+   "style",
+   "title"
+  ],
+  "ids": [],
+  "id_counts": {},
+  "classes": [],
+  "class_counts": {},
+  "text_samples": [
+   "百度百科 JavaScript",
+   "JavaScript（简称“JS”） 是一种具有函数优先的轻量级，解释型或即时编译型的编程语言。虽然它是作为开发Web页面的脚本语言而出名，但是它也被用到了很多非浏览器环境中，JavaScript 基于原型编程、多范式的动态脚本语言，并且支"
+  ],
+  "inline_styles": [],
+  "attr_samples": {},
+  "roles": {},
+  "aria": {},
+  "forms": {},
+  "media": {
+   "img": 1
+  },
+  "linked_css": [],
+  "linked_js": [],
+  "style_blocks": 1,
+  "inline_js": 0,
+  "images": [
+   "./undraw_static_assets_rpm6.svg"
+  ],
+  "features": [
+   "position",
+   "anim",
+   "media",
+   "typo",
+   "color",
+   "box"
+  ],
+  "css": {
+   "rules": 5,
+   "selectors": [
+    "*",
+    "main",
+    "h1",
+    "article",
+    "img"
+   ],
+   "properties": [
+    "margin",
+    "shape-outside",
+    "padding",
+    "box-sizing",
+    "font-family",
+    "width",
+    "margin-bottom",
+    "line-height",
+    "color",
+    "float",
+    "transform"
+   ],
+   "property_counts": {
+    "margin": 3,
+    "shape-outside": 3,
+    "padding": 2,
+    "box-sizing": 1,
+    "font-family": 1,
+    "width": 1,
+    "margin-bottom": 1,
+    "line-height": 1,
+    "color": 1,
+    "float": 1,
+    "transform": 1
+   },
+   "media": 0,
+   "keyframes": 0,
+   "bytes": 635
+  },
+  "js_bytes": 0,
+  "html_bytes": 2238,
+  "missing_assets": []
+ }
+}

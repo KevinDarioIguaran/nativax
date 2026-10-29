@@ -1,42 +1,39 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
+
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>NativaX Lab · 005 · Forms and inputs — text input case 005</title>
-<link rel="stylesheet" href="style.css">
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Text Utils Application</title>
+    <link rel="stylesheet" href="./style.css">
 </head>
-<body class="">
-<div class="aurora" aria-hidden="true"><i></i><i></i><i></i></div>
-<header class="topbar">
-  <div class="brand"><span class="logo"></span><span>NativaX <b>Lab</b></span></div>
-  <nav class="nav" aria-label="primary">
-    <a class="nav-link is-active" href="#case">Case</a>
-    <a class="nav-link" href="#cards">Components</a>
-    <a class="nav-link" href="#footer">About</a>
-  </nav>
-  <button id="theme-toggle" class="btn ghost" type="button">Theme</button>
-</header>
-<main class="stage">
-  <section class="hero">
-    <p class="eyebrow">Section 01 · HTML, DOM and parsing</p>
-    <h1 class="title">html.001 <span class="grad">div básico</span></h1>
-    <p class="lede">A real laboratory application: semantic HTML structure, animated styles and verifiable JavaScript behaviour.</p>
-    <div class="hero-actions">
-      <button id="ping" class="btn" type="button">Try interaction <span id="pings" class="badge">0</span></button>
-      <span id="clock" class="clock">--:--:--</span>
+
+<body>
+    <div class="maintext">Enter the text you want to analyze below.</div>
+    <div class="container">
+        <div class="txtdiv">
+            <textarea class="mytxt" id="txt"  placeholder="Enter text here."></textarea>
+            <div class="txtbtns">
+                <button onClick="upper()" class="btn">Convert to Uppercase</button>
+                <button onClick="lower()" class="btn">Convert to Lowercase</button>
+                <button onClick="cpytxt()" class="btn">Copy Text</button>
+                <button onClick="rmv()" class="btn">Remove Extra Space</button>
+                <button onClick="clrtxt()" class="btn">Clear Text</button>
+            </div>
+        </div>
+        <div class="mytextsummary">
+            <h1 class="txtsummary">Your text Summary</h1>
+            <div class="wordsandchars">
+                <span id="words">0</span>&nbsp;Words and
+                <span id="characters">0</span>&nbsp;characters
+            </div>
+            <div class="minread"><span id="minsread"></span>&nbsp;Minutes Read</div>
+            <h1 class="txtsummary">Preview</h1>
+            <p  class="wordsandchars" id="txtsmry"></p>
+        </div>
     </div>
-  </section>
-  <section id="case" class="case panel">
-<div id=t class='target'>Section 12 case 005: text input.</div>
-  </section>
-  <section id="cards" class="cards" aria-label="components">
-    <article class="card"><span class="tag">HTML</span><h3>Semantics</h3><p>Real elements, attributes and parent-child relations verified by the laboratory.</p></article>
-    <article class="card"><span class="tag">CSS</span><h3>Animation</h3><p>Gradients, keyframes and transitions compared pixel by pixel in the visual sections.</p></article>
-    <article class="card"><span class="tag">JS</span><h3>Interaction</h3><p>JavaScriptCore runs this file: clock, theme, counter and pointer events.</p></article>
-  </section>
-</main>
-<footer id="footer" class="footer"><span>NativaX Lab · C11 + Sokol + JavaScriptCore</span><span>html.001</span></footer>
-<script src="app.js"></script>
 </body>
+<script src="./index.js"></script>
+
 </html>

@@ -1,0 +1,232 @@
+{
+ "id": "box.011",
+ "section": 3,
+ "name": "keshavgbpecdelhi/Web-Development · projects/calculator",
+ "source": {
+  "repo": "keshavgbpecdelhi/Web-Development",
+  "commit": "c1613b1424c3226ecd09ca0f23cd39bc4e32709b",
+  "license": "Apache-2.0",
+  "path": "projects/calculator",
+  "url": "https://github.com/keshavgbpecdelhi/Web-Development/tree/c1613b1424c3226ecd09ca0f23cd39bc4e32709b/projects/calculator"
+ },
+ "entry": "index.html",
+ "dir": "cases/s03/011",
+ "bytes": 4984,
+ "files": 3,
+ "digest": "8214e97f257f75c7df79",
+ "facts": {
+  "title": "Calculator",
+  "elements": 58,
+  "max_depth": 9,
+  "tags": {
+   "html": 1,
+   "head": 1,
+   "meta": 3,
+   "link": 1,
+   "title": 1,
+   "body": 1,
+   "div": 5,
+   "table": 1,
+   "tr": 5,
+   "td": 19,
+   "button": 19,
+   "script": 1
+  },
+  "html_tags": [
+   "body",
+   "button",
+   "div",
+   "head",
+   "html",
+   "link",
+   "meta",
+   "script",
+   "table",
+   "td",
+   "title",
+   "tr"
+  ],
+  "ids": [
+   "display",
+   "clear",
+   "backspace",
+   "equal"
+  ],
+  "id_counts": {
+   "display": 1,
+   "clear": 1,
+   "backspace": 1,
+   "equal": 1
+  },
+  "classes": [
+   "container",
+   "calculator",
+   "display-screen",
+   "buttons",
+   "btn-operator",
+   "btn-number",
+   "btn-equal"
+  ],
+  "class_counts": {
+   "container": 1,
+   "calculator": 1,
+   "display-screen": 1,
+   "buttons": 1,
+   "btn-operator": 8,
+   "btn-number": 10,
+   "btn-equal": 1
+  },
+  "text_samples": [],
+  "inline_styles": [],
+  "attr_samples": {
+   "display": {
+    "tag": "div",
+    "class": "",
+    "attrs": {
+     "id": "display"
+    }
+   },
+   "clear": {
+    "tag": "button",
+    "class": "btn-operator",
+    "attrs": {
+     "id": "clear",
+     "class": "btn-operator"
+    }
+   },
+   "backspace": {
+    "tag": "button",
+    "class": "btn-operator",
+    "attrs": {
+     "id": "backspace",
+     "class": "btn-operator"
+    }
+   },
+   "equal": {
+    "tag": "button",
+    "class": "btn-equal",
+    "attrs": {
+     "id": "equal",
+     "class": "btn-equal"
+    }
+   }
+  },
+  "roles": {},
+  "aria": {},
+  "forms": {
+   "button": 19
+  },
+  "media": {},
+  "linked_css": [
+   "style.css"
+  ],
+  "linked_js": [
+   "script.js"
+  ],
+  "style_blocks": 0,
+  "inline_js": 1,
+  "images": [],
+  "features": [
+   "flex",
+   "grid",
+   "position",
+   "anim",
+   "forms",
+   "typo",
+   "color",
+   "box",
+   "jsdom",
+   "events"
+  ],
+  "css": {
+   "rules": 18,
+   "selectors": [
+    "*",
+    "body",
+    "a",
+    ".container",
+    ".calculator",
+    "#display",
+    "#display::-webkit-scrollbar",
+    "button",
+    "button:hover",
+    "button#equal",
+    ".calculator #display",
+    ".calculator button#clear",
+    ".calculator button.btn-number",
+    ".calculator button.btn-operator",
+    ".calculator button.btn-equal"
+   ],
+   "properties": [
+    "color",
+    "height",
+    "background-color",
+    "width",
+    "margin",
+    "display",
+    "padding",
+    "position",
+    "border-radius",
+    "cursor",
+    "font-size",
+    "box-sizing",
+    "outline",
+    "font-family",
+    "text-decoration",
+    "background-image",
+    "text-align",
+    "box-shadow",
+    "top",
+    "right",
+    "z-index",
+    "max-width",
+    "align-items",
+    "justify-content",
+    "margin-bottom",
+    "overflow-x",
+    "border",
+    "transition",
+    "button",
+    "transform"
+   ],
+   "property_counts": {
+    "color": 7,
+    "height": 6,
+    "background-color": 5,
+    "width": 4,
+    "margin": 3,
+    "display": 3,
+    "padding": 2,
+    "position": 2,
+    "border-radius": 2,
+    "cursor": 2,
+    "font-size": 2,
+    "box-sizing": 1,
+    "outline": 1,
+    "font-family": 1,
+    "text-decoration": 1,
+    "background-image": 1,
+    "text-align": 1,
+    "box-shadow": 1,
+    "top": 1,
+    "right": 1,
+    "z-index": 1,
+    "max-width": 1,
+    "align-items": 1,
+    "justify-content": 1,
+    "margin-bottom": 1,
+    "overflow-x": 1,
+    "border": 1,
+    "transition": 1,
+    "button": 1,
+    "transform": 1
+   },
+   "media": 0,
+   "keyframes": 0,
+   "bytes": 1665
+  },
+  "js_bytes": 709,
+  "html_bytes": 2425,
+  "missing_assets": []
+ }
+}

@@ -1,0 +1,226 @@
+{
+ "id": "forms.005",
+ "section": 12,
+ "name": "keshavgbpecdelhi/Web-Development · projects/TextUtils",
+ "source": {
+  "repo": "keshavgbpecdelhi/Web-Development",
+  "commit": "c1613b1424c3226ecd09ca0f23cd39bc4e32709b",
+  "license": "Apache-2.0",
+  "path": "projects/TextUtils",
+  "url": "https://github.com/keshavgbpecdelhi/Web-Development/tree/c1613b1424c3226ecd09ca0f23cd39bc4e32709b/projects/TextUtils"
+ },
+ "entry": "index.html",
+ "dir": "cases/s12/005",
+ "bytes": 3955,
+ "files": 3,
+ "digest": "9cc566dccb79843fb361",
+ "facts": {
+  "title": "Text Utils Application",
+  "elements": 28,
+  "max_depth": 6,
+  "tags": {
+   "html": 1,
+   "head": 1,
+   "meta": 3,
+   "title": 1,
+   "link": 1,
+   "body": 1,
+   "div": 7,
+   "textarea": 1,
+   "button": 5,
+   "h1": 2,
+   "span": 3,
+   "p": 1,
+   "script": 1
+  },
+  "html_tags": [
+   "body",
+   "button",
+   "div",
+   "h1",
+   "head",
+   "html",
+   "link",
+   "meta",
+   "p",
+   "script",
+   "span",
+   "textarea",
+   "title"
+  ],
+  "ids": [
+   "txt",
+   "words",
+   "characters",
+   "minsread",
+   "txtsmry"
+  ],
+  "id_counts": {
+   "txt": 1,
+   "words": 1,
+   "characters": 1,
+   "minsread": 1,
+   "txtsmry": 1
+  },
+  "classes": [
+   "maintext",
+   "container",
+   "txtdiv",
+   "mytxt",
+   "txtbtns",
+   "btn",
+   "mytextsummary",
+   "txtsummary",
+   "wordsandchars",
+   "minread"
+  ],
+  "class_counts": {
+   "maintext": 1,
+   "container": 1,
+   "txtdiv": 1,
+   "mytxt": 1,
+   "txtbtns": 1,
+   "btn": 5,
+   "mytextsummary": 1,
+   "txtsummary": 2,
+   "wordsandchars": 2,
+   "minread": 1
+  },
+  "text_samples": [
+   "Enter the text you want to analyze below.",
+   "Convert to Uppercase",
+   "Convert to Lowercase",
+   "Remove Extra Space",
+   "Your text Summary",
+   "Minutes Read"
+  ],
+  "inline_styles": [],
+  "attr_samples": {
+   "txt": {
+    "tag": "textarea",
+    "class": "mytxt",
+    "attrs": {
+     "id": "txt",
+     "class": "mytxt",
+     "placeholder": "Enter text here."
+    }
+   },
+   "words": {
+    "tag": "span",
+    "class": "",
+    "attrs": {
+     "id": "words"
+    }
+   },
+   "characters": {
+    "tag": "span",
+    "class": "",
+    "attrs": {
+     "id": "characters"
+    }
+   },
+   "minsread": {
+    "tag": "span",
+    "class": "",
+    "attrs": {
+     "id": "minsread"
+    }
+   },
+   "txtsmry": {
+    "tag": "p",
+    "class": "wordsandchars",
+    "attrs": {
+     "id": "txtsmry",
+     "class": "wordsandchars"
+    }
+   }
+  },
+  "roles": {},
+  "aria": {},
+  "forms": {
+   "textarea": 1,
+   "button": 5
+  },
+  "media": {},
+  "linked_css": [
+   "./style.css"
+  ],
+  "linked_js": [
+   "./index.js"
+  ],
+  "style_blocks": 0,
+  "inline_js": 1,
+  "images": [],
+  "features": [
+   "flex",
+   "forms",
+   "typo",
+   "color",
+   "box",
+   "jsdom",
+   "events"
+  ],
+  "css": {
+   "rules": 13,
+   "selectors": [
+    ".maintext",
+    ".txtdiv",
+    ".mytxt",
+    ".txtbtns",
+    ".btn",
+    ".container",
+    ".mytextsummary",
+    ".txtsummary",
+    ".wordsandchars",
+    ".minread",
+    "#minsread",
+    "#characters",
+    "#words"
+   ],
+   "properties": [
+    "margin",
+    "color",
+    "width",
+    "padding",
+    "border-radius",
+    "font-size",
+    "background-color",
+    "border",
+    "font-family",
+    "font-weight",
+    "font-style",
+    "height",
+    "outline",
+    "cursor",
+    "display",
+    "flex-direction",
+    "text-align"
+   ],
+   "property_counts": {
+    "margin": 6,
+    "color": 4,
+    "width": 4,
+    "padding": 3,
+    "border-radius": 3,
+    "font-size": 2,
+    "background-color": 2,
+    "border": 2,
+    "font-family": 2,
+    "font-weight": 1,
+    "font-style": 1,
+    "height": 1,
+    "outline": 1,
+    "cursor": 1,
+    "display": 1,
+    "flex-direction": 1,
+    "text-align": 1
+   },
+   "media": 0,
+   "keyframes": 0,
+   "bytes": 1028
+  },
+  "js_bytes": 1398,
+  "html_bytes": 1530,
+  "missing_assets": []
+ }
+}

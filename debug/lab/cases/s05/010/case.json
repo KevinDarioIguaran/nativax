@@ -1,0 +1,107 @@
+{
+ "id": "color.010",
+ "section": 5,
+ "name": "zxuqian/html-css-examples · 40-multi-column-layout",
+ "source": {
+  "repo": "zxuqian/html-css-examples",
+  "commit": "2a9fc59f44aeda092cbac07472aaf0f1ead4e1a6",
+  "license": "MIT",
+  "path": "40-multi-column-layout",
+  "url": "https://github.com/zxuqian/html-css-examples/tree/2a9fc59f44aeda092cbac07472aaf0f1ead4e1a6/40-multi-column-layout"
+ },
+ "entry": "index.html",
+ "dir": "cases/s05/010",
+ "bytes": 2458,
+ "files": 1,
+ "digest": "de1045c94a91db497d5a",
+ "facts": {
+  "title": "CSS Multi-column Layout",
+  "elements": 14,
+  "max_depth": 5,
+  "tags": {
+   "html": 1,
+   "head": 1,
+   "meta": 3,
+   "title": 1,
+   "style": 1,
+   "body": 1,
+   "main": 1,
+   "article": 1,
+   "p": 3,
+   "h2": 1
+  },
+  "html_tags": [
+   "article",
+   "body",
+   "h2",
+   "head",
+   "html",
+   "main",
+   "meta",
+   "p",
+   "style",
+   "title"
+  ],
+  "ids": [],
+  "id_counts": {},
+  "classes": [],
+  "class_counts": {},
+  "text_samples": [
+   "技术方面的问题是最棘手的，你可能认为面试通过的人，技术一定很牛，这个我以身边进谷歌、Facebook、亚马逊等国外大厂的朋友的经验证明，这是绝对错误的。技术关是最没有技术含量的考验。通常，公司并不知道一个面试者的技术水平，所以才会通过笔试和"
+  ],
+  "inline_styles": [],
+  "attr_samples": {},
+  "roles": {},
+  "aria": {},
+  "forms": {},
+  "media": {},
+  "linked_css": [],
+  "linked_js": [],
+  "style_blocks": 1,
+  "inline_js": 0,
+  "images": [],
+  "features": [
+   "typo",
+   "color",
+   "box"
+  ],
+  "css": {
+   "rules": 3,
+   "selectors": [
+    "body",
+    "article",
+    "h2"
+   ],
+   "properties": [
+    "background",
+    "color",
+    "font-family",
+    "columns",
+    "column-gap",
+    "column-rule",
+    "height",
+    "column-fill",
+    "column-span",
+    "background-color"
+   ],
+   "property_counts": {
+    "background": 1,
+    "color": 1,
+    "font-family": 1,
+    "columns": 1,
+    "column-gap": 1,
+    "column-rule": 1,
+    "height": 1,
+    "column-fill": 1,
+    "column-span": 1,
+    "background-color": 1
+   },
+   "media": 0,
+   "keyframes": 0,
+   "bytes": 390
+  },
+  "js_bytes": 0,
+  "html_bytes": 2458,
+  "missing_assets": []
+ }
+}

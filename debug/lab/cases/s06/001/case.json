@@ -1,0 +1,171 @@
+{
+ "id": "anim.001",
+ "section": 6,
+ "name": "keshavgbpecdelhi/Web-Development · projects/car-animation",
+ "source": {
+  "repo": "keshavgbpecdelhi/Web-Development",
+  "commit": "c1613b1424c3226ecd09ca0f23cd39bc4e32709b",
+  "license": "Apache-2.0",
+  "path": "projects/car-animation",
+  "url": "https://github.com/keshavgbpecdelhi/Web-Development/tree/c1613b1424c3226ecd09ca0f23cd39bc4e32709b/projects/car-animation"
+ },
+ "entry": "index.html",
+ "dir": "cases/s06/001",
+ "bytes": 3183877,
+ "files": 9,
+ "digest": "d4c33e759fda36a3cb32",
+ "facts": {
+  "title": "Car Animation CSS and JavaScript",
+  "elements": 23,
+  "max_depth": 7,
+  "tags": {
+   "html": 1,
+   "head": 1,
+   "meta": 2,
+   "title": 1,
+   "link": 1,
+   "script": 1,
+   "body": 1,
+   "div": 13,
+   "img": 2
+  },
+  "html_tags": [
+   "body",
+   "div",
+   "head",
+   "html",
+   "img",
+   "link",
+   "meta",
+   "script",
+   "title"
+  ],
+  "ids": [
+   "clouds"
+  ],
+  "id_counts": {
+   "clouds": 1
+  },
+  "classes": [
+   "container",
+   "sky",
+   "cloud",
+   "x1",
+   "x2",
+   "x3",
+   "x4",
+   "x5",
+   "trees",
+   "track",
+   "car",
+   "wheel",
+   "wheel1",
+   "wheel2"
+  ],
+  "class_counts": {
+   "container": 1,
+   "sky": 1,
+   "cloud": 5,
+   "x1": 1,
+   "x2": 1,
+   "x3": 1,
+   "x4": 1,
+   "x5": 1,
+   "trees": 1,
+   "track": 1,
+   "car": 1,
+   "wheel": 2,
+   "wheel1": 1,
+   "wheel2": 1
+  },
+  "text_samples": [],
+  "inline_styles": [],
+  "attr_samples": {
+   "clouds": {
+    "tag": "div",
+    "class": "",
+    "attrs": {
+     "id": "clouds"
+    }
+   }
+  },
+  "roles": {},
+  "aria": {},
+  "forms": {},
+  "media": {
+   "img": 2
+  },
+  "linked_css": [
+   "style.css"
+  ],
+  "linked_js": [
+   "script.js"
+  ],
+  "style_blocks": 0,
+  "inline_js": 1,
+  "images": [
+   "car_wheel_left.png",
+   "car_wheel_right.png"
+  ],
+  "features": [
+   "position",
+   "anim",
+   "media",
+   "color",
+   "box"
+  ],
+  "css": {
+   "rules": 8,
+   "selectors": [
+    "*",
+    "body",
+    ".sky",
+    ".trees",
+    ".track",
+    ".car",
+    ".wheel1 img",
+    ".wheel2 img"
+   ],
+   "properties": [
+    "animation",
+    "width",
+    "position",
+    "transform",
+    "height",
+    "background-image",
+    "top",
+    "left",
+    "margin",
+    "padding",
+    "background-repeat",
+    "background-size",
+    "background-position",
+    "overflow",
+    "bottom"
+   ],
+   "property_counts": {
+    "animation": 7,
+    "width": 6,
+    "position": 6,
+    "transform": 5,
+    "height": 4,
+    "background-image": 4,
+    "top": 4,
+    "left": 3,
+    "margin": 2,
+    "padding": 2,
+    "background-repeat": 2,
+    "background-size": 2,
+    "background-position": 2,
+    "overflow": 1,
+    "bottom": 1
+   },
+   "media": 0,
+   "keyframes": 5,
+   "bytes": 1734
+  },
+  "js_bytes": 118,
+  "html_bytes": 1101,
+  "missing_assets": []
+ }
+}

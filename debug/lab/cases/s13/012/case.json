@@ -1,0 +1,437 @@
+{
+ "id": "a11y.012",
+ "section": 13,
+ "name": "keshavgbpecdelhi/Web-Development · projects/FRONTEND_COURSE_WEBSITE",
+ "source": {
+  "repo": "keshavgbpecdelhi/Web-Development",
+  "commit": "c1613b1424c3226ecd09ca0f23cd39bc4e32709b",
+  "license": "Apache-2.0",
+  "path": "projects/FRONTEND_COURSE_WEBSITE",
+  "url": "https://github.com/keshavgbpecdelhi/Web-Development/tree/c1613b1424c3226ecd09ca0f23cd39bc4e32709b/projects/FRONTEND_COURSE_WEBSITE"
+ },
+ "entry": "index.html",
+ "dir": "cases/s13/012",
+ "bytes": 90690,
+ "files": 5,
+ "digest": "8f594f59e3f840376b7c",
+ "facts": {
+  "title": "Frontend Bootcamp",
+  "elements": 220,
+  "max_depth": 10,
+  "tags": {
+   "html": 1,
+   "head": 1,
+   "meta": 3,
+   "link": 3,
+   "title": 1,
+   "body": 1,
+   "nav": 1,
+   "div": 75,
+   "a": 26,
+   "button": 11,
+   "span": 6,
+   "ul": 2,
+   "li": 7,
+   "section": 8,
+   "h1": 1,
+   "p": 15,
+   "img": 7,
+   "h3": 8,
+   "input": 4,
+   "i": 22,
+   "h2": 10,
+   "footer": 1,
+   "h5": 1,
+   "form": 1,
+   "label": 3,
+   "script": 1
+  },
+  "html_tags": [
+   "a",
+   "body",
+   "button",
+   "div",
+   "footer",
+   "form",
+   "h1",
+   "h2",
+   "h3",
+   "h5",
+   "head",
+   "html",
+   "i",
+   "img",
+   "input",
+   "label",
+   "li",
+   "link",
+   "meta",
+   "nav",
+   "p",
+   "script",
+   "section",
+   "span",
+   "title",
+   "ul"
+  ],
+  "ids": [
+   "navmenu",
+   "learn",
+   "questions",
+   "question-one",
+   "question-two",
+   "question-three",
+   "question-four",
+   "question-five",
+   "instructors",
+   "enroll",
+   "enrollLabel",
+   "first-name",
+   "email",
+   "phone"
+  ],
+  "id_counts": {
+   "navmenu": 1,
+   "learn": 2,
+   "questions": 2,
+   "question-one": 1,
+   "question-two": 1,
+   "question-three": 1,
+   "question-four": 1,
+   "question-five": 1,
+   "instructors": 1,
+   "enroll": 1,
+   "enrollLabel": 1,
+   "first-name": 1,
+   "email": 1,
+   "phone": 1
+  },
+  "classes": [
+   "navbar",
+   "navbar-expand-lg",
+   "bg-dark",
+   "navbar-dark",
+   "py-3",
+   "fixed-top",
+   "container",
+   "navbar-brand",
+   "navbar-toggler",
+   "navbar-toggler-icon",
+   "collapse",
+   "navbar-collapse",
+   "navbar-nav",
+   "ms-auto",
+   "nav-item",
+   "nav-link",
+   "text-light",
+   "p-5",
+   "p-lg-0",
+   "pt-lg-5",
+   "text-center",
+   "text-sm-start",
+   "d-sm-flex",
+   "align-items-center",
+   "justify-content-between",
+   "text-warning",
+   "lead",
+   "my-4",
+   "btn",
+   "btn-primary",
+   "btn-lg",
+   "img-fluid",
+   "w-50",
+   "d-none",
+   "d-sm-block",
+   "bg-primary",
+   "d-md-flex",
+   "mb-3",
+   "mb-md-0",
+   "input-group",
+   "mail-entry",
+   "form-control",
+   "btn-dark",
+   "btn-submit",
+   "row",
+   "g-4",
+   "col-md",
+   "card",
+   "card-body",
+   "h1",
+   "bi",
+   "bi-laptop",
+   "card-title",
+   "card-text",
+   "bg-secondary",
+   "bi-person-square",
+   "bi-people",
+   "btn-read-more",
+   "align-center",
+   "btn-light"
+  ],
+  "class_counts": {
+   "navbar": 1,
+   "navbar-expand-lg": 1,
+   "bg-dark": 6,
+   "navbar-dark": 1,
+   "py-3": 1,
+   "fixed-top": 1,
+   "container": 10,
+   "navbar-brand": 1,
+   "navbar-toggler": 1,
+   "navbar-toggler-icon": 1,
+   "collapse": 6,
+   "navbar-collapse": 1,
+   "navbar-nav": 1,
+   "ms-auto": 1,
+   "nav-item": 3,
+   "nav-link": 3,
+   "text-light": 7,
+   "p-5": 12,
+   "p-lg-0": 1,
+   "pt-lg-5": 1,
+   "text-center": 14,
+   "text-sm-start": 1,
+   "d-sm-flex": 1,
+   "align-items-center": 2,
+   "justify-content-between": 4,
+   "text-warning": 1,
+   "lead": 7,
+   "my-4": 1,
+   "btn": 9,
+   "btn-primary": 4,
+   "btn-lg": 2,
+   "img-fluid": 3,
+   "w-50": 1,
+   "d-none": 1,
+   "d-sm-block": 1,
+   "bg-primary": 2,
+   "d-md-flex": 1,
+   "mb-3": 18,
+   "mb-md-0": 1,
+   "input-group": 1,
+   "mail-entry": 1,
+   "form-control": 4,
+   "btn-dark": 2,
+   "btn-submit": 1,
+   "row": 5,
+   "g-4": 3,
+   "col-md": 9,
+   "card": 7,
+   "card-body": 7,
+   "h1": 4,
+   "bi": 22,
+   "bi-laptop": 1,
+   "card-title": 7,
+   "card-text": 7,
+   "bg-secondary": 1,
+   "bi-person-square": 1,
+   "bi-people": 1,
+   "btn-read-more": 3,
+   "align-center": 2,
+   "btn-light": 2
+  },
+  "text_samples": [
+   "FrontEnd Bootcamp",
+   "What You'll Learn",
+   "Web Developer",
+   "We focus on teaching our students the fundamentals of the latest and greatest technologies to prepare them for their fir",
+   "Start The Enrollment",
+   "Sign Up for Our NewsLetter",
+   "Lorem ipsum dolor sit amet consectetur adipisicing elit. Enim, eveniet quia. In officiis sed aliquam!",
+   "Learn The Fundamentals"
+  ],
+  "inline_styles": [],
+  "attr_samples": {
+   "navmenu": {
+    "tag": "div",
+    "class": "collapse navbar-collapse",
+    "attrs": {
+     "id": "navmenu",
+     "class": "collapse navbar-collapse"
+    }
+   },
+   "learn": {
+    "tag": "section",
+    "class": "p-5",
+    "attrs": {
+     "id": "learn",
+     "class": "p-5"
+    }
+   },
+   "questions": {
+    "tag": "section",
+    "class": "p-5",
+    "attrs": {
+     "id": "questions",
+     "class": "p-5"
+    }
+   },
+   "question-one": {
+    "tag": "div",
+    "class": "accordion-collapse collapse",
+    "attrs": {
+     "id": "question-one",
+     "class": "accordion-collapse collapse"
+    }
+   },
+   "question-two": {
+    "tag": "div",
+    "class": "accordion-collapse collapse",
+    "attrs": {
+     "id": "question-two",
+     "class": "accordion-collapse collapse"
+    }
+   },
+   "question-three": {
+    "tag": "div",
+    "class": "accordion-collapse collapse",
+    "attrs": {
+     "id": "question-three",
+     "class": "accordion-collapse collapse"
+    }
+   },
+   "question-four": {
+    "tag": "div",
+    "class": "accordion-collapse collapse",
+    "attrs": {
+     "id": "question-four",
+     "class": "accordion-collapse collapse"
+    }
+   },
+   "question-five": {
+    "tag": "div",
+    "class": "accordion-collapse collapse",
+    "attrs": {
+     "id": "question-five",
+     "class": "accordion-collapse collapse"
+    }
+   },
+   "instructors": {
+    "tag": "section",
+    "class": "p-5 bg-primary",
+    "attrs": {
+     "id": "instructors",
+     "class": "p-5 bg-primary"
+    }
+   },
+   "enroll": {
+    "tag": "div",
+    "class": "modal fade",
+    "attrs": {
+     "id": "enroll",
+     "class": "modal fade",
+     "aria-hidden": "true"
+    }
+   },
+   "enrollLabel": {
+    "tag": "h5",
+    "class": "modal-title",
+    "attrs": {
+     "id": "enrollLabel",
+     "class": "modal-title"
+    }
+   },
+   "first-name": {
+    "tag": "input",
+    "class": "form-control",
+    "attrs": {
+     "id": "first-name",
+     "class": "form-control",
+     "type": "text"
+    }
+   },
+   "email": {
+    "tag": "input",
+    "class": "form-control",
+    "attrs": {
+     "id": "email",
+     "class": "form-control",
+     "type": "email"
+    }
+   },
+   "phone": {
+    "tag": "input",
+    "class": "form-control",
+    "attrs": {
+     "id": "phone",
+     "class": "form-control",
+     "type": "tel"
+    }
+   }
+  },
+  "roles": {},
+  "aria": {
+   "aria-labelledby": 1,
+   "aria-hidden": 1,
+   "aria-label": 1
+  },
+  "forms": {
+   "button": 11,
+   "input": 4,
+   "form": 1,
+   "label": 3
+  },
+  "media": {
+   "img": 7
+  },
+  "linked_css": [
+   "style.css"
+  ],
+  "linked_js": [],
+  "style_blocks": 0,
+  "inline_js": 1,
+  "images": [
+   "showcase.svg",
+   "fundamentals.svg",
+   "react.svg",
+   "https://randomuser.me/api/portraits/men/11.jpg",
+   "https://randomuser.me/api/portraits/women/11.jpg",
+   "https://randomuser.me/api/portraits/men/9.jpg",
+   "https://randomuser.me/api/portraits/women/1.jpg"
+  ],
+  "features": [
+   "responsive",
+   "forms",
+   "a11y",
+   "media",
+   "color",
+   "box",
+   "events"
+  ],
+  "css": {
+   "rules": 7,
+   "selectors": [
+    ".mail-entry",
+    "body::before",
+    "#map",
+    ".btn-submit:hover",
+    ".btn-submit:active",
+    ".btn-read-more:hover"
+   ],
+   "properties": [
+    "width",
+    "height",
+    "background-color",
+    "body",
+    "display",
+    "content",
+    "border-radius"
+   ],
+   "property_counts": {
+    "width": 2,
+    "height": 2,
+    "background-color": 2,
+    "body": 1,
+    "display": 1,
+    "content": 1,
+    "border-radius": 1
+   },
+   "media": 1,
+   "keyframes": 0,
+   "bytes": 663
+  },
+  "js_bytes": 0,
+  "html_bytes": 22780,
+  "missing_assets": []
+ }
+}

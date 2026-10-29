@@ -1,0 +1,139 @@
+{
+ "id": "anim.004",
+ "section": 6,
+ "name": "zxuqian/html-css-examples · 20-typewritter-effect",
+ "source": {
+  "repo": "zxuqian/html-css-examples",
+  "commit": "2a9fc59f44aeda092cbac07472aaf0f1ead4e1a6",
+  "license": "MIT",
+  "path": "20-typewritter-effect",
+  "url": "https://github.com/zxuqian/html-css-examples/tree/2a9fc59f44aeda092cbac07472aaf0f1ead4e1a6/20-typewritter-effect"
+ },
+ "entry": "index.html",
+ "dir": "cases/s06/004",
+ "bytes": 3428,
+ "files": 3,
+ "digest": "302ed82592a9e9fcbae8",
+ "facts": {
+  "title": "Document",
+  "elements": 13,
+  "max_depth": 5,
+  "tags": {
+   "html": 1,
+   "head": 1,
+   "meta": 2,
+   "link": 2,
+   "title": 1,
+   "body": 1,
+   "main": 1,
+   "h1": 1,
+   "span": 2,
+   "script": 1
+  },
+  "html_tags": [
+   "body",
+   "h1",
+   "head",
+   "html",
+   "link",
+   "main",
+   "meta",
+   "script",
+   "span",
+   "title"
+  ],
+  "ids": [
+   "text"
+  ],
+  "id_counts": {
+   "text": 1
+  },
+  "classes": [
+   "mark"
+  ],
+  "class_counts": {
+   "mark": 1
+  },
+  "text_samples": [],
+  "inline_styles": [],
+  "attr_samples": {
+   "text": {
+    "tag": "span",
+    "class": "",
+    "attrs": {
+     "id": "text"
+    }
+   }
+  },
+  "roles": {},
+  "aria": {},
+  "forms": {},
+  "media": {},
+  "linked_css": [
+   "style.css"
+  ],
+  "linked_js": [
+   "index.js"
+  ],
+  "style_blocks": 0,
+  "inline_js": 1,
+  "images": [],
+  "features": [
+   "flex",
+   "anim",
+   "typo",
+   "color",
+   "box",
+   "jsdom"
+  ],
+  "css": {
+   "rules": 4,
+   "selectors": [
+    "*",
+    "main",
+    "h1",
+    "span.mark"
+   ],
+   "properties": [
+    "border-color",
+    "margin",
+    "padding",
+    "box-sizing",
+    "font-family",
+    "background",
+    "display",
+    "align-items",
+    "justify-content",
+    "height",
+    "color",
+    "font-size",
+    "font-weight",
+    "border-right",
+    "animation"
+   ],
+   "property_counts": {
+    "border-color": 2,
+    "margin": 1,
+    "padding": 1,
+    "box-sizing": 1,
+    "font-family": 1,
+    "background": 1,
+    "display": 1,
+    "align-items": 1,
+    "justify-content": 1,
+    "height": 1,
+    "color": 1,
+    "font-size": 1,
+    "font-weight": 1,
+    "border-right": 1,
+    "animation": 1
+   },
+   "media": 0,
+   "keyframes": 1,
+   "bytes": 536
+  },
+  "js_bytes": 1960,
+  "html_bytes": 933,
+  "missing_assets": []
+ }
+}

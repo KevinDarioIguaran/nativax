@@ -1,0 +1,207 @@
+{
+ "id": "forms.014",
+ "section": 12,
+ "name": "keshavgbpecdelhi/Web-Development · projects/Simon Game",
+ "source": {
+  "repo": "keshavgbpecdelhi/Web-Development",
+  "commit": "c1613b1424c3226ecd09ca0f23cd39bc4e32709b",
+  "license": "Apache-2.0",
+  "path": "projects/Simon Game",
+  "url": "https://github.com/keshavgbpecdelhi/Web-Development/tree/c1613b1424c3226ecd09ca0f23cd39bc4e32709b/projects/Simon Game"
+ },
+ "entry": "index.html",
+ "dir": "cases/s12/014",
+ "bytes": 60872,
+ "files": 3,
+ "digest": "d7f469f81efdab444bb5",
+ "facts": {
+  "title": "Simon",
+  "elements": 17,
+  "max_depth": 5,
+  "tags": {
+   "html": 1,
+   "head": 1,
+   "meta": 1,
+   "title": 1,
+   "link": 2,
+   "body": 1,
+   "h1": 1,
+   "div": 7,
+   "script": 2
+  },
+  "html_tags": [
+   "body",
+   "div",
+   "h1",
+   "head",
+   "html",
+   "link",
+   "meta",
+   "script",
+   "title"
+  ],
+  "ids": [
+   "level-title",
+   "green",
+   "red",
+   "yellow",
+   "blue"
+  ],
+  "id_counts": {
+   "level-title": 1,
+   "green": 1,
+   "red": 1,
+   "yellow": 1,
+   "blue": 1
+  },
+  "classes": [
+   "container",
+   "row",
+   "btn",
+   "green",
+   "red",
+   "yellow",
+   "blue"
+  ],
+  "class_counts": {
+   "container": 1,
+   "row": 2,
+   "btn": 4,
+   "green": 1,
+   "red": 1,
+   "yellow": 1,
+   "blue": 1
+  },
+  "text_samples": [
+   "Press A Key to Start"
+  ],
+  "inline_styles": [],
+  "attr_samples": {
+   "level-title": {
+    "tag": "h1",
+    "class": "",
+    "attrs": {
+     "id": "level-title"
+    }
+   },
+   "green": {
+    "tag": "div",
+    "class": "btn green",
+    "attrs": {
+     "id": "green",
+     "class": "btn green",
+     "type": "button"
+    }
+   },
+   "red": {
+    "tag": "div",
+    "class": "btn red",
+    "attrs": {
+     "id": "red",
+     "class": "btn red",
+     "type": "button"
+    }
+   },
+   "yellow": {
+    "tag": "div",
+    "class": "btn yellow",
+    "attrs": {
+     "id": "yellow",
+     "class": "btn yellow",
+     "type": "button"
+    }
+   },
+   "blue": {
+    "tag": "div",
+    "class": "btn blue",
+    "attrs": {
+     "id": "blue",
+     "class": "btn blue",
+     "type": "button"
+    }
+   }
+  },
+  "roles": {},
+  "aria": {},
+  "forms": {},
+  "media": {},
+  "linked_css": [
+   "styles.css"
+  ],
+  "linked_js": [
+   "game.js"
+  ],
+  "style_blocks": 0,
+  "inline_js": 2,
+  "images": [],
+  "features": [
+   "typo",
+   "color",
+   "box",
+   "events"
+  ],
+  "css": {
+   "rules": 12,
+   "selectors": [
+    "html",
+    "body",
+    "h1",
+    "#level-title",
+    ".btn",
+    ".blue",
+    ".container",
+    ".game-over",
+    ".green",
+    ".red",
+    ".yellow",
+    ".pressed"
+   ],
+   "properties": [
+    "background-color",
+    "display",
+    "margin",
+    "font-size",
+    "width",
+    "text-align",
+    "margin-block-start",
+    "margin-block-end",
+    "margin-inline-start",
+    "margin-inline-end",
+    "font-weight",
+    "font-family",
+    "color",
+    "height",
+    "border",
+    "border-radius",
+    "opacity",
+    "box-shadow"
+   ],
+   "property_counts": {
+    "background-color": 7,
+    "display": 4,
+    "margin": 4,
+    "font-size": 2,
+    "width": 2,
+    "text-align": 1,
+    "margin-block-start": 1,
+    "margin-block-end": 1,
+    "margin-inline-start": 1,
+    "margin-inline-end": 1,
+    "font-weight": 1,
+    "font-family": 1,
+    "color": 1,
+    "height": 1,
+    "border": 1,
+    "border-radius": 1,
+    "opacity": 1,
+    "box-shadow": 1
+   },
+   "media": 0,
+   "keyframes": 0,
+   "bytes": 934
+  },
+  "js_bytes": 1837,
+  "html_bytes": 937,
+  "missing_assets": []
+ }
+}

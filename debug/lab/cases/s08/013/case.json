@@ -1,0 +1,136 @@
+{
+ "id": "flex.013",
+ "section": 8,
+ "name": "zxuqian/html-css-examples · 13-css-3d-tutorial",
+ "source": {
+  "repo": "zxuqian/html-css-examples",
+  "commit": "2a9fc59f44aeda092cbac07472aaf0f1ead4e1a6",
+  "license": "MIT",
+  "path": "13-css-3d-tutorial",
+  "url": "https://github.com/zxuqian/html-css-examples/tree/2a9fc59f44aeda092cbac07472aaf0f1ead4e1a6/13-css-3d-tutorial"
+ },
+ "entry": "index.html",
+ "dir": "cases/s08/013",
+ "bytes": 6055,
+ "files": 2,
+ "digest": "90506a8b0fd675a3ee71",
+ "facts": {
+  "title": "Document",
+  "elements": 15,
+  "max_depth": 5,
+  "tags": {
+   "html": 1,
+   "head": 1,
+   "meta": 3,
+   "link": 1,
+   "title": 1,
+   "body": 1,
+   "main": 1,
+   "div": 4,
+   "p": 2
+  },
+  "html_tags": [
+   "body",
+   "div",
+   "head",
+   "html",
+   "link",
+   "main",
+   "meta",
+   "p",
+   "title"
+  ],
+  "ids": [],
+  "id_counts": {},
+  "classes": [
+   "wrapper",
+   "front",
+   "back",
+   "text"
+  ],
+  "class_counts": {
+   "wrapper": 1,
+   "front": 1,
+   "back": 1,
+   "text": 1
+  },
+  "text_samples": [],
+  "inline_styles": [],
+  "attr_samples": {},
+  "roles": {},
+  "aria": {},
+  "forms": {},
+  "media": {},
+  "linked_css": [
+   "style.css"
+  ],
+  "linked_js": [],
+  "style_blocks": 0,
+  "inline_js": 0,
+  "images": [],
+  "features": [
+   "flex",
+   "position",
+   "anim",
+   "typo",
+   "color",
+   "box"
+  ],
+  "css": {
+   "rules": 11,
+   "selectors": [
+    "html",
+    "body",
+    "*",
+    "main",
+    ".wrapper",
+    ".front",
+    ".back",
+    ".text",
+    "p"
+   ],
+   "properties": [
+    "transform",
+    "background-color",
+    "height",
+    "width",
+    "padding",
+    "position",
+    "margin",
+    "box-sizing",
+    "display",
+    "align-items",
+    "justify-content",
+    "overflow-y",
+    "perspective",
+    "transform-style",
+    "font-family",
+    "color"
+   ],
+   "property_counts": {
+    "transform": 6,
+    "background-color": 4,
+    "height": 3,
+    "width": 3,
+    "padding": 2,
+    "position": 2,
+    "margin": 1,
+    "box-sizing": 1,
+    "display": 1,
+    "align-items": 1,
+    "justify-content": 1,
+    "overflow-y": 1,
+    "perspective": 1,
+    "transform-style": 1,
+    "font-family": 1,
+    "color": 1
+   },
+   "media": 0,
+   "keyframes": 2,
+   "bytes": 1360
+  },
+  "js_bytes": 0,
+  "html_bytes": 4695,
+  "missing_assets": []
+ }
+}

@@ -1,0 +1,166 @@
+{
+ "id": "typo.012",
+ "section": 4,
+ "name": "learning-zone/website-templates · droll",
+ "source": {
+  "repo": "learning-zone/website-templates",
+  "commit": "7bf31e9646a6b5f51c2e55b2557787310436989f",
+  "license": "not declared upstream",
+  "path": "droll",
+  "url": "https://github.com/learning-zone/website-templates/tree/7bf31e9646a6b5f51c2e55b2557787310436989f/droll"
+ },
+ "entry": "index.html",
+ "dir": "cases/s04/012",
+ "bytes": 9930,
+ "files": 1,
+ "digest": "52e2cd9afe977740ce78",
+ "facts": {
+  "title": "Droll Software",
+  "elements": 182,
+  "max_depth": 18,
+  "tags": {
+   "html": 1,
+   "head": 1,
+   "title": 1,
+   "style": 1,
+   "body": 1,
+   "div": 1,
+   "table": 19,
+   "tr": 37,
+   "td": 56,
+   "span": 2,
+   "a": 16,
+   "b": 20,
+   "p": 9,
+   "ul": 2,
+   "li": 7,
+   "br": 6,
+   "blockquote": 1,
+   "img": 1
+  },
+  "html_tags": [
+   "a",
+   "b",
+   "blockquote",
+   "body",
+   "div",
+   "head",
+   "html",
+   "img",
+   "li",
+   "p",
+   "span",
+   "style",
+   "table",
+   "td",
+   "title",
+   "tr",
+   "ul"
+  ],
+  "ids": [],
+  "id_counts": {},
+  "classes": [
+   "tableOutline1",
+   "titleBarTop",
+   "title",
+   "tableBody1",
+   "heading",
+   "tableHead1",
+   "tableHead2",
+   "tableBody2",
+   "tableOutline2",
+   "footerOutline",
+   "footerBody"
+  ],
+  "class_counts": {
+   "tableOutline1": 3,
+   "titleBarTop": 1,
+   "title": 1,
+   "tableBody1": 3,
+   "heading": 1,
+   "tableHead1": 4,
+   "tableHead2": 3,
+   "tableBody2": 1,
+   "tableOutline2": 2,
+   "footerOutline": 1,
+   "footerBody": 1
+  },
+  "text_samples": [
+   "Droll Software Inc.",
+   "Homepage Instructions",
+   "100% Fat Free Web Site",
+   "> Instructions",
+   "Free Hosting",
+   "A list of sites that will host your page for free",
+   "$8.99/year to register your domain",
+   "Web Hosting Sites"
+  ],
+  "inline_styles": [],
+  "attr_samples": {},
+  "roles": {},
+  "aria": {},
+  "forms": {},
+  "media": {
+   "img": 1
+  },
+  "linked_css": [],
+  "linked_js": [],
+  "style_blocks": 1,
+  "inline_js": 0,
+  "images": [
+   "spacer.gif"
+  ],
+  "features": [
+   "media",
+   "typo",
+   "color",
+   "box",
+   "events"
+  ],
+  "css": {
+   "rules": 17,
+   "selectors": [
+    "body",
+    "tr",
+    "td",
+    "a",
+    "a:hover",
+    "tr.titleBarTop",
+    "tr.tableBody1",
+    "tr.tableBody2",
+    "td.tableOutline1",
+    "td.tableOutline2",
+    "td.tableHead1",
+    "tr.tableHead2",
+    "td.footerOutline",
+    "tr.footerBody",
+    ".title",
+    ".heading"
+   ],
+   "properties": [
+    "background",
+    "font-size",
+    "color",
+    "text-decoration",
+    "font-weight",
+    "font-family"
+   ],
+   "property_counts": {
+    "background": 10,
+    "font-size": 3,
+    "color": 2,
+    "text-decoration": 2,
+    "font-weight": 2,
+    "font-family": 1
+   },
+   "media": 0,
+   "keyframes": 0,
+   "bytes": 765
+  },
+  "js_bytes": 0,
+  "html_bytes": 9729,
+  "missing_assets": [
+   "spacer.gif"
+  ]
+ }
+}

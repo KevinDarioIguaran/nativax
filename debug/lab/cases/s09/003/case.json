@@ -1,0 +1,131 @@
+{
+ "id": "pos.003",
+ "section": 9,
+ "name": "keshavgbpecdelhi/Web-Development · projects/Check Internet Connection Status",
+ "source": {
+  "repo": "keshavgbpecdelhi/Web-Development",
+  "commit": "c1613b1424c3226ecd09ca0f23cd39bc4e32709b",
+  "license": "Apache-2.0",
+  "path": "projects/Check Internet Connection Status",
+  "url": "https://github.com/keshavgbpecdelhi/Web-Development/tree/c1613b1424c3226ecd09ca0f23cd39bc4e32709b/projects/Check Internet Connection Status"
+ },
+ "entry": "index.html",
+ "dir": "cases/s09/003",
+ "bytes": 7778,
+ "files": 3,
+ "digest": "726f2ccd504afe7f3518",
+ "facts": {
+  "title": "Check Internet Connection Status",
+  "elements": 9,
+  "max_depth": 3,
+  "tags": {
+   "html": 1,
+   "head": 1,
+   "meta": 1,
+   "title": 1,
+   "link": 2,
+   "body": 1,
+   "h1": 1,
+   "script": 1
+  },
+  "html_tags": [
+   "body",
+   "h1",
+   "head",
+   "html",
+   "link",
+   "meta",
+   "script",
+   "title"
+  ],
+  "ids": [
+   "message"
+  ],
+  "id_counts": {
+   "message": 1
+  },
+  "classes": [],
+  "class_counts": {},
+  "text_samples": [
+   "Sample Message"
+  ],
+  "inline_styles": [],
+  "attr_samples": {
+   "message": {
+    "tag": "h1",
+    "class": "",
+    "attrs": {
+     "id": "message"
+    }
+   }
+  },
+  "roles": {},
+  "aria": {},
+  "forms": {},
+  "media": {},
+  "linked_css": [
+   "style.css"
+  ],
+  "linked_js": [
+   "script.js"
+  ],
+  "style_blocks": 0,
+  "inline_js": 1,
+  "images": [],
+  "features": [
+   "position",
+   "anim",
+   "typo",
+   "color",
+   "box",
+   "jsdom"
+  ],
+  "css": {
+   "rules": 2,
+   "selectors": [
+    "*",
+    "#message"
+   ],
+   "properties": [
+    "padding",
+    "width",
+    "margin",
+    "height",
+    "box-sizing",
+    "position",
+    "transform",
+    "top",
+    "left",
+    "font-family",
+    "text-align",
+    "font-weight",
+    "letter-spacing",
+    "border-radius",
+    "font-size"
+   ],
+   "property_counts": {
+    "padding": 2,
+    "width": 2,
+    "margin": 1,
+    "height": 1,
+    "box-sizing": 1,
+    "position": 1,
+    "transform": 1,
+    "top": 1,
+    "left": 1,
+    "font-family": 1,
+    "text-align": 1,
+    "font-weight": 1,
+    "letter-spacing": 1,
+    "border-radius": 1,
+    "font-size": 1
+   },
+   "media": 0,
+   "keyframes": 0,
+   "bytes": 368
+  },
+  "js_bytes": 549,
+  "html_bytes": 528,
+  "missing_assets": []
+ }
+}

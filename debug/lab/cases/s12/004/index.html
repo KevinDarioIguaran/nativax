@@ -1,42 +1,60 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>NativaX Lab · 004 · Forms and inputs — text input case 004</title>
-<link rel="stylesheet" href="style.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+    <title>Speed Typing</title>
 </head>
-<body class="">
-<div class="aurora" aria-hidden="true"><i></i><i></i><i></i></div>
-<header class="topbar">
-  <div class="brand"><span class="logo"></span><span>NativaX <b>Lab</b></span></div>
-  <nav class="nav" aria-label="primary">
-    <a class="nav-link is-active" href="#case">Case</a>
-    <a class="nav-link" href="#cards">Components</a>
-    <a class="nav-link" href="#footer">About</a>
-  </nav>
-  <button id="theme-toggle" class="btn ghost" type="button">Theme</button>
-</header>
-<main class="stage">
-  <section class="hero">
-    <p class="eyebrow">Section 01 · HTML, DOM and parsing</p>
-    <h1 class="title">html.001 <span class="grad">div básico</span></h1>
-    <p class="lede">A real laboratory application: semantic HTML structure, animated styles and verifiable JavaScript behaviour.</p>
-    <div class="hero-actions">
-      <button id="ping" class="btn" type="button">Try interaction <span id="pings" class="badge">0</span></button>
-      <span id="clock" class="clock">--:--:--</span>
-    </div>
-  </section>
-  <section id="case" class="case panel">
-<div id=t class='target'>Section 12 case 004: text input.</div>
-  </section>
-  <section id="cards" class="cards" aria-label="components">
-    <article class="card"><span class="tag">HTML</span><h3>Semantics</h3><p>Real elements, attributes and parent-child relations verified by the laboratory.</p></article>
-    <article class="card"><span class="tag">CSS</span><h3>Animation</h3><p>Gradients, keyframes and transitions compared pixel by pixel in the visual sections.</p></article>
-    <article class="card"><span class="tag">JS</span><h3>Interaction</h3><p>JavaScriptCore runs this file: clock, theme, counter and pointer events.</p></article>
-  </section>
-</main>
-<footer id="footer" class="footer"><span>NativaX Lab · C11 + Sokol + JavaScriptCore</span><span>html.001</span></footer>
-<script src="app.js"></script>
+<body class="bg-dark text-white">
+    <header class="bg-info p-3 mb-5 text-center">
+        <h1>Speed Typing Lite</h1>
+    </header>
+    <section class="container text-center">
+        <div class="row">
+            <div class="col-md-6 mx-auto"> <!-- auto margin - to center content -->
+                <p>Type the following word in <span id="seconds" class="text-warning"></span> seconds: </p>
+                <h2 id="current-word" class="display-2 mb-4"></h2> <!-- increased font size -->
+                <div class="form-group col-md-4 mx-auto">
+                    <label for="difficulty">Difficulty:</label>
+                    <select class="form-control" id="difficulty">
+                      <option>Easy</option>
+                      <option>Medium</option>
+                      <option>Hard</option>
+                    </select>
+                  </div>
+                <input id="input-word" type="text" class="form-control form-control-lg" placeholder="Start typing ..." autofocus>
+                <h4 id="message" class="mt-3 text-warning"></h4> 
+
+                <!-- Time Left and Score -->
+                <div class="row mt-3">
+                    <div class="col-md-6">
+                        <h3>Time Left: <span id="time-left">0</span></h3>
+                    </div>
+                    <div class="col-md-6">
+                        <h3>Score: <span id="score">0</span></h3>
+                    </div>
+                    <!-- <div class="col-md-4">
+                        <h3>High Score: <span id="high-score">0</span></h3>
+                    </div> -->
+                </div>
+
+                <!-- Instructions -->
+                <div class="row mt-4">
+                    <div class="col-md-10 mx-auto">
+                        <div class="card card-body bg-secondary">
+                            <h5>Instructions</h5>
+                            <p>Type each word in the given amount of time to score. To play again, just type the current word. Your score will reset.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    <footer>
+        <p class="text-center small mt-3 text-muted">Coded by <a href="https://github.com/aman-maharshi">Aman Maharshi</a></p>
+    </footer>
+    <script src="script.js"></script>
 </body>
 </html>

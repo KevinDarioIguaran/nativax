@@ -1,0 +1,94 @@
+{
+ "id": "anim.006",
+ "section": 6,
+ "name": "zxuqian/html-css-examples · 30-gradient-background-animation",
+ "source": {
+  "repo": "zxuqian/html-css-examples",
+  "commit": "2a9fc59f44aeda092cbac07472aaf0f1ead4e1a6",
+  "license": "MIT",
+  "path": "30-gradient-background-animation",
+  "url": "https://github.com/zxuqian/html-css-examples/tree/2a9fc59f44aeda092cbac07472aaf0f1ead4e1a6/30-gradient-background-animation"
+ },
+ "entry": "index.html",
+ "dir": "cases/s06/006",
+ "bytes": 855,
+ "files": 1,
+ "digest": "95e249676dcf59d40980",
+ "facts": {
+  "title": "Document",
+  "elements": 7,
+  "max_depth": 3,
+  "tags": {
+   "html": 1,
+   "head": 1,
+   "meta": 2,
+   "title": 1,
+   "style": 1,
+   "body": 1
+  },
+  "html_tags": [
+   "body",
+   "head",
+   "html",
+   "meta",
+   "style",
+   "title"
+  ],
+  "ids": [],
+  "id_counts": {},
+  "classes": [],
+  "class_counts": {},
+  "text_samples": [],
+  "inline_styles": [],
+  "attr_samples": {},
+  "roles": {},
+  "aria": {},
+  "forms": {},
+  "media": {},
+  "linked_css": [],
+  "linked_js": [],
+  "style_blocks": 1,
+  "inline_js": 0,
+  "images": [],
+  "features": [
+   "anim",
+   "color",
+   "box"
+  ],
+  "css": {
+   "rules": 2,
+   "selectors": [
+    "*",
+    "body"
+   ],
+   "properties": [
+    "background-position",
+    "box-sizing",
+    "margin",
+    "padding",
+    "width",
+    "height",
+    "background",
+    "background-size",
+    "animation"
+   ],
+   "property_counts": {
+    "background-position": 2,
+    "box-sizing": 1,
+    "margin": 1,
+    "padding": 1,
+    "width": 1,
+    "height": 1,
+    "background": 1,
+    "background-size": 1,
+    "animation": 1
+   },
+   "media": 0,
+   "keyframes": 1,
+   "bytes": 625
+  },
+  "js_bytes": 0,
+  "html_bytes": 855,
+  "missing_assets": []
+ }
+}

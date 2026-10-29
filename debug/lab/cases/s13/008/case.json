@@ -1,0 +1,416 @@
+{
+ "id": "a11y.008",
+ "section": 13,
+ "name": "keshavgbpecdelhi/Web-Development · projects/TinDog Website [HTML + CSS + Bootstrap]",
+ "source": {
+  "repo": "keshavgbpecdelhi/Web-Development",
+  "commit": "c1613b1424c3226ecd09ca0f23cd39bc4e32709b",
+  "license": "Apache-2.0",
+  "path": "projects/TinDog Website [HTML + CSS + Bootstrap]",
+  "url": "https://github.com/keshavgbpecdelhi/Web-Development/tree/c1613b1424c3226ecd09ca0f23cd39bc4e32709b/projects/TinDog Website [HTML + CSS + Bootstrap]"
+ },
+ "entry": "index.html",
+ "dir": "cases/s13/008",
+ "bytes": 437576,
+ "files": 7,
+ "digest": "05a5b103c1b4c526dc27",
+ "facts": {
+  "title": "TinDog",
+  "elements": 124,
+  "max_depth": 9,
+  "tags": {
+   "html": 1,
+   "head": 1,
+   "meta": 1,
+   "title": 1,
+   "script": 2,
+   "link": 5,
+   "body": 1,
+   "section": 6,
+   "div": 29,
+   "nav": 1,
+   "a": 6,
+   "button": 10,
+   "span": 5,
+   "ul": 1,
+   "li": 4,
+   "h1": 1,
+   "i": 11,
+   "img": 7,
+   "h3": 7,
+   "p": 15,
+   "h2": 6,
+   "em": 2,
+   "footer": 1
+  },
+  "html_tags": [
+   "a",
+   "body",
+   "button",
+   "div",
+   "em",
+   "footer",
+   "h1",
+   "h2",
+   "h3",
+   "head",
+   "html",
+   "i",
+   "img",
+   "li",
+   "link",
+   "meta",
+   "nav",
+   "p",
+   "script",
+   "section",
+   "span",
+   "title",
+   "ul"
+  ],
+  "ids": [
+   "title",
+   "navbarSupportedContent",
+   "features",
+   "testimonials",
+   "carouselExampleControls",
+   "press",
+   "pricing",
+   "cta",
+   "footer"
+  ],
+  "id_counts": {
+   "title": 1,
+   "navbarSupportedContent": 1,
+   "features": 1,
+   "testimonials": 1,
+   "carouselExampleControls": 1,
+   "press": 1,
+   "pricing": 1,
+   "cta": 1,
+   "footer": 1
+  },
+  "classes": [
+   "container-fluid",
+   "navbar",
+   "navbar-expand-lg",
+   "navbar-brand",
+   "navbar-toggler",
+   "navbar-toggler-icon",
+   "collapse",
+   "navbar-collapse",
+   "navbar-nav",
+   "ms-auto",
+   "nav-item",
+   "nav-link",
+   "row",
+   "col-lg-6",
+   "btn",
+   "btn-dark",
+   "btn-lg",
+   "download-Button",
+   "fa-brands",
+   "fa-apple",
+   "btn-outline-warning",
+   "fa-google-play",
+   "title-image",
+   "features",
+   "col-lg-4",
+   "feature-box",
+   "icon",
+   "fa-solid",
+   "fa-circle-check",
+   "circle-check",
+   "fa-3x",
+   "fa-bullseye",
+   "bullseye",
+   "fa-heart",
+   "heart",
+   "carousel",
+   "slide",
+   "carousel-inner",
+   "carousel-item",
+   "active",
+   "testimonial-image",
+   "testimonial-text",
+   "carousel-control-prev",
+   "carousel-control-prev-icon",
+   "visually-hidden",
+   "carousel-control-next",
+   "carousel-control-next-icon",
+   "press-img",
+   "pricing-row",
+   "col-md-6",
+   "price-box",
+   "card",
+   "card-header",
+   "card-body",
+   "d-grid",
+   "gap-2",
+   "btn-outline-dark",
+   "btn-light",
+   "fa",
+   "fa-twitter"
+  ],
+  "class_counts": {
+   "container-fluid": 1,
+   "navbar": 1,
+   "navbar-expand-lg": 1,
+   "navbar-brand": 1,
+   "navbar-toggler": 1,
+   "navbar-toggler-icon": 1,
+   "collapse": 1,
+   "navbar-collapse": 1,
+   "navbar-nav": 1,
+   "ms-auto": 1,
+   "nav-item": 4,
+   "nav-link": 4,
+   "row": 3,
+   "col-lg-6": 2,
+   "btn": 7,
+   "btn-dark": 4,
+   "btn-lg": 4,
+   "download-Button": 2,
+   "fa-brands": 4,
+   "fa-apple": 2,
+   "btn-outline-warning": 1,
+   "fa-google-play": 2,
+   "title-image": 1,
+   "features": 1,
+   "col-lg-4": 6,
+   "feature-box": 3,
+   "icon": 3,
+   "fa-solid": 3,
+   "fa-circle-check": 1,
+   "circle-check": 1,
+   "fa-3x": 3,
+   "fa-bullseye": 1,
+   "bullseye": 1,
+   "fa-heart": 1,
+   "heart": 1,
+   "carousel": 1,
+   "slide": 1,
+   "carousel-inner": 1,
+   "carousel-item": 2,
+   "active": 1,
+   "testimonial-image": 2,
+   "testimonial-text": 1,
+   "carousel-control-prev": 1,
+   "carousel-control-prev-icon": 1,
+   "visually-hidden": 2,
+   "carousel-control-next": 1,
+   "carousel-control-next-icon": 1,
+   "press-img": 4,
+   "pricing-row": 1,
+   "col-md-6": 2,
+   "price-box": 3,
+   "card": 3,
+   "card-header": 3,
+   "card-body": 3,
+   "d-grid": 3,
+   "gap-2": 3,
+   "btn-outline-dark": 1,
+   "btn-light": 1,
+   "fa": 4,
+   "fa-twitter": 1
+  },
+  "text_samples": [
+   "Meet new and interesting dogs nearby.",
+   "Easy to use.",
+   "So easy to use, even your dog could do it.",
+   "Elite Clientele",
+   "We have all the dogs, the greatest dogs.",
+   "Guaranteed to work.",
+   "Find the love of your dog's life or your money back.",
+   "I no longer have to sniff other dogs for love. I've found the hottest Corgi on TinDog. Woof."
+  ],
+  "inline_styles": [
+   "text-decoration: none;"
+  ],
+  "attr_samples": {
+   "title": {
+    "tag": "section",
+    "class": "",
+    "attrs": {
+     "id": "title"
+    }
+   },
+   "navbarSupportedContent": {
+    "tag": "div",
+    "class": "collapse navbar-collapse",
+    "attrs": {
+     "id": "navbarSupportedContent",
+     "class": "collapse navbar-collapse"
+    }
+   },
+   "features": {
+    "tag": "section",
+    "class": "",
+    "attrs": {
+     "id": "features"
+    }
+   },
+   "testimonials": {
+    "tag": "section",
+    "class": "",
+    "attrs": {
+     "id": "testimonials"
+    }
+   },
+   "carouselExampleControls": {
+    "tag": "div",
+    "class": "carousel slide",
+    "attrs": {
+     "id": "carouselExampleControls",
+     "class": "carousel slide"
+    }
+   },
+   "press": {
+    "tag": "section",
+    "class": "",
+    "attrs": {
+     "id": "press"
+    }
+   },
+   "pricing": {
+    "tag": "section",
+    "class": "",
+    "attrs": {
+     "id": "pricing"
+    }
+   },
+   "cta": {
+    "tag": "section",
+    "class": "",
+    "attrs": {
+     "id": "cta"
+    }
+   },
+   "footer": {
+    "tag": "footer",
+    "class": "",
+    "attrs": {
+     "id": "footer"
+    }
+   }
+  },
+  "roles": {},
+  "aria": {
+   "aria-controls": 1,
+   "aria-expanded": 1,
+   "aria-label": 1,
+   "aria-current": 4,
+   "aria-hidden": 2
+  },
+  "forms": {
+   "button": 10
+  },
+  "media": {
+   "img": 7
+  },
+  "linked_css": [
+   "css/styles.css"
+  ],
+  "linked_js": [],
+  "style_blocks": 0,
+  "inline_js": 2,
+  "images": [
+   "images/iphone6.png",
+   "images/dog-img.jpg",
+   "images/lady-img.jpg",
+   "images/techcrunch.png",
+   "images/tnw.png",
+   "images/techcrunch.png",
+   "images/mashable.png"
+  ],
+  "features": [
+   "position",
+   "anim",
+   "responsive",
+   "forms",
+   "a11y",
+   "media",
+   "typo",
+   "color",
+   "box"
+  ],
+  "css": {
+   "rules": 32,
+   "selectors": [
+    "body",
+    "#title",
+    ".navbar-brand",
+    "h1",
+    "h2",
+    ".nav-link",
+    ".container-fluid",
+    ".row",
+    ".nav-item",
+    ".download-Button",
+    ".title-image",
+    ".icon",
+    ".icon:hover",
+    "#features",
+    ".feature-box",
+    "h3",
+    "p",
+    "#testimonials",
+    ".testimonial-image",
+    ".carousel-item",
+    "#press",
+    ".press-img",
+    ".price-box",
+    "#pricing",
+    "#cta",
+    "#cta h3",
+    "#cta button",
+    "#footer",
+    "#footer i"
+   ],
+   "properties": [
+    "padding",
+    "color",
+    "text-align",
+    "font-family",
+    "margin",
+    "background-color",
+    "font-size",
+    "width",
+    "font-weight",
+    "line-height",
+    "position",
+    "margin-top",
+    "transform",
+    "padding-bottom",
+    "z-index",
+    "border-radius"
+   ],
+   "property_counts": {
+    "padding": 8,
+    "color": 7,
+    "text-align": 7,
+    "font-family": 6,
+    "margin": 6,
+    "background-color": 5,
+    "font-size": 5,
+    "width": 4,
+    "font-weight": 3,
+    "line-height": 3,
+    "position": 3,
+    "margin-top": 2,
+    "transform": 2,
+    "padding-bottom": 2,
+    "z-index": 1,
+    "border-radius": 1
+   },
+   "media": 1,
+   "keyframes": 0,
+   "bytes": 2470
+  },
+  "js_bytes": 1,
+  "html_bytes": 7972,
+  "missing_assets": [
+   "images/techcrunch.png"
+  ]
+ }
+}

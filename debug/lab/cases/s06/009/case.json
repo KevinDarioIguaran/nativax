@@ -1,0 +1,211 @@
+{
+ "id": "anim.009",
+ "section": 6,
+ "name": "keshavgbpecdelhi/Web-Development · projects/Mathbot",
+ "source": {
+  "repo": "keshavgbpecdelhi/Web-Development",
+  "commit": "c1613b1424c3226ecd09ca0f23cd39bc4e32709b",
+  "license": "Apache-2.0",
+  "path": "projects/Mathbot",
+  "url": "https://github.com/keshavgbpecdelhi/Web-Development/tree/c1613b1424c3226ecd09ca0f23cd39bc4e32709b/projects/Mathbot"
+ },
+ "entry": "index.html",
+ "dir": "cases/s06/009",
+ "bytes": 89383,
+ "files": 4,
+ "digest": "d6a5a042e3dea1e4dc96",
+ "facts": {
+  "title": "Math Bot",
+  "elements": 17,
+  "max_depth": 5,
+  "tags": {
+   "html": 1,
+   "head": 1,
+   "meta": 2,
+   "title": 1,
+   "link": 1,
+   "body": 1,
+   "div": 5,
+   "h2": 1,
+   "input": 1,
+   "button": 1,
+   "script": 2
+  },
+  "html_tags": [
+   "body",
+   "button",
+   "div",
+   "h2",
+   "head",
+   "html",
+   "input",
+   "link",
+   "meta",
+   "script",
+   "title"
+  ],
+  "ids": [
+   "chat-output",
+   "user-message"
+  ],
+  "id_counts": {
+   "chat-output": 2,
+   "user-message": 1
+  },
+  "classes": [
+   "chat",
+   "chat-header",
+   "chat-body",
+   "user-input"
+  ],
+  "class_counts": {
+   "chat": 1,
+   "chat-header": 1,
+   "chat-body": 1,
+   "user-input": 1
+  },
+  "text_samples": [],
+  "inline_styles": [],
+  "attr_samples": {
+   "chat-output": {
+    "tag": "div",
+    "class": "chat-body",
+    "attrs": {
+     "id": "chat-output",
+     "class": "chat-body"
+    }
+   },
+   "user-message": {
+    "tag": "input",
+    "class": "",
+    "attrs": {
+     "id": "user-message",
+     "type": "text",
+     "placeholder": "Type your math expression here..."
+    }
+   }
+  },
+  "roles": {},
+  "aria": {},
+  "forms": {
+   "input": 1,
+   "button": 1
+  },
+  "media": {},
+  "linked_css": [
+   "styles.css"
+  ],
+  "linked_js": [
+   "script.js"
+  ],
+  "style_blocks": 0,
+  "inline_js": 2,
+  "images": [],
+  "features": [
+   "flex",
+   "anim",
+   "forms",
+   "typo",
+   "color",
+   "box",
+   "jsdom",
+   "events"
+  ],
+  "css": {
+   "rules": 13,
+   "selectors": [
+    "*",
+    "body",
+    ".container",
+    ".chat",
+    ".chat-header",
+    ".chat-header h2",
+    ".chat-body",
+    ".chat-body .message",
+    ".chat-body .user-message",
+    ".user-input",
+    ".user-input input",
+    ".user-input button",
+    ".user-input button:hover"
+   ],
+   "properties": [
+    "padding",
+    "background-color",
+    "display",
+    "border-radius",
+    "align-items",
+    "border",
+    "margin",
+    "justify-content",
+    "flex-direction",
+    "height",
+    "color",
+    "flex",
+    "font-size",
+    "opacity",
+    "transform",
+    "box-sizing",
+    "background-image",
+    "background-position",
+    "background-repeat",
+    "background-size",
+    "font-family",
+    "min-height",
+    "background",
+    "box-shadow",
+    "width",
+    "overflow",
+    "border-top-left-radius",
+    "border-top-right-radius",
+    "overflow-y",
+    "margin-bottom",
+    "text-align",
+    "cursor",
+    "transition",
+    "button"
+   ],
+   "property_counts": {
+    "padding": 7,
+    "background-color": 5,
+    "display": 4,
+    "border-radius": 4,
+    "align-items": 3,
+    "border": 3,
+    "margin": 2,
+    "justify-content": 2,
+    "flex-direction": 2,
+    "height": 2,
+    "color": 2,
+    "flex": 2,
+    "font-size": 2,
+    "opacity": 2,
+    "transform": 2,
+    "box-sizing": 1,
+    "background-image": 1,
+    "background-position": 1,
+    "background-repeat": 1,
+    "background-size": 1,
+    "font-family": 1,
+    "min-height": 1,
+    "background": 1,
+    "box-shadow": 1,
+    "width": 1,
+    "overflow": 1,
+    "border-top-left-radius": 1,
+    "border-top-right-radius": 1,
+    "overflow-y": 1,
+    "margin-bottom": 1,
+    "text-align": 1,
+    "cursor": 1,
+    "transition": 1,
+    "button": 1
+   },
+   "media": 0,
+   "keyframes": 1,
+   "bytes": 1937
+  },
+  "js_bytes": 1338,
+  "html_bytes": 767,
+  "missing_assets": []
+ }
+}

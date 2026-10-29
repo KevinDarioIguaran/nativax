@@ -1,0 +1,135 @@
+{
+ "id": "typo.003",
+ "section": 4,
+ "name": "zxuqian/html-css-examples · 48-css-clay-morphism",
+ "source": {
+  "repo": "zxuqian/html-css-examples",
+  "commit": "2a9fc59f44aeda092cbac07472aaf0f1ead4e1a6",
+  "license": "MIT",
+  "path": "48-css-clay-morphism",
+  "url": "https://github.com/zxuqian/html-css-examples/tree/2a9fc59f44aeda092cbac07472aaf0f1ead4e1a6/48-css-clay-morphism"
+ },
+ "entry": "index.html",
+ "dir": "cases/s04/003",
+ "bytes": 1491,
+ "files": 2,
+ "digest": "961db8833d5719a2df9b",
+ "facts": {
+  "title": "CSS Claymporphism",
+  "elements": 13,
+  "max_depth": 5,
+  "tags": {
+   "html": 1,
+   "head": 1,
+   "meta": 3,
+   "title": 1,
+   "link": 1,
+   "body": 1,
+   "main": 1,
+   "div": 1,
+   "p": 2,
+   "button": 1
+  },
+  "html_tags": [
+   "body",
+   "button",
+   "div",
+   "head",
+   "html",
+   "link",
+   "main",
+   "meta",
+   "p",
+   "title"
+  ],
+  "ids": [],
+  "id_counts": {},
+  "classes": [
+   "box"
+  ],
+  "class_counts": {
+   "box": 1
+  },
+  "text_samples": [
+   "这是 CSS “泥陶态“ 样式",
+   "Claymorphism"
+  ],
+  "inline_styles": [],
+  "attr_samples": {},
+  "roles": {},
+  "aria": {},
+  "forms": {
+   "button": 1
+  },
+  "media": {},
+  "linked_css": [
+   "style.css"
+  ],
+  "linked_js": [],
+  "style_blocks": 0,
+  "inline_js": 0,
+  "images": [],
+  "features": [
+   "grid",
+   "forms",
+   "typo",
+   "color",
+   "box"
+  ],
+  "css": {
+   "rules": 6,
+   "selectors": [
+    "*",
+    "main",
+    "p",
+    ".box p:nth-child(2)",
+    ".box",
+    "button"
+   ],
+   "properties": [
+    "padding",
+    "background",
+    "font-weight",
+    "display",
+    "place-items",
+    "color",
+    "box-shadow",
+    "border-radius",
+    "box-sizing",
+    "margin",
+    "font-family",
+    "width",
+    "height",
+    "max-width",
+    "font-size",
+    "gap",
+    "border"
+   ],
+   "property_counts": {
+    "padding": 3,
+    "background": 3,
+    "font-weight": 3,
+    "display": 2,
+    "place-items": 2,
+    "color": 2,
+    "box-shadow": 2,
+    "border-radius": 2,
+    "box-sizing": 1,
+    "margin": 1,
+    "font-family": 1,
+    "width": 1,
+    "height": 1,
+    "max-width": 1,
+    "font-size": 1,
+    "gap": 1,
+    "border": 1
+   },
+   "media": 0,
+   "keyframes": 0,
+   "bytes": 984
+  },
+  "js_bytes": 0,
+  "html_bytes": 507,
+  "missing_assets": []
+ }
+}

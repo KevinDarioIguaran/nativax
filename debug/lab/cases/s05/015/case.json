@@ -1,0 +1,141 @@
+{
+ "id": "color.015",
+ "section": 5,
+ "name": "zxuqian/html-css-examples · 45-URLSearchParams",
+ "source": {
+  "repo": "zxuqian/html-css-examples",
+  "commit": "2a9fc59f44aeda092cbac07472aaf0f1ead4e1a6",
+  "license": "MIT",
+  "path": "45-URLSearchParams",
+  "url": "https://github.com/zxuqian/html-css-examples/tree/2a9fc59f44aeda092cbac07472aaf0f1ead4e1a6/45-URLSearchParams"
+ },
+ "entry": "index.html",
+ "dir": "cases/s05/015",
+ "bytes": 2023,
+ "files": 1,
+ "digest": "1fdfdc3608d0d409b997",
+ "facts": {
+  "title": "URLSearchParams",
+  "elements": 12,
+  "max_depth": 5,
+  "tags": {
+   "html": 1,
+   "head": 1,
+   "meta": 3,
+   "title": 1,
+   "style": 1,
+   "body": 1,
+   "main": 1,
+   "div": 1,
+   "input": 1,
+   "script": 1
+  },
+  "html_tags": [
+   "body",
+   "div",
+   "head",
+   "html",
+   "input",
+   "main",
+   "meta",
+   "script",
+   "style",
+   "title"
+  ],
+  "ids": [
+   "url"
+  ],
+  "id_counts": {
+   "url": 1
+  },
+  "classes": [
+   "inputContainer"
+  ],
+  "class_counts": {
+   "inputContainer": 1
+  },
+  "text_samples": [],
+  "inline_styles": [],
+  "attr_samples": {
+   "url": {
+    "tag": "input",
+    "class": "",
+    "attrs": {
+     "id": "url",
+     "type": "text",
+     "value": "q=测试&order=asc&filters=[\"前端\",\"后端\"]"
+    }
+   }
+  },
+  "roles": {},
+  "aria": {},
+  "forms": {
+   "input": 1
+  },
+  "media": {},
+  "linked_css": [],
+  "linked_js": [],
+  "style_blocks": 1,
+  "inline_js": 1,
+  "images": [],
+  "features": [
+   "grid",
+   "forms",
+   "typo",
+   "color",
+   "box",
+   "jsdom"
+  ],
+  "css": {
+   "rules": 4,
+   "selectors": [
+    "*",
+    "body",
+    "main",
+    "input"
+   ],
+   "properties": [
+    "padding",
+    "width",
+    "margin",
+    "font-family",
+    "box-sizing",
+    "background",
+    "height",
+    "max-width",
+    "display",
+    "place-items",
+    "border",
+    "font-size",
+    "border-radius",
+    "background-color",
+    "color",
+    "outline"
+   ],
+   "property_counts": {
+    "padding": 2,
+    "width": 2,
+    "margin": 1,
+    "font-family": 1,
+    "box-sizing": 1,
+    "background": 1,
+    "height": 1,
+    "max-width": 1,
+    "display": 1,
+    "place-items": 1,
+    "border": 1,
+    "font-size": 1,
+    "border-radius": 1,
+    "background-color": 1,
+    "color": 1,
+    "outline": 1
+   },
+   "media": 0,
+   "keyframes": 0,
+   "bytes": 592
+  },
+  "js_bytes": 905,
+  "html_bytes": 2023,
+  "missing_assets": []
+ }
+}

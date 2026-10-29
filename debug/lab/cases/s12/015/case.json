@@ -1,0 +1,102 @@
+{
+ "id": "forms.015",
+ "section": 12,
+ "name": "keshavgbpecdelhi/Web-Development · projects/Slide out Gallery",
+ "source": {
+  "repo": "keshavgbpecdelhi/Web-Development",
+  "commit": "c1613b1424c3226ecd09ca0f23cd39bc4e32709b",
+  "license": "Apache-2.0",
+  "path": "projects/Slide out Gallery",
+  "url": "https://github.com/keshavgbpecdelhi/Web-Development/tree/c1613b1424c3226ecd09ca0f23cd39bc4e32709b/projects/Slide out Gallery"
+ },
+ "entry": "index.html",
+ "dir": "cases/s12/015",
+ "bytes": 10183,
+ "files": 1,
+ "digest": "b91e7189857c2cdc887c",
+ "facts": {
+  "title": "",
+  "elements": 31,
+  "max_depth": 5,
+  "tags": {
+   "ul": 1,
+   "li": 2,
+   "h2": 2,
+   "p": 7,
+   "progress": 6,
+   "div": 6,
+   "span": 6,
+   "a": 1
+  },
+  "html_tags": [
+   "a",
+   "div",
+   "h2",
+   "li",
+   "p",
+   "progress",
+   "span",
+   "ul"
+  ],
+  "ids": [],
+  "id_counts": {},
+  "classes": [
+   "html5",
+   "progress-bar",
+   "css3",
+   "jquery",
+   "python",
+   "php",
+   "node-js"
+  ],
+  "class_counts": {
+   "html5": 1,
+   "progress-bar": 6,
+   "css3": 1,
+   "jquery": 1,
+   "python": 1,
+   "php": 1,
+   "node-js": 1
+  },
+  "text_samples": [],
+  "inline_styles": [
+   "width:80%",
+   "width: 80%",
+   "width:60%",
+   "width: 60%",
+   "width:50%",
+   "width: 50%",
+   "width:75%",
+   "width: 75%",
+   "width:65%",
+   "width: 65%",
+   "width:35%",
+   "width: 35%"
+  ],
+  "attr_samples": {},
+  "roles": {},
+  "aria": {},
+  "forms": {},
+  "media": {},
+  "linked_css": [],
+  "linked_js": [],
+  "style_blocks": 0,
+  "inline_js": 0,
+  "images": [],
+  "features": [
+   "box"
+  ],
+  "css": {
+   "rules": 0,
+   "selectors": [],
+   "properties": [],
+   "property_counts": {},
+   "media": 0,
+   "keyframes": 0,
+   "bytes": 0
+  },
+  "js_bytes": 0,
+  "html_bytes": 3259,
+  "missing_assets": []
+ }
+}

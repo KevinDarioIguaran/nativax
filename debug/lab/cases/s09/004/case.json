@@ -1,0 +1,174 @@
+{
+ "id": "pos.004",
+ "section": 9,
+ "name": "keshavgbpecdelhi/Web-Development · projects/Eyes Moving",
+ "source": {
+  "repo": "keshavgbpecdelhi/Web-Development",
+  "commit": "c1613b1424c3226ecd09ca0f23cd39bc4e32709b",
+  "license": "Apache-2.0",
+  "path": "projects/Eyes Moving",
+  "url": "https://github.com/keshavgbpecdelhi/Web-Development/tree/c1613b1424c3226ecd09ca0f23cd39bc4e32709b/projects/Eyes Moving"
+ },
+ "entry": "index.html",
+ "dir": "cases/s09/004",
+ "bytes": 6338,
+ "files": 4,
+ "digest": "6d0f52b3bf61240b4477",
+ "facts": {
+  "title": "Eyes",
+  "elements": 14,
+  "max_depth": 5,
+  "tags": {
+   "html": 1,
+   "head": 1,
+   "meta": 3,
+   "title": 1,
+   "link": 1,
+   "body": 1,
+   "main": 1,
+   "img": 2,
+   "div": 1,
+   "h1": 1,
+   "script": 1
+  },
+  "html_tags": [
+   "body",
+   "div",
+   "h1",
+   "head",
+   "html",
+   "img",
+   "link",
+   "main",
+   "meta",
+   "script",
+   "title"
+  ],
+  "ids": [
+   "anchor",
+   "eyes",
+   "eye1"
+  ],
+  "id_counts": {
+   "anchor": 1,
+   "eyes": 1,
+   "eye1": 1
+  },
+  "classes": [
+   "eye",
+   "text"
+  ],
+  "class_counts": {
+   "eye": 1,
+   "text": 1
+  },
+  "text_samples": [
+   "Beauty Lies in the Eyes of the beholder"
+  ],
+  "inline_styles": [],
+  "attr_samples": {
+   "anchor": {
+    "tag": "img",
+    "class": "",
+    "attrs": {
+     "id": "anchor",
+     "alt": "char",
+     "src": "https://www.animeoutline.com/wp-content/uploads/2018/03/anime_male_eye_iris.png"
+    }
+   },
+   "eyes": {
+    "tag": "div",
+    "class": "",
+    "attrs": {
+     "id": "eyes"
+    }
+   },
+   "eye1": {
+    "tag": "img",
+    "class": "eye",
+    "attrs": {
+     "id": "eye1",
+     "class": "eye",
+     "src": "eye_ball.png"
+    }
+   }
+  },
+  "roles": {},
+  "aria": {},
+  "forms": {},
+  "media": {
+   "img": 2
+  },
+  "linked_css": [
+   "style.css"
+  ],
+  "linked_js": [
+   "index.js"
+  ],
+  "style_blocks": 0,
+  "inline_js": 1,
+  "images": [
+   "https://www.animeoutline.com/wp-content/uploads/2018/03/anime_male_eye_iris.png",
+   "eye_ball.png"
+  ],
+  "features": [
+   "flex",
+   "grid",
+   "position",
+   "anim",
+   "media",
+   "color",
+   "box",
+   "jsdom"
+  ],
+  "css": {
+   "rules": 7,
+   "selectors": [
+    "*",
+    "body",
+    "main",
+    "#eyes img",
+    "#eyes",
+    ".text"
+   ],
+   "properties": [
+    "height",
+    "background-color",
+    "color",
+    "display",
+    "position",
+    "top",
+    "left",
+    "box-sizing",
+    "padding",
+    "margin",
+    "justify-content",
+    "align-items",
+    "place-items",
+    "width"
+   ],
+   "property_counts": {
+    "height": 2,
+    "background-color": 2,
+    "color": 2,
+    "display": 2,
+    "position": 2,
+    "top": 2,
+    "left": 2,
+    "box-sizing": 1,
+    "padding": 1,
+    "margin": 1,
+    "justify-content": 1,
+    "align-items": 1,
+    "place-items": 1,
+    "width": 1
+   },
+   "media": 0,
+   "keyframes": 0,
+   "bytes": 550
+  },
+  "js_bytes": 681,
+  "html_bytes": 688,
+  "missing_assets": []
+ }
+}

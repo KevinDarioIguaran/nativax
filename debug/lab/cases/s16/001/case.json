@@ -1,0 +1,218 @@
+{
+ "id": "integ.001",
+ "section": 16,
+ "name": "keshavgbpecdelhi/Web-Development · projects/TicTacToe",
+ "source": {
+  "repo": "keshavgbpecdelhi/Web-Development",
+  "commit": "c1613b1424c3226ecd09ca0f23cd39bc4e32709b",
+  "license": "Apache-2.0",
+  "path": "projects/TicTacToe",
+  "url": "https://github.com/keshavgbpecdelhi/Web-Development/tree/c1613b1424c3226ecd09ca0f23cd39bc4e32709b/projects/TicTacToe"
+ },
+ "entry": "index.html",
+ "dir": "cases/s16/001",
+ "bytes": 113404,
+ "files": 4,
+ "digest": "f7cf13f2f63de1d0c41a",
+ "facts": {
+  "title": "Document",
+  "elements": 39,
+  "max_depth": 6,
+  "tags": {
+   "html": 1,
+   "head": 1,
+   "meta": 3,
+   "title": 1,
+   "link": 1,
+   "body": 1,
+   "nav": 1,
+   "span": 11,
+   "div": 15,
+   "h1": 1,
+   "button": 1,
+   "img": 1,
+   "script": 1
+  },
+  "html_tags": [
+   "body",
+   "button",
+   "div",
+   "h1",
+   "head",
+   "html",
+   "img",
+   "link",
+   "meta",
+   "nav",
+   "script",
+   "span",
+   "title"
+  ],
+  "ids": [
+   "reset"
+  ],
+  "id_counts": {
+   "reset": 1
+  },
+  "classes": [
+   "navbar",
+   "yellow",
+   "gamecontainer",
+   "container",
+   "line",
+   "tile",
+   "boxtext",
+   "gameinfo",
+   "controls",
+   "info",
+   "image"
+  ],
+  "class_counts": {
+   "navbar": 1,
+   "yellow": 1,
+   "gamecontainer": 1,
+   "container": 1,
+   "line": 1,
+   "tile": 9,
+   "boxtext": 9,
+   "gameinfo": 1,
+   "controls": 1,
+   "info": 1,
+   "image": 1
+  },
+  "text_samples": [],
+  "inline_styles": [],
+  "attr_samples": {
+   "reset": {
+    "tag": "button",
+    "class": "",
+    "attrs": {
+     "id": "reset"
+    }
+   }
+  },
+  "roles": {},
+  "aria": {},
+  "forms": {
+   "button": 1
+  },
+  "media": {
+   "img": 1
+  },
+  "linked_css": [
+   "style.css"
+  ],
+  "linked_js": [
+   "script.js"
+  ],
+  "style_blocks": 0,
+  "inline_js": 1,
+  "images": [
+   "excited.gif"
+  ],
+  "features": [
+   "flex",
+   "grid",
+   "position",
+   "anim",
+   "responsive",
+   "forms",
+   "media",
+   "typo",
+   "color",
+   "box",
+   "jsdom",
+   "events"
+  ],
+  "css": {
+   "rules": 21,
+   "selectors": [
+    "*",
+    ".gamecontainer",
+    ".navbar",
+    ".yellow",
+    ".container",
+    ".gameinfo",
+    ".tile",
+    ".hover:hover",
+    ".boxtext",
+    ".controls",
+    "#reset",
+    ".image",
+    ".image img",
+    ".line",
+    ".background",
+    ".gameinfo h1",
+    ".gameinfo h1::after"
+   ],
+   "properties": [
+    "position",
+    "display",
+    "align-items",
+    "width",
+    "background-color",
+    "justify-content",
+    "height",
+    "padding",
+    "font-size",
+    "color",
+    "overflow",
+    "font-weight",
+    "flex-direction",
+    "border",
+    "margin",
+    "font-family",
+    "background",
+    "cursor",
+    "transition",
+    "left",
+    "margin-top",
+    "margin-left",
+    "grid-template-columns",
+    "grid-template-rows",
+    "box-shadow",
+    "border-radius",
+    "top",
+    "content",
+    "bottom"
+   ],
+   "property_counts": {
+    "position": 7,
+    "display": 7,
+    "align-items": 7,
+    "width": 7,
+    "background-color": 6,
+    "justify-content": 5,
+    "height": 5,
+    "padding": 4,
+    "font-size": 4,
+    "color": 4,
+    "overflow": 3,
+    "font-weight": 3,
+    "flex-direction": 3,
+    "border": 3,
+    "margin": 2,
+    "font-family": 2,
+    "background": 2,
+    "cursor": 2,
+    "transition": 2,
+    "left": 2,
+    "margin-top": 1,
+    "margin-left": 1,
+    "grid-template-columns": 1,
+    "grid-template-rows": 1,
+    "box-shadow": 1,
+    "border-radius": 1,
+    "top": 1,
+    "content": 1,
+    "bottom": 1
+   },
+   "media": 2,
+   "keyframes": 0,
+   "bytes": 2677
+  },
+  "js_bytes": 3021,
+  "html_bytes": 1565,
+  "missing_assets": []
+ }
+}

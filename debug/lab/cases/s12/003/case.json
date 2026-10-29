@@ -1,0 +1,178 @@
+{
+ "id": "forms.003",
+ "section": 12,
+ "name": "keshavgbpecdelhi/Web-Development · projects/drumkit",
+ "source": {
+  "repo": "keshavgbpecdelhi/Web-Development",
+  "commit": "c1613b1424c3226ecd09ca0f23cd39bc4e32709b",
+  "license": "Apache-2.0",
+  "path": "projects/drumkit",
+  "url": "https://github.com/keshavgbpecdelhi/Web-Development/tree/c1613b1424c3226ecd09ca0f23cd39bc4e32709b/projects/drumkit"
+ },
+ "entry": "index.html",
+ "dir": "cases/s12/003",
+ "bytes": 627020,
+ "files": 11,
+ "digest": "a1f952e5d88c7e51e16b",
+ "facts": {
+  "title": "Drum Kit",
+  "elements": 19,
+  "max_depth": 4,
+  "tags": {
+   "html": 1,
+   "head": 1,
+   "meta": 1,
+   "title": 1,
+   "link": 3,
+   "body": 1,
+   "h1": 1,
+   "div": 1,
+   "button": 7,
+   "footer": 1,
+   "script": 1
+  },
+  "html_tags": [
+   "body",
+   "button",
+   "div",
+   "footer",
+   "h1",
+   "head",
+   "html",
+   "link",
+   "meta",
+   "script",
+   "title"
+  ],
+  "ids": [
+   "title"
+  ],
+  "id_counts": {
+   "title": 1
+  },
+  "classes": [
+   "set",
+   "w",
+   "drum",
+   "a",
+   "s",
+   "d",
+   "j",
+   "k",
+   "l"
+  ],
+  "class_counts": {
+   "set": 1,
+   "w": 1,
+   "drum": 7,
+   "a": 1,
+   "s": 1,
+   "d": 1,
+   "j": 1,
+   "k": 1,
+   "l": 1
+  },
+  "text_samples": [
+   "Made with ❤️ in India🤩."
+  ],
+  "inline_styles": [],
+  "attr_samples": {
+   "title": {
+    "tag": "h1",
+    "class": "",
+    "attrs": {
+     "id": "title"
+    }
+   }
+  },
+  "roles": {},
+  "aria": {},
+  "forms": {
+   "button": 7
+  },
+  "media": {},
+  "linked_css": [
+   "styles.css"
+  ],
+  "linked_js": [
+   "index.js"
+  ],
+  "style_blocks": 0,
+  "inline_js": 1,
+  "images": [],
+  "features": [
+   "forms",
+   "typo",
+   "color",
+   "box",
+   "jsdom",
+   "events"
+  ],
+  "css": {
+   "rules": 15,
+   "selectors": [
+    "body",
+    "h1",
+    "footer",
+    ".w",
+    ".a",
+    ".s",
+    ".d",
+    ".j",
+    ".k",
+    ".l",
+    ".set",
+    ".game-over",
+    ".pressed",
+    ".red",
+    ".drum"
+   ],
+   "properties": [
+    "background-image",
+    "color",
+    "background-color",
+    "font-family",
+    "text-align",
+    "font-size",
+    "text-shadow",
+    "margin",
+    "opacity",
+    "box-shadow",
+    "outline",
+    "border",
+    "line-height",
+    "font-weight",
+    "border-radius",
+    "display",
+    "width",
+    "height"
+   ],
+   "property_counts": {
+    "background-image": 7,
+    "color": 4,
+    "background-color": 3,
+    "font-family": 3,
+    "text-align": 2,
+    "font-size": 2,
+    "text-shadow": 2,
+    "margin": 2,
+    "opacity": 2,
+    "box-shadow": 1,
+    "outline": 1,
+    "border": 1,
+    "line-height": 1,
+    "font-weight": 1,
+    "border-radius": 1,
+    "display": 1,
+    "width": 1,
+    "height": 1
+   },
+   "media": 0,
+   "keyframes": 0,
+   "bytes": 1106
+  },
+  "js_bytes": 1528,
+  "html_bytes": 779,
+  "missing_assets": []
+ }
+}

@@ -1,0 +1,342 @@
+{
+ "id": "typo.014",
+ "section": 4,
+ "name": "learning-zone/website-templates · gila",
+ "source": {
+  "repo": "learning-zone/website-templates",
+  "commit": "7bf31e9646a6b5f51c2e55b2557787310436989f",
+  "license": "not declared upstream",
+  "path": "gila",
+  "url": "https://github.com/learning-zone/website-templates/tree/7bf31e9646a6b5f51c2e55b2557787310436989f/gila"
+ },
+ "entry": "index.html",
+ "dir": "cases/s04/014",
+ "bytes": 17371,
+ "files": 3,
+ "digest": "bb1bb454a33a16159201",
+ "facts": {
+  "title": "Gila Two",
+  "elements": 142,
+  "max_depth": 7,
+  "tags": {
+   "html": 1,
+   "head": 1,
+   "meta": 3,
+   "link": 10,
+   "title": 1,
+   "style": 1,
+   "body": 1,
+   "div": 16,
+   "a": 45,
+   "h1": 5,
+   "span": 10,
+   "p": 14,
+   "ul": 2,
+   "li": 8,
+   "strong": 5,
+   "br": 6,
+   "acronym": 5,
+   "dl": 1,
+   "dt": 3,
+   "dd": 3,
+   "img": 1
+  },
+  "html_tags": [
+   "a",
+   "body",
+   "dd",
+   "div",
+   "dl",
+   "dt",
+   "h1",
+   "head",
+   "html",
+   "img",
+   "li",
+   "link",
+   "meta",
+   "p",
+   "span",
+   "strong",
+   "style",
+   "title",
+   "ul"
+  ],
+  "ids": [
+   "top",
+   "header",
+   "side-bar",
+   "main-copy",
+   "introduction",
+   "cross-browser",
+   "stylesheets",
+   "accessibility",
+   "footer"
+  ],
+  "id_counts": {
+   "top": 1,
+   "header": 1,
+   "side-bar": 1,
+   "main-copy": 1,
+   "introduction": 1,
+   "cross-browser": 1,
+   "stylesheets": 1,
+   "accessibility": 1,
+   "footer": 1
+  },
+  "classes": [
+   "doNotDisplay",
+   "doNotPrint",
+   "headerTitle",
+   "subHeader",
+   "leftSideBar",
+   "sideBarTitle",
+   "thisPage",
+   "sideBarText",
+   "rightSideBar",
+   "more",
+   "titleTip",
+   "smallCaps",
+   "nocopyright"
+  ],
+  "class_counts": {
+   "doNotDisplay": 2,
+   "doNotPrint": 2,
+   "headerTitle": 1,
+   "subHeader": 1,
+   "leftSideBar": 1,
+   "sideBarTitle": 6,
+   "thisPage": 1,
+   "sideBarText": 7,
+   "rightSideBar": 1,
+   "more": 1,
+   "titleTip": 3,
+   "smallCaps": 2,
+   "nocopyright": 1
+  },
+  "text_samples": [
+   "Skip to main content.",
+   "Introduction",
+   "Cross-browser",
+   "Accessibility",
+   "Branch Navigation",
+   "Browse Designs",
+   "haran’s Designs",
+   "Gila Homepage"
+  ],
+  "inline_styles": [
+   "border-top: none; padding-top: 0;"
+  ],
+  "attr_samples": {
+   "top": {
+    "tag": "div",
+    "class": "",
+    "attrs": {
+     "id": "top"
+    }
+   },
+   "header": {
+    "tag": "div",
+    "class": "",
+    "attrs": {
+     "id": "header"
+    }
+   },
+   "side-bar": {
+    "tag": "div",
+    "class": "",
+    "attrs": {
+     "id": "side-bar"
+    }
+   },
+   "main-copy": {
+    "tag": "div",
+    "class": "",
+    "attrs": {
+     "id": "main-copy"
+    }
+   },
+   "introduction": {
+    "tag": "h1",
+    "class": "",
+    "attrs": {
+     "id": "introduction",
+     "style": "border-top: none; padding-top: 0;"
+    }
+   },
+   "cross-browser": {
+    "tag": "h1",
+    "class": "",
+    "attrs": {
+     "id": "cross-browser"
+    }
+   },
+   "stylesheets": {
+    "tag": "h1",
+    "class": "",
+    "attrs": {
+     "id": "stylesheets"
+    }
+   },
+   "accessibility": {
+    "tag": "h1",
+    "class": "",
+    "attrs": {
+     "id": "accessibility"
+    }
+   },
+   "footer": {
+    "tag": "div",
+    "class": "",
+    "attrs": {
+     "id": "footer"
+    }
+   }
+  },
+  "roles": {},
+  "aria": {},
+  "forms": {},
+  "media": {
+   "img": 1
+  },
+  "linked_css": [
+   "./gila-screen.css",
+   "./gila-print.css"
+  ],
+  "linked_js": [],
+  "style_blocks": 1,
+  "inline_js": 0,
+  "images": [
+   "spacer.gif"
+  ],
+  "features": [
+   "position",
+   "anim",
+   "media",
+   "typo",
+   "color",
+   "box",
+   "events"
+  ],
+  "css": {
+   "rules": 64,
+   "selectors": [
+    "body",
+    "html > body",
+    "acronym",
+    ".titleTip",
+    ".doNotDisplay",
+    ".smallCaps",
+    "#header",
+    ".headerTitle",
+    ".headerTitle a",
+    ".headerTitle > a",
+    ".headerTitle span",
+    ".subHeader",
+    ".subHeader a",
+    ".subHeader a:hover",
+    ".leftSideBar",
+    ".leftSideBar .sideBarTitle",
+    ".leftSideBar ul",
+    ".leftSideBar li",
+    ".leftSideBar a",
+    ".leftSideBar a:hover",
+    ".leftSideBar .sideBarText",
+    ".leftSideBar .sideBarText a",
+    ".leftSideBar .sideBarText a:hover",
+    ".leftSideBar .thisPage",
+    ".rightSideBar",
+    "[class~=\"rightSideBar\"]",
+    ".rightSideBar .sideBarTitle",
+    ".rightSideBar a",
+    ".rightSideBar a:hover",
+    ".rightSideBar .sideBarText",
+    ".rightSideBar .more",
+    ".rightSideBar .more:hover",
+    "#main-copy",
+    "#main-copy h1",
+    "#main-copy a",
+    "#main-copy a:hover",
+    "p",
+    "dt",
+    "dd",
+    "#footer",
+    "#footer div",
+    "#footer a",
+    "#footer a:hover",
+    "acronym:after",
+    ".titleTip:after",
+    ".doNotPrint",
+    "#side-bar",
+    "#main-copy a:after",
+    "dl"
+   ],
+   "properties": [
+    "margin",
+    "padding",
+    "color",
+    "background-color",
+    "text-decoration",
+    "font-size",
+    "font-weight",
+    "display",
+    "text-align",
+    "font-family",
+    "font-style",
+    "line-height",
+    "border-bottom",
+    "clear",
+    "width",
+    "float",
+    "border-top",
+    "content",
+    "padding-left",
+    "cursor",
+    "font-variant",
+    "list-style-type",
+    "list-style-position",
+    "border",
+    "margin-right",
+    "border-left",
+    "acronym"
+   ],
+   "property_counts": {
+    "margin": 30,
+    "padding": 30,
+    "color": 24,
+    "background-color": 23,
+    "text-decoration": 17,
+    "font-size": 13,
+    "font-weight": 12,
+    "display": 6,
+    "text-align": 6,
+    "font-family": 5,
+    "font-style": 4,
+    "line-height": 4,
+    "border-bottom": 3,
+    "clear": 3,
+    "width": 2,
+    "float": 2,
+    "border-top": 2,
+    "content": 2,
+    "padding-left": 2,
+    "cursor": 1,
+    "font-variant": 1,
+    "list-style-type": 1,
+    "list-style-position": 1,
+    "border": 1,
+    "margin-right": 1,
+    "border-left": 1,
+    "acronym": 1
+   },
+   "media": 0,
+   "keyframes": 0,
+   "bytes": 6781
+  },
+  "js_bytes": 0,
+  "html_bytes": 10433,
+  "missing_assets": [
+   "spacer.gif"
+  ]
+ }
+}

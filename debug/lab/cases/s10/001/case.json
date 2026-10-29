@@ -1,0 +1,108 @@
+{
+ "id": "jsdom.001",
+ "section": 10,
+ "name": "zxuqian/html-css-examples · 18-elsa-magic-effect",
+ "source": {
+  "repo": "zxuqian/html-css-examples",
+  "commit": "2a9fc59f44aeda092cbac07472aaf0f1ead4e1a6",
+  "license": "MIT",
+  "path": "18-elsa-magic-effect",
+  "url": "https://github.com/zxuqian/html-css-examples/tree/2a9fc59f44aeda092cbac07472aaf0f1ead4e1a6/18-elsa-magic-effect"
+ },
+ "entry": "index.html",
+ "dir": "cases/s10/001",
+ "bytes": 72711,
+ "files": 3,
+ "digest": "35b4d932a3d566e22b9b",
+ "facts": {
+  "title": "Document",
+  "elements": 11,
+  "max_depth": 3,
+  "tags": {
+   "html": 1,
+   "head": 1,
+   "meta": 3,
+   "style": 1,
+   "title": 1,
+   "body": 1,
+   "canvas": 1,
+   "script": 2
+  },
+  "html_tags": [
+   "body",
+   "canvas",
+   "head",
+   "html",
+   "meta",
+   "script",
+   "style",
+   "title"
+  ],
+  "ids": [
+   "canvas"
+  ],
+  "id_counts": {
+   "canvas": 1
+  },
+  "classes": [],
+  "class_counts": {},
+  "text_samples": [],
+  "inline_styles": [],
+  "attr_samples": {
+   "canvas": {
+    "tag": "canvas",
+    "class": "",
+    "attrs": {
+     "id": "canvas"
+    }
+   }
+  },
+  "roles": {},
+  "aria": {},
+  "forms": {},
+  "media": {
+   "canvas": 1
+  },
+  "linked_css": [],
+  "linked_js": [
+   "proton.min.js",
+   "index.js"
+  ],
+  "style_blocks": 1,
+  "inline_js": 2,
+  "images": [],
+  "features": [
+   "position",
+   "anim",
+   "media",
+   "typo",
+   "color",
+   "box",
+   "jsdom",
+   "events"
+  ],
+  "css": {
+   "rules": 2,
+   "selectors": [
+    "*",
+    "#canvas"
+   ],
+   "properties": [
+    "margin",
+    "padding",
+    "background-color"
+   ],
+   "property_counts": {
+    "margin": 1,
+    "padding": 1,
+    "background-color": 1
+   },
+   "media": 0,
+   "keyframes": 0,
+   "bytes": 121
+  },
+  "js_bytes": 72171,
+  "html_bytes": 543,
+  "missing_assets": []
+ }
+}

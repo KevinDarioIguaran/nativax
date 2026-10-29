@@ -1,0 +1,229 @@
+{
+ "id": "forms.001",
+ "section": 12,
+ "name": "keshavgbpecdelhi/Web-Development · projects/VAT Calculator",
+ "source": {
+  "repo": "keshavgbpecdelhi/Web-Development",
+  "commit": "c1613b1424c3226ecd09ca0f23cd39bc4e32709b",
+  "license": "Apache-2.0",
+  "path": "projects/VAT Calculator",
+  "url": "https://github.com/keshavgbpecdelhi/Web-Development/tree/c1613b1424c3226ecd09ca0f23cd39bc4e32709b/projects/VAT Calculator"
+ },
+ "entry": "index.html",
+ "dir": "cases/s12/001",
+ "bytes": 3256,
+ "files": 3,
+ "digest": "5e0bdc2c3382c245858f",
+ "facts": {
+  "title": "VAT Calculator",
+  "elements": 26,
+  "max_depth": 6,
+  "tags": {
+   "html": 1,
+   "head": 1,
+   "meta": 2,
+   "title": 1,
+   "link": 1,
+   "body": 1,
+   "div": 7,
+   "h1": 1,
+   "label": 4,
+   "input": 4,
+   "button": 2,
+   "script": 1
+  },
+  "html_tags": [
+   "body",
+   "button",
+   "div",
+   "h1",
+   "head",
+   "html",
+   "input",
+   "label",
+   "link",
+   "meta",
+   "script",
+   "title"
+  ],
+  "ids": [
+   "price",
+   "vat-percent",
+   "vat-price",
+   "price-without-vat",
+   "calculate-btn",
+   "reset-btn"
+  ],
+  "id_counts": {
+   "price": 1,
+   "vat-percent": 1,
+   "vat-price": 1,
+   "price-without-vat": 1,
+   "calculate-btn": 1,
+   "reset-btn": 1
+  },
+  "classes": [
+   "container",
+   "vat-form",
+   "input",
+   "btns"
+  ],
+  "class_counts": {
+   "container": 1,
+   "vat-form": 1,
+   "input": 4,
+   "btns": 1
+  },
+  "text_samples": [
+   "VAT Calculator",
+   "Price Without VAT"
+  ],
+  "inline_styles": [],
+  "attr_samples": {
+   "price": {
+    "tag": "input",
+    "class": "",
+    "attrs": {
+     "id": "price",
+     "name": "price"
+    }
+   },
+   "vat-percent": {
+    "tag": "input",
+    "class": "",
+    "attrs": {
+     "id": "vat-percent",
+     "name": "vat-percent"
+    }
+   },
+   "vat-price": {
+    "tag": "input",
+    "class": "",
+    "attrs": {
+     "id": "vat-price",
+     "name": "vat-price"
+    }
+   },
+   "price-without-vat": {
+    "tag": "input",
+    "class": "",
+    "attrs": {
+     "id": "price-without-vat",
+     "name": "price-without-vat"
+    }
+   },
+   "calculate-btn": {
+    "tag": "button",
+    "class": "",
+    "attrs": {
+     "id": "calculate-btn",
+     "type": "submit",
+     "name": "calculate-btn"
+    }
+   },
+   "reset-btn": {
+    "tag": "button",
+    "class": "",
+    "attrs": {
+     "id": "reset-btn",
+     "type": "reset",
+     "name": "reset-btn"
+    }
+   }
+  },
+  "roles": {},
+  "aria": {},
+  "forms": {
+   "label": 4,
+   "input": 4,
+   "button": 2
+  },
+  "media": {},
+  "linked_css": [
+   "style.css"
+  ],
+  "linked_js": [
+   "script.js"
+  ],
+  "style_blocks": 0,
+  "inline_js": 1,
+  "images": [],
+  "features": [
+   "flex",
+   "anim",
+   "forms",
+   "typo",
+   "color",
+   "box",
+   "jsdom",
+   "events"
+  ],
+  "css": {
+   "rules": 14,
+   "selectors": [
+    "body",
+    ".container",
+    ".container > *",
+    ".input",
+    ".input > label",
+    ".input:focus-within > label:first-child",
+    ".input:focus-within > label:nth-child(2)",
+    ".input > input",
+    ".btns",
+    ".btns > button",
+    "#calculate-btn",
+    "#calculate-btn:hover",
+    "#reset-btn",
+    "#reset-btn:hover"
+   ],
+   "properties": [
+    "background",
+    "color",
+    "flex-direction",
+    "display",
+    "justify-content",
+    "align-items",
+    "transform",
+    "label",
+    "border",
+    "padding",
+    "font-family",
+    "font-size",
+    "gap",
+    "border-bottom",
+    "outline",
+    "cursor",
+    "font-weight",
+    "width",
+    "height"
+   ],
+   "property_counts": {
+    "background": 6,
+    "color": 3,
+    "flex-direction": 3,
+    "display": 2,
+    "justify-content": 2,
+    "align-items": 2,
+    "transform": 2,
+    "label": 2,
+    "border": 2,
+    "padding": 2,
+    "font-family": 1,
+    "font-size": 1,
+    "gap": 1,
+    "border-bottom": 1,
+    "outline": 1,
+    "cursor": 1,
+    "font-weight": 1,
+    "width": 1,
+    "height": 1
+   },
+   "media": 0,
+   "keyframes": 0,
+   "bytes": 1084
+  },
+  "js_bytes": 722,
+  "html_bytes": 1451,
+  "missing_assets": []
+ }
+}
