@@ -52,7 +52,6 @@ class App:
         ttk.Button(left, text="Ejecutar todo", command=self.run_all).pack(fill=tk.X, pady=2)
         ttk.Button(left, text="Quality gate", command=self.run_gate).pack(fill=tk.X, pady=2)
         ttk.Button(left, text="Historial", command=self.run_history).pack(fill=tk.X, pady=2)
-        ttk.Button(left, text="Abrir dashboard HTML", command=self.open_dashboard).pack(fill=tk.X, pady=2)
 
         ttk.Label(left, text=f"Casos reales: {len(self.cases)}").pack(pady=(8, 0))
         ttk.Label(left, text=f"Gaps s17: 26").pack()
