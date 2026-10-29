@@ -272,59 +272,59 @@ dialog h3 { margin-top: 0; font-family: var(--mono); }
 <body>
 <div class="app">
   <header class="topbar">
-    <nav class="run-tabs" id="run-tabs" aria-label="Ejecuciones">
-      <button class="run-tab active" data-mode="tests"><i class="fa-solid fa-vial"></i> Ejecutar tests</button>
+    <nav class="run-tabs" id="run-tabs" aria-label="Runs">
+      <button class="run-tab active" data-mode="tests"><i class="fa-solid fa-vial"></i> Run tests</button>
       <button class="run-tab" data-mode="visual"><i class="fa-solid fa-images"></i> Chrome vs NativaX</button>
       <button class="run-tab" data-mode="responsive"><i class="fa-solid fa-arrows-left-right"></i> Responsive</button>
     </nav>
 
     <div class="run-controls" id="run-controls">
-      <label>Alcance
+      <label>Scope
         <select id="scope">
-          <option value="all">Todo</option>
-          <option value="section">Sección</option>
+          <option value="all">All</option>
+          <option value="section">Section</option>
         </select>
       </label>
-      <label id="section-wrap">Sección
+      <label id="section-wrap">Section
         <select id="section"></select>
       </label>
-      <label id="case-wrap" hidden>Caso
+      <label id="case-wrap" hidden>Case
         <select id="case"></select>
       </label>
-      <label id="widths-wrap" hidden>Anchos
+      <label id="widths-wrap" hidden>Widths
         <select id="widths">
           <option value="1024">1024 px</option>
           <option value="768,1024">768 · 1024 px</option>
           <option value="320,768,1024">320 · 768 · 1024 px</option>
         </select>
       </label>
-      <label id="sweep-wrap" hidden><input type="checkbox" id="sweep"> sweep responsive</label>
-      <button class="btn primary" id="btn-run"><i class="fa-solid fa-play"></i> Iniciar</button>
-      <button class="btn danger" id="btn-stop" disabled><i class="fa-solid fa-stop"></i> Detener</button>
+      <label id="sweep-wrap" hidden><input type="checkbox" id="sweep"> responsive sweep</label>
+      <button class="btn primary" id="btn-run"><i class="fa-solid fa-play"></i> Start</button>
+      <button class="btn danger" id="btn-stop" disabled><i class="fa-solid fa-stop"></i> Stop</button>
     </div>
 
     <div class="run-state">
       <span class="dot" id="run-dot"></span>
-      <span class="txt" id="run-text">Sin ejecución</span>
+      <span class="txt" id="run-text">No run</span>
       <span class="bar"><i id="run-bar"></i></span>
     </div>
-    <button class="icon-btn" id="btn-theme" aria-label="Cambiar tema">◐</button>
+    <button class="icon-btn" id="btn-theme" aria-label="Toggle theme">◐</button>
   </header>
 
   <aside class="sidebar">
-    <div class="side-title">Vistas</div>
+    <div class="side-title">Views</div>
     <nav class="nav" id="views">
-      <button data-view="resumen" class="active">Resumen</button>
-      <button data-view="envivo">En vivo <span class="count" id="cnt-live"></span></button>
-      <button data-view="informes">Informes</button>
+      <button data-view="resumen" class="active">Summary</button>
+      <button data-view="envivo">Live <span class="count" id="cnt-live"></span></button>
+      <button data-view="informes">Reports</button>
       <button data-view="visual">Visual</button>
-      <button data-view="rendimiento">Rendimiento</button>
-      <button data-view="historial">Historial</button>
-      <button data-view="artefactos">Artefactos</button>
+      <button data-view="rendimiento">Performance</button>
+      <button data-view="historial">History</button>
+      <button data-view="artefactos">Artifacts</button>
     </nav>
-    <div class="side-title">Secciones</div>
+    <div class="side-title">Sections</div>
     <nav class="nav" id="sections"></nav>
-    <div class="side-foot" id="side-foot">Sin ejecuciones todavía.</div>
+    <div class="side-foot" id="side-foot">No runs yet.</div>
   </aside>
 
   <main class="content">
@@ -338,10 +338,10 @@ dialog h3 { margin-top: 0; font-family: var(--mono); }
       <section class="view" id="view-artefactos"></section>
     </div>
 
-    <aside class="judge" aria-label="Juez de la ejecución">
+    <aside class="judge" aria-label="Execution judge">
       <div class="judge-head">
-        <h2>Juez</h2>
-        <span class="badge unrun" id="judge-badge">sin ejecución</span>
+        <h2>Judge</h2>
+        <span class="badge unrun" id="judge-badge">no run</span>
       </div>
       <div class="judge-body" id="judge-body"></div>
     </aside>

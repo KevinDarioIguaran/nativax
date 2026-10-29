@@ -60,7 +60,7 @@
     const s = status || 'unrun';
     const label = {
       pass: 'pass', fail: 'fail', blocked: 'blocked', error: 'error',
-      warn: 'warn', skip: 'skip', unrun: 'sin ejecutar', running: 'ejecutando',
+      warn: 'warn', skip: 'skip', unrun: 'not run', running: 'running',
     }[s] || s;
     return `<span class="badge ${esc(s)}">${esc(label)}</span>`;
   }
@@ -183,9 +183,9 @@
   /* ------------------------------------------------------------------- runs */
   function currentModeConfig() {
     if (MODE === 'visual') {
-      return { scopes: [['case', 'Un caso'], ['section', 'Sección'], ['all', 'Todo']] };
+      return { scopes: [['case', 'Un case'], ['section', 'Section'], ['all', 'All']] };
     }
-    return { scopes: [['all', 'Todo'], ['section', 'Sección']] };
+    return { scopes: [['all', 'All'], ['section', 'Section']] };
   }
 
   function syncControls() {
@@ -279,17 +279,17 @@
       const cur = p.current;
       text.textContent = cur && cur.id
         ? `${done}/${total || '?'} · ${cur.id}`
-        : `ejecutando ${p.kind || ''}`;
+        : `running ${p.kind || ''}`;
     } else if (p.summary || (STATUS && STATUS.exit_code !== null &&
                              STATUS.exit_code !== undefined)) {
       const s = p.summary || {};
       const label = p.kind === 'visual'
         ? `visual ${s.pass || 0} pass · ${s.fail || 0} fail · ${s.error || 0} error`
         : `lab ${s.pass || 0} pass · ${s.fail || 0} fail · ${s.blocked || 0} blocked`;
-      text.textContent = `terminado · ${label}`;
+      text.textContent = `finished · ${label}`;
       bar.style.width = '100%';
     } else {
-      text.textContent = 'Sin ejecución';
+      text.textContent = 'No run';
       bar.style.width = '0';
     }
     $('#btn-run').disabled = !!running;
@@ -309,8 +309,8 @@
     const n = executedCount();
     const corpus = (DATA.cases || []).length;
     $('#side-foot').innerHTML = corpus
-      ? `${corpus} casos registrados · ${n} ejecutados.<br>` +
-        (n ? 'Los datos son de tus ejecuciones locales.' : 'Sin resultados todavía.')
+      ? `${corpus} cases registrados · ${n} executed.<br>` +
+        (n ? 'Data comes from your local runs.' : 'No results yet.')
       : 'Sin corpus cargado.';
   }
 
@@ -369,7 +369,7 @@
     const sections = DATA.sections || [];
     const counts = sectionCounts();
     if (!sections.length) {
-      host.innerHTML = '<div class="side-foot">Sin secciones registradas.</div>';
+      host.innerHTML = '<div class="side-foot">No sections registered.</div>';
       return;
     }
     host.innerHTML = sections.map(([sid, name], index) => {
@@ -408,13 +408,13 @@
   }
 
   function renderView(name) {
-    if (name === 'resumen') renderResumen();
+    if (name === 'resumen') renderSummary();
     else if (name === 'envivo') renderEnVivo();
-    else if (name === 'informes') renderInformes();
+    else if (name === 'informes') renderReports();
     else if (name === 'visual') renderVisual();
-    else if (name === 'rendimiento') renderRendimiento();
-    else if (name === 'historial') renderHistorial();
-    else if (name === 'artefactos') renderArtefactos();
+    else if (name === 'rendimiento') renderPerformance();
+    else if (name === 'historial') renderHistory();
+    else if (name === 'artefactos') renderArtifacts();
   }
 
   function kpi(label, value, cls = '') {
@@ -428,7 +428,7 @@
     return null;
   }
 
-  function renderResumen() {
+  function renderSummary() {
     const host = $('#view-resumen');
     if (!host) return;
     const executed = executedCount();
@@ -436,7 +436,7 @@
     const liveVisual = LIVE && LIVE.kind === 'visual' && LIVE.summary;
 
     if (!hasRunData() && !executed && !liveVisual) {
-      host.innerHTML = emptyState('◌', 'Sin ejecuciones todavía',
+      host.innerHTML = emptyState('◌', 'No runs yet',
         'Ejecuta desde la barra superior. Los resultados aparecerán aquí ' +
         'y en el juez de la derecha, sin datos de ejemplo.');
       return;
@@ -444,10 +444,10 @@
 
     const sums = s || {};
     let html = `<section class="panel"><div class="panel-head">` +
-      `<h2>Resumen de la ejecución</h2>` +
+      `<h2>Execution summary</h2>` +
       `<span class="hint">${esc(DATA.report && DATA.report.generated_at || '')}` +
       `</span></div><div class="kpis">` +
-      kpi('Casos', sums.total ?? executed) +
+      kpi('Cases', sums.total ?? executed) +
       kpi('Pass', sums.pass ?? 0, 'pass') +
       kpi('Fail', sums.fail ?? 0, 'fail') +
       kpi('Blocked', sums.blocked ?? 0, 'blocked') +
@@ -456,8 +456,8 @@
 
     const counts = sectionCounts();
     html += `<section class="panel"><div class="panel-head">` +
-      `<h2>Secciones</h2><span class="hint">pass / total ejecutado</span></div>` +
-      `<div class="table-wrap"><table><thead><tr><th>Sección</th><th>Estado</th>` +
+      `<h2>Sections</h2><span class="hint">pass / total executed</span></div>` +
+      `<div class="table-wrap"><table><thead><tr><th>Section</th><th>Status</th>` +
       `<th>Pass</th><th>Fail</th><th>Blocked</th><th>Error</th><th>Avance</th>` +
       `</tr></thead><tbody>` +
       (DATA.sections || []).map(([sid]) => {
@@ -478,26 +478,26 @@
         (!QUERY || `${c.id} ${c.name} ${c.repo}`.toLowerCase().includes(QUERY)));
       const total = rows.length;
       rows = rows.slice(0, 80);
-      html += `<section class="panel"><div class="panel-head"><h2>Casos</h2>` +
-        `<div class="filters"><input id="q" type="search" placeholder="Buscar caso o repo…" value="${esc(QUERY)}">` +
-        `<select id="f-status"><option value="">Todos</option>` +
+      html += `<section class="panel"><div class="panel-head"><h2>Cases</h2>` +
+        `<div class="filters"><input id="q" type="search" placeholder="Buscar case o repo…" value="${esc(QUERY)}">` +
+        `<select id="f-status"><option value="">Alls</option>` +
         ['pass', 'fail', 'blocked', 'error', 'unrun'].map((v) =>
           `<option value="${v}"${STATUS_FILTER === v ? ' selected' : ''}>${v}</option>`).join('') +
         `</select></div></div>` +
-        `<div class="table-wrap"><table><thead><tr><th>ID</th><th>Sección</th>` +
-        `<th>Nombre</th><th>ms</th><th>Estado</th></tr></thead><tbody>` +
+        `<div class="table-wrap"><table><thead><tr><th>ID</th><th>Section</th>` +
+        `<th>Name</th><th>ms</th><th>Status</th></tr></thead><tbody>` +
         rows.map((c) => `<tr><td class="mono">${esc(c.id)}</td>` +
           `<td>${esc(c.sid)}</td><td>${esc(c.name)}</td>` +
           `<td class="num">${c.ms ? num(c.ms) : '—'}</td>` +
           `<td>${statusBadge(c.status)}</td></tr>`).join('') +
         `</tbody></table></div><div class="hint" style="margin-top:8px">` +
-        `${rows.length} de ${total} casos` +
-        (SECTION ? ` · sección ${esc(SECTION)}` : '') + `</div></section>`;
+        `${rows.length} of ${total} cases` +
+        (SECTION ? ` · section ${esc(SECTION)}` : '') + `</div></section>`;
       setTimeout(() => {
         const q = $('#q');
         const f = $('#f-status');
-        if (q) q.oninput = () => { QUERY = q.value.toLowerCase(); renderResumen(); };
-        if (f) f.onchange = () => { STATUS_FILTER = f.value; renderResumen(); };
+        if (q) q.oninput = () => { QUERY = q.value.toLowerCase(); renderSummary(); };
+        if (f) f.onchange = () => { STATUS_FILTER = f.value; renderSummary(); };
       }, 0);
     }
     host.innerHTML = html;
@@ -520,7 +520,7 @@
     return `<div class="pipeline">` +
       `<div class="step ${cls(0)}">1 · Chrome</div>` +
       `<div class="step ${cls(1)}">2 · NativaX</div>` +
-      `<div class="step ${cls(2)}">3 · Diferencia</div>` +
+      `<div class="step ${cls(2)}">3 · Diff</div>` +
       `</div>`;
   }
 
@@ -544,9 +544,10 @@
     const host = $('#view-envivo');
     if (!host) return;
     if (!LIVE) {
-      host.innerHTML = emptyState('◌', 'Sin ejecución en curso',
-        'Pulsa “Iniciar” en la barra superior para ver cada caso ejecutarse ' +
-        'en tiempo real. El juez de la derecha muestra los estándares.');
+      host.innerHTML = emptyState('◌', 'No run in progress',
+        'Pulsa “Start” en la barra superior para ver cada case ejecutarse ' +
+        'en tiempo real. Las capturas de pantalla solo se generan en el modo ' +
+        '“Chrome vs NativaX”. El juez de la derecha muestra los estándares.');
       return;
     }
     const p = LIVE;
@@ -558,10 +559,10 @@
     const cur = p.current || {};
 
     let html = `<section class="panel"><div class="panel-head">` +
-      `<h2>${esc(p.title || 'Ejecución')}</h2>` +
+      `<h2>${esc(p.title || 'Run')}</h2>` +
       `<span class="badge ${running ? 'running' : ((s.fail || s.error) ? 'fail' : 'pass')}">` +
-      `${running ? 'en curso' : 'terminado'}</span></div>` +
-      `<div class="hint">${done} / ${total || '?'} casos · ${pctDone}% · ` +
+      `${running ? 'running' : 'finished'}</span></div>` +
+      `<div class="hint">${done} / ${total || '?'} cases · ${pctDone}% · ` +
       `${esc(p.kind === 'visual' ? 'Chrome vs NativaX' : 'laboratorio')}</div>` +
       `<div class="bar-mini" style="height:9px;margin:10px 0"><i class="i-pass" style="width:${pctDone}%"></i></div>`;
 
@@ -571,26 +572,29 @@
       const m = c.metrics || {};
       html += `<div class="compare">` +
         `<figure><figcaption><span>Chrome</span></figcaption>` +
-        `<img src="${esc(c.chrome || '')}" alt="Chrome"></figure>` +
+        `<img src="${esc(c.chrome || '')}" alt="Chrome" onload="console.log('img ok',this.src)" onerror="console.error('img fail',this.src)">` +
+        `</figure>` +
         `<figure><figcaption><span>NativaX</span></figcaption>` +
-        `<img src="${esc(c.nativax || '')}" alt="NativaX"></figure>` +
-        `<figure><figcaption><span>Diferencia</span></figcaption>` +
-        `<img src="${esc(c.diff || '')}" alt="Diferencia"></figure></div>`;
+        `<img src="${esc(c.nativax || '')}" alt="NativaX" onload="console.log('img ok',this.src)" onerror="console.error('img fail',this.src)">` +
+        `</figure>` +
+        `<figure><figcaption><span>Diff</span></figcaption>` +
+        `<img src="${esc(c.diff || '')}" alt="Diff" onload="console.log('img ok',this.src)" onerror="console.error('img fail',this.src)">` +
+        `</figure></div>`;
       html += `<div class="metrics">` +
-        `<div class="metric"><div class="v">${pct(m.changed_percent)}</div><div class="l">cambio</div></div>` +
+        `<div class="metric"><div class="v">${pct(m.changed_percent)}</div><div class="l">change</div></div>` +
         `<div class="metric"><div class="v">${num(m.mae, 2)}</div><div class="l">MAE</div></div>` +
         `<div class="metric"><div class="v">${num(m.ssim, 4)}</div><div class="l">SSIM</div></div>` +
-        `<div class="metric"><div class="v">${statusBadge(c.status)}</div><div class="l">caso actual</div></div>` +
+        `<div class="metric"><div class="v">${statusBadge(c.status)}</div><div class="l">current case</div></div>` +
         `</div>`;
     } else {
-      html += `<div class="hint">Caso actual: <b class="mono">` +
+      html += `<div class="hint">Case actual: <b class="mono">` +
         `${esc(cur.id || '—')}</b> ${esc(cur.name || '')} ` +
         `${cur.status ? statusBadge(cur.status) : ''}</div>`;
     }
     html += `</section>`;
 
     html += `<section class="panel"><div class="panel-head">` +
-      `<h2>Casos en vivo</h2><span class="hint">los últimos 120 eventos</span></div>` +
+      `<h2>Cases en vivo</h2><span class="hint">los últimos 120 eventos</span></div>` +
       `<div class="events">` +
       (p.events || []).slice(-120).reverse().map(eventHTML).join('') +
       `</div></section>`;
@@ -602,18 +606,18 @@
     host.innerHTML = html;
   }
 
-  function renderInformes() {
+  function renderReports() {
     const host = $('#view-informes');
     if (!host) return;
     if (!DATA.report || !DATA.report.available) {
-      host.innerHTML = emptyState('◌', 'Sin informes todavía',
+      host.innerHTML = emptyState('◌', 'No reports yet',
         'Cuando termine una ejecución se escribirá el informe real en ' +
         'debug/reports/lab. No hay informes de ejemplo.');
       return;
     }
     const s = DATA.report.summary || {};
     let html = `<section class="panel"><div class="panel-head">` +
-      `<h2>Informe del laboratorio</h2><span class="hint">` +
+      `<h2>Lab report</h2><span class="hint">` +
       `${esc(DATA.report.generated_at || '')} · ${esc(DATA.report.label || '')}` +
       `</span></div><div class="kpis">` +
       kpi('Total', s.total ?? 0) + kpi('Pass', s.pass ?? 0, 'pass') +
@@ -621,9 +625,9 @@
       kpi('Error', s.error ?? 0, 'error') + `</div></section>`;
 
     const reps = DATA.report_sections || [];
-    html += `<section class="panel"><div class="panel-head"><h2>Informes por sección</h2>` +
+    html += `<section class="panel"><div class="panel-head"><h2>Reports by section</h2>` +
       `<span class="hint">${reps.length}</span></div><div class="table-wrap">` +
-      `<table><thead><tr><th>Informe</th><th>Total</th><th>Pass</th><th>Fail</th>` +
+      `<table><thead><tr><th>Report</th><th>Total</th><th>Pass</th><th>Fail</th>` +
       `<th>Blocked</th><th>Error</th></tr></thead><tbody>` +
       reps.map((r) => `<tr><td class="mono">${esc(r.label || r.file)}</td>` +
         `<td class="num">${r.summary.total ?? 0}</td>` +
@@ -657,21 +661,21 @@
       const c = p.case || {};
       const m = c.metrics || {};
       html += `<section class="panel"><div class="panel-head">` +
-        `<h2>Comparación en vivo</h2>` +
+        `<h2>Live comparison</h2>` +
         `<span class="badge ${p.running ? 'running' : 'pass'}">` +
-        `${p.running ? 'en curso' : 'terminado'}</span></div>` +
+        `${p.running ? 'running' : 'finished'}</span></div>` +
         pipelineHTML(p.stage) +
-        `<div class="hint">Caso: <b class="mono">${esc(c.id || '—')}</b> ` +
+        `<div class="hint">Case: <b class="mono">${esc(c.id || '—')}</b> ` +
         `${esc(c.name || '')} ${c.status ? statusBadge(c.status) : ''}</div>` +
         `<div class="compare">` +
         `<figure><figcaption><span>Chrome</span></figcaption>` +
         `<img src="${esc(c.chrome || '')}" alt="Chrome"></figure>` +
         `<figure><figcaption><span>NativaX</span></figcaption>` +
         `<img src="${esc(c.nativax || '')}" alt="NativaX"></figure>` +
-        `<figure><figcaption><span>Diferencia</span></figcaption>` +
-        `<img src="${esc(c.diff || '')}" alt="Diferencia"></figure></div>` +
+        `<figure><figcaption><span>Diff</span></figcaption>` +
+        `<img src="${esc(c.diff || '')}" alt="Diff"></figure></div>` +
         `<div class="metrics">` +
-        `<div class="metric"><div class="v">${pct(m.changed_percent)}</div><div class="l">cambio</div></div>` +
+        `<div class="metric"><div class="v">${pct(m.changed_percent)}</div><div class="l">change</div></div>` +
         `<div class="metric"><div class="v">${num(m.mae, 2)}</div><div class="l">MAE</div></div>` +
         `<div class="metric"><div class="v">${num(m.ssim, 4)}</div><div class="l">SSIM</div></div>` +
         `<div class="metric"><div class="v">${num(m.rmse, 2)}</div><div class="l">RMSE</div></div>` +
@@ -680,8 +684,8 @@
 
     if (!v.cases || !Object.keys(v.cases).length) {
       if (!liveVisual) {
-        host.innerHTML = html + emptyState('◌', 'Sin comparaciones todavía',
-          'Elige un caso y pulsa “Chrome vs NativaX” en la barra superior. ' +
+        host.innerHTML = html + emptyState('◌', 'No comparisons yet',
+          'Elige un case y pulsa “Chrome vs NativaX” en la barra superior. ' +
           'Verás Chrome → NativaX → diferencia mientras se calcula.');
       } else {
         host.innerHTML = html;
@@ -691,19 +695,19 @@
 
     const summary = v.summary || {};
     html += `<section class="panel"><div class="panel-head">` +
-      `<h2>Resultados Chrome vs NativaX</h2><span class="hint">` +
+      `<h2>Chrome vs NativaX results</h2><span class="hint">` +
       `${esc(v.generated_at || '')}</span></div><div class="kpis">` +
-      kpi('Casos', summary.cases ?? 0) + kpi('Comparaciones', summary.comparisons ?? 0) +
+      kpi('Cases', summary.cases ?? 0) + kpi('Comparisons', summary.comparisons ?? 0) +
       kpi('Pass', summary.pass ?? 0, 'pass') + kpi('Warn', summary.warn ?? 0, 'warn') +
       kpi('Fail', summary.fail ?? 0, 'fail') + kpi('Error', summary.error ?? 0, 'error') +
       `</div><div class="hint" style="margin-top:10px">` +
-      `Cambio medio ${pct(summary.mean_changed_percent)} · ` +
-      `SSIM medio ${num(summary.mean_ssim, 4)}</div></section>`;
+      `Mean change ${pct(summary.mean_changed_percent)} · ` +
+      `Mean SSIM ${num(summary.mean_ssim, 4)}</div></section>`;
 
     const keys = Object.keys(v.cases);
     const current = visualCase();
     const selected = VSEL;
-    html += `<section class="panel"><div class="panel-head"><h2>Comparación por caso</h2>` +
+    html += `<section class="panel"><div class="panel-head"><h2>Comparison by case</h2>` +
       `<div class="filters"><select id="v-case">` +
       keys.map((k) => `<option value="${esc(k)}"${k === selected ? ' selected' : ''}>` +
         `${esc(k)} · ${esc(v.cases[k].name || '')}</option>`).join('') +
@@ -718,19 +722,19 @@
         `<a href="${esc(chrome.url || '')}" target="_blank"><img src="${esc(chrome.url || '')}" alt="Chrome"></a></figure>` +
         `<figure><figcaption><span>NativaX</span></figcaption>` +
         `<a href="${esc(nativax.url || '')}" target="_blank"><img src="${esc(nativax.url || '')}" alt="NativaX"></a></figure>` +
-        `<figure><figcaption><span>Diferencia</span></figcaption>` +
-        `<a href="${esc(m.diff_url || '')}" target="_blank"><img src="${esc(m.diff_url || '')}" alt="Diferencia"></a></figure>` +
+        `<figure><figcaption><span>Diff</span></figcaption>` +
+        `<a href="${esc(m.diff_url || '')}" target="_blank"><img src="${esc(m.diff_url || '')}" alt="Diff"></a></figure>` +
         `</div><div class="metrics">` +
-        `<div class="metric"><div class="v">${pct(m.changed_percent)}</div><div class="l">cambio</div></div>` +
+        `<div class="metric"><div class="v">${pct(m.changed_percent)}</div><div class="l">change</div></div>` +
         `<div class="metric"><div class="v">${num(m.mae, 2)}</div><div class="l">MAE</div></div>` +
         `<div class="metric"><div class="v">${num(m.rmse, 2)}</div><div class="l">RMSE</div></div>` +
         `<div class="metric"><div class="v">${num(m.ssim, 4)}</div><div class="l">SSIM</div></div>` +
         `<div class="metric"><div class="v">${m.bbox ? esc(JSON.stringify(m.bbox)) : '—'}</div><div class="l">bbox</div></div>` +
-        `<div class="metric"><div class="v">${statusBadge(row.status)}</div><div class="l">estado</div></div>` +
+        `<div class="metric"><div class="v">${statusBadge(row.status)}</div><div class="l">status</div></div>` +
         `</div>`;
     }
-    html += `<div class="table-wrap"><table><thead><tr><th>Caso</th><th>Sección</th>` +
-      `<th>Estado</th><th>Cambio medio</th><th>SSIM medio</th><th>Anchos</th>` +
+    html += `<div class="table-wrap"><table><thead><tr><th>Case</th><th>Section</th>` +
+      `<th>Status</th><th>Mean change</th><th>Mean SSIM</th><th>Widths</th>` +
       `</tr></thead><tbody>` +
       keys.map((k) => {
         const c = v.cases[k];
@@ -745,12 +749,12 @@
     if (sel) sel.onchange = () => { VSEL = sel.value; renderVisual(); };
   }
 
-  function renderRendimiento() {
+  function renderPerformance() {
     const host = $('#view-rendimiento');
     if (!host) return;
     const measured = (DATA.cases || []).filter((c) => Number(c.ms) > 0);
     if (!measured.length) {
-      host.innerHTML = emptyState('◌', 'Sin datos de rendimiento',
+      host.innerHTML = emptyState('◌', 'No performance data',
         'Las duraciones salen de tus ejecuciones reales. Ejecuta el ' +
         'laboratorio para medirlas.');
       return;
@@ -765,25 +769,25 @@
       r.ms += Number(c.ms);
       r.max = Math.max(r.max, Number(c.ms));
     }
-    let html = `<section class="panel"><div class="panel-head"><h2>Rendimiento</h2>` +
-      `<span class="hint">duraciones medidas por caso</span></div><div class="kpis">` +
-      kpi('Casos medidos', measured.length) +
-      kpi('Tiempo total', ms(total)) +
-      kpi('Media', ms(total / measured.length)) +
-      kpi('Máximo', ms(max)) + `</div></section>`;
+    let html = `<section class="panel"><div class="panel-head"><h2>Performance</h2>` +
+      `<span class="hint">durations measured per case</span></div><div class="kpis">` +
+      kpi('Measured cases', measured.length) +
+      kpi('Total time', ms(total)) +
+      kpi('Average', ms(total / measured.length)) +
+      kpi('Maximum', ms(max)) + `</div></section>`;
 
-    html += `<section class="panel"><div class="panel-head"><h2>Por sección</h2></div>` +
-      `<div class="table-wrap"><table><thead><tr><th>Sección</th><th>Casos</th>` +
-      `<th>Total</th><th>Media</th><th>Máximo</th></tr></thead><tbody>` +
+    html += `<section class="panel"><div class="panel-head"><h2>By section</h2></div>` +
+      `<div class="table-wrap"><table><thead><tr><th>Section</th><th>Cases</th>` +
+      `<th>Total</th><th>Average</th><th>Maximum</th></tr></thead><tbody>` +
       Object.entries(bySec).sort((a, b) => b[1].ms - a[1].ms).map(([sid, r]) =>
         `<tr><td class="mono">${esc(sid)}</td><td class="num">${r.n}</td>` +
         `<td class="num">${ms(r.ms)}</td><td class="num">${ms(r.ms / r.n)}</td>` +
         `<td class="num">${ms(r.max)}</td></tr>`).join('') +
       `</tbody></table></div></section>`;
 
-    html += `<section class="panel"><div class="panel-head"><h2>Casos más lentos</h2></div>` +
-      `<div class="table-wrap"><table><thead><tr><th>Caso</th><th>Sección</th>` +
-      `<th>Duración</th><th>Estado</th></tr></thead><tbody>` +
+    html += `<section class="panel"><div class="panel-head"><h2>Slowest cases</h2></div>` +
+      `<div class="table-wrap"><table><thead><tr><th>Case</th><th>Section</th>` +
+      `<th>Duration</th><th>Status</th></tr></thead><tbody>` +
       rows.slice(0, 20).map((c) => `<tr><td class="mono">${esc(c.id)}</td>` +
         `<td>${esc(c.sid)}</td><td class="num">${ms(c.ms)}</td>` +
         `<td>${statusBadge(c.status)}</td></tr>`).join('') +
@@ -791,18 +795,18 @@
     host.innerHTML = html;
   }
 
-  function renderHistorial() {
+  function renderHistory() {
     const host = $('#view-historial');
     if (!host) return;
     const hist = DATA.history || [];
     if (!hist.length) {
-      host.innerHTML = emptyState('◌', 'Sin historial',
+      host.innerHTML = emptyState('◌', 'No history',
         'No hay ejecuciones guardadas. El historial solo contiene lo que ' +
         'se ejecute en esta máquina; no hay corridas de ejemplo.');
       return;
     }
     host.innerHTML = `<section class="panel"><div class="panel-head">` +
-      `<h2>Historial de ejecuciones</h2><span class="hint">${hist.length}</span>` +
+      `<h2>Run history</h2><span class="hint">${hist.length}</span>` +
       `</div><div class="table-wrap"><table><thead><tr><th>Run</th><th>Fecha</th>` +
       `<th>Total</th><th>Pass</th><th>Fail</th><th>Blocked</th><th>Error</th>` +
       `</tr></thead><tbody>` +
@@ -822,18 +826,18 @@
     });
   }
 
-  function renderArtefactos() {
+  function renderArtifacts() {
     const host = $('#view-artefactos');
     if (!host) return;
     const items = DATA.artifacts || [];
     if (!items.length) {
-      host.innerHTML = emptyState('◌', 'Sin artefactos',
+      host.innerHTML = emptyState('◌', 'No artifacts',
         'Las capturas de Chrome, NativaX y los mapas de diferencia ' +
         'aparecerán aquí cuando ejecutes una comparación.');
       return;
     }
     host.innerHTML = `<section class="panel"><div class="panel-head">` +
-      `<h2>Artefactos visuales</h2><span class="hint">${items.length}</span></div>` +
+      `<h2>Artifacts visuales</h2><span class="hint">${items.length}</span></div>` +
       `<div class="artifacts">` +
       items.map((a) => `<div class="artifact" data-path="${esc(a.path)}">` +
         `<img src="${esc(a.url)}" alt="${esc(a.path)}" loading="lazy" ` +
@@ -910,22 +914,22 @@
 
     if (!src) {
       badge.className = 'badge unrun';
-      badge.textContent = 'sin ejecución';
+      badge.textContent = 'no run';
       const t = defaults;
       host.innerHTML = `<div class="judge-meta">El juez evalúa cada ejecución. ` +
         `Todavía no hay resultados: estos son los estándares que se aplicarán.</div>` +
-        `<div class="judge-section"><h3>Estándares del laboratorio</h3>` +
-        stdRow('Pass', '—', '', 'la aserción se cumple') +
-        stdRow('Fail', '—', '', 'regresión real; el veredicto falla') +
-        stdRow('Blocked', '—', '', 'capacidad no implementada (s17)') +
-        stdRow('Error', '—', '', 'excepción del harness; nunca es pass') +
-        `</div><div class="judge-section"><h3>Estándares visuales</h3>` +
-        stdRow('Cambio máximo', `≤ ${num(t.max_changed_percent, 1)} %`, '',
-               'píxeles distintos permitidos para pass') +
-        stdRow('Aviso', `≤ ${num(t.warn_changed_percent, 1)} %`, '', 'por encima es fail') +
-        stdRow('MAE', `≤ ${num(t.max_mae, 1)}`, '', 'error absoluto medio') +
-        stdRow('SSIM', `≥ ${num(t.min_ssim, 2)}`, '', 'similitud estructural') +
-        stdRow('Tolerancia', `≤ ${num(t.tolerance, 0)}/255`, '', 'diferencia por canal ignorada') +
+        `<div class="judge-section"><h3>Lab standards</h3>` +
+        stdRow('Pass', '—', '', 'assertion holds') +
+        stdRow('Fail', '—', '', 'real regression; verdict fails') +
+        stdRow('Blocked', '—', '', 'capability not implemented (s17)') +
+        stdRow('Error', '—', '', 'harness exception; never a pass') +
+        `</div><div class="judge-section"><h3>Visual standards</h3>` +
+        stdRow('Max change', `≤ ${num(t.max_changed_percent, 1)} %`, '',
+               'changed pixels allowed for pass') +
+        stdRow('Warn', `≤ ${num(t.warn_changed_percent, 1)} %`, '', 'above that is fail') +
+        stdRow('MAE', `≤ ${num(t.max_mae, 1)}`, '', 'mean absolute error') +
+        stdRow('SSIM', `≥ ${num(t.min_ssim, 2)}`, '', 'structural similarity') +
+        stdRow('Tolerancia', `≤ ${num(t.tolerance, 0)}/255`, '', 'per-channel difference ignored') +
         `</div>`;
       return;
     }
@@ -933,19 +937,19 @@
     const s = src.summary || {};
     const running = src.running;
     let verdict = 'unrun';
-    let verdictText = 'SIN EJECUCIÓN';
+    let verdictText = 'NO RUN';
     if (running) {
       verdict = 'running';
-      verdictText = 'EN CURSO';
+      verdictText = 'RUNNING';
     } else if (src.kind === 'visual') {
       const bad = (Number(s.fail) || 0) + (Number(s.error) || 0);
       verdict = bad ? 'fail' : ((Number(s.comparisons) || 0) ? 'pass' : 'unrun');
       verdictText = bad ? 'FAIL' : ((Number(s.comparisons) || 0)
-        ? 'PASS' : 'SIN COMPARACIONES');
+        ? 'PASS' : 'NO COMPARISONS');
     } else {
       const bad = (Number(s.fail) || 0) + (Number(s.error) || 0);
       verdict = bad ? 'fail' : ((Number(s.total) || 0) ? 'pass' : 'unrun');
-      verdictText = bad ? 'FAIL' : ((Number(s.total) || 0) ? 'PASS' : 'SIN CASOS');
+      verdictText = bad ? 'FAIL' : ((Number(s.total) || 0) ? 'PASS' : 'NO CASES');
     }
     badge.className = `badge ${verdict}`;
     badge.textContent = verdictText;
@@ -968,8 +972,8 @@
       const okSsim = ssim === null ? '' :
         (Number(ssim) >= Number(t.min_ssim ?? 0.9) ? 'ok' : 'bad');
       const mismatch = m.size_mismatch;
-      html += `<div class="judge-section"><h3>Estándares visuales</h3>` +
-        stdBar('Cambio', `${pct(changed)}`, t.max_changed_percent ?? 2,
+      html += `<div class="judge-section"><h3>Visual standards</h3>` +
+        stdBar('Change', `${pct(changed)}`, t.max_changed_percent ?? 2,
                okChanged, `≤ ${num(t.max_changed_percent, 1)} %`) +
         stdBar('MAE', `${num(mae, 2)}`, t.max_mae ?? 6, okMae,
                `≤ ${num(t.max_mae, 1)}`) +
@@ -980,28 +984,28 @@
                'igual = ok') +
         stdBar('Tolerancia', `${num(t.tolerance, 0)}/255`, 255, 'ok',
                'diferencia ignorada') +
-        `</div><div class="judge-section"><h3>Conteo real</h3>` +
-        stdRow('Comparaciones', num(s.comparisons ?? 0), '', '') +
+        `</div><div class="judge-section"><h3>Real counts</h3>` +
+        stdRow('Comparisons', num(s.comparisons ?? 0), '', '') +
         stdRow('Pass', num(s.pass ?? 0), (Number(s.pass) || 0) ? 'ok' : '', '') +
         stdRow('Warn', num(s.warn ?? 0), (Number(s.warn) || 0) ? 'warn' : '', 'no es pass') +
-        stdRow('Fail', num(s.fail ?? 0), (Number(s.fail) || 0) ? 'bad' : 'ok', 'debe ser 0') +
-        stdRow('Error', num(s.error ?? 0), (Number(s.error) || 0) ? 'bad' : 'ok', 'debe ser 0') +
+        stdRow('Fail', num(s.fail ?? 0), (Number(s.fail) || 0) ? 'bad' : 'ok', 'must be 0') +
+        stdRow('Error', num(s.error ?? 0), (Number(s.error) || 0) ? 'bad' : 'ok', 'must be 0') +
         `</div>`;
     } else {
       const resp = src.standards && src.standards.responsive;
-      html += `<div class="judge-section"><h3>Estándares del laboratorio</h3>` +
-        stdBar('Casos', num(s.total ?? 0), s.total ?? 1, '', 'ejecutados de verdad') +
+      html += `<div class="judge-section"><h3>Lab standards</h3>` +
+        stdBar('Cases', num(s.total ?? 0), s.total ?? 1, '', 'really executed') +
         stdBar('Pass', num(s.pass ?? 0), s.total ?? 1, (Number(s.pass) || 0) ? 'ok' : '', '') +
-        stdBar('Fail', num(s.fail ?? 0), s.total ?? 1, (Number(s.fail) || 0) ? 'bad' : 'ok', 'debe ser 0') +
-        stdBar('Error', num(s.error ?? 0), s.total ?? 1, (Number(s.error) || 0) ? 'bad' : 'ok', 'debe ser 0') +
-        stdBar('Blocked', num(s.blocked ?? 0), s.total ?? 1, (Number(s.blocked) || 0) ? 'warn' : 'ok', 'gaps s17') +
+        stdBar('Fail', num(s.fail ?? 0), s.total ?? 1, (Number(s.fail) || 0) ? 'bad' : 'ok', 'must be 0') +
+        stdBar('Error', num(s.error ?? 0), s.total ?? 1, (Number(s.error) || 0) ? 'bad' : 'ok', 'must be 0') +
+        stdBar('Blocked', num(s.blocked ?? 0), s.total ?? 1, (Number(s.blocked) || 0) ? 'warn' : 'ok', 's17 gaps') +
         `</div>`;
     }
 
     if (src.kind === 'visual') {
       const worst = (s.worst || []).slice(0, 6);
       if (worst.length) {
-        html += `<div class="judge-section"><h3>Casos (peores primero)</h3>` +
+        html += `<div class="judge-section"><h3>Cases (worst first)</h3>` +
           worst.map((w) => `<div class="judge-case" data-case="${esc(w.id)}">` +
             `<span class="id">${esc(w.id)}</span> ${statusBadge(w.status)}` +
             `<span class="val">${pct(w.mean_changed_percent)}</span>` +
@@ -1017,10 +1021,10 @@
                 `<div class="compare">` +
                 `<figure><figcaption>Chrome</figcaption><img src="${esc((r.chrome || {}).url || '')}" style="max-width:100%"></figure>` +
                 `<figure><figcaption>NativaX</figcaption><img src="${esc((r.nativax || {}).url || '')}" style="max-width:100%"></figure>` +
-                `<figure><figcaption>Diferencia</figcaption><img src="${esc(m.diff_url || '')}" style="max-width:100%"></figure>` +
+                `<figure><figcaption>Diff</figcaption><img src="${esc(m.diff_url || '')}" style="max-width:100%"></figure>` +
                 `</div>` +
                 `<div class="metrics">` +
-                `<div class="metric"><div class="v">${pct(m.changed_percent)}</div><div class="l">cambio</div></div>` +
+                `<div class="metric"><div class="v">${pct(m.changed_percent)}</div><div class="l">change</div></div>` +
                 `<div class="metric"><div class="v">${num(m.mae, 2)}</div><div class="l">MAE</div></div>` +
                 `<div class="metric"><div class="v">${num(m.ssim, 4)}</div><div class="l">SSIM</div></div>` +
                 `</div>`);
@@ -1033,7 +1037,7 @@
     if (src.kind === 'lab') {
       const bad = (DATA.cases || []).filter((c) => c.status === 'fail' || c.status === 'error').slice(0, 8);
       if (bad.length) {
-        html += `<div class="judge-section"><h3>Casos con fallo (selecciona)</h3>` +
+        html += `<div class="judge-section"><h3>Failing cases (select)</h3>` +
           bad.map((c) => `<div class="judge-case" data-case="${esc(c.id)}">` +
             `<span class="id">${esc(c.id)}</span> ${statusBadge(c.status)}` +
             `<span class="val">${ms(c.ms)}</span></div>`).join('') + `</div>`;
@@ -1042,8 +1046,8 @@
             el.onclick = () => {
               const c = (DATA.cases || []).find((x) => x.id === el.dataset.case);
               if (!c) return;
-              dialog(c.id, `<div class="hint">Sección ${esc(c.sid)} · ${esc(c.name)}</div>` +
-                `<div class="hint">Estado: ${esc(c.status)} · duración ${ms(c.ms)}</div>` +
+              dialog(c.id, `<div class="hint">Section ${esc(c.sid)} · ${esc(c.name)}</div>` +
+                `<div class="hint">Status: ${esc(c.status)} · duration ${ms(c.ms)}</div>` +
                 `<pre class="log">${esc(JSON.stringify(c, null, 2))}</pre>`);
             };
           });
@@ -1054,7 +1058,7 @@
     if (LIVE && LIVE.events) {
       const last = LIVE.events.slice(-1)[0];
       if (last) {
-        html += `<div class="judge-meta">último evento: ${esc(last.type)}` +
+        html += `<div class="judge-meta">last event: ${esc(last.type)}` +
           `${last.id ? ' · ' + esc(last.id) : ''}` +
           `${last.status ? ' · ' + statusBadge(last.status) : ''}</div>`;
       }

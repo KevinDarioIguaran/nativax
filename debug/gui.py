@@ -44,7 +44,7 @@ def run_build() -> bool:
     r = subprocess.run([sys.executable, str(DATA_SCRIPT)], cwd=ROOT,
                        capture_output=True, text=True)
     if r.returncode != 0:
-        log(f"no se pudo generar dashboard_data.js (exit {r.returncode})")
+        log(f"could not generate dashboard_data.js (exit {r.returncode})")
         detail = ((r.stdout or "") + (r.stderr or "")).strip()
         if detail:
             log(detail[-800:])
@@ -117,7 +117,7 @@ class Runner:
     def start(self, mode: str, cmd: list[str]) -> dict:
         with self.lock:
             if self.proc is not None and self.proc.poll() is None:
-                return {"started": False, "error": "ya hay una ejecución en curso"}
+                return {"started": False, "error": "a run is already in progress"}
             PROGRESS.unlink(missing_ok=True)
             self.mode = mode
             self.command = list(cmd)
@@ -130,7 +130,7 @@ class Runner:
                     stderr=subprocess.STDOUT, text=True, bufsize=1)
             except OSError as exc:
                 self.exit_code = -1
-                return {"started": False, "error": f"no pude iniciar: {exc}"}
+                return {"started": False, "error": f"could not start: {exc}"}
             self.proc = proc
 
         def worker() -> None:
@@ -153,7 +153,7 @@ class Runner:
         with self.lock:
             proc = self.proc
         if proc is None or proc.poll() is not None:
-            return {"stopped": False, "error": "no hay ejecución activa"}
+            return {"stopped": False, "error": "no active run"}
         proc.terminate()
         try:
             proc.wait(timeout=5)
@@ -312,7 +312,7 @@ def _ensure_webview():
     try:
         import webview  # type: ignore
     except Exception as exc:
-        log(f"pywebview no está instalado en {sys.executable}: {exc}")
+        log(f"pywebview is not installed in {sys.executable}: {exc}")
         webview = None
     if webview is not None and _has_gui_backend():
         return webview
@@ -323,15 +323,15 @@ def _ensure_webview():
     same = sp and Path(sp).resolve() == Path(sys.executable).resolve()
     if sp and not same and _has_gui_backend(sp) \
             and os.environ.get("NATIVAX_GUI_REEXEC") != "1":
-        log(f"reintentando con el Python del sistema: {sp}")
+        log(f"retrying with the system Python: {sp}")
         os.environ["NATIVAX_GUI_REEXEC"] = "1"
         os.execv(sp, [sp, str(Path(__file__).resolve())] + sys.argv[1:])
 
     if not _has_gui_backend():
-        log("no hay backend GTK/WebKit ni Qt disponible")
+        log("no GTK/WebKit or Qt backend available")
         return None
 
-    log("pywebview no está disponible; se usará la ventana GTK/WebKit")
+    log("pywebview is unavailable; using the GTK/WebKit window")
     return None
 
 
@@ -434,7 +434,7 @@ def _run_qt(api: Api) -> int:
         script.setWorldId(QWebEngineScript.ScriptWorldId.MainWorld)
         page.scripts().insert(script)
     else:
-        log("no pude leer qwebchannel.js de los recursos de Qt")
+        log("could not read qwebchannel.js from Qt resources")
 
     # Build dashboard_data.js in the background so the window appears immediately.
     import threading as _threading
@@ -445,7 +445,7 @@ def _run_qt(api: Api) -> int:
             run_build()
             pending_data["value"] = load_data()
         except Exception as exc:  # noqa: BLE001
-            log(f"build en segundo plano falló: {exc}")
+            log(f"background build failed: {exc}")
 
     _threading.Thread(target=_refresh_data, daemon=True).start()
 
@@ -551,10 +551,10 @@ def _open_dashboard(url: str | None = None) -> bool:
     uri = url or DASHBOARD_HTML.as_uri()
     try:
         if webbrowser.open(uri):
-            log(f"dashboard abierto en el navegador: {uri}")
+            log(f"dashboard opened in the browser: {uri}")
             return True
     except Exception as exc:  # noqa: BLE001
-        log(f"webbrowser.open falló: {exc}")
+        log(f"webbrowser.open failed: {exc}")
     for opener in ("xdg-open", "gio", "sensible-browser"):
         exe = shutil.which(opener)
         if not exe:
@@ -611,13 +611,13 @@ def _check() -> int:
         f"{visual_py if visual_py else 'FALTA'}")
 
     if not (current_backend or other_backend):
-        log("no hay QtWebEngine ni GTK/WebKit. Instala:")
+        log("no QtWebEngine or GTK/WebKit. Install:")
         log("  pip install PyQt6 PyQt6-WebEngine")
-        log("  (o en Debian/MX: sudo apt install python3-gi gir1.2-gtk-3.0 "
+        log("  (or on Debian/MX: sudo apt install python3-gi gir1.2-gtk-3.0 "
             "gir1.2-webkit2-4.1)")
         ok = False
     else:
-        log("la ventana nativa puede abrirse (no se usa ningún servidor)")
+        log("the native window can be opened")
     return 0 if ok else 1
 
 
@@ -628,16 +628,16 @@ def main(argv: list[str] | None = None) -> int:
     if "--browser" in argv:
         run_build()
         if _open_dashboard():
-            log("modo navegador: solo lectura; ejecuta desde la ventana nativa")
+            log("browser mode: read-only; run from the native window")
             return 0
-        log(f"no pude abrir el navegador. Abre manualmente: "
+        log(f"could not open the browser. Open manually: "
             f"{DASHBOARD_HTML.as_uri()}")
         return 1
 
     if not DASHBOARD_DATA.exists():
         run_build()
     if not DASHBOARD_HTML.exists():
-        log(f"no existe el dashboard: {DASHBOARD_HTML}")
+        log(f"dashboard does not exist: {DASHBOARD_HTML}")
         return 1
 
     api = Api()
@@ -653,30 +653,30 @@ def main(argv: list[str] | None = None) -> int:
             os.execv(sp, [sp, str(Path(__file__).resolve())] + sys.argv[1:])
 
     if _has_qtwebengine():
-        log(f"abriendo ventana PyQt6-WebEngine ({sys.executable}), sin servidor")
+        log(f"opening PyQt6-WebEngine window ({sys.executable})")
         return _run_qt(api)
 
     webview = _ensure_webview()
 
     if webview is not None:
-        log(f"abriendo ventana nativa con pywebview ({sys.executable})")
+        log(f"opening native window with pywebview ({sys.executable})")
         webview.create_window("NativaX Debug Lab", DASHBOARD_HTML.as_uri(),
                               js_api=api, width=1440, height=920)
         webview.start()
         return 0
 
     if _has_gtk():
-        log(f"abriendo ventana GTK/WebKit ({sys.executable}), sin servidor")
+        log(f"opening GTK/WebKit window ({sys.executable})")
         return _run_gtk(api)
 
     # No native backend: the dashboard still opens, but read-only.
     if _open_dashboard():
-        log("modo navegador: solo lectura; ejecuta desde la ventana nativa")
+        log("browser mode: read-only; run from the native window")
         return 0
-    log("no pude abrir una ventana ni el navegador automáticamente.")
-    log("faltan las librerías GTK/WebKit. En MX Linux / Debian:")
+    log("could not open a window or the browser automatically.")
+    log("missing GTK/WebKit libraries. On MX Linux / Debian:")
     log("  sudo apt install python3-gi gir1.2-gtk-3.0 gir1.2-webkit2-4.1")
-    log(f"o abre este archivo a mano: {DASHBOARD_HTML.as_uri()}")
+    log(f"or open this file manually: {DASHBOARD_HTML.as_uri()}")
     return 1
 
 
