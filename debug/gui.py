@@ -450,7 +450,7 @@ def _run_qt(api: Api) -> int:
             % _json.dumps(payload))
 
     timer = QTimer(window)
-    timer.setInterval(700)
+    timer.setInterval(1000)
     timer.timeout.connect(push)
     timer.start()
     page.loadFinished.connect(lambda _ok: push())
@@ -521,7 +521,7 @@ def _run_gtk(api: Api) -> int:
             tick()
 
     view.connect("load-changed", on_load)
-    GLib.timeout_add(700, tick)
+    GLib.timeout_add(1000, tick)
     window.show_all()
     Gtk.main()
     return 0

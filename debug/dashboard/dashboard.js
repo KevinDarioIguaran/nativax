@@ -126,6 +126,7 @@
 
   /* ------------------------------------------------------------------ status */
   async function poll() {
+    if (window.NATIVAX_QT) return; // Qt pushes updates; avoid duplicate load
     let st = null;
     const api = nativeApi();
     if (api) {
@@ -887,6 +888,18 @@
       `<span class="val">${esc(value)}</span></div>`;
   }
 
+  function stdBar(label, value, max, state, rule) {
+    const v = (value === null || value === undefined || value === '—') ? 0 : Number(value);
+    const m = (max === null || max === undefined) ? 100 : Number(max);
+    const width = m ? Math.min(100, Math.max(0, (v / m) * 100)) : 0;
+    const color = state === 'ok' ? 'var(--pass)' : state === 'bad' ? 'var(--fail)'
+      : state === 'warn' ? 'var(--warn)' : 'var(--muted)';
+    return `<div class="stdbar"><div class="stdbar-head">` +
+      `<span>${esc(label)}</span><span class="val">${esc(value ?? '—')}` +
+      `${rule ? ' · ' + esc(rule) : ''}</span></div>` +
+      `<div class="bar-mini" style="height:8px"><i style="width:${width}%;background:${color}"></i></div></div>`;
+  }
+
   function renderJudge() {
     const host = $('#judge-body');
     const badge = $('#judge-badge');
@@ -956,17 +969,17 @@
         (Number(ssim) >= Number(t.min_ssim ?? 0.9) ? 'ok' : 'bad');
       const mismatch = m.size_mismatch;
       html += `<div class="judge-section"><h3>Estándares visuales</h3>` +
-        stdRow('Cambio máximo', `${pct(changed)} / ≤ ${num(t.max_changed_percent, 1)} %`,
-               okChanged, 'píxeles distintos') +
-        stdRow('MAE', `${num(mae, 2)} / ≤ ${num(t.max_mae, 1)}`, okMae,
-               'error absoluto medio') +
-        stdRow('SSIM', `${num(ssim, 4)} / ≥ ${num(t.min_ssim, 2)}`, okSsim,
-               'similitud estructural') +
-        stdRow('Tamaño', mismatch === undefined ? '—' : (mismatch ? 'distinto' : 'igual'),
-               mismatch === true ? 'bad' : (mismatch === false ? 'ok' : ''),
-               'un tamaño distinto es fail') +
-        stdRow('Tolerancia', `${num(t.tolerance, 0)}/255`, '', 'diferencia ignorada') +
-        stdRow('Aviso', `≤ ${num(t.warn_changed_percent, 1)} %`, '', 'por encima es fail') +
+        stdBar('Cambio', `${pct(changed)}`, t.max_changed_percent ?? 2,
+               okChanged, `≤ ${num(t.max_changed_percent, 1)} %`) +
+        stdBar('MAE', `${num(mae, 2)}`, t.max_mae ?? 6, okMae,
+               `≤ ${num(t.max_mae, 1)}`) +
+        stdBar('SSIM', `${num(ssim, 4)}`, 1, okSsim,
+               `≥ ${num(t.min_ssim, 2)}`) +
+        stdBar('Tamaño', mismatch === undefined ? '—' : (mismatch ? 'distinto' : 'igual'),
+               1, mismatch === true ? 'bad' : (mismatch === false ? 'ok' : ''),
+               'igual = ok') +
+        stdBar('Tolerancia', `${num(t.tolerance, 0)}/255`, 255, 'ok',
+               'diferencia ignorada') +
         `</div><div class="judge-section"><h3>Conteo real</h3>` +
         stdRow('Comparaciones', num(s.comparisons ?? 0), '', '') +
         stdRow('Pass', num(s.pass ?? 0), (Number(s.pass) || 0) ? 'ok' : '', '') +
@@ -977,15 +990,65 @@
     } else {
       const resp = src.standards && src.standards.responsive;
       html += `<div class="judge-section"><h3>Estándares del laboratorio</h3>` +
-        stdRow('Casos', num(s.total ?? 0), '', 'ejecutados de verdad') +
-        stdRow('Pass', num(s.pass ?? 0), (Number(s.pass) || 0) ? 'ok' : '', '') +
-        stdRow('Fail', num(s.fail ?? 0), (Number(s.fail) || 0) ? 'bad' : 'ok', 'debe ser 0') +
-        stdRow('Error', num(s.error ?? 0), (Number(s.error) || 0) ? 'bad' : 'ok', 'debe ser 0') +
-        stdRow('Blocked', num(s.blocked ?? 0), (Number(s.blocked) || 0) ? 'warn' : 'ok', 'gaps s17') +
-        stdRow('Sweep responsive', resp === true ? 'sí' : resp === false ? 'no' : '—',
-               resp === true ? 'ok' : (resp === false ? 'warn' : ''),
-               resp === false ? 'no ejecutado en esta corrida' : '') +
+        stdBar('Casos', num(s.total ?? 0), s.total ?? 1, '', 'ejecutados de verdad') +
+        stdBar('Pass', num(s.pass ?? 0), s.total ?? 1, (Number(s.pass) || 0) ? 'ok' : '', '') +
+        stdBar('Fail', num(s.fail ?? 0), s.total ?? 1, (Number(s.fail) || 0) ? 'bad' : 'ok', 'debe ser 0') +
+        stdBar('Error', num(s.error ?? 0), s.total ?? 1, (Number(s.error) || 0) ? 'bad' : 'ok', 'debe ser 0') +
+        stdBar('Blocked', num(s.blocked ?? 0), s.total ?? 1, (Number(s.blocked) || 0) ? 'warn' : 'ok', 'gaps s17') +
         `</div>`;
+    }
+
+    if (src.kind === 'visual') {
+      const worst = (s.worst || []).slice(0, 6);
+      if (worst.length) {
+        html += `<div class="judge-section"><h3>Casos (peores primero)</h3>` +
+          worst.map((w) => `<div class="judge-case" data-case="${esc(w.id)}">` +
+            `<span class="id">${esc(w.id)}</span> ${statusBadge(w.status)}` +
+            `<span class="val">${pct(w.mean_changed_percent)}</span>` +
+            `</div>`).join('') + `</div>`;
+        setTimeout(() => {
+          $$('#judge-body .judge-case').forEach((el) => {
+            el.onclick = () => {
+              const c = (DATA.visual && DATA.visual.cases || {})[el.dataset.case];
+              if (!c) return;
+              const r = (c.results || [])[0] || {};
+              const m = r.metrics || {};
+              dialog(el.dataset.case,
+                `<div class="compare">` +
+                `<figure><figcaption>Chrome</figcaption><img src="${esc((r.chrome || {}).url || '')}" style="max-width:100%"></figure>` +
+                `<figure><figcaption>NativaX</figcaption><img src="${esc((r.nativax || {}).url || '')}" style="max-width:100%"></figure>` +
+                `<figure><figcaption>Diferencia</figcaption><img src="${esc(m.diff_url || '')}" style="max-width:100%"></figure>` +
+                `</div>` +
+                `<div class="metrics">` +
+                `<div class="metric"><div class="v">${pct(m.changed_percent)}</div><div class="l">cambio</div></div>` +
+                `<div class="metric"><div class="v">${num(m.mae, 2)}</div><div class="l">MAE</div></div>` +
+                `<div class="metric"><div class="v">${num(m.ssim, 4)}</div><div class="l">SSIM</div></div>` +
+                `</div>`);
+            };
+          });
+        }, 0);
+      }
+    }
+
+    if (src.kind === 'lab') {
+      const bad = (DATA.cases || []).filter((c) => c.status === 'fail' || c.status === 'error').slice(0, 8);
+      if (bad.length) {
+        html += `<div class="judge-section"><h3>Casos con fallo (selecciona)</h3>` +
+          bad.map((c) => `<div class="judge-case" data-case="${esc(c.id)}">` +
+            `<span class="id">${esc(c.id)}</span> ${statusBadge(c.status)}` +
+            `<span class="val">${ms(c.ms)}</span></div>`).join('') + `</div>`;
+        setTimeout(() => {
+          $$('#judge-body .judge-case').forEach((el) => {
+            el.onclick = () => {
+              const c = (DATA.cases || []).find((x) => x.id === el.dataset.case);
+              if (!c) return;
+              dialog(c.id, `<div class="hint">Sección ${esc(c.sid)} · ${esc(c.name)}</div>` +
+                `<div class="hint">Estado: ${esc(c.status)} · duración ${ms(c.ms)}</div>` +
+                `<pre class="log">${esc(JSON.stringify(c, null, 2))}</pre>`);
+            };
+          });
+        }, 0);
+      }
     }
 
     if (LIVE && LIVE.events) {
@@ -1033,7 +1096,7 @@
     renderAll();
     showView('resumen');
     poll();
-    setInterval(poll, 800);
+    setInterval(poll, 1500);
   }
 
   if (document.readyState === 'loading') {

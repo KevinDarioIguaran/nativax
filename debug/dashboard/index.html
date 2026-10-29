@@ -4,6 +4,8 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>NativaX Debug Lab</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
   <style>
 :root {
   --bg: #f4f5f8;
@@ -232,6 +234,16 @@ td.num { text-align: right; font-family: var(--mono); }
 .std.warn { border-color: color-mix(in srgb, var(--warn) 35%, var(--line)); }
 .std.warn .mark { color: var(--warn); }
 .std .val { font-family: var(--mono); font-size: 11px; color: var(--muted); }
+.stdbar { display: grid; gap: 4px; padding: 6px 8px; border-radius: 7px;
+  background: var(--panel-2); border: 1px solid var(--line); font-size: 12px; }
+.stdbar-head { display: flex; justify-content: space-between; gap: 8px; align-items: baseline; }
+.stdbar-head .val { font-family: var(--mono); font-size: 11px; color: var(--muted); }
+.judge-case { display: flex; gap: 8px; align-items: center; padding: 6px 8px;
+  border-radius: 7px; background: var(--panel-2); border: 1px solid var(--line);
+  font-size: 12px; cursor: pointer; }
+.judge-case:hover { border-color: var(--accent); }
+.judge-case .id { font-family: var(--mono); }
+.judge-case .st { margin-left: auto; }
 .verdict { padding: 10px; border-radius: 9px; font-weight: 800; text-align: center; font-size: 13px; }
 .verdict.pass { background: var(--pass-soft); color: var(--pass); }
 .verdict.fail { background: var(--fail-soft); color: var(--fail); }
@@ -261,9 +273,9 @@ dialog h3 { margin-top: 0; font-family: var(--mono); }
 <div class="app">
   <header class="topbar">
     <nav class="run-tabs" id="run-tabs" aria-label="Ejecuciones">
-      <button class="run-tab active" data-mode="tests">Ejecutar tests</button>
-      <button class="run-tab" data-mode="visual">Chrome vs NativaX</button>
-      <button class="run-tab" data-mode="responsive">Responsive</button>
+      <button class="run-tab active" data-mode="tests"><i class="fa-solid fa-vial"></i> Ejecutar tests</button>
+      <button class="run-tab" data-mode="visual"><i class="fa-solid fa-images"></i> Chrome vs NativaX</button>
+      <button class="run-tab" data-mode="responsive"><i class="fa-solid fa-arrows-left-right"></i> Responsive</button>
     </nav>
 
     <div class="run-controls" id="run-controls">
@@ -287,8 +299,8 @@ dialog h3 { margin-top: 0; font-family: var(--mono); }
         </select>
       </label>
       <label id="sweep-wrap" hidden><input type="checkbox" id="sweep"> sweep responsive</label>
-      <button class="btn primary" id="btn-run">▶ Iniciar</button>
-      <button class="btn danger" id="btn-stop" disabled>■ Detener</button>
+      <button class="btn primary" id="btn-run"><i class="fa-solid fa-play"></i> Iniciar</button>
+      <button class="btn danger" id="btn-stop" disabled><i class="fa-solid fa-stop"></i> Detener</button>
     </div>
 
     <div class="run-state">
